@@ -1,0 +1,3 @@
+[functions]
+[functions.test-smtp]
+verify_jwt = true
