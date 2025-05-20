@@ -35,9 +35,13 @@ export default function SidebarNav({
   handleSubmenuToggle,
   showOthersTitle = true,
   subMenuRefs
-}: SidebarNavProps)  {
+}: SidebarNavProps) {
   const renderMenuItems = (items: any[], menuType: "main" | "others") => (
-    <ul className={`flex flex-col gap-4 ${menuType === "main" ? "menu-principal" : "menu-admin"}`}>
+    <ul
+      className={`flex flex-col gap-4 ${
+        menuType === "main" ? "menu-principal" : "menu-admin"
+      }`}
+    >
       {items.map((item, index) => (
         <li key={item.name}>
           {item.subItems ? (
@@ -56,7 +60,8 @@ export default function SidebarNav({
               >
                 <span
                   className={`menu-item-icon-size ${
-                    openSubmenu?.type === menuType && openSubmenu?.index === index
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
                   }`}
@@ -82,14 +87,17 @@ export default function SidebarNav({
                   className="overflow-hidden transition-all duration-300"
                   style={{
                     height:
-                      openSubmenu?.type === menuType && openSubmenu?.index === index
-                        ? `${subMenuHeights[`${menuType}-${index}`] || 0}px`
-                        : "0px",
+                      openSubmenu?.type === menuType &&
+                      openSubmenu?.index === index
+                        ? `${
+                            (subMenuHeights[`${menuType}-${index}`] || 0) + 10
+                          }px`
+                        : "0px"
                   }}
                 >
-                  <ul 
+                  <ul
                     className="mt-2 space-y-1 ml-9"
-                    ref={el => {
+                    ref={(el) => {
                       subMenuRefs.current[`${menuType}-${index}`] = el;
                     }}
                   >
@@ -140,7 +148,9 @@ export default function SidebarNav({
               <Link
                 to={item.path}
                 className={`menu-item group ${
-                  isActive(item.path) ? "menu-item-active" : "menu-item-inactive"
+                  isActive(item.path)
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
                 } ${
                   !isExpanded && !isHovered
                     ? "lg:justify-center"
@@ -173,9 +183,7 @@ export default function SidebarNav({
         <div>
           <h2
             className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-              !isExpanded && !isHovered
-                ? "lg:justify-center"
-                : "justify-start"
+              !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
             }`}
           >
             {isExpanded || isHovered || isMobileOpen ? (

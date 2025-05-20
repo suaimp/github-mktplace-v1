@@ -34,25 +34,24 @@ export default function ViewPage() {
       setError("");
 
       const { data: page, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
+        .from("pages")
+        .select("*")
+        .eq("slug", slug)
+        .eq("status", "published")
         .single();
 
       if (error) throw error;
 
       if (!page) {
-        navigate('/404');
+        navigate("/404");
         return;
       }
 
       setPage(page);
-      
     } catch (err) {
-      console.error('Error loading page:', err);
-      setError('Error loading page');
-      navigate('/404');
+      console.error("Error loading page:", err);
+      setError("Error loading page");
+      navigate("/404");
     } finally {
       setLoading(false);
     }
@@ -62,40 +61,46 @@ export default function ViewPage() {
     // Parse shortcodes in content
     const parts = [];
     let lastIndex = 0;
-    
+
     // Match all shortcode types
-    const shortcodeRegex = /\[(form|form_entries|user_form_entries|marketplace)\s+id="([^"]+)"\]/g;
+    const shortcodeRegex =
+      /\[(form|form_entries|user_form_entries|marketplace)\s+id="([^"]+)"\]/g;
     let match;
 
     while ((match = shortcodeRegex.exec(content)) !== null) {
       // Add text before shortcode
       if (match.index > lastIndex) {
         parts.push(
-          <div key={`text-${match.index}`} dangerouslySetInnerHTML={{ __html: content.slice(lastIndex, match.index) }} />
+          <div
+            key={`text-${match.index}`}
+            dangerouslySetInnerHTML={{
+              __html: content.slice(lastIndex, match.index)
+            }}
+          />
         );
       }
 
       // Add appropriate component based on shortcode type
       const [_, type, id] = match;
-      if (type === 'form') {
+      if (type === "form") {
         parts.push(
           <div key={`form-${id}`} className="my-8">
             <FormRenderer formId={id} />
           </div>
         );
-      } else if (type === 'form_entries') {
+      } else if (type === "form_entries") {
         parts.push(
           <div key={`entries-${id}`} className="my-8">
             <FormEntriesRenderer formId={id} />
           </div>
         );
-      } else if (type === 'user_form_entries') {
+      } else if (type === "user_form_entries") {
         parts.push(
           <div key={`user-entries-${id}`} className="my-8">
             <UserFormEntriesRenderer formId={id} />
           </div>
         );
-      } else if (type === 'marketplace') {
+      } else if (type === "marketplace") {
         parts.push(
           <div key={`marketplace-${id}`} className="my-8">
             <MarketplaceRenderer formId={id} />
@@ -109,7 +114,10 @@ export default function ViewPage() {
     // Add remaining text
     if (lastIndex < content.length) {
       parts.push(
-        <div key="text-end" dangerouslySetInnerHTML={{ __html: content.slice(lastIndex) }} />
+        <div
+          key="text-end"
+          dangerouslySetInnerHTML={{ __html: content.slice(lastIndex) }}
+        />
       );
     }
 
@@ -127,7 +135,7 @@ export default function ViewPage() {
   if (error || !page) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-error-500">{error || 'Page not found'}</div>
+        <div className="text-error-500">{error || "Page not found"}</div>
       </div>
     );
   }
@@ -138,7 +146,7 @@ export default function ViewPage() {
         title={page.meta_title || page.title}
         description={page.meta_description || `View ${page.title} page`}
       />
-      
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         <h1 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white/90">
           {page.title}

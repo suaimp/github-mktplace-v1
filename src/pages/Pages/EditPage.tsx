@@ -32,7 +32,9 @@ export default function EditPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -51,18 +53,18 @@ export default function EditPage() {
   useEffect(() => {
     if (!slugEdited && form.title) {
       const generatedSlug = generateSlug(form.title);
-      setForm(prev => ({ ...prev, slug: generatedSlug }));
+      setForm((prev) => ({ ...prev, slug: generatedSlug }));
     }
   }, [form.title, slugEdited]);
 
   function generateSlug(title: string): string {
     return title
       .toLowerCase() // Convert to lowercase
-      .normalize('NFD') // Normalize diacritics
-      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-      .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+      .normalize("NFD") // Normalize diacritics
+      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
+      .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
+      .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
   }
 
   async function loadPage(pageId: string) {
@@ -71,9 +73,9 @@ export default function EditPage() {
       setError("");
 
       const { data: page, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('id', pageId)
+        .from("pages")
+        .select("*")
+        .eq("id", pageId)
         .single();
 
       if (error) throw error;
@@ -88,11 +90,10 @@ export default function EditPage() {
         });
         setSlugEdited(true); // Don't auto-generate slug for existing pages
       }
-      
     } catch (err) {
-      console.error('Error loading page:', err);
-      setError('Error loading page');
-      navigate('/pages');
+      console.error("Error loading page:", err);
+      setError("Error loading page");
+      navigate("/pages");
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,8 @@ export default function EditPage() {
       errors.slug = "Slug is required";
       isValid = false;
     } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
-      errors.slug = "Slug must contain only lowercase letters, numbers, and hyphens";
+      errors.slug =
+        "Slug must contain only lowercase letters, numbers, and hyphens";
       isValid = false;
     }
 
@@ -126,7 +128,7 @@ export default function EditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (!validateForm()) {
         return;
@@ -138,17 +140,17 @@ export default function EditPage() {
 
       // Check if slug is already in use
       const { data: existingPages, error: slugCheckError } = await supabase
-        .from('pages')
-        .select('id')
-        .eq('slug', form.slug.trim());
+        .from("pages")
+        .select("id")
+        .eq("slug", form.slug.trim());
 
       if (slugCheckError) throw slugCheckError;
 
       // Check if slug exists and belongs to a different page
       if (existingPages && existingPages.length > 0) {
-        const slugExists = existingPages.some(page => page.id !== id);
+        const slugExists = existingPages.some((page) => page.id !== id);
         if (slugExists) {
-          setValidationErrors(prev => ({
+          setValidationErrors((prev) => ({
             ...prev,
             slug: "This slug is already in use"
           }));
@@ -156,7 +158,9 @@ export default function EditPage() {
         }
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       const pageData = {
@@ -171,20 +175,20 @@ export default function EditPage() {
       if (id) {
         // Update existing page
         const { error } = await supabase
-          .from('pages')
+          .from("pages")
           .update(pageData)
-          .eq('id', id);
+          .eq("id", id);
 
         if (error) throw error;
         setSuccess("Page updated successfully");
       } else {
         // Create new page
-        const { error } = await supabase
-          .from('pages')
-          .insert([{
+        const { error } = await supabase.from("pages").insert([
+          {
             ...pageData,
             created_by: user.id
-          }]);
+          }
+        ]);
 
         if (error) throw error;
         setSuccess("Page created successfully");
@@ -192,12 +196,11 @@ export default function EditPage() {
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate('/pages');
+        navigate("/pages");
       }, 1500);
-
     } catch (err) {
-      console.error('Error saving page:', err);
-      setError('Error saving page');
+      console.error("Error saving page:", err);
+      setError("Error saving page");
     } finally {
       setLoading(false);
     }
@@ -205,12 +208,12 @@ export default function EditPage() {
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
-    setForm(prev => ({ ...prev, title: newTitle }));
+    setForm((prev) => ({ ...prev, title: newTitle }));
   };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSlugEdited(true);
-    setForm(prev => ({ ...prev, slug: e.target.value }));
+    setForm((prev) => ({ ...prev, slug: e.target.value }));
   };
 
   if (loading && !form.title) {
@@ -222,7 +225,7 @@ export default function EditPage() {
   }
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permission="pages.edit"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
@@ -231,10 +234,10 @@ export default function EditPage() {
       }
     >
       <PageMeta
-        title={`${id ? 'Edit' : 'New'} Page | Admin Panel`}
+        title={`${id ? "Edit" : "New"} Page | Admin Panel`}
         description="Manage system pages"
       />
-      <PageBreadcrumb pageTitle={`${id ? 'Edit' : 'New'} Page`} />
+      <PageBreadcrumb pageTitle={`${id ? "Edit" : "New"} Page`} />
 
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {error && (
@@ -252,7 +255,9 @@ export default function EditPage() {
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-6">
             <div>
-              <Label>Title <span className="text-error-500">*</span></Label>
+              <Label>
+                Title <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={form.title}
@@ -264,7 +269,9 @@ export default function EditPage() {
             </div>
 
             <div>
-              <Label>Slug <span className="text-error-500">*</span></Label>
+              <Label>
+                Slug <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={form.slug}
@@ -274,12 +281,15 @@ export default function EditPage() {
                 required
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                The URL-friendly version of the title. Will be auto-generated from title if left empty.
+                The URL-friendly version of the title. Will be auto-generated
+                from title if left empty.
               </p>
             </div>
 
             <div>
-              <Label>Content <span className="text-error-500">*</span></Label>
+              <Label>
+                Content <span className="text-error-500">*</span>
+              </Label>
               <TextArea
                 value={form.content}
                 onChange={(value) => setForm({ ...form, content: value })}
@@ -299,7 +309,12 @@ export default function EditPage() {
                   { value: "archived", label: "Archived" }
                 ]}
                 value={form.status}
-                onChange={(value) => setForm({ ...form, status: value as "draft" | "published" | "archived" })}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    status: value as "draft" | "published" | "archived"
+                  })
+                }
               />
             </div>
 
@@ -312,7 +327,12 @@ export default function EditPage() {
                   { value: "advertiser", label: "Advertisers Only" }
                 ]}
                 value={form.visible_to}
-                onChange={(value) => setForm({ ...form, visible_to: value as "all" | "publisher" | "advertiser" })}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    visible_to: value as "all" | "publisher" | "advertiser"
+                  })
+                }
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Control which type of users can view this page
@@ -320,16 +340,10 @@ export default function EditPage() {
             </div>
 
             <div className="flex gap-4 pt-6">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/pages')}
-              >
+              <Button variant="outline" onClick={() => navigate("/pages")}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-              >
+              <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : "Save"}
               </Button>
             </div>

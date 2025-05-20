@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
@@ -47,10 +52,12 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
         setIsAuthenticated(true);
-      } else if (event === 'SIGNED_OUT') {
+      } else if (event === "SIGNED_OUT") {
         setIsAuthenticated(false);
       }
     });
@@ -63,10 +70,12 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   async function checkAuth() {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
     } catch (error) {
-      console.error('Auth check error:', error);
+      console.error("Auth check error:", error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -106,11 +115,13 @@ export default function App() {
         <Route path="/adm/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes */}
-        <Route element={
-          <AuthenticatedRoute>
-            <AppLayout />
-          </AuthenticatedRoute>
-        }>
+        <Route
+          element={
+            <AuthenticatedRoute>
+              <AppLayout />
+            </AuthenticatedRoute>
+          }
+        >
           <Route path="/dashboard" element={<Home />} />
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/settings" element={<Settings />} />
@@ -141,23 +152,36 @@ export default function App() {
         </Route>
 
         {/* Protected Publisher Routes */}
-        <Route element={
-          <AuthenticatedRoute>
-            <AppLayout />
-          </AuthenticatedRoute>
-        }>
+        <Route
+          element={
+            <AuthenticatedRoute>
+              <AppLayout />
+            </AuthenticatedRoute>
+          }
+        >
           <Route path="/publisher/dashboard" element={<PublisherDashboard />} />
-          <Route path="/publisher/profile" element={<PlatformUserProfile userType="publisher" />} />
+          <Route
+            path="/publisher/profile"
+            element={<PlatformUserProfile userType="publisher" />}
+          />
         </Route>
 
         {/* Protected Advertiser Routes */}
-        <Route element={
-          <AuthenticatedRoute>
-            <AppLayout />
-          </AuthenticatedRoute>
-        }>
-          <Route path="/advertiser/dashboard" element={<AdvertiserDashboard />} />
-          <Route path="/advertiser/profile" element={<PlatformUserProfile userType="advertiser" />} />
+        <Route
+          element={
+            <AuthenticatedRoute>
+              <AppLayout />
+            </AuthenticatedRoute>
+          }
+        >
+          <Route
+            path="/advertiser/dashboard"
+            element={<AdvertiserDashboard />}
+          />
+          <Route
+            path="/advertiser/profile"
+            element={<PlatformUserProfile userType="advertiser" />}
+          />
         </Route>
 
         {/* Fallback Route */}

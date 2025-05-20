@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import * as Icons from '../../icons';
+import { useState } from "react";
+import * as Icons from "../../icons";
 
 interface FormFieldSidebarProps {
   onAddField: (fieldType: string) => void;
 }
 
+// Definição dos grupos de campos disponíveis para adicionar ao formulário
+// Cada grupo possui um título e uma lista de campos (tipo, título, descrição, ícone)
 const fieldGroups = [
   {
     title: "Campos Básicos",
@@ -37,6 +39,12 @@ const fieldGroups = [
         type: "phone",
         title: "Telefone",
         description: "Para números de telefone",
+        icon: "FileIcon"
+      },
+      {
+        type: "modal_button",
+        title: "Botão modal",
+        description: "Botão para abrir modal",
         icon: "FileIcon"
       }
     ]
@@ -201,12 +209,19 @@ const fieldGroups = [
   }
 ];
 
-export default function FormFieldSidebar({ onAddField }: FormFieldSidebarProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(fieldGroups.map(g => g.title)));
+export default function FormFieldSidebar({
+  onAddField
+}: FormFieldSidebarProps) {
+  // Estado para busca de campos pelo usuário
+  const [searchTerm, setSearchTerm] = useState("");
+  // Estado para controlar quais grupos estão expandidos
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(fieldGroups.map((g) => g.title))
+  );
 
+  // Alterna a expansão de um grupo de campos
   const toggleGroup = (groupTitle: string) => {
-    setExpandedGroups(prev => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(groupTitle)) {
         next.delete(groupTitle);
@@ -217,16 +232,22 @@ export default function FormFieldSidebar({ onAddField }: FormFieldSidebarProps) 
     });
   };
 
-  const filteredGroups = fieldGroups.map(group => ({
-    ...group,
-    fields: group.fields.filter(field => 
-      field.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      field.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(group => group.fields.length > 0);
+  // Filtra os grupos e campos conforme o termo de busca
+  const filteredGroups = fieldGroups
+    .map((group) => ({
+      ...group,
+      fields: group.fields.filter(
+        (field) =>
+          field.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          field.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }))
+    .filter((group) => group.fields.length > 0);
 
   return (
+    // Container principal da sidebar
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+      {/* Header com busca */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
           Adicionar Campos
@@ -243,26 +264,33 @@ export default function FormFieldSidebar({ onAddField }: FormFieldSidebarProps) 
         </div>
       </div>
 
+      {/* Lista de grupos e campos disponíveis */}
       <div className="flex-1 overflow-y-auto">
         {filteredGroups.map((group) => (
-          <div key={group.title} className="border-b border-gray-200 dark:border-gray-800 last:border-0">
+          <div
+            key={group.title}
+            className="border-b border-gray-200 dark:border-gray-800 last:border-0"
+          >
+            {/* Botão para expandir/recolher grupo */}
             <button
               onClick={() => toggleGroup(group.title)}
               className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
             >
               {group.title}
-              <Icons.ChevronDownIcon 
+              <Icons.ChevronDownIcon
                 className={`w-5 h-5 transition-transform ${
-                  expandedGroups.has(group.title) ? 'rotate-180' : ''
+                  expandedGroups.has(group.title) ? "rotate-180" : ""
                 }`}
               />
             </button>
 
+            {/* Lista de campos do grupo, exibidos se o grupo estiver expandido */}
             {expandedGroups.has(group.title) && (
               <div className="p-4 grid grid-cols-2 gap-3">
                 {group.fields.map((field) => {
                   const Icon = Icons[field.icon as keyof typeof Icons];
                   return (
+                    // Botão para adicionar o campo ao formulário
                     <button
                       key={field.type}
                       onClick={() => onAddField(field.type)}

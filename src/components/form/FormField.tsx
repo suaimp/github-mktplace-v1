@@ -1,7 +1,7 @@
-import { useDrag, useDrop } from 'react-dnd';
-import { useRef, useState } from 'react';
-import * as Icons from '../../icons';
-import FormFieldSettings from './FormFieldSettings';
+import { useDrag, useDrop } from "react-dnd";
+import { useRef, useState } from "react";
+import * as Icons from "../../icons";
+import FormFieldSettings from "./FormFieldSettings";
 
 interface FormField {
   id: string;
@@ -32,15 +32,22 @@ interface DragItem {
   type: string;
 }
 
-export default function FormField({ field, index, moveField, onEdit, onDelete }: FormFieldProps) {
+export default function FormField({
+  field,
+  index,
+  moveField,
+  onEdit,
+  onDelete
+}: FormFieldProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const [{ handlerId }, drop] = useDrop({
-    accept: 'form-field',
+    accept: "form-field",
     collect(monitor) {
       return {
-        handlerId: monitor.getHandlerId(),
+        handlerId: monitor.getHandlerId()
       };
     },
     hover(item: DragItem, monitor) {
@@ -55,7 +62,8 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
       }
 
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
@@ -68,17 +76,17 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
 
       moveField(dragIndex, hoverIndex);
       item.index = hoverIndex;
-    },
+    }
   });
 
   const [{ isDragging }, drag, dragPreview] = useDrag({
-    type: 'form-field',
+    type: "form-field",
     item: () => {
       return { id: field.id, index };
     },
     collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
+      isDragging: monitor.isDragging()
+    })
   });
 
   const opacity = isDragging ? 0.4 : 1;
@@ -88,33 +96,33 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
 
   const getFieldIcon = () => {
     switch (field.field_type) {
-      case 'text':
+      case "text":
         return <Icons.FileIcon className="w-5 h-5" />;
-      case 'textarea':
+      case "textarea":
         return <Icons.FileIcon className="w-5 h-5" />;
-      case 'number':
+      case "number":
         return <Icons.FileIcon className="w-5 h-5" />;
-      case 'email':
+      case "email":
         return <Icons.EnvelopeIcon className="w-5 h-5" />;
-      case 'phone':
+      case "phone":
         return <Icons.FileIcon className="w-5 h-5" />;
-      case 'select':
+      case "select":
         return <Icons.ListIcon className="w-5 h-5" />;
-      case 'multiselect':
+      case "multiselect":
         return <Icons.ListIcon className="w-5 h-5" />;
-      case 'radio':
+      case "radio":
         return <Icons.CheckCircleIcon className="w-5 h-5" />;
-      case 'checkbox':
+      case "checkbox":
         return <Icons.CheckCircleIcon className="w-5 h-5" />;
-      case 'date':
+      case "date":
         return <Icons.CalenderIcon className="w-5 h-5" />;
-      case 'time':
+      case "time":
         return <Icons.TimeIcon className="w-5 h-5" />;
-      case 'file':
+      case "file":
         return <Icons.FileIcon className="w-5 h-5" />;
-      case 'hidden':
+      case "hidden":
         return <Icons.EyeCloseIcon className="w-5 h-5" />;
-      case 'html':
+      case "html":
         return <Icons.CodeIcon className="w-5 h-5" />;
       default:
         return <Icons.FileIcon className="w-5 h-5" />;
@@ -123,34 +131,34 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
 
   const getFieldTypeName = (type: string) => {
     switch (type) {
-      case 'text':
-        return 'Texto Simples';
-      case 'textarea':
-        return 'Texto Longo';
-      case 'number':
-        return 'Número';
-      case 'email':
-        return 'Email';
-      case 'phone':
-        return 'Telefone';
-      case 'select':
-        return 'Lista Suspensa';
-      case 'multiselect':
-        return 'Múltipla Escolha';
-      case 'radio':
-        return 'Botões de Opção';
-      case 'checkbox':
-        return 'Caixas de Seleção';
-      case 'date':
-        return 'Data';
-      case 'time':
-        return 'Hora';
-      case 'file':
-        return 'Upload de Arquivo';
-      case 'hidden':
-        return 'Campo Oculto';
-      case 'html':
-        return 'HTML';
+      case "text":
+        return "Texto Simples";
+      case "textarea":
+        return "Texto Longo";
+      case "number":
+        return "Número";
+      case "email":
+        return "Email";
+      case "phone":
+        return "Telefone";
+      case "select":
+        return "Lista Suspensa";
+      case "multiselect":
+        return "Múltipla Escolha";
+      case "radio":
+        return "Botões de Opção";
+      case "checkbox":
+        return "Caixas de Seleção";
+      case "date":
+        return "Data";
+      case "time":
+        return "Hora";
+      case "file":
+        return "Upload de Arquivo";
+      case "hidden":
+        return "Campo Oculto";
+      case "html":
+        return "HTML";
       default:
         return type.charAt(0).toUpperCase() + type.slice(1);
     }
@@ -163,7 +171,7 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
         style={{ opacity }}
         data-handler-id={handlerId}
         className={`relative p-4 mb-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-          isDragging ? 'border-brand-500 dark:border-brand-500' : ''
+          isDragging ? "border-brand-500 dark:border-brand-500" : ""
         }`}
         onClick={() => setIsSettingsOpen(true)}
       >
@@ -206,7 +214,7 @@ export default function FormField({ field, index, moveField, onEdit, onDelete }:
             >
               <Icons.TrashBinIcon className="w-5 h-5" />
             </button>
-            <div 
+            <div
               ref={drag}
               className="cursor-move p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
             >
