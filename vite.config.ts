@@ -11,8 +11,8 @@ export default defineConfig({
         icon: true,
         // This will transform your SVG to a React component
         exportType: "named",
-        namedExport: "ReactComponent",
-      },
-    }),
-  ],
+        namedExport: "ReactComponent"
+      }
+    })
+  ]
 });
