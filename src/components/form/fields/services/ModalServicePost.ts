@@ -1,7 +1,7 @@
 import { supabase } from "../../../../lib/supabase";
 
 export interface ModalServiceData {
-  publisherId: string; // novo campo obrigatório
+  publisherId: string;
   serviceTitle: string;
   price: string; // deve ser convertido para número
   promoPrice?: string; // deve ser convertido para número ou null

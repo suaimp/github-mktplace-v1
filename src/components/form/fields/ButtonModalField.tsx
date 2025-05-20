@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../../lib/supabase";
 import { postModalService } from "./services/ModalServicePost";
 
 interface ButtonModalFieldProps {
@@ -8,7 +9,6 @@ interface ButtonModalFieldProps {
   onChange: (value: string) => void;
   error?: string;
   onErrorClear?: () => void;
-  publisherId: string; // Adicionado publisherId obrigatório
 }
 
 export default function ButtonModalField({
@@ -17,8 +17,7 @@ export default function ButtonModalField({
   value,
   onChange,
   error,
-  onErrorClear,
-  publisherId // Recebe publisherId
+  onErrorClear
 }: ButtonModalFieldProps) {
   const [open, setOpen] = useState(false);
   const [serviceTitle, setServiceTitle] = useState("");
@@ -26,6 +25,17 @@ export default function ButtonModalField({
   const [promoPrice, setPromoPrice] = useState("");
   const [label, setLabel] = useState("Publicação comercial");
   const [features, setFeatures] = useState<string[]>([""]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setUserId(data.user.id);
+    });
+  }, []);
 
   // Função para adicionar novo campo de recurso
   const addFeature = () => setFeatures([...features, ""]);
@@ -46,15 +56,48 @@ export default function ButtonModalField({
         });
   };
 
-  const formSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const formSubmit = async () => {
+    if (!userId) {
+      setErrorMsg("Usuário não autenticado!");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+    if (!serviceTitle.trim()) {
+      setErrorMsg("Título do serviço é obrigatório!");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+    if (!price.trim()) {
+      setErrorMsg("Preço é obrigatório!");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+    if (!label.trim()) {
+      setErrorMsg("Observação é obrigatória!");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+    if (features.some((f) => !f.trim())) {
+      setErrorMsg("Todos os recursos do serviço são obrigatórios!");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
     try {
-      postModalService({
-        publisherId: publisherId,
+      // Função para converter BRL formatado para string numérica (ex: "1234.56")
+      const toNumericString = (str: string) => {
+        if (!str) return "";
+        return str.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+      };
+      await postModalService({
+        publisherId: userId,
         serviceTitle: serviceTitle,
-        price: price,
-        promoPrice: promoPrice,
+        price: toNumericString(price),
+        promoPrice: promoPrice ? toNumericString(promoPrice) : undefined,
         label: label,
         features: features.filter((f) => f.trim() !== "")
       });
@@ -63,13 +106,43 @@ export default function ButtonModalField({
       setPromoPrice("");
       setLabel("Publicação comercial");
       setFeatures([""]);
-    } catch (err) {
-      console.error("Erro ao salvar serviço:", err);
+      setSuccessMsg("Serviço cadastrado com sucesso!");
+      setShowSuccess(true);
+      setErrorMsg("");
+      setShowError(false);
+      setOpen(false);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err: any) {
+      let msg = "Erro ao salvar serviço. ";
+      if (err?.message)
+        msg += "Tente novamente ou entre em contato com o suporte.";
+      setSuccessMsg("");
+      setErrorMsg(msg);
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
     }
   };
 
   return (
     <>
+      {/* Mensagem de sucesso animada */}
+      <div
+        className={`fixed top-6 right-0 z-[999999] transition-transform duration-500 ${
+          showSuccess ? "translate-x-0" : "translate-x-full"
+        } bg-green-500 text-white px-6 py-3 rounded-l-lg shadow-lg flex items-center`}
+        style={{ minWidth: 220 }}
+      >
+        {successMsg}
+      </div>
+      {/* Mensagem de erro animada */}
+      <div
+        className={`fixed top-20 right-0 z-[999999] transition-transform duration-500 ${
+          showError ? "translate-x-0" : "translate-x-full"
+        } bg-red-500 text-white px-6 py-3 rounded-l-lg shadow-lg flex items-center`}
+        style={{ minWidth: 220 }}
+      >
+        {errorMsg}
+      </div>
       <button
         type="button"
         onClick={() => setOpen(true)}
