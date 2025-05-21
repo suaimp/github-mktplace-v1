@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Button from "../ui/button/Button";
+// import Button from "../ui/button/Button";
 import CompanyInfoForm from "./company/CompanyInfoForm";
 import PaymentMethodForm from "./company/PaymentMethodForm";
 import { supabase } from "../../lib/supabase";
@@ -47,7 +47,6 @@ export default function CompanyDataCard({
   profile,
   onUpdate
 }: CompanyDataCardProps) {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [companyData, setCompanyData] = useState<CompanyData>({
@@ -77,7 +76,7 @@ export default function CompanyDataCard({
 
   async function loadCompanyData() {
     try {
-      setLoading(true);
+      // setLoading(true);
       setError("");
 
       const { data, error: fetchError } = await supabase
@@ -101,7 +100,7 @@ export default function CompanyDataCard({
       console.error("Erro ao carregar dados da empresa:", err);
       setError("Erro ao carregar dados da empresa");
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   }
 
@@ -109,7 +108,7 @@ export default function CompanyDataCard({
     e.preventDefault();
 
     try {
-      setLoading(true);
+      // setLoading(true);
       setError("");
       setSuccess(false);
 
@@ -155,7 +154,7 @@ export default function CompanyDataCard({
       console.error("Erro ao salvar dados da empresa:", err);
       setError("Erro ao salvar dados da empresa");
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
@@ -180,16 +179,22 @@ export default function CompanyDataCard({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <CompanyInfoForm data={companyData} onChange={setCompanyData} />
+        <CompanyInfoForm
+          data={companyData}
+          onChange={(data) => setCompanyData({ ...companyData, ...data })}
+        />
 
-        <PaymentMethodForm data={companyData} onChange={setCompanyData} />
+        <PaymentMethodForm
+          data={companyData}
+          onChange={(data) => setCompanyData({ ...companyData, ...data })}
+        />
 
-        <div className="flex justify-end pt-6">
+        {/* <div className="flex justify-end pt-6">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button disabled={loading}>{loading ? "Salvar..." : "Salvar"}</Button>
-        </div>
+        </div> */}
       </form>
     </div>
   );

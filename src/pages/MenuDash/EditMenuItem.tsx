@@ -64,12 +64,8 @@ export default function EditMenuItem() {
     .filter((key) => key !== "default") // Filter out default export
     .map((iconName) => ({
       value: iconName,
-      label: (
-        <div className="flex items-center gap-2">
-          {React.createElement(Icons[iconName as keyof typeof Icons])}
-          <span>{iconName}</span>
-        </div>
-      )
+      label: iconName, // label agora é string
+      icon: React.createElement(Icons[iconName as keyof typeof Icons]) // icon recebe o JSX
     }));
 
   useEffect(() => {
@@ -419,7 +415,7 @@ export default function EditMenuItem() {
                 { value: "publisher", label: "Publishers Only" },
                 { value: "advertiser", label: "Advertisers Only" }
               ]}
-              value={form.visible_to}
+              value={form.visible_to ?? ""}
               onChange={(value) =>
                 setForm({
                   ...form,

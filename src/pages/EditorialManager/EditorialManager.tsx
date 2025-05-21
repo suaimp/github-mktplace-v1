@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { supabase } from "../../lib/supabase";
@@ -56,7 +56,6 @@ interface Form {
 }
 
 export default function EditorialManager() {
-  const navigate = useNavigate();
   const [entries, setEntries] = useState<FormEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -234,7 +233,8 @@ export default function EditorialManager() {
             publisher,
             values,
             form: entry.form,
-            notes: entry.notes || []
+            notes: entry.notes || [],
+            fields: [] // Corrigido: garantir compatibilidade com FormEntry
           };
         })
       );

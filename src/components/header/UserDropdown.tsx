@@ -43,7 +43,7 @@ export default function UserDropdown() {
       if (!user) return;
 
       // First try to load admin profile
-      const { data: adminData, error: adminError } = await supabase
+      const { data: adminData } = await supabase
         .from("admins")
         .select("id, first_name, last_name, email, is_first_admin")
         .eq("id", user.id)

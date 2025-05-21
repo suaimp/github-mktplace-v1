@@ -4,12 +4,12 @@ import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
-import Select from "../../components/form/Select";
 import PhoneInput from "../../components/form/group-input/PhoneInput";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
 import { supabase } from "../../lib/supabase";
 import { EyeIcon, EyeCloseIcon } from "../../icons";
+import { Link } from "react-router-dom";
 
 const accountTypes = [
   {
@@ -399,7 +399,6 @@ export default function Register() {
                     <Checkbox
                       checked={termsAccepted}
                       onChange={setTermsAccepted}
-                      error={!!validationErrors.terms}
                     />
                     <span className="block text-sm text-gray-500 dark:text-gray-400">
                       Li e aceito os{" "}

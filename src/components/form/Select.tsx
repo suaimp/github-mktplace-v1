@@ -12,7 +12,7 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
-  value?: string;
+  value?: string | null;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -21,10 +21,12 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   defaultValue = "",
-  value,
+  value
 }) => {
   // Manage the selected value
-  const [selectedValue, setSelectedValue] = useState<string>(value || defaultValue);
+  const [selectedValue, setSelectedValue] = useState<string>(
+    value || defaultValue
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -33,7 +35,9 @@ const Select: React.FC<SelectProps> = ({
   };
 
   // Find selected option to display icon
-  const selectedOption = options.find(opt => opt.value === (value || selectedValue));
+  const selectedOption = options.find(
+    (opt) => opt.value === (value || selectedValue)
+  );
 
   return (
     <div className="relative">
@@ -47,7 +51,7 @@ const Select: React.FC<SelectProps> = ({
           selectedValue
             ? "text-gray-800 dark:text-white/90"
             : "text-gray-400 dark:text-gray-400"
-        } ${selectedOption?.icon ? 'pl-12' : 'pl-4'} ${className}`}
+        } ${selectedOption?.icon ? "pl-12" : "pl-4"} ${className}`}
         value={value || selectedValue}
         onChange={handleChange}
       >

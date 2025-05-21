@@ -43,6 +43,7 @@ export default function FormRenderer({
       } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
+        console.log(currentUser);
       }
     } catch (err) {
       console.error("Error getting current user:", err);

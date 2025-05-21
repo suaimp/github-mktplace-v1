@@ -9,7 +9,9 @@ export default function FirstAdmin() {
         title="Criar Conta de Administrador | Admin Panel"
         description="Create the first admin account for the system"
       />
-      <AuthLayout>{/* <FirstAdminForm /> */}</AuthLayout>
+      <AuthLayout>
+        {/* <FirstAdminForm /> */ <>firstAdminForm não existe.</>}
+      </AuthLayout>
     </>
   );
 }

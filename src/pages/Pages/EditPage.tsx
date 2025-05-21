@@ -10,15 +10,6 @@ import TextArea from "../../components/form/input/TextArea";
 import Select from "../../components/form/Select";
 import PermissionGuard from "../../components/auth/PermissionGuard";
 
-interface Page {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  status: "draft" | "published" | "archived";
-  visible_to: "all" | "publisher" | "advertiser";
-}
-
 interface ValidationErrors {
   title?: string;
   slug?: string;
@@ -35,12 +26,18 @@ export default function EditPage() {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    title: string;
+    slug: string;
+    content: string;
+    status: string;
+    visible_to: string;
+  }>({
     title: "",
     slug: "",
     content: "",
-    status: "draft" as const,
-    visible_to: "all" as const
+    status: "draft",
+    visible_to: "all"
   });
 
   useEffect(() => {
@@ -312,7 +309,7 @@ export default function EditPage() {
                 onChange={(value) =>
                   setForm({
                     ...form,
-                    status: value as "draft" | "published" | "archived"
+                    status: value
                   })
                 }
               />
@@ -330,7 +327,7 @@ export default function EditPage() {
                 onChange={(value) =>
                   setForm({
                     ...form,
-                    visible_to: value as "all" | "publisher" | "advertiser"
+                    visible_to: value
                   })
                 }
               />

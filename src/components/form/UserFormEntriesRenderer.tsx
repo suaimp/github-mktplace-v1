@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+
 import { supabase } from "../../lib/supabase";
 import FormEntriesTable from "./FormEntriesTable";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
-import Select from "./Select";
 import FormEntriesSkeleton from "./FormEntriesSkeleton";
 import * as FieldsImport from "./fields";
 import TextArea from "./input/TextArea";
@@ -18,10 +17,8 @@ interface UserFormEntriesRendererProps {
 export default function UserFormEntriesRenderer({
   formId
 }: UserFormEntriesRendererProps) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [entries, setEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -34,7 +31,6 @@ export default function UserFormEntriesRenderer({
   const [editableFormValues, setEditableFormValues] = useState<
     Record<string, any>
   >({});
-  const [entryStatus, setEntryStatus] = useState<string>("em_analise");
   const [note, setNote] = useState("");
   const [fieldSettings, setFieldSettings] = useState<Record<string, any>>({});
   const [validationErrors, setValidationErrors] = useState<
@@ -58,7 +54,6 @@ export default function UserFormEntriesRenderer({
 
   useEffect(() => {
     if (selectedEntry) {
-      setEntryStatus(selectedEntry.status || "em_analise");
       setEditableFormValues(selectedEntry.values || {});
     }
   }, [selectedEntry]);
@@ -277,7 +272,6 @@ export default function UserFormEntriesRenderer({
     try {
       setLoading(true);
       setError("");
-      setSuccess("");
 
       const { error } = await supabase
         .from("form_entries")
@@ -287,7 +281,6 @@ export default function UserFormEntriesRenderer({
 
       if (error) throw error;
 
-      setSuccess("Entry deleted successfully");
       await loadFormData();
     } catch (err) {
       console.error("Error deleting entry:", err);

@@ -10,7 +10,7 @@ import Label from "../components/form/Label";
 import Select from "../components/form/Select";
 
 export default function Checkout() {
-  const { items, totalItems, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -319,7 +319,7 @@ export default function Checkout() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                  <Button type="submit" disabled={loading} className="w-full">
+                  <Button disabled={loading} className="w-full">
                     {loading ? (
                       <span className="flex items-center justify-center">
                         <svg

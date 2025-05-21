@@ -8,17 +8,6 @@ import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import Select from "../../components/form/Select";
 
-interface Form {
-  id: string;
-  title: string;
-  description: string | null;
-  submit_button_text: string | null;
-  success_message: string | null;
-  failure_message: string | null;
-  redirect_page: string | null;
-  no_data_message: string | null;
-}
-
 interface Page {
   id: string;
   title: string;

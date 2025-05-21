@@ -21,6 +21,14 @@ interface MenuItem {
   subItems?: MenuItem[];
 }
 
+// Interface para itens de navegação do SidebarNav
+interface NavItem {
+  name: string;
+  icon: React.ReactNode;
+  path?: string;
+  subItems?: { name: string; path: string }[];
+}
+
 export default function AppSidebar() {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
@@ -220,7 +228,7 @@ export default function AppSidebar() {
   };
 
   // Main dashboard menu items
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       icon: <Icons.GridIcon />,
       name: "Dashboard",
@@ -242,7 +250,7 @@ export default function AppSidebar() {
   ];
 
   // Admin menu items
-  const adminItems = isAdmin
+  const adminItems: NavItem[] = isAdmin
     ? [
         {
           icon: <Icons.FileIcon />,
@@ -282,25 +290,15 @@ export default function AppSidebar() {
     [location.pathname]
   );
 
-  const isMenuActive = useCallback(
-    (item: any) => {
-      if (item.path && isActive(item.path)) {
-        return true;
-      }
-      if (item.subItems) {
-        return item.subItems.some((subItem: any) => isActive(subItem.path));
-      }
-      return false;
-    },
-    [isActive]
-  );
-
+  // Ajustar updateOpenDropdowns para checar subItems corretamente e tipar subItem
   const updateOpenDropdowns = () => {
     // Check main menu items
     navItems.forEach((item, index) => {
       if (
-        item.subItems &&
-        item.subItems.some((subItem) => isActive(subItem.path))
+        Array.isArray((item as any).subItems) &&
+        ((item as any).subItems as { name: string; path: string }[]).some(
+          (subItem) => subItem && subItem.path && isActive(subItem.path)
+        )
       ) {
         setOpenSubmenu({ type: "main", index });
       }
@@ -309,8 +307,10 @@ export default function AppSidebar() {
     // Check admin menu items
     adminItems.forEach((item, index) => {
       if (
-        item.subItems &&
-        item.subItems.some((subItem) => isActive(subItem.path))
+        Array.isArray((item as any).subItems) &&
+        ((item as any).subItems as { name: string; path: string }[]).some(
+          (subItem) => subItem && subItem.path && isActive(subItem.path)
+        )
       ) {
         setOpenSubmenu({ type: "others", index });
       }

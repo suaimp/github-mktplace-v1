@@ -1,11 +1,7 @@
 import { Table, TableBody, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon } from "../../icons";
-import {
-  getFlagUrl,
-  getFaviconUrl,
-  extractDomain
-} from "../form/utils/formatters";
+import { getFlagUrl, getFaviconUrl } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
 
 interface FormEntry {

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { extractDomain, getFaviconUrl, getFlagUrl } from './utils/formatters';
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import { extractDomain, getFaviconUrl, getFlagUrl } from "./utils/formatters";
 
 interface TableLayoutDisplayProps {
   displayId: string;
@@ -18,7 +18,9 @@ interface TableCell {
   showLabel: boolean;
 }
 
-export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProps) {
+export default function TableLayoutDisplay({
+  displayId
+}: TableLayoutDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [layout, setLayout] = useState<TableCell[][]>([]);
@@ -36,15 +38,17 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
 
       // Load table display settings
       const { data: display, error: displayError } = await supabase
-        .from('table_displays')
-        .select(`
+        .from("table_displays")
+        .select(
+          `
           *,
           form:forms (
             id,
             form_fields (*)
           )
-        `)
-        .eq('id', displayId)
+        `
+        )
+        .eq("id", displayId)
         .single();
 
       if (displayError) throw displayError;
@@ -63,22 +67,24 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
 
       // Load form entries
       const { data: entries, error: entriesError } = await supabase
-        .from('form_entries')
-        .select(`
+        .from("form_entries")
+        .select(
+          `
           *,
           values:form_entry_values (
             field_id,
             value,
             value_json
           )
-        `)
-        .eq('form_id', display.form.id)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("form_id", display.form.id)
+        .order("created_at", { ascending: false });
 
       if (entriesError) throw entriesError;
 
       // Process entries
-      const processedEntries = entries?.map(entry => {
+      const processedEntries = entries?.map((entry) => {
         const values: Record<string, any> = {};
         entry.values.forEach((value: any) => {
           values[value.field_id] = value.value_json || value.value;
@@ -87,10 +93,9 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
       });
 
       setEntries(processedEntries || []);
-
     } catch (err) {
-      console.error('Error loading table display:', err);
-      setError('Error loading table display');
+      console.error("Error loading table display:", err);
+      setError("Error loading table display");
     } finally {
       setLoading(false);
     }
@@ -98,40 +103,46 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
 
   // Format cell value based on field type
   const formatCellValue = (value: any, fieldType: string) => {
-    if (value === undefined || value === null) return '-';
-    
+    if (value === undefined || value === null) return "-";
+
     // Handle URL fields
-    if (fieldType === 'url' || 
-        (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://')))) {
+    if (
+      fieldType === "url" ||
+      (typeof value === "string" &&
+        (value.startsWith("http://") || value.startsWith("https://")))
+    ) {
       return renderUrlWithFavicon(value);
     }
-    
+
     // Handle country fields
-    if (fieldType === 'country' && typeof value === 'object') {
+    if (fieldType === "country" && typeof value === "object") {
       return renderCountryFlags(value);
     }
-    
+
     // Format other field types
     switch (fieldType) {
-      case 'file':
-        return Array.isArray(value) ? `${value.length} arquivo(s)` : '1 arquivo';
-      case 'checkbox':
-      case 'multiselect':
-        return Array.isArray(value) ? value.join(', ') : value;
-      case 'toggle':
-        return value ? 'Sim' : 'Não';
-      case 'product':
+      case "file":
+        return Array.isArray(value)
+          ? `${value.length} arquivo(s)`
+          : "1 arquivo";
+      case "checkbox":
+      case "multiselect":
+        return Array.isArray(value) ? value.join(", ") : value;
+      case "toggle":
+        return value ? "Sim" : "Não";
+      case "product":
         try {
-          const productData = typeof value === 'string' ? JSON.parse(value) : value;
+          const productData =
+            typeof value === "string" ? JSON.parse(value) : value;
           const price = parseFloat(productData.price);
           if (!isNaN(price)) {
-            return new Intl.NumberFormat('pt-BR', {
-              style: 'currency',
-              currency: 'BRL'
+            return new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL"
             }).format(price);
           }
         } catch (err) {
-          console.error('Error formatting price:', err);
+          console.error("Error formatting price:", err);
         }
         return value.toString();
       default:
@@ -141,22 +152,22 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
 
   // Render URL with favicon
   const renderUrlWithFavicon = (url: string) => {
-    if (!url) return '-';
-    
+    if (!url) return "-";
+
     return (
       <div className="flex items-center gap-2">
-        <img 
-          src={getFaviconUrl(url)} 
-          alt="Site icon" 
+        <img
+          src={getFaviconUrl(url)}
+          alt="Site icon"
           className="w-4 h-4"
           onError={(e) => {
             // Fallback if favicon fails to load
-            (e.target as HTMLImageElement).style.display = 'none';
+            (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-        <a 
-          href={url} 
-          target="_blank" 
+        <a
+          href={url}
+          target="_blank"
           rel="noopener noreferrer"
           className="text-brand-500 hover:text-brand-600 dark:text-brand-400 hover:underline truncate max-w-[200px]"
         >
@@ -168,19 +179,24 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
 
   // Render country flags with percentages
   const renderCountryFlags = (countries: Record<string, any>) => {
-    if (!countries || Object.keys(countries).length === 0) return '-';
-    
+    if (!countries || Object.keys(countries).length === 0) return "-";
+
     return (
       <div className="flex flex-wrap gap-2">
         {Object.entries(countries).map(([countryCode, percentage]) => (
-          <div key={countryCode} className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1">
-            <img 
+          <div
+            key={countryCode}
+            className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"
+          >
+            <img
               src={getFlagUrl(countryCode)}
               alt={countryCode}
-              className={`w-4 h-4 object-cover ${countryCode === 'ROW' ? 'dark:invert' : ''}`}
+              className={`w-4 h-4 object-cover ${
+                countryCode === "ROW" ? "dark:invert" : ""
+              }`}
               onError={(e) => {
                 // Fallback if flag fails to load
-                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).style.display = "none";
               }}
             />
             {percentage && (
@@ -199,8 +215,11 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
       <div className="animate-pulse">
         <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg mb-4"></div>
         <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-20 bg-gray-200 dark:bg-gray-800 rounded-lg"
+            ></div>
           ))}
         </div>
       </div>
@@ -208,33 +227,35 @@ export default function TableLayoutDisplay({ displayId }: TableLayoutDisplayProp
   }
 
   if (error) {
-    return (
-      <div className="p-4 text-center text-error-500">
-        {error}
-      </div>
-    );
+    return <div className="p-4 text-center text-error-500">{error}</div>;
   }
 
   return (
     <div className="space-y-4">
       {entries.map((entry, entryIndex) => (
-        <div 
+        <div
           key={entryIndex}
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden"
         >
           {layout.map((row, rowIndex) => (
-            <div 
+            <div
               key={rowIndex}
               className={`grid grid-cols-5 gap-4 p-4 ${
-                rowIndex === 0 ? '' : 'border-t border-gray-200 dark:border-gray-800'
+                rowIndex === 0
+                  ? ""
+                  : "border-t border-gray-200 dark:border-gray-800"
               }`}
             >
-              {row.map((cell, cellIndex) => {
-                if (!cell.fieldId) return (
-                  <div key={cell.id} className="text-gray-400 dark:text-gray-600">
-                    -
-                  </div>
-                );
+              {row.map((cell) => {
+                if (!cell.fieldId)
+                  return (
+                    <div
+                      key={cell.id}
+                      className="text-gray-400 dark:text-gray-600"
+                    >
+                      -
+                    </div>
+                  );
 
                 const field = fields[cell.fieldId];
                 if (!field) return null;

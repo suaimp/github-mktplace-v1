@@ -1,7 +1,7 @@
 import { useDrag, useDrop } from "react-dnd";
 import { useRef, useState } from "react";
-import FormFieldSettings from "./FormFieldSettings";
 import * as Icons from "../../icons";
+import FormFieldSettings from "./FormFieldSettings";
 
 interface FormField {
   id: string;
@@ -42,46 +42,49 @@ export default function FormField({
   const ref = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const [{ handlerId }, drop] = useDrop({
-    accept: "form-field",
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId()
-      };
-    },
-    hover(item: DragItem, monitor) {
-      if (!ref.current) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
+  // Corrija os tipos do useDrop para DragItem e handlerId corretamente
+  const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: unknown }>(
+    {
+      accept: "form-field",
+      collect(monitor) {
+        return {
+          handlerId: monitor.getHandlerId()
+        };
+      },
+      hover(item, monitor) {
+        if (!ref.current) {
+          return;
+        }
+        const dragIndex = item.index;
+        const hoverIndex = index;
 
-      if (dragIndex === hoverIndex) {
-        return;
-      }
+        if (dragIndex === hoverIndex) {
+          return;
+        }
 
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
+        const hoverBoundingRect = ref.current?.getBoundingClientRect();
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const clientOffset = monitor.getClientOffset();
+        const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
+        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+          return;
+        }
+        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+          return;
+        }
 
-      moveField(dragIndex, hoverIndex);
-      item.index = hoverIndex;
+        moveField(dragIndex, hoverIndex);
+        item.index = hoverIndex;
+      }
     }
-  });
+  );
 
-  const [{ isDragging }, drag, dragPreview] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "form-field",
     item: () => {
-      return { id: field.id, index };
+      return { id: field.id, index, type: "form-field" };
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
@@ -90,8 +93,8 @@ export default function FormField({
 
   const opacity = isDragging ? 0.4 : 1;
 
-  // Apply drag preview to entire component and drag handle to dots icon
-  dragPreview(drop(ref));
+  // Corrija o uso do ref: conecte drag e drop juntos em um único ref
+  drag(drop(ref));
 
   const getFieldIcon = () => {
     switch (field.field_type) {
@@ -214,7 +217,7 @@ export default function FormField({
               <Icons.TrashBinIcon className="w-5 h-5" />
             </button>
             <div
-              ref={drag}
+              // Remova o ref={drag} daqui, pois o ref já está aplicado no container principal
               className="cursor-move p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
             >
               <Icons.HorizontaLDots className="w-5 h-5" />

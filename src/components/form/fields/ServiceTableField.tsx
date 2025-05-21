@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getPublisherServices } from "./services/publisher_services_get";
 
 interface ServiceTableFieldProps {

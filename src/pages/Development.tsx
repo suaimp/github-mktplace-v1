@@ -1,5 +1,3 @@
-import PageMeta from "../components/common/PageMeta";
-
 export default function Development() {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">

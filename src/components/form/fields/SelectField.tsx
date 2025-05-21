@@ -1,4 +1,4 @@
-import Select from '../Select';
+import Select from "../Select";
 
 interface SelectFieldProps {
   field: any;
@@ -10,20 +10,26 @@ interface SelectFieldProps {
 export default function SelectField({
   field,
   value,
-  onChange,
-  error
+  onChange
 }: SelectFieldProps) {
+  const options =
+    field.options?.map((opt: any) => ({
+      value: opt.value || opt.label,
+      label: opt.label
+    })) || [];
+
+  const handleChange = (selectedValue: string) => {
+    onChange(selectedValue);
+  };
+
+  const placeholder = field.placeholder || "Select an option";
+
   return (
     <Select
-      options={field.options?.map((opt: any) => ({
-        value: opt.value || opt.label,
-        label: opt.label
-      })) || []}
-      value={value || ''}
-      onChange={onChange}
-      placeholder={field.placeholder || "Select an option"}
-      error={!!error}
-      hint={error}
+      options={options}
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
     />
   );
 }

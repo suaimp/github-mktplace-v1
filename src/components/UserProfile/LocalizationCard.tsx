@@ -80,11 +80,9 @@ const countryNames: { [key: string]: string } = {
 };
 
 export default function LocalizationCard({
-  profile,
-  onUpdate
+  profile
 }: {
   profile: AdminProfile | null;
-  onUpdate: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -257,9 +255,7 @@ export default function LocalizationCard({
         </div>
 
         <div className="flex justify-end pt-6">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
+          <Button variant="outline">Cancelar</Button>
           <Button disabled={loading}>
             {loading ? "Salvando..." : "Salvar"}
           </Button>

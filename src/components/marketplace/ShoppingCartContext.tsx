@@ -53,20 +53,6 @@ interface CartProviderProps {
   children: ReactNode;
 }
 
-// Corrigir tipagem dos campos de form_field_settings
-interface FormFieldSettings {
-  is_product_name?: boolean;
-  is_site_url?: boolean;
-  [key: string]: any;
-}
-
-// Corrigir tipagem dos campos retornados do supabase
-interface SupabaseFormField {
-  id: string;
-  field_type: string;
-  form_field_settings?: FormFieldSettings;
-}
-
 // Retry configuration
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -176,28 +162,41 @@ export function CartProvider({ children }: CartProviderProps) {
                 .from("form_fields")
                 .select(
                   `
-                  id, 
-                  field_type,
-                  form_field_settings (
-                    is_product_name,
-                    is_site_url
-                  )
-                `
+                id, 
+                field_type,
+                form_field_settings (
+                  is_product_name,
+                  is_site_url
+                )
+              `
                 )
                 .eq("form_id", formData.form_id);
+
               if (error) throw error;
-              return data as SupabaseFormField[];
+              return data;
             });
 
             // Find product name field
-            const productNameField = formFields.find(
-              (field) => field.form_field_settings?.is_product_name === true
-            );
+            const productNameField = formFields.find((field) => {
+              const settings = field.form_field_settings as
+                | { is_product_name?: boolean; is_site_url?: boolean }[]
+                | undefined;
+              if (Array.isArray(settings)) {
+                return settings[0]?.is_product_name === true;
+              }
+              return (settings as any)?.is_product_name === true;
+            });
 
             // Find site URL field
-            const siteUrlField = formFields.find(
-              (field) => field.form_field_settings?.is_site_url === true
-            );
+            const siteUrlField = formFields.find((field) => {
+              const settings = field.form_field_settings as
+                | { is_product_name?: boolean; is_site_url?: boolean }[]
+                | undefined;
+              if (Array.isArray(settings)) {
+                return settings[0]?.is_site_url === true;
+              }
+              return (settings as any)?.is_site_url === true;
+            });
 
             // Find product price field
             const productPriceField = formFields.find(
@@ -282,17 +281,7 @@ export function CartProvider({ children }: CartProviderProps) {
       );
 
       // Filter out any failed items and set the state
-      setItems(
-        itemsWithDetails.filter(
-          (item): item is CartItem =>
-            !!item &&
-            typeof item === "object" &&
-            "product" in item &&
-            item.product &&
-            typeof item.product.name === "string" &&
-            typeof item.product.price === "number"
-        ) as CartItem[]
-      );
+      setItems(itemsWithDetails.filter((item) => item !== null) as CartItem[]);
     } catch (err) {
       console.error("Error loading cart items:", err);
       setError(
@@ -316,6 +305,9 @@ export function CartProvider({ children }: CartProviderProps) {
       setLoading(true);
       setError(null);
 
+      if (productName && price && image && url) {
+        console.log(productName, price, image, url);
+      }
       const {
         data: { user }
       } = await supabase.auth.getUser();

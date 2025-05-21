@@ -9,7 +9,9 @@ export default function Install() {
         title="Instalação | Admin Panel"
         description="Configure o primeiro administrador do sistema"
       />
-      <AuthLayout>{/* <InstallForm /> */}</AuthLayout>
+      <AuthLayout>
+        {/* <InstallForm /> */} <>InstallForm não existe</>
+      </AuthLayout>
     </>
   );
 }

@@ -1,7 +1,6 @@
-import Input from '../input/InputField';
+import Input from "../input/InputField";
 
 interface CommissionFieldProps {
-  field: any;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -9,16 +8,18 @@ interface CommissionFieldProps {
 }
 
 export default function CommissionField({
-  field,
   value,
   onChange,
   error,
   onErrorClear
 }: CommissionFieldProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = Math.min(1000, Math.max(0, parseFloat(e.target.value) || 0));
+    const newValue = Math.min(
+      1000,
+      Math.max(0, parseFloat(e.target.value) || 0)
+    );
     onChange(newValue.toString());
-    
+
     if (error && onErrorClear) {
       onErrorClear();
     }
@@ -28,11 +29,11 @@ export default function CommissionField({
     <div className="flex items-center gap-2">
       <Input
         type="number"
-        value={value || ''}
+        value={value || ""}
         onChange={handleChange}
         min="0"
         max="1000"
-        step="0.01"
+        step={0.01}
         placeholder="0.00"
         error={!!error}
         hint={error}

@@ -3,7 +3,7 @@ import {
   TableBody,
   TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon, EyeIcon } from "../../icons";
@@ -20,22 +20,22 @@ interface EntriesTableProps {
   onDelete: (entryId: string) => void;
 }
 
-export default function EntriesTable({ 
-  entries, 
-  fields, 
-  loading, 
+export default function EntriesTable({
+  entries,
+  fields,
+  loading,
   selectedFormId,
-  onView, 
-  onEdit, 
-  onDelete 
+  onView,
+  onEdit,
+  onDelete
 }: EntriesTableProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'verificado':
+      case "verificado":
         return <Badge color="success">Verificado</Badge>;
-      case 'reprovado':
+      case "reprovado":
         return <Badge color="error">Reprovado</Badge>;
-      case 'em_analise':
+      case "em_analise":
       default:
         return <Badge color="warning">Em Análise</Badge>;
     }
@@ -46,8 +46,11 @@ export default function EntriesTable({
       <div className="animate-pulse">
         <div className="h-12 bg-gray-200 rounded-lg w-full mb-4 dark:bg-gray-800"></div>
         <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-gray-200 rounded-lg dark:bg-gray-800"></div>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-20 bg-gray-200 rounded-lg dark:bg-gray-800"
+            ></div>
           ))}
         </div>
       </div>
@@ -57,10 +60,12 @@ export default function EntriesTable({
   // Display first two fields from the selected form
   // Filter out admin-only and button_buy fields
   const displayFields = fields
-    .filter(field => {
+    .filter((field) => {
       const settings = field.form_field_settings;
-      return field.field_type !== 'button_buy' && 
-             (!settings || settings.visibility !== 'admin');
+      return (
+        field.field_type !== "button_buy" &&
+        (!settings || settings.visibility !== "admin")
+      );
     })
     .slice(0, 2);
 
@@ -77,7 +82,7 @@ export default function EntriesTable({
                 >
                   Data
                 </TableCell>
-                
+
                 {/* Show first two fields from the selected form */}
                 {displayFields.map((field) => (
                   <TableCell
@@ -88,7 +93,7 @@ export default function EntriesTable({
                     {field.label}
                   </TableCell>
                 ))}
-                
+
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
@@ -118,48 +123,57 @@ export default function EntriesTable({
                       {formatDate(entry.created_at)}
                     </span>
                   </TableCell>
-                  
+
                   {/* Display first two fields from the selected form */}
                   {displayFields.map((field) => {
                     // Skip admin-only fields
                     const settings = field.form_field_settings;
-                    if (settings?.visibility === 'admin') {
+                    if (settings?.visibility === "admin") {
                       return (
-                        <TableCell 
+                        <TableCell
                           key={field.id}
                           className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
                         >
-                          <span className="text-gray-400 dark:text-gray-600 italic">Admin only</span>
+                          <span className="text-gray-400 dark:text-gray-600 italic">
+                            Admin only
+                          </span>
                         </TableCell>
                       );
                     }
-                    
+
                     return (
-                      <TableCell 
+                      <TableCell
                         key={field.id}
                         className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
                       >
-                        {renderFormattedValue(entry.values[field.id], field.field_type, field)}
+                        {renderFormattedValue(
+                          entry.values[field.id],
+                          field.field_type,
+                          field
+                        )}
                       </TableCell>
                     );
                   })}
-                  
+
                   {/* Publisher */}
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap">
                     {entry.publisher ? (
                       <div>
-                        <div className="font-medium">{entry.publisher.first_name} {entry.publisher.last_name}</div>
+                        <div className="font-medium">
+                          {entry.publisher.first_name}{" "}
+                          {entry.publisher.last_name}
+                        </div>
                         <div className="text-xs">{entry.publisher.email}</div>
                       </div>
                     ) : (
-                      '-'
+                      "-"
                     )}
                   </TableCell>
-                  
+
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap">
-                    {getStatusBadge(entry.status || 'em_analise')}
+                    {getStatusBadge(entry.status || "em_analise")}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 whitespace-nowrap">
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap">
                     <div className="flex gap-2">
                       <button
                         onClick={() => onView(entry)}
@@ -187,14 +201,17 @@ export default function EntriesTable({
                 </TableRow>
               ))}
 
+              {/* Corrigir uso de colSpan: usar <td colSpan={...}> diretamente para linha de vazio */}
               {entries.length === 0 && (
                 <TableRow>
-                  <TableCell 
-                    colSpan={5 + displayFields.length} 
+                  <td
+                    colSpan={5 + displayFields.length}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
-                    {selectedFormId ? "Nenhum registro encontrado para este formulário" : "Selecione um formulário para ver as entradas"}
-                  </TableCell>
+                    {selectedFormId
+                      ? "Nenhum registro encontrado para este formulário"
+                      : "Selecione um formulário para ver as entradas"}
+                  </td>
                 </TableRow>
               )}
             </TableBody>

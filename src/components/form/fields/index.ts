@@ -20,9 +20,8 @@ import { default as ProductField } from "./ProductField";
 import { default as CommissionField } from "./CommissionField";
 import { default as BrandField } from "./BrandField";
 import { default as ButtonBuyField } from "./ButtonBuyField";
-import { default as ButtonModal } from "./ButtonModal";
-import { default as ButtonModalField } from "./ButtonModalField";
 import { default as ServiceTableField } from "./ServiceTableField";
+import ButtonModalField from "./ButtonModalField";
 
 export {
   TextField,
@@ -47,8 +46,8 @@ export {
   CommissionField,
   BrandField,
   ButtonBuyField,
-  ButtonModalField,
-  ServiceTableField
+  ServiceTableField,
+  ButtonModalField
 };
 
 export type { FormField, FormFieldSettings, BaseFieldProps } from "./types";

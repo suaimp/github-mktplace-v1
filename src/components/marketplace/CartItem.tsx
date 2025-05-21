@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { useCart } from './ShoppingCartContext';
-import { formatCurrency } from './utils';
-import { getFaviconUrl } from '../form/utils/formatters';
-import { TrashBinIcon } from '../../icons';
+import { useState } from "react";
+import { useCart } from "./ShoppingCartContext";
+import { formatCurrency } from "./utils";
+import { getFaviconUrl } from "../form/utils/formatters";
 
 interface CartItemProps {
   id: string;
@@ -14,7 +13,6 @@ interface CartItemProps {
 }
 
 export default function CartItem({
-  id,
   entryId,
   productName,
   price,
@@ -34,7 +32,7 @@ export default function CartItem({
       setIsUpdating(true);
       await updateQuantity(entryId, newQuantity);
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      console.error("Error updating quantity:", error);
     } finally {
       setIsUpdating(false);
     }
@@ -45,7 +43,7 @@ export default function CartItem({
       setIsUpdating(true);
       await removeItem(entryId);
     } catch (error) {
-      console.error('Error removing item:', error);
+      console.error("Error removing item:", error);
     } finally {
       setIsUpdating(false);
     }
@@ -53,10 +51,10 @@ export default function CartItem({
 
   // Format URL to remove protocol and trailing slashes
   const formatUrl = (url: string): string => {
-    if (!url) return '';
+    if (!url) return "";
     return url
-      .replace(/^https?:\/\//, '') // Remove http:// or https://
-      .replace(/\/$/, '');         // Remove trailing slash
+      .replace(/^https?:\/\//, "") // Remove http:// or https://
+      .replace(/\/$/, ""); // Remove trailing slash
   };
 
   return (
@@ -66,21 +64,21 @@ export default function CartItem({
           <h3 className="flex items-center gap-2 truncate max-w-[200px]">
             {url ? (
               <>
-                <img 
-                  src={getFaviconUrl(url)} 
-                  alt="Site icon" 
-                  width="20" 
+                <img
+                  src={getFaviconUrl(url)}
+                  alt="Site icon"
+                  width="20"
                   height="20"
                   className="flex-shrink-0"
                   onError={(e) => {
                     // Fallback if favicon fails to load
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
-                <a 
-                  href={url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-brand-500 hover:underline truncate"
                   title={url}
                 >
@@ -97,15 +95,17 @@ export default function CartItem({
           <div className="flex items-center">
             <span className="text-gray-500 dark:text-gray-400 mr-2">Qtd</span>
             <div className="flex items-center border border-gray-300 dark:border-gray-700 rounded">
-              <button 
+              <button
                 onClick={() => handleQuantityChange(quantity - 1)}
                 disabled={isUpdating}
                 className="px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 -
               </button>
-              <span className="px-2 py-1 text-gray-700 dark:text-gray-300">{quantity}</span>
-              <button 
+              <span className="px-2 py-1 text-gray-700 dark:text-gray-300">
+                {quantity}
+              </span>
+              <button
                 onClick={() => handleQuantityChange(quantity + 1)}
                 disabled={isUpdating}
                 className="px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -114,13 +114,13 @@ export default function CartItem({
               </button>
             </div>
           </div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleRemove}
             disabled={isUpdating}
             className="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500"
           >
-            {isUpdating ? 'Removendo...' : 'Remover'}
+            {isUpdating ? "Removendo..." : "Remover"}
           </button>
         </div>
       </div>

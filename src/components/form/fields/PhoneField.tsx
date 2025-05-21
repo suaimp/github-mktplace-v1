@@ -1,7 +1,6 @@
-import PhoneInput from '../group-input/PhoneInput';
+import PhoneInput from "../group-input/PhoneInput";
 
 interface PhoneFieldProps {
-  field: any;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -32,7 +31,6 @@ const brazilianPhoneCodes = [
 ];
 
 export default function PhoneField({
-  field,
   value,
   onChange,
   error,

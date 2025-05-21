@@ -1,4 +1,3 @@
-import { useState } from "react";
 import UserAvatar from "../ui/avatar/UserAvatar";
 
 interface UserProfile {
@@ -15,18 +14,21 @@ interface UserMetaCardProps {
 }
 
 export default function UserMetaCard({ profile }: UserMetaCardProps) {
-  const [loading, setLoading] = useState(false);
-
   if (!profile) return null;
 
   const fullName = `${profile.first_name} ${profile.last_name}`;
-  const role = profile.is_first_admin !== undefined 
-    ? (profile.is_first_admin ? "Administrador Principal" : "Administrador")
-    : (profile.role === "publisher" ? "Publisher" : "Anunciante");
+  const role =
+    profile.is_first_admin !== undefined
+      ? profile.is_first_admin
+        ? "Administrador Principal"
+        : "Administrador"
+      : profile.role === "publisher"
+      ? "Publisher"
+      : "Anunciante";
 
   const handleAvatarChange = () => {
     // Refresh any components that need to show the updated avatar
-    setLoading(prev => !prev);
+    /*  setLoading(prev => !prev); */
   };
 
   return (
@@ -49,9 +51,7 @@ export default function UserMetaCard({ profile }: UserMetaCardProps) {
                 {profile.email}
               </p>
               <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {role}
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{role}</p>
             </div>
           </div>
         </div>

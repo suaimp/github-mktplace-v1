@@ -133,7 +133,7 @@ export default function UserProfiles() {
           )}
 
           {activeTab === "localization" && (
-            <LocalizationCard profile={profile} onUpdate={loadProfile} />
+            <LocalizationCard profile={profile} />
           )}
         </div>
       </div>

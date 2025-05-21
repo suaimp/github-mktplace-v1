@@ -1,5 +1,5 @@
 import PageMeta from "../../components/common/PageMeta";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
@@ -9,28 +9,25 @@ import RecentOrders from "../../components/ecommerce/RecentOrders";
 import DemographicCard from "../../components/ecommerce/DemographicCard";
 
 export default function PublisherDashboard() {
-  const [userName, setUserName] = useState("");
-
   useEffect(() => {
     loadUserProfile();
   }, []);
 
   async function loadUserProfile() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
-      const { data: userData, error } = await supabase
-        .from('platform_users')
-        .select('first_name, last_name')
-        .eq('id', user.id)
+      const { error } = await supabase
+        .from("platform_users")
+        .select("first_name, last_name")
+        .eq("id", user.id)
         .single();
 
       if (error) throw error;
-
-      setUserName(`${userData.first_name} ${userData.last_name}`);
-      
     } catch (err) {
       console.error("Erro ao carregar perfil:", err);
     }

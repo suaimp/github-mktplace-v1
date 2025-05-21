@@ -21,7 +21,7 @@ export default function AdvertiserDashboard() {
 
       if (!user) return;
 
-      const { data: userData, error } = await supabase
+      const { data: error } = await supabase
         .from("platform_users")
         .select("first_name, last_name")
         .eq("id", user.id)

@@ -140,7 +140,7 @@ export default function PlatformUserProfile({ userType }: PlatformUserProfilePro
           )}
 
           {activeTab === "localization" && (
-            <LocalizationCard profile={profile} onUpdate={loadProfile} />
+            <LocalizationCard profile={profile} />
           )}
         </div>
       </div>

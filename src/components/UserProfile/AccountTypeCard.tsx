@@ -1,20 +1,16 @@
-import { useState } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
-import { supabase } from "../../lib/supabase";
 
 interface AccountTypeCardProps {
   profile: any;
   onUpdate: () => void;
 }
 
-export default function AccountTypeCard({ profile, onUpdate }: AccountTypeCardProps) {
+export default function AccountTypeCard({}: AccountTypeCardProps) {
   const { isOpen, openModal, closeModal } = useModal();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   return (
     <div className="space-y-6">
@@ -26,7 +22,8 @@ export default function AccountTypeCard({ profile, onUpdate }: AccountTypeCardPr
       </div>
 
       <p className="text-gray-500 dark:text-gray-400">
-        Funcionalidade em desenvolvimento. Em breve você poderá gerenciar seu tipo de conta aqui.
+        Funcionalidade em desenvolvimento. Em breve você poderá gerenciar seu
+        tipo de conta aqui.
       </p>
 
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">

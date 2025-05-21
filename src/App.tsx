@@ -27,7 +27,6 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import ResetPassword from "./pages/auth/ResetPassword";
-import Development from "./pages/Development";
 import PlatformUsers from "./pages/Users/PlatformUsers";
 import PublisherDashboard from "./pages/Publisher/Dashboard";
 import AdvertiserDashboard from "./pages/Advertiser/Dashboard";

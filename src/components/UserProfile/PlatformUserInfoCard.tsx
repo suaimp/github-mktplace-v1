@@ -20,6 +20,7 @@ interface PlatformUser {
 interface PlatformUserInfoCardProps {
   profile: PlatformUser | null;
   onUpdate: () => void;
+  onClose?: () => void; // Torna onClose opcional
 }
 
 const brazilianPhoneCodes = [
@@ -47,7 +48,8 @@ const brazilianPhoneCodes = [
 
 export default function PlatformUserInfoCard({
   profile,
-  onUpdate
+  onUpdate,
+  onClose
 }: PlatformUserInfoCardProps) {
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
@@ -179,9 +181,11 @@ export default function PlatformUserInfoCard({
           </div>
 
           <div className="flex justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
+            {onClose && (
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+            )}
             <Button disabled={loading}>
               {loading ? "Salvando..." : "Salvar"}
             </Button>

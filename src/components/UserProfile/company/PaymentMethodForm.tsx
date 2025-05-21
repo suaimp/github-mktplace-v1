@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Label from "../../form/Label";
 import Input from "../../form/input/InputField";
 import Select from "../../form/Select";
@@ -28,7 +28,10 @@ interface PaymentMethodFormProps {
   onChange: (data: CompanyData) => void;
 }
 
-export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormProps) {
+export default function PaymentMethodForm({
+  data,
+  onChange
+}: PaymentMethodFormProps) {
   const handleChange = (field: keyof CompanyData, value: any) => {
     onChange({ ...data, [field]: value });
   };
@@ -159,7 +162,9 @@ export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormP
                 <Input
                   type="text"
                   value={data.bank_account_number || ""}
-                  onChange={(e) => handleChange("bank_account_number", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("bank_account_number", e.target.value)
+                  }
                 />
               </div>
 
@@ -168,7 +173,9 @@ export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormP
                 <Input
                   type="text"
                   value={data.bank_account_type || ""}
-                  onChange={(e) => handleChange("bank_account_type", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("bank_account_type", e.target.value)
+                  }
                 />
               </div>
 
@@ -177,7 +184,9 @@ export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormP
                 <Input
                   type="text"
                   value={data.bank_account_holder || ""}
-                  onChange={(e) => handleChange("bank_account_holder", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("bank_account_holder", e.target.value)
+                  }
                 />
               </div>
 
@@ -186,7 +195,9 @@ export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormP
                 <Input
                   type="text"
                   value={data.bank_account_holder_document || ""}
-                  onChange={(e) => handleChange("bank_account_holder_document", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("bank_account_holder_document", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -217,7 +228,9 @@ export default function PaymentMethodForm({ data, onChange }: PaymentMethodFormP
                 <Input
                   type="text"
                   value={data.bank_routing_number || ""}
-                  onChange={(e) => handleChange("bank_routing_number", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("bank_routing_number", e.target.value)
+                  }
                 />
               </div>
 

@@ -1,24 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { postModalService } from "./services/ModalServicePost";
 
+// Corrigir ButtonModalFieldProps para remover props não usadas
 interface ButtonModalFieldProps {
   field: any;
-  settings: any;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  onErrorClear?: () => void;
 }
 
-export default function ButtonModalField({
-  field,
-  settings,
-  value,
-  onChange,
-  error,
-  onErrorClear
-}: ButtonModalFieldProps) {
+export default function ButtonModalField({ field }: ButtonModalFieldProps) {
   const [open, setOpen] = useState(false);
   const [serviceTitle, setServiceTitle] = useState("");
   const [price, setPrice] = useState("");

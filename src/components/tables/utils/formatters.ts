@@ -1,88 +1,85 @@
 export function formatDate(date: string) {
-  return new Date(date).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Date(date).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
 
 export function getFlagUrl(countryCode: string): string {
-  if (countryCode === 'ROW') {
+  if (countryCode === "ROW") {
     return "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzZCN0FCNSIgZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bS0xIDE3LjkzYy0zLjk1LS40OS03LTMuODUtNy03LjkzIDAtLjYyLjA4LTEuMjEuMjEtMS43OUw5IDEzdjFjMCAxLjEuOSAyIDIgMnYzLjkzem02LjktMi41NGMtLjI2LS44MS0xLTEuMzktMS45LTEuMzloLTF2LTNjMC0uNTUtLjQ1LTEtMS0xaC02di0yaDJjLjU1IDAgMS0uNDUgMS0xVjdoMmMxLjEgMCAyLS45IDItMnYtLjQxYzIuOTMgMS4xOSA1IDQuMDYgNSA3LjQxIDAgMi4wOC0uOCAzLjk3LTIuMSA1LjM5eiIvPjwvc3ZnPg==";
   }
   return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
 }
 
 export function formatValue(value: any, fieldType: string) {
-  if (!value) return '-';
+  if (!value) return "-";
 
   switch (fieldType) {
-    case 'file':
-      return Array.isArray(value) 
-        ? `${value.length} arquivo(s)` 
-        : '1 arquivo';
-    
-    case 'checkbox':
-    case 'multiselect':
-      return Array.isArray(value) 
-        ? value.join(', ') 
-        : value;
-    
-    case 'toggle':
-      return value ? 'Sim' : 'Não';
-    
-    case 'product':
+    case "file":
+      return Array.isArray(value) ? `${value.length} arquivo(s)` : "1 arquivo";
+
+    case "checkbox":
+    case "multiselect":
+      return Array.isArray(value) ? value.join(", ") : value;
+
+    case "toggle":
+      return value ? "Sim" : "Não";
+
+    case "product":
       try {
-        const productData = typeof value === 'string' ? JSON.parse(value) : value;
+        const productData =
+          typeof value === "string" ? JSON.parse(value) : value;
         const price = parseFloat(productData.price);
-        
+
         if (!isNaN(price)) {
-          return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
+          return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
           }).format(price);
         }
       } catch (err) {
-        console.error('Error formatting price:', err);
+        console.error("Error formatting price:", err);
       }
       return value.toString();
 
-    case 'commission':
+    case "commission":
       const commission = parseFloat(value);
       return !isNaN(commission) ? `${commission}%` : value;
 
-    case 'country':
-      if (typeof value === 'object') {
-        return Object.keys(value).join(', ');
+    case "country":
+      if (typeof value === "object") {
+        return Object.keys(value).join(", ");
       }
       return value.toString();
 
-    case 'brazilian_states':
-      if (typeof value === 'object') {
+    case "brazilian_states":
+      if (typeof value === "object") {
         const { state_name, city_names, state, cities } = value;
-        
+
         // Format with consistent text style
         if (Array.isArray(city_names) && city_names.length > 0) {
-          return `${state_name} - ${city_names.join(', ')}`;
+          return `${state_name} - ${city_names.join(", ")}`;
         } else if (Array.isArray(cities) && cities.length > 0) {
-          return `${state_name} - ${cities.join(', ')}`;
+          return `${state_name} - ${cities.join(", ")}`;
         }
-        
-        return state_name || state || '-';
+
+        return state_name || state || "-";
       }
       return value.toString();
-    
-    case 'brand':
+
+    case "brand":
       try {
-        const brandData = typeof value === 'string' ? JSON.parse(value) : value;
+        const brandData = typeof value === "string" ? JSON.parse(value) : value;
         return brandData?.name || value.toString();
       } catch (err) {
-        console.error('Error parsing brand data:', err);
+        console.error("Error parsing brand data:", err);
         return value.toString();
       }
-    
+
     default:
       return value.toString();
   }
@@ -106,27 +103,26 @@ export function getFaviconUrl(url: string): string {
 
 // Get brand logo URL from storage path
 export function getBrandLogoUrl(logoPath: string): string {
-  if (!logoPath) return '';
-  
+  if (!logoPath) return "";
+
   try {
     const { data } = supabase.storage
-      .from('brand_logos')
+      .from("brand_logos")
       .getPublicUrl(logoPath);
-      
-    return data?.publicUrl || '';
+
+    return data?.publicUrl || "";
   } catch (err) {
-    console.error('Error getting brand logo URL:', err);
-    return '';
+    console.error("Error getting brand logo URL:", err);
+    return "";
   }
 }
 
 // Render URL with favicon (returns HTML string for non-React contexts)
 export function getUrlWithFaviconHtml(url: string): string {
-  if (!url) return '-';
-  
-  const domain = extractDomain(url);
+  if (!url) return "-";
+
   const faviconUrl = getFaviconUrl(url);
-  
+
   return `
     <div class="flex items-center gap-2">
       <img src="${faviconUrl}" alt="Site icon" class="w-4 h-4" onerror="this.style.display='none';" />
@@ -139,4 +135,4 @@ export function getUrlWithFaviconHtml(url: string): string {
 }
 
 // Import supabase client
-import { supabase } from '../../../lib/supabase';
+import { supabase } from "../../../lib/supabase";

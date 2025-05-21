@@ -425,7 +425,7 @@ export default function EntryEditModal({
               <Button variant="outline" onClick={onClose} disabled={loading}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button disabled={loading}>
                 {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
