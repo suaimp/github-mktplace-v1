@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function MarketplaceTableSkeleton() {
   return (
     <div className="animate-pulse">
@@ -11,17 +9,17 @@ export default function MarketplaceTableSkeleton() {
         </div>
         <div className="w-48 h-8 bg-gray-200 rounded dark:bg-gray-800"></div>
       </div>
-      
+
       {/* Table header skeleton */}
       <div className="h-12 bg-gray-200 rounded-t-lg w-full dark:bg-gray-800"></div>
-      
+
       {/* Table rows skeleton */}
       <div className="space-y-1">
-        {[1, 2, 3, 4, 5].map(i => (
+        {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-16 bg-gray-200 dark:bg-gray-800"></div>
         ))}
       </div>
-      
+
       {/* Pagination skeleton */}
       <div className="flex justify-between p-4 mt-4 rounded-lg dark:bg-gray-800">
         <div className="w-48 h-6 bg-gray-200 rounded dark:bg-gray-800"></div>

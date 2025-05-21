@@ -43,7 +43,10 @@ interface CompanyDataCardProps {
   onUpdate: () => void;
 }
 
-export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardProps) {
+export default function CompanyDataCard({
+  profile,
+  onUpdate
+}: CompanyDataCardProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -53,7 +56,7 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
     city: "",
     zip_code: "",
     address: "",
-    document_number: "",
+    document_number: ""
   });
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
   useEffect(() => {
     // Set Brazil as default country if phone starts with +55
     if (profile?.phone?.startsWith("+55") && !companyData.id) {
-      setCompanyData(prev => ({
+      setCompanyData((prev) => ({
         ...prev,
         country: "BR"
       }));
@@ -78,9 +81,9 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
       setError("");
 
       const { data, error: fetchError } = await supabase
-        .from('company_data')
-        .select('*')
-        .eq('admin_id', profile?.id)
+        .from("company_data")
+        .select("*")
+        .eq("admin_id", profile?.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -89,15 +92,14 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
         setCompanyData(data);
       } else if (profile?.phone?.startsWith("+55")) {
         // If no data exists and phone is Brazilian, set Brazil as default
-        setCompanyData(prev => ({
+        setCompanyData((prev) => ({
           ...prev,
           country: "BR"
         }));
       }
-
     } catch (err) {
-      console.error('Erro ao carregar dados da empresa:', err);
-      setError('Erro ao carregar dados da empresa');
+      console.error("Erro ao carregar dados da empresa:", err);
+      setError("Erro ao carregar dados da empresa");
     } finally {
       setLoading(false);
     }
@@ -105,49 +107,50 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
       setSuccess(false);
 
       const { data: existingData } = await supabase
-        .from('company_data')
-        .select('id')
-        .eq('admin_id', profile?.id)
+        .from("company_data")
+        .select("id")
+        .eq("admin_id", profile?.id)
         .maybeSingle();
 
       if (existingData?.id) {
         // Update existing record
         const { error: updateError } = await supabase
-          .from('company_data')
+          .from("company_data")
           .update({
             ...companyData,
             updated_at: new Date().toISOString()
           })
-          .eq('id', existingData.id);
+          .eq("id", existingData.id);
 
         if (updateError) throw updateError;
       } else {
         // Insert new record
         const { error: insertError } = await supabase
-          .from('company_data')
-          .insert([{
-            ...companyData,
-            admin_id: profile?.id
-          }]);
+          .from("company_data")
+          .insert([
+            {
+              ...companyData,
+              admin_id: profile?.id
+            }
+          ]);
 
         if (insertError) throw insertError;
       }
 
       setSuccess(true);
       onUpdate();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
-      
     } catch (err) {
       console.error("Erro ao salvar dados da empresa:", err);
       setError("Erro ao salvar dados da empresa");
@@ -177,23 +180,15 @@ export default function CompanyDataCard({ profile, onUpdate }: CompanyDataCardPr
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <CompanyInfoForm 
-          data={companyData}
-          onChange={setCompanyData}
-        />
+        <CompanyInfoForm data={companyData} onChange={setCompanyData} />
 
-        <PaymentMethodForm 
-          data={companyData}
-          onChange={setCompanyData}
-        />
+        <PaymentMethodForm data={companyData} onChange={setCompanyData} />
 
         <div className="flex justify-end pt-6">
-          <Button
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? "Salvando..." : "Salvar"}
+          <Button variant="outline" onClick={onClose}>
+            Cancel
           </Button>
+          <Button disabled={loading}>{loading ? "Salvar..." : "Salvar"}</Button>
         </div>
       </form>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { signOut, supabase } from "../../lib/supabase";
@@ -29,7 +29,6 @@ export default function UserDropdown() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userType, setUserType] = useState<"admin" | "platform" | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     loadProfile();
@@ -37,15 +36,17 @@ export default function UserDropdown() {
 
   async function loadProfile() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       // First try to load admin profile
       const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('id, first_name, last_name, email, is_first_admin')
-        .eq('id', user.id)
+        .from("admins")
+        .select("id, first_name, last_name, email, is_first_admin")
+        .eq("id", user.id)
         .maybeSingle();
 
       if (adminData) {
@@ -56,18 +57,17 @@ export default function UserDropdown() {
 
       // If not admin, try to load platform user profile
       const { data: userData, error: userError } = await supabase
-        .from('platform_users')
-        .select('id, first_name, last_name, email, role')
-        .eq('id', user.id)
+        .from("platform_users")
+        .select("id, first_name, last_name, email, role")
+        .eq("id", user.id)
         .single();
 
       if (userError) throw userError;
 
       setProfile(userData);
       setUserType("platform");
-      
     } catch (err) {
-      console.error('Erro ao carregar perfil:', err);
+      console.error("Erro ao carregar perfil:", err);
     }
   }
 
@@ -97,8 +97,8 @@ export default function UserDropdown() {
     }
     if (userType === "platform") {
       const platformUser = profile as PlatformUser;
-      return platformUser.role === "publisher" 
-        ? "/publisher/profile" 
+      return platformUser.role === "publisher"
+        ? "/publisher/profile"
         : "/advertiser/profile";
     }
     return "/";
@@ -110,8 +110,8 @@ export default function UserDropdown() {
     }
     if (userType === "platform") {
       const platformUser = profile as PlatformUser;
-      return platformUser.role === "publisher" 
-        ? "/publisher/settings" 
+      return platformUser.role === "publisher"
+        ? "/publisher/settings"
         : "/advertiser/settings";
     }
     return "/";
@@ -128,11 +128,7 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3">
-          <UserAvatar
-            userId={profile.id}
-            name={fullName}
-            size="sm"
-          />
+          <UserAvatar userId={profile.id} name={fullName} size="sm" />
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">

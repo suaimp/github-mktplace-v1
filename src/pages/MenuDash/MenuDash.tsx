@@ -7,7 +7,7 @@ import {
   TableBody,
   TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
@@ -46,24 +46,23 @@ export default function MenuDash() {
       setError("");
 
       const { data: items, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .order('position', { ascending: true });
+        .from("menu_items")
+        .select("*")
+        .order("position", { ascending: true });
 
       if (error) throw error;
 
       setMenuItems(items || []);
-      
     } catch (err) {
-      console.error('Error loading menu items:', err);
-      setError('Error loading menu item list');
+      console.error("Error loading menu items:", err);
+      setError("Error loading menu item list");
     } finally {
       setLoading(false);
     }
   }
 
   const handleCreate = () => {
-    navigate('/menu-dash/new');
+    navigate("/menu-dash/new");
   };
 
   const handleEdit = (item: MenuItem) => {
@@ -71,7 +70,11 @@ export default function MenuDash() {
   };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this item? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -81,30 +84,29 @@ export default function MenuDash() {
       setSuccess("");
 
       const { error } = await supabase
-        .from('menu_items')
+        .from("menu_items")
         .delete()
-        .eq('id', itemId);
+        .eq("id", itemId);
 
       if (error) throw error;
 
       setSuccess("Item deleted successfully");
       await loadMenuItems();
-
     } catch (err) {
-      console.error('Error deleting item:', err);
-      setError('Error deleting item');
+      console.error("Error deleting item:", err);
+      setError("Error deleting item");
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(date).toLocaleString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
@@ -117,7 +119,7 @@ export default function MenuDash() {
   }
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permission="menu.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
@@ -144,9 +146,7 @@ export default function MenuDash() {
       )}
 
       <div className="mb-6">
-        <Button onClick={handleCreate}>
-          New Item
-        </Button>
+        <Button onClick={handleCreate}>New Item</Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -214,9 +214,7 @@ export default function MenuDash() {
                       {item.position}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      <Badge
-                        color={item.is_visible ? "success" : "error"}
-                      >
+                      <Badge color={item.is_visible ? "success" : "error"}>
                         {item.is_visible ? "Yes" : "No"}
                       </Badge>
                     </TableCell>
@@ -246,9 +244,12 @@ export default function MenuDash() {
 
                 {menuItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No items found
-                    </TableCell>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
+                      Nenhum item encontrado.
+                    </td>
                   </TableRow>
                 )}
               </TableBody>

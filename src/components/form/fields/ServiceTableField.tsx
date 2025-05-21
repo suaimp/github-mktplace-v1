@@ -74,28 +74,8 @@ export default function ServiceTableField({}: ServiceTableFieldProps) {
                     })}`
                   : "-"}
               </td>
-              <td className="px-3 py-2 dark:text-[#e4e7ec]">
-                <select className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-900 text-black dark:text-[#e4e7ec] border-gray-200 dark:border-gray-700">
-                  {Array.isArray(service.features) &&
-                  service.features.length > 0 ? (
-                    service.features.map((feature: string, idx: number) => (
-                      <option
-                        key={idx}
-                        value={feature}
-                        className="text-black dark:text-[#e4e7ec] bg-white dark:bg-gray-900"
-                      >
-                        {feature}
-                      </option>
-                    ))
-                  ) : (
-                    <option
-                      value=""
-                      className="text-black dark:text-[#e4e7ec] bg-white dark:bg-gray-900"
-                    >
-                      Nenhum recurso
-                    </option>
-                  )}
-                </select>
+              <td className="px-3 py-2 dark:text-[#e4e7ec] relative">
+                <ServiceFeaturesBox features={service.features} />
               </td>
             </tr>
           ))}
@@ -111,6 +91,64 @@ export default function ServiceTableField({}: ServiceTableFieldProps) {
           )}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function ServiceFeaturesBox({ features }: { features: string[] }) {
+  const [open, setOpen] = useState(false);
+  const hasFeatures = Array.isArray(features) && features.length > 0;
+
+  if (!hasFeatures) {
+    return (
+      <div className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-900 text-gray-400 dark:text-[#e4e7ec] border-gray-200 dark:border-gray-700">
+        Nenhum recurso
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-900 text-black dark:text-[#e4e7ec] border-gray-200 dark:border-gray-700 relative flex items-center"
+      tabIndex={0}
+      onBlur={() => setOpen(false)}
+      style={{ minHeight: 20 }}
+    >
+      <span className="flex-1 truncate">{features[0]}</span>
+      {features.length > 1 && (
+        <button
+          type="button"
+          className="absolute right-0 top-0 h-full px-3 rounded-none rounded-r bg-gray-200 dark:bg-gray-800  border-l border-gray-300 dark:border-gray-700 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
+          style={{ zIndex: 2 }}
+          onClick={() => setOpen((v) => !v)}
+          tabIndex={-1}
+        >
+          Ver demais recursos
+        </button>
+      )}
+      {features.length > 1 && (
+        <div
+          className="absolute left-0 top-full mt-1 min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-10"
+          style={{
+            maxHeight: 120,
+            height: 120,
+            overflowY: "scroll",
+            scrollbarWidth: "auto",
+            display: open ? "block" : "block",
+            visibility: open ? "visible" : "hidden"
+          }}
+        >
+          {open &&
+            features.map((feature: string, idx: number) => (
+              <div
+                key={idx}
+                className="px-2 py-1 text-black dark:text-[#e4e7ec] hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {feature}
+              </div>
+            ))}
+        </div>
+      )}
     </div>
   );
 }

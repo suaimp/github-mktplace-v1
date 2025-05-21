@@ -2,12 +2,21 @@ import type React from "react";
 import type { FC } from "react";
 
 interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | "url" | string;
+  type?:
+    | "text"
+    | "number"
+    | "email"
+    | "password"
+    | "date"
+    | "time"
+    | "url"
+    | string;
   id?: string;
   name?: string;
   placeholder?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
   min?: string;
   max?: string;
@@ -19,6 +28,7 @@ interface InputProps {
   pattern?: string;
   title?: string;
   required?: boolean;
+  maxLength?: number;
 }
 
 const Input: FC<InputProps> = ({
@@ -28,6 +38,7 @@ const Input: FC<InputProps> = ({
   placeholder,
   value,
   onChange,
+  onBlur,
   className = "",
   min,
   max,
@@ -39,6 +50,7 @@ const Input: FC<InputProps> = ({
   pattern,
   title,
   required = false,
+  maxLength
 }) => {
   let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
@@ -54,9 +66,9 @@ const Input: FC<InputProps> = ({
 
   // Add URL input mask
   const handleUrlInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (type === 'url') {
+    if (type === "url") {
       let value = e.target.value;
-      
+
       // If value is empty or already has protocol, don't modify
       if (!value || /^https?:\/\//.test(value)) {
         onChange?.(e);
@@ -68,7 +80,7 @@ const Input: FC<InputProps> = ({
         e.target.value = `https://${value}`;
       }
     }
-    
+
     onChange?.(e);
   };
 
@@ -78,17 +90,24 @@ const Input: FC<InputProps> = ({
         type={type}
         id={id}
         name={name}
-        placeholder={type === 'url' ? 'https://example.com' : placeholder}
+        placeholder={type === "url" ? "https://example.com" : placeholder}
         value={value}
-        onChange={type === 'url' ? handleUrlInput : onChange}
+        onChange={type === "url" ? handleUrlInput : onChange}
+        onBlur={onBlur}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
         className={inputClasses}
-        pattern={pattern || (type === 'url' ? '^https?://.+' : undefined)}
-        title={title || (type === 'url' ? 'URL must start with http:// or https://' : undefined)}
+        pattern={pattern || (type === "url" ? "^https?://.+" : undefined)}
+        title={
+          title ||
+          (type === "url"
+            ? "URL must start with http:// or https://"
+            : undefined)
+        }
         required={required}
+        maxLength={maxLength}
       />
 
       {hint && (

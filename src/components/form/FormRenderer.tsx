@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import FormSkeleton from "./FormSkeleton";
-import * as Fields from "./fields";
+import * as FieldsImport from "./fields";
+
+const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
 
 interface FormRendererProps {
   formId: string;
@@ -384,12 +386,11 @@ export default function FormRenderer({
       );
     };
 
-    const FieldComponent =
-      Fields[
-        `${
-          fieldTypeMapped.charAt(0).toUpperCase() + fieldTypeMapped.slice(1)
-        }Field`
-      ];
+    const FieldComponent = (Fields as Record<string, React.ComponentType<any>>)[
+      `${
+        fieldTypeMapped.charAt(0).toUpperCase() + fieldTypeMapped.slice(1)
+      }Field`
+    ];
     if (!FieldComponent) {
       console.error(
         `No component found for field type: ${field.field_type} (mapped to ${fieldTypeMapped})`

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLogos } from "../hooks/useLogos";
 import * as Icons from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 import SidebarLogo from "../components/sidebar/SidebarLogo";
 import SidebarNav from "../components/sidebar/SidebarNav";
 import { supabase } from "../lib/supabase";
@@ -28,10 +27,17 @@ export default function AppSidebar() {
   const { logos, loading } = useLogos();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [userRole, setUserRole] = useState<"publisher" | "advertiser" | null>(null);
+  const [userRole, setUserRole] = useState<"publisher" | "advertiser" | null>(
+    null
+  );
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [openSubmenu, setOpenSubmenu] = useState<{ type: "main" | "others"; index: number } | null>(null);
-  const [subMenuHeights, setSubMenuHeights] = useState<Record<string, number>>({});
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(null);
+  const [subMenuHeights, setSubMenuHeights] = useState<Record<string, number>>(
+    {}
+  );
   const subMenuRefs = useRef<Record<string, HTMLUListElement | null>>({});
 
   useEffect(() => {
@@ -61,14 +67,16 @@ export default function AppSidebar() {
       calculateSubMenuHeights();
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [menuItems, openSubmenu]);
 
   async function checkUserType() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) {
         setIsAdmin(false);
         setUserRole(null);
@@ -77,9 +85,9 @@ export default function AppSidebar() {
 
       // Check if admin
       const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('id', user.id)
+        .from("admins")
+        .select("id")
+        .eq("id", user.id)
         .maybeSingle();
 
       if (adminData) {
@@ -90,9 +98,9 @@ export default function AppSidebar() {
 
       // Check if platform user
       const { data: userData } = await supabase
-        .from('platform_users')
-        .select('role, status')
-        .eq('id', user.id)
+        .from("platform_users")
+        .select("role, status")
+        .eq("id", user.id)
         .single();
 
       if (userData) {
@@ -102,9 +110,8 @@ export default function AppSidebar() {
         setIsAdmin(false);
         setUserRole(null);
       }
-      
     } catch (err) {
-      console.error('Error checking user type:', err);
+      console.error("Error checking user type:", err);
       setIsAdmin(false);
       setUserRole(null);
     }
@@ -114,23 +121,23 @@ export default function AppSidebar() {
     try {
       // Get all menu items
       const { data: items, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('is_visible', true)
-        .order('position', { ascending: true });
+        .from("menu_items")
+        .select("*")
+        .eq("is_visible", true)
+        .order("position", { ascending: true });
 
       if (error) throw error;
 
       // Organize items into a tree structure
       const organizedItems = organizeMenuItems(items || []);
       setMenuItems(organizedItems);
-      
+
       // Log for debugging
       console.log("User role:", userRole);
       console.log("Is admin:", isAdmin);
       console.log("Menu items loaded:", items?.length);
     } catch (err) {
-      console.error('Error loading menu items:', err);
+      console.error("Error loading menu items:", err);
     }
   }
 
@@ -138,11 +145,11 @@ export default function AppSidebar() {
     const itemMap = new Map<string, MenuItem>();
     const rootItems: MenuItem[] = [];
 
-    items.forEach(item => {
+    items.forEach((item) => {
       itemMap.set(item.id, { ...item, subItems: [] });
     });
 
-    items.forEach(item => {
+    items.forEach((item) => {
       const menuItem = itemMap.get(item.id)!;
       if (item.parent_id && itemMap.has(item.parent_id)) {
         const parent = itemMap.get(item.parent_id)!;
@@ -164,41 +171,52 @@ export default function AppSidebar() {
 
   // Filter menu items based on user role and visibility
   const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
-    return items.filter(item => {
-      // Admin can see everything
-      if (isAdmin) return true;
+    return items
+      .filter((item) => {
+        // Admin can see everything
+        if (isAdmin) return true;
 
-      // Check visibility rules for platform users
-      if (item.visible_to === 'all') return true;
-      if (item.visible_to === 'publisher' && userRole === 'publisher') return true;
-      if (item.visible_to === 'advertiser' && userRole === 'advertiser') return true;
+        // Check visibility rules for platform users
+        if (item.visible_to === "all") return true;
+        if (item.visible_to === "publisher" && userRole === "publisher")
+          return true;
+        if (item.visible_to === "advertiser" && userRole === "advertiser")
+          return true;
 
-      return false;
-    }).map(item => {
-      // Also filter subItems based on the same rules
-      if (item.subItems && item.subItems.length > 0) {
-        const filteredSubItems = item.subItems.filter(subItem => {
-          if (isAdmin) return true;
-          if (subItem.visible_to === 'all') return true;
-          if (subItem.visible_to === 'publisher' && userRole === 'publisher') return true;
-          if (subItem.visible_to === 'advertiser' && userRole === 'advertiser') return true;
-          return false;
-        });
-        
-        return {
-          ...item,
-          subItems: filteredSubItems
-        };
-      }
-      
-      return item;
-    }).filter(item => {
-      // Remove items with no subItems if they are meant to be a dropdown
-      if (!item.path && (!item.subItems || item.subItems.length === 0)) {
         return false;
-      }
-      return true;
-    }).filter(item => item.name !== "Service Packages");
+      })
+      .map((item) => {
+        // Also filter subItems based on the same rules
+        if (item.subItems && item.subItems.length > 0) {
+          const filteredSubItems = item.subItems.filter((subItem) => {
+            if (isAdmin) return true;
+            if (subItem.visible_to === "all") return true;
+            if (subItem.visible_to === "publisher" && userRole === "publisher")
+              return true;
+            if (
+              subItem.visible_to === "advertiser" &&
+              userRole === "advertiser"
+            )
+              return true;
+            return false;
+          });
+
+          return {
+            ...item,
+            subItems: filteredSubItems
+          };
+        }
+
+        return item;
+      })
+      .filter((item) => {
+        // Remove items with no subItems if they are meant to be a dropdown
+        if (!item.path && (!item.subItems || item.subItems.length === 0)) {
+          return false;
+        }
+        return true;
+      })
+      .filter((item) => item.name !== "Service Packages");
   };
 
   // Main dashboard menu items
@@ -206,13 +224,17 @@ export default function AppSidebar() {
     {
       icon: <Icons.GridIcon />,
       name: "Dashboard",
-      path: isAdmin ? "/dashboard" : userRole === "publisher" ? "/publisher/dashboard" : "/advertiser/dashboard",
+      path: isAdmin
+        ? "/dashboard"
+        : userRole === "publisher"
+        ? "/publisher/dashboard"
+        : "/advertiser/dashboard"
     },
-    ...filterMenuItems(menuItems).map(item => ({
+    ...filterMenuItems(menuItems).map((item) => ({
       icon: getIconComponent(item.icon),
       name: item.name,
       path: item.path || undefined,
-      subItems: item.subItems?.map(subItem => ({
+      subItems: item.subItems?.map((subItem) => ({
         name: subItem.name,
         path: subItem.path || ""
       }))
@@ -220,65 +242,76 @@ export default function AppSidebar() {
   ];
 
   // Admin menu items
-  const adminItems = isAdmin ? [
-    {
-      icon: <Icons.FileIcon />,
-      name: "Editorial Manager",
-      path: "/editorial",
-    },
-    {
-      icon: <Icons.UserIcon />,
-      name: "Users",
-      path: "/users",
-    },
-    {
-      icon: <Icons.PageIcon />,
-      name: "Pages",
-      path: "/pages",
-    },
-    {
-      icon: <Icons.ListIcon />,
-      name: "Menu Dash",
-      path: "/menu-dash",
-    },
-    {
-      icon: <Icons.FileIcon />,
-      name: "Forms",
-      path: "/forms",
-    },
-    {
-      icon: <Icons.BoxIcon />,
-      name: "Services",
-      path: "/service-packages",
-    }
-  ] : [];
+  const adminItems = isAdmin
+    ? [
+        {
+          icon: <Icons.FileIcon />,
+          name: "Editorial Manager",
+          path: "/editorial"
+        },
+        {
+          icon: <Icons.UserIcon />,
+          name: "Users",
+          path: "/users"
+        },
+        {
+          icon: <Icons.PageIcon />,
+          name: "Pages",
+          path: "/pages"
+        },
+        {
+          icon: <Icons.ListIcon />,
+          name: "Menu Dash",
+          path: "/menu-dash"
+        },
+        {
+          icon: <Icons.FileIcon />,
+          name: "Forms",
+          path: "/forms"
+        },
+        {
+          icon: <Icons.BoxIcon />,
+          name: "Services",
+          path: "/service-packages"
+        }
+      ]
+    : [];
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
   );
 
-  const isMenuActive = useCallback((item: any) => {
-    if (item.path && isActive(item.path)) {
-      return true;
-    }
-    if (item.subItems) {
-      return item.subItems.some((subItem: any) => isActive(subItem.path));
-    }
-    return false;
-  }, [isActive]);
+  const isMenuActive = useCallback(
+    (item: any) => {
+      if (item.path && isActive(item.path)) {
+        return true;
+      }
+      if (item.subItems) {
+        return item.subItems.some((subItem: any) => isActive(subItem.path));
+      }
+      return false;
+    },
+    [isActive]
+  );
 
   const updateOpenDropdowns = () => {
     // Check main menu items
     navItems.forEach((item, index) => {
-      if (item.subItems && item.subItems.some(subItem => isActive(subItem.path))) {
+      if (
+        item.subItems &&
+        item.subItems.some((subItem) => isActive(subItem.path))
+      ) {
         setOpenSubmenu({ type: "main", index });
       }
     });
 
     // Check admin menu items
     adminItems.forEach((item, index) => {
-      if (item.subItems && item.subItems.some(subItem => isActive(subItem.path))) {
+      if (
+        item.subItems &&
+        item.subItems.some((subItem) => isActive(subItem.path))
+      ) {
         setOpenSubmenu({ type: "others", index });
       }
     });
@@ -315,9 +348,9 @@ export default function AppSidebar() {
   };
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu(prev => 
-      prev?.type === menuType && prev?.index === index 
-        ? null 
+    setOpenSubmenu((prev) =>
+      prev?.type === menuType && prev?.index === index
+        ? null
         : { type: menuType, index }
     );
   };
@@ -350,7 +383,7 @@ export default function AppSidebar() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div onClick={handleLogoClick} className="cursor-pointer">
-        <SidebarLogo 
+        <SidebarLogo
           logos={logos}
           isExpanded={isExpanded}
           isHovered={isHovered}

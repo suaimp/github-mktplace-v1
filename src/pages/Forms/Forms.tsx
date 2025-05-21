@@ -5,11 +5,11 @@ import PageMeta from "../../components/common/PageMeta";
 import { supabase } from "../../lib/supabase";
 import {
   Table,
-  TableBody,
-  TableCell,
   TableHeader,
+  TableBody,
   TableRow,
-} from "../../components/ui/table";
+  TableCell
+} from "../../components/ui/table/index";
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
@@ -59,7 +59,9 @@ export default function Forms() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [newFormTitle, setNewFormTitle] = useState("");
   const [selectedForm, setSelectedForm] = useState<Form | null>(null);
   const [isShortcodesOpen, setIsShortcodesOpen] = useState(false);
@@ -74,17 +76,16 @@ export default function Forms() {
       setError("");
 
       const { data: forms, error } = await supabase
-        .from('forms')
-        .select('*, fields:form_fields(*)')
-        .order('created_at', { ascending: false });
+        .from("forms")
+        .select("*, fields:form_fields(*)")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       setForms(forms || []);
-      
     } catch (err) {
-      console.error('Error loading forms:', err);
-      setError('Error loading form list');
+      console.error("Error loading forms:", err);
+      setError("Error loading form list");
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export default function Forms() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // Validate title
       if (!newFormTitle.trim()) {
@@ -110,18 +111,22 @@ export default function Forms() {
       setError("");
       setSuccess("");
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       // Create new form
       const { data: form, error: createError } = await supabase
-        .from('forms')
-        .insert([{
-          title: newFormTitle.trim(),
-          fields: [],
-          validation_rules: {},
-          created_by: user.id
-        }])
+        .from("forms")
+        .insert([
+          {
+            title: newFormTitle.trim(),
+            fields: [],
+            validation_rules: {},
+            created_by: user.id
+          }
+        ])
         .select()
         .single();
 
@@ -130,10 +135,9 @@ export default function Forms() {
 
       setIsCreateModalOpen(false);
       navigate(`/forms/edit/${form.id}`);
-
     } catch (err) {
-      console.error('Error creating form:', err);
-      setError('Error creating form');
+      console.error("Error creating form:", err);
+      setError("Error creating form");
     } finally {
       setLoading(false);
     }
@@ -144,7 +148,11 @@ export default function Forms() {
   };
 
   const handleDelete = async (formId: string) => {
-    if (!confirm("Are you sure you want to delete this form? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this form? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -153,19 +161,15 @@ export default function Forms() {
       setError("");
       setSuccess("");
 
-      const { error } = await supabase
-        .from('forms')
-        .delete()
-        .eq('id', formId);
+      const { error } = await supabase.from("forms").delete().eq("id", formId);
 
       if (error) throw error;
 
       setSuccess("Form deleted successfully");
       await loadForms();
-
     } catch (err) {
-      console.error('Error deleting form:', err);
-      setError('Error deleting form');
+      console.error("Error deleting form:", err);
+      setError("Error deleting form");
     } finally {
       setLoading(false);
     }
@@ -177,12 +181,12 @@ export default function Forms() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(date).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
@@ -195,7 +199,7 @@ export default function Forms() {
   }
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permission="forms.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
@@ -203,10 +207,7 @@ export default function Forms() {
         </div>
       }
     >
-      <PageMeta
-        title="Forms | Admin Panel"
-        description="Manage system forms"
-      />
+      <PageMeta title="Forms | Admin Panel" description="Manage system forms" />
       <PageBreadcrumb pageTitle="Forms" />
 
       {error && (
@@ -222,9 +223,7 @@ export default function Forms() {
       )}
 
       <div className="mb-6">
-        <Button onClick={handleCreate}>
-          New Form
-        </Button>
+        <Button onClick={handleCreate}>New Form</Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -338,9 +337,12 @@ export default function Forms() {
 
                 {forms.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No forms found
-                    </TableCell>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
+                      Nenhum registro encontrado.
+                    </td>
                   </TableRow>
                 )}
               </TableBody>
@@ -350,8 +352,8 @@ export default function Forms() {
       </div>
 
       {/* Create Form Modal */}
-      <Modal 
-        isOpen={isCreateModalOpen} 
+      <Modal
+        isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         className="max-w-[500px] m-4"
       >
@@ -367,7 +369,9 @@ export default function Forms() {
 
           <form onSubmit={handleCreateSubmit}>
             <div className="mb-6">
-              <Label>Form Title <span className="text-error-500">*</span></Label>
+              <Label>
+                Form Title <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={newFormTitle}
@@ -385,17 +389,14 @@ export default function Forms() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsCreateModalOpen(false)}
               >
-                Cancel
+                Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? "Creating..." : "Create Form"}
+              <Button disabled={loading}>
+                {loading ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </form>
@@ -414,13 +415,12 @@ export default function Forms() {
               Shortcodes
             </h4>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Use estes shortcodes para inserir o formulário ou sua listagem em páginas
+              Use estes shortcodes para inserir o formulário ou sua listagem em
+              páginas
             </p>
           </div>
 
-          {selectedForm && (
-            <FormShortcodes formId={selectedForm.id} />
-          )}
+          {selectedForm && <FormShortcodes formId={selectedForm.id} />}
 
           <div className="flex justify-end mt-6">
             <Button

@@ -343,7 +343,7 @@ export default function EditPage() {
               <Button variant="outline" onClick={() => navigate("/pages")}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button disabled={loading}>
                 {loading ? "Saving..." : "Save"}
               </Button>
             </div>

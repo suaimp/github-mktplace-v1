@@ -19,6 +19,7 @@ interface AdminProfile {
 interface UserInfoCardProps {
   profile: AdminProfile | null;
   onUpdate: () => void;
+  onClose?: () => void; // Torna onClose opcional
 }
 
 const brazilianPhoneCodes = [
@@ -41,10 +42,14 @@ const brazilianPhoneCodes = [
   { code: "PE", label: "+51" },
   { code: "UY", label: "+598" },
   { code: "PY", label: "+595" },
-  { code: "BO", label: "+591" },
+  { code: "BO", label: "+591" }
 ];
 
-export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
+export default function UserInfoCard({
+  profile,
+  onUpdate,
+  onClose
+}: UserInfoCardProps) {
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
@@ -64,7 +69,7 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
@@ -77,24 +82,23 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
       }
 
       const { error: updateError } = await supabase
-        .from('admins')
+        .from("admins")
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: phone.trim()
         })
-        .eq('id', profile.id);
+        .eq("id", profile.id);
 
       if (updateError) throw updateError;
 
       setSuccess(true);
       onUpdate();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
-      
     } catch (err) {
       console.error("Erro ao atualizar perfil:", err);
       setError("Erro ao atualizar perfil");
@@ -125,7 +129,9 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div>
-              <Label>Nome <span className="text-error-500">*</span></Label>
+              <Label>
+                Nome <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={firstName}
@@ -135,7 +141,9 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
             </div>
 
             <div>
-              <Label>Sobrenome <span className="text-error-500">*</span></Label>
+              <Label>
+                Sobrenome <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={lastName}
@@ -146,11 +154,7 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
 
             <div>
               <Label>Email</Label>
-              <Input
-                type="email"
-                value={profile.email}
-                disabled
-              />
+              <Input type="email" value={profile.email} disabled />
             </div>
 
             <div>
@@ -167,17 +171,23 @@ export default function UserInfoCard({ profile, onUpdate }: UserInfoCardProps) {
               <Label>Tipo de Conta</Label>
               <Input
                 type="text"
-                value={profile.is_first_admin ? "Administrador Principal" : "Administrador"}
+                value={
+                  profile.is_first_admin
+                    ? "Administrador Principal"
+                    : "Administrador"
+                }
                 disabled
               />
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button 
-              type="submit"
-              disabled={loading}
-            >
+            {onClose && (
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+            )}
+            <Button disabled={loading}>
               {loading ? "Salvando..." : "Salvar"}
             </Button>
           </div>

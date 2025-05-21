@@ -113,7 +113,7 @@ export default function ButtonModalField({
       setShowSuccess(true);
       setErrorMsg("");
       setShowError(false);
-      setOpen(false);
+
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (err: any) {
       let msg = "Erro ao salvar serviço. ";

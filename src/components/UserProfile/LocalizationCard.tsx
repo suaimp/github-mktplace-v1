@@ -37,7 +37,11 @@ const languages = [
   { value: "it-IT", label: "Italian", description: "Italiano" },
   { value: "es-ES", label: "Spanish", description: "Español" },
   { value: "pt-PT", label: "Portuguese", description: "Português" },
-  { value: "pt-BR", label: "Portuguese (Brazil)", description: "Português (Brazil)" }
+  {
+    value: "pt-BR",
+    label: "Portuguese (Brazil)",
+    description: "Português (Brazil)"
+  }
 ];
 
 const counterTypes = [
@@ -53,29 +57,35 @@ const currencies = [
 
 // Map of country codes to their names
 const countryNames: { [key: string]: string } = {
-  "BR": "Brasil",
-  "US": "Estados Unidos",
-  "GB": "Reino Unido",
-  "PT": "Portugal",
-  "ES": "Espanha",
-  "FR": "França",
-  "DE": "Alemanha",
-  "IT": "Itália",
-  "JP": "Japão",
-  "CN": "China",
-  "AU": "Austrália",
-  "CA": "Canadá",
-  "MX": "México",
-  "AR": "Argentina",
-  "CL": "Chile",
-  "CO": "Colômbia",
-  "PE": "Peru",
-  "UY": "Uruguai",
-  "PY": "Paraguai",
-  "BO": "Bolívia"
+  BR: "Brasil",
+  US: "Estados Unidos",
+  GB: "Reino Unido",
+  PT: "Portugal",
+  ES: "Espanha",
+  FR: "França",
+  DE: "Alemanha",
+  IT: "Itália",
+  JP: "Japão",
+  CN: "China",
+  AU: "Austrália",
+  CA: "Canadá",
+  MX: "México",
+  AR: "Argentina",
+  CL: "Chile",
+  CO: "Colômbia",
+  PE: "Peru",
+  UY: "Uruguai",
+  PY: "Paraguai",
+  BO: "Bolívia"
 };
 
-export default function LocalizationCard({ profile, onUpdate }: { profile: AdminProfile | null; onUpdate: () => void }) {
+export default function LocalizationCard({
+  profile,
+  onUpdate
+}: {
+  profile: AdminProfile | null;
+  onUpdate: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -97,28 +107,30 @@ export default function LocalizationCard({ profile, onUpdate }: { profile: Admin
       setError("");
 
       const { data: companyData, error: companyError } = await supabase
-        .from('company_data')
-        .select('country')
-        .eq('admin_id', profile?.id)
+        .from("company_data")
+        .select("country")
+        .eq("admin_id", profile?.id)
         .maybeSingle();
 
-      if (companyError && companyError.code !== 'PGRST116') {
+      if (companyError && companyError.code !== "PGRST116") {
         throw companyError;
       }
 
       // If company data exists, use it
       if (companyData) {
-        setSettings(prev => ({
+        setSettings((prev) => ({
           ...prev,
           country: companyData.country,
           language: companyData.country === "BR" ? "pt-BR" : prev.language,
-          operational_currency: companyData.country === "BR" ? "BRL" : prev.operational_currency,
-          display_currency: companyData.country === "BR" ? "BRL" : prev.display_currency
+          operational_currency:
+            companyData.country === "BR" ? "BRL" : prev.operational_currency,
+          display_currency:
+            companyData.country === "BR" ? "BRL" : prev.display_currency
         }));
-      } 
+      }
       // If no company data but Brazilian phone, set defaults
       else if (profile?.phone?.startsWith("+55")) {
-        setSettings(prev => ({
+        setSettings((prev) => ({
           ...prev,
           country: "BR",
           language: "pt-BR",
@@ -126,10 +138,9 @@ export default function LocalizationCard({ profile, onUpdate }: { profile: Admin
           display_currency: "BRL"
         }));
       }
-
     } catch (err) {
-      console.error('Erro ao carregar dados:', err);
-      setError('Erro ao carregar configurações');
+      console.error("Erro ao carregar dados:", err);
+      setError("Erro ao carregar configurações");
     } finally {
       setLoading(false);
     }
@@ -137,7 +148,7 @@ export default function LocalizationCard({ profile, onUpdate }: { profile: Admin
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
@@ -146,12 +157,11 @@ export default function LocalizationCard({ profile, onUpdate }: { profile: Admin
       // Here you would save the settings to your database
       // For now, we'll just simulate success
       setSuccess(true);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
-      
     } catch (err) {
       console.error("Erro ao salvar configurações:", err);
       setError("Erro ao salvar configurações");
@@ -193,47 +203,64 @@ export default function LocalizationCard({ profile, onUpdate }: { profile: Admin
           </div>
 
           <div>
-            <Label>Moeda Operacional <span className="text-error-500">*</span></Label>
+            <Label>
+              Moeda Operacional <span className="text-error-500">*</span>
+            </Label>
             <Select
               options={currencies}
               value={settings.operational_currency}
-              onChange={(value) => setSettings({ ...settings, operational_currency: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, operational_currency: value })
+              }
             />
           </div>
 
           <div>
-            <Label>Idioma da Plataforma <span className="text-error-500">*</span></Label>
+            <Label>
+              Idioma da Plataforma <span className="text-error-500">*</span>
+            </Label>
             <Select
               options={languages}
               value={settings.language}
-              onChange={(value) => setSettings({ ...settings, language: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, language: value })
+              }
             />
           </div>
 
           <div>
-            <Label>Número de caracteres/palavras <span className="text-error-500">*</span></Label>
+            <Label>
+              Número de caracteres/palavras{" "}
+              <span className="text-error-500">*</span>
+            </Label>
             <Select
               options={counterTypes}
               value={settings.counter_type}
-              onChange={(value) => setSettings({ ...settings, counter_type: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, counter_type: value })
+              }
             />
           </div>
 
           <div>
-            <Label>Moeda de Exibição <span className="text-error-500">*</span></Label>
+            <Label>
+              Moeda de Exibição <span className="text-error-500">*</span>
+            </Label>
             <Select
               options={currencies}
               value={settings.display_currency}
-              onChange={(value) => setSettings({ ...settings, display_currency: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, display_currency: value })
+              }
             />
           </div>
         </div>
 
         <div className="flex justify-end pt-6">
-          <Button 
-            type="submit"
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button disabled={loading}>
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         </div>

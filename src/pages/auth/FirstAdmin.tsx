@@ -1,6 +1,6 @@
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
-import FirstAdminForm from "../../components/auth/FirstAdminForm";
+// import FirstAdminForm from "../../components/auth/FirstAdminForm"; // Arquivo não encontrado, importação comentada
 
 export default function FirstAdmin() {
   return (
@@ -9,9 +9,7 @@ export default function FirstAdmin() {
         title="Criar Conta de Administrador | Admin Panel"
         description="Create the first admin account for the system"
       />
-      <AuthLayout>
-        <FirstAdminForm />
-      </AuthLayout>
+      <AuthLayout>{/* <FirstAdminForm /> */}</AuthLayout>
     </>
   );
 }

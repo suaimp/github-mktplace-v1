@@ -8,7 +8,11 @@ export default function Development() {
           Em Desenvolvimento
         </h1>
 
-        <img src="/images/error/maintenance.svg" alt="Em Desenvolvimento" className="dark:hidden" />
+        <img
+          src="/images/error/maintenance.svg"
+          alt="Em Desenvolvimento"
+          className="dark:hidden"
+        />
         <img
           src="/images/error/maintenance-dark.svg"
           alt="Em Desenvolvimento"
@@ -16,10 +20,11 @@ export default function Development() {
         />
 
         <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
-          Esta página está em desenvolvimento. Para acessar o painel administrativo, utilize a URL /adm.
+          Esta página está em desenvolvimento. Para acessar o painel
+          administrativo, utilize a URL /adm.
         </p>
       </div>
-      
+
       <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
         &copy; {new Date().getFullYear()}
       </p>

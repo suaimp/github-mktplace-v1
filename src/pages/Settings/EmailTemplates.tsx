@@ -31,8 +31,12 @@ export default function EmailTemplates() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("signup_confirmation");
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(
+    "signup_confirmation"
+  );
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [template, setTemplate] = useState<EmailTemplate>({
     id: "",
     code: "signup_confirmation",
@@ -52,9 +56,9 @@ export default function EmailTemplates() {
       setSuccess(false);
 
       const { data: template, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .eq('code', templateCode)
+        .from("email_templates")
+        .select("*")
+        .eq("code", templateCode)
         .single();
 
       if (error) throw error;
@@ -62,10 +66,9 @@ export default function EmailTemplates() {
       if (template) {
         setTemplate(template);
       }
-
     } catch (err: any) {
-      console.error('Erro ao carregar template:', err);
-      setError('Erro ao carregar template');
+      console.error("Erro ao carregar template:", err);
+      setError("Erro ao carregar template");
     } finally {
       setLoading(false);
     }
@@ -93,40 +96,39 @@ export default function EmailTemplates() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setTemplate(prev => ({ ...prev, [name]: value }));
-    
+    setTemplate((prev) => ({ ...prev, [name]: value }));
+
     if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors(prev => ({ ...prev, [name]: undefined }));
+      setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateTemplate()) {
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setSuccess(false);
-    
+
     try {
       const { error: updateError } = await supabase
-        .from('email_templates')
+        .from("email_templates")
         .update({
           subject: template.subject.trim(),
           body: template.body.trim()
         })
-        .eq('code', template.code);
+        .eq("code", template.code);
 
       if (updateError) throw updateError;
 
       setSuccess(true);
-      
     } catch (err: any) {
       console.error("Erro ao salvar template:", err);
-      setError(err.message || 'Erro ao salvar template');
+      setError(err.message || "Erro ao salvar template");
     } finally {
       setLoading(false);
     }
@@ -185,7 +187,9 @@ export default function EmailTemplates() {
             <TextArea
               name="body"
               value={template.body}
-              onChange={(value) => handleChange({ target: { name: "body", value } } as any)}
+              onChange={(value) =>
+                handleChange({ target: { name: "body", value } } as any)
+              }
               placeholder="Digite o conteúdo do email"
               rows={10}
               error={!!validationErrors.body}
@@ -193,20 +197,19 @@ export default function EmailTemplates() {
             />
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Você pode usar as seguintes variáveis no template:
-              <br />
-              - {`{{name}}`}: Nome do usuário
-              <br />
-              - {`{{email}}`}: Email do usuário
-              <br />
-              - {`{{link}}`}: Link de ação (quando aplicável)
-              <br />
-              - {`{{code}}`}: Código de verificação (quando aplicável)
+              <br />- {`{{name}}`}: Nome do usuário
+              <br />- {`{{email}}`}: Email do usuário
+              <br />- {`{{link}}`}: Link de ação (quando aplicável)
+              <br />- {`{{code}}`}: Código de verificação (quando aplicável)
             </p>
           </div>
 
           <div className="flex justify-end pt-6">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar Template"}
+            <Button variant="outline" onClick={() => {}}>
+              Cancelar
+            </Button>
+            <Button disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </div>

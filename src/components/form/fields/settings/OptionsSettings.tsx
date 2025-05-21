@@ -24,8 +24,7 @@ export default function OptionsSettings({
   const [showBulkInput, setShowBulkInput] = useState(false);
   const [bulkOptions, setBulkOptions] = useState("");
 
-  const handleAddOption = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleAddOption = () => {
     onOptionsChange([...options, { label: '', value: '' }]);
   };
 
@@ -39,8 +38,7 @@ export default function OptionsSettings({
     onOptionsChange(newOptions);
   };
 
-  const handleBulkOptionsSubmit = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleBulkOptionsSubmit = () => {
     const lines = bulkOptions.split('\n').filter(line => line.trim());
     const newOptions = lines.map(line => {
       const [label, value] = line.split('|').map(s => s.trim());
@@ -62,14 +60,12 @@ export default function OptionsSettings({
         </h5>
         <div className="flex gap-2">
           <Button
-            type="button"
             variant="outline"
             onClick={() => setShowBulkInput(!showBulkInput)}
           >
             Bulk Add
           </Button>
           <Button
-            type="button"
             onClick={handleAddOption}
           >
             <PlusIcon className="w-5 h-5 mr-2" />
@@ -88,7 +84,6 @@ export default function OptionsSettings({
           />
           <div className="flex justify-end gap-2">
             <Button
-              type="button"
               variant="outline"
               onClick={() => {
                 setShowBulkInput(false);
@@ -98,7 +93,6 @@ export default function OptionsSettings({
               Cancel
             </Button>
             <Button
-              type="button"
               onClick={handleBulkOptionsSubmit}
             >
               Add Options
@@ -152,7 +146,7 @@ export default function OptionsSettings({
               max_selections: e.target.value ? parseInt(e.target.value) : undefined 
             })}
             min="1"
-            max={options.length}
+            max={String(options.length)}
             placeholder="Leave empty for unlimited"
           />
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

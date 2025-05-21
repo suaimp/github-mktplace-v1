@@ -1,6 +1,6 @@
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
-import InstallForm from "../../components/auth/InstallForm";
+// import InstallForm from "../../components/auth/InstallForm"; // Arquivo não encontrado, importação comentada
 
 export default function Install() {
   return (
@@ -9,9 +9,7 @@ export default function Install() {
         title="Instalação | Admin Panel"
         description="Configure o primeiro administrador do sistema"
       />
-      <AuthLayout>
-        <InstallForm />
-      </AuthLayout>
+      <AuthLayout>{/* <InstallForm /> */}</AuthLayout>
     </>
   );
 }

@@ -1,13 +1,11 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import { Table, TableBody, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon } from "../../icons";
-import { getFlagUrl, getFaviconUrl, extractDomain } from '../form/utils/formatters';
+import {
+  getFlagUrl,
+  getFaviconUrl,
+  extractDomain
+} from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
 
 interface FormEntry {
@@ -31,94 +29,99 @@ interface FormEntriesTableProps {
   onDelete?: (entryId: string) => void;
 }
 
-export default function FormEntriesTable({ entries, fields, urlFields = [], onEdit, onDelete }: FormEntriesTableProps) {
+export default function FormEntriesTable({
+  entries,
+  fields,
+  urlFields = [],
+  onEdit,
+  onDelete
+}: FormEntriesTableProps) {
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(date).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
   const formatValue = (value: any, fieldType: string, fieldId: string) => {
-    if (!value) return '-';
+    if (!value) return "-";
 
     // Special handling for URL fields
-    if (fieldType === 'url' || urlFields.includes(fieldId)) {
+    if (fieldType === "url" || urlFields.includes(fieldId)) {
       return renderUrlWithFavicon(value);
     }
-    
+
     // Special handling for brand fields
-    if (fieldType === 'brand') {
+    if (fieldType === "brand") {
       return renderBrandWithLogo(value);
     }
-    
+
     // Handle country fields
-    if (fieldType === 'country' && typeof value === 'object') {
+    if (fieldType === "country" && typeof value === "object") {
       return renderCountryFlags(value, fieldId);
     }
-    
+
     switch (fieldType) {
-      case 'file':
-        return Array.isArray(value) 
-          ? `${value.length} arquivo(s)` 
-          : '1 arquivo';
-      
-      case 'checkbox':
-      case 'multiselect':
-        return Array.isArray(value) 
-          ? value.join(', ') 
-          : value;
-      
-      case 'toggle':
-        return value ? 'Sim' : 'Não';
-      
-      case 'product':
+      case "file":
+        return Array.isArray(value)
+          ? `${value.length} arquivo(s)`
+          : "1 arquivo";
+
+      case "checkbox":
+      case "multiselect":
+        return Array.isArray(value) ? value.join(", ") : value;
+
+      case "toggle":
+        return value ? "Sim" : "Não";
+
+      case "product":
         try {
-          const productData = typeof value === 'string' ? JSON.parse(value) : value;
+          const productData =
+            typeof value === "string" ? JSON.parse(value) : value;
           const price = parseFloat(productData.price);
-          
+
           if (!isNaN(price)) {
-            return new Intl.NumberFormat('pt-BR', {
-              style: 'currency',
-              currency: 'BRL'
+            return new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL"
             }).format(price);
           }
         } catch (err) {
-          console.error('Error formatting price:', err);
+          console.error("Error formatting price:", err);
         }
         return value.toString();
 
-      case 'commission':
+      case "commission":
         const commission = parseFloat(value);
         return !isNaN(commission) ? `${commission}%` : value;
 
-      case 'brazilian_states':
-        if (typeof value === 'object') {
+      case "brazilian_states":
+        if (typeof value === "object") {
           const { state_name, city_names, state, cities } = value;
           if (Array.isArray(city_names) && city_names.length > 0) {
             return (
               <span className="text-gray-500 dark:text-gray-400 text-theme-sm">
-                {state_name} - {city_names.join(', ')}
+                {state_name} - {city_names.join(", ")}
               </span>
             );
           } else if (Array.isArray(cities) && cities.length > 0) {
             return (
               <span className="text-gray-500 dark:text-gray-400 text-theme-sm">
-                {state_name} - {cities.join(', ')}
+                {state_name} - {cities.join(", ")}
               </span>
             );
           }
           return (
             <span className="text-gray-500 dark:text-gray-400 text-theme-sm">
-              {state_name || state || '-'}
+              {state_name || state || "-"}
             </span>
           );
         }
         return value.toString();
-      
+
       default:
         return value.toString();
     }
@@ -126,33 +129,33 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
 
   // Render URL with favicon - without truncation
   const renderUrlWithFavicon = (url: string) => {
-    if (!url) return '-';
-    
+    if (!url) return "-";
+
     // Clean up the URL to remove protocol and trailing slash
     let displayUrl = url;
-    
+
     // Remove protocol (http:// or https://)
-    displayUrl = displayUrl.replace(/^https?:\/\//, '');
-    
+    displayUrl = displayUrl.replace(/^https?:\/\//, "");
+
     // Remove trailing slash
-    displayUrl = displayUrl.replace(/\/$/, '');
-    
+    displayUrl = displayUrl.replace(/\/$/, "");
+
     return (
       <div className="flex items-center gap-2">
-        <img 
-          src={getFaviconUrl(url)} 
-          alt="Site icon" 
+        <img
+          src={getFaviconUrl(url)}
+          alt="Site icon"
           width="24"
           height="24"
           className="flex-shrink-0"
           onError={(e) => {
             // Fallback if favicon fails to load
-            (e.target as HTMLImageElement).style.display = 'none';
+            (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-        <a 
-          href={url} 
-          target="_blank" 
+        <a
+          href={url}
+          target="_blank"
           rel="noopener noreferrer"
           className="font-semibold text-gray-800 text-theme-sm dark:text-white/90 hover:underline"
         >
@@ -166,25 +169,25 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
   const renderBrandWithLogo = (value: any) => {
     try {
       // Parse the brand data if it's a string
-      const brandData = typeof value === 'string' ? JSON.parse(value) : value;
-      
-      if (!brandData || !brandData.name) return '-';
-      
+      const brandData = typeof value === "string" ? JSON.parse(value) : value;
+
+      if (!brandData || !brandData.name) return "-";
+
       // If there's no logo, just return the name
       if (!brandData.logo) return brandData.name;
-      
+
       // Get the logo URL from storage
       const logoUrl = getBrandLogoUrl(brandData.logo);
-      
+
       return (
         <div className="flex items-center gap-2">
-          <img 
-            src={logoUrl} 
-            alt={`${brandData.name} logo`} 
+          <img
+            src={logoUrl}
+            alt={`${brandData.name} logo`}
             className="w-8 h-8 object-contain"
             onError={(e) => {
               // Fallback if logo fails to load
-              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).style.display = "none";
             }}
           />
           <span className="text-gray-800 dark:text-white/90 font-medium">
@@ -193,55 +196,63 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
         </div>
       );
     } catch (err) {
-      console.error('Error rendering brand:', err);
-      return value?.toString() || '-';
+      console.error("Error rendering brand:", err);
+      return value?.toString() || "-";
     }
   };
 
   // Get brand logo URL from storage
   const getBrandLogoUrl = (logoPath: string): string => {
-    if (!logoPath) return '';
-    
+    if (!logoPath) return "";
+
     try {
       const { data } = supabase.storage
-        .from('brand_logos')
+        .from("brand_logos")
         .getPublicUrl(logoPath);
-        
-      return data?.publicUrl || '';
+
+      return data?.publicUrl || "";
     } catch (err) {
-      console.error('Error getting brand logo URL:', err);
-      return '';
+      console.error("Error getting brand logo URL:", err);
+      return "";
     }
   };
 
   // Find field settings by field ID
   const getFieldSettings = (fieldId: string) => {
-    const field = fields.find(f => f.id === fieldId);
+    const field = fields.find((f) => f.id === fieldId);
     if (!field) return null;
     return field.form_field_settings;
   };
 
   // Render country flags with codes or percentages
-  const renderCountryFlags = (countries: Record<string, any>, fieldId: string) => {
-    if (!countries || Object.keys(countries).length === 0) return '-';
-    
+  const renderCountryFlags = (
+    countries: Record<string, any>,
+    fieldId: string
+  ) => {
+    if (!countries || Object.keys(countries).length === 0) return "-";
+
     // Check if we should show country codes instead of percentages
     const fieldSettings = getFieldSettings(fieldId);
     const showCountryCodes = fieldSettings?.show_percentage === true;
-    
+
     return (
       <div className="flex flex-wrap gap-2">
         {Object.entries(countries).map(([countryCode, percentage]) => (
-          <div key={countryCode} className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1">
-            <img 
+          <div
+            key={countryCode}
+            className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"
+          >
+            <img
               src={getFlagUrl(countryCode)}
               alt={countryCode}
               width="24"
               height="24"
-              className={`rounded-full ${countryCode === 'ROW' ? 'dark:invert' : ''}`}
+              className={`rounded-full ${
+                countryCode === "ROW" ? "dark:invert" : ""
+              }`}
               onError={(e) => {
                 // Fallback if flag fails to load
-                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).style.display = "none";
               }}
             />
             {showCountryCodes ? (
@@ -266,72 +277,62 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Data
-                </TableCell>
+                </th>
                 {fields.map((field) => (
-                  <TableCell
+                  <th
                     key={field.id}
-                    isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
                     {field.label}
-                  </TableCell>
+                  </th>
                 ))}
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Publisher
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                </th>
+                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Status
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                </th>
+                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Ações
-                </TableCell>
+                </th>
               </TableRow>
             </TableHeader>
-
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
+                  <td className="px-5 py-4 sm:px-6 text-start">
                     <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {formatDate(entry.created_at)}
                     </span>
-                  </TableCell>
-                  
+                  </td>
                   {fields.map((field) => (
-                    <TableCell 
+                    <td
                       key={field.id}
                       className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                     >
-                      {formatValue(entry.values[field.id], field.field_type, field.id)}
-                    </TableCell>
+                      {formatValue(
+                        entry.values[field.id],
+                        field.field_type,
+                        field.id
+                      )}
+                    </td>
                   ))}
-                  
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {entry.publisher ? (
                       <div>
-                        <div className="font-medium">{entry.publisher.first_name} {entry.publisher.last_name}</div>
+                        <div className="font-medium">
+                          {entry.publisher.first_name}{" "}
+                          {entry.publisher.last_name}
+                        </div>
                         <div className="text-xs">{entry.publisher.email}</div>
                       </div>
                     ) : (
-                      '-'
+                      "-"
                     )}
-                  </TableCell>
-                  
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     <Badge
                       color={
                         entry.status === "verificado"
@@ -347,9 +348,8 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
                         ? "Reprovado"
                         : "Em Análise"}
                     </Badge>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     <div className="flex gap-2">
                       {onEdit && (
                         <button
@@ -363,7 +363,11 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
                       {onDelete && (
                         <button
                           onClick={() => {
-                            if (confirm('Tem certeza que deseja excluir este registro?')) {
+                            if (
+                              confirm(
+                                "Tem certeza que deseja excluir este registro?"
+                              )
+                            ) {
                               onDelete(entry.id);
                             }
                           }}
@@ -374,18 +378,17 @@ export default function FormEntriesTable({ entries, fields, urlFields = [], onEd
                         </button>
                       )}
                     </div>
-                  </TableCell>
+                  </td>
                 </TableRow>
               ))}
-
               {entries.length === 0 && (
                 <TableRow>
-                  <TableCell 
-                    colSpan={fields.length + 4} 
+                  <td
+                    colSpan={fields.length + 4}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     Nenhum registro encontrado
-                  </TableCell>
+                  </td>
                 </TableRow>
               )}
             </TableBody>

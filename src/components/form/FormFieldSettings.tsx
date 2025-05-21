@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Modal } from '../ui/modal';
-import Button from '../ui/button/Button';
-import Input from './input/InputField';
-import Label from './Label';
-import Select from './Select';
-import Switch from './switch/Switch';
-import CountrySettings from './fields/settings/CountrySettings';
-import BrazilianStatesSettings from './fields/settings/BrazilianStatesSettings';
-import ProductSettings from './fields/settings/ProductSettings';
-import DateTimeSettings from './fields/settings/DateTimeSettings';
-import FileSettings from './fields/settings/FileSettings';
-import InputMaskSettings from './fields/settings/InputMaskSettings';
-import OptionsSettings from './fields/settings/OptionsSettings';
-import ButtonBuySettings from './fields/settings/ButtonBuySettings';
-import BrandSettings from './fields/settings/BrandSettings';
-import ApiFieldSettings from './fields/settings/ApiFieldSettings';
-import UrlFieldSettings from './fields/settings/UrlFieldSettings';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect } from "react";
+import { Modal } from "../ui/modal";
+import Button from "../ui/button/Button";
+import Input from "./input/InputField";
+import Label from "./Label";
+import Select from "./Select";
+import Switch from "./switch/Switch";
+import CountrySettings from "./fields/settings/CountrySettings";
+import BrazilianStatesSettings from "./fields/settings/BrazilianStatesSettings";
+import ProductSettings from "./fields/settings/ProductSettings";
+import DateTimeSettings from "./fields/settings/DateTimeSettings";
+import FileSettings from "./fields/settings/FileSettings";
+import InputMaskSettings from "./fields/settings/InputMaskSettings";
+import OptionsSettings from "./fields/settings/OptionsSettings";
+import ButtonBuySettings from "./fields/settings/ButtonBuySettings";
+import BrandSettings from "./fields/settings/BrandSettings";
+import ApiFieldSettings from "./fields/settings/ApiFieldSettings";
+import UrlFieldSettings from "./fields/settings/UrlFieldSettings";
+import { supabase } from "../../lib/supabase";
 
 interface FormField {
   id: string;
@@ -85,7 +85,12 @@ interface Option {
   value: string;
 }
 
-export default function FormFieldSettings({ field, isOpen, onClose, onSave }: FormFieldSettingsProps) {
+export default function FormFieldSettings({
+  field,
+  isOpen,
+  onClose,
+  onSave
+}: FormFieldSettingsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [options, setOptions] = useState<Option[]>(field.options || []);
@@ -98,9 +103,10 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
     is_required: field.is_required,
     no_duplicates: false,
     visibility: "visible",
-    validation_type: field.field_type === 'url' ? 'url' : undefined,
-    validation_regex: field.field_type === 'url' ? '^https?://' : undefined,
-    field_identifier: field.field_type === 'button_buy' ? 'botao_comprar' : field.css_class,
+    validation_type: field.field_type === "url" ? "url" : undefined,
+    validation_regex: field.field_type === "url" ? "^https?://" : undefined,
+    field_identifier:
+      field.field_type === "button_buy" ? "botao_comprar" : field.css_class,
     input_mask_enabled: false,
     input_mask_pattern: "",
     columns: 1,
@@ -140,28 +146,27 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
       setError("");
 
       const { data: fieldSettings, error: settingsError } = await supabase
-        .from('form_field_settings')
-        .select('*')
-        .eq('field_id', field.id)
+        .from("form_field_settings")
+        .select("*")
+        .eq("field_id", field.id)
         .maybeSingle();
 
       if (settingsError) throw settingsError;
 
       if (fieldSettings) {
         setSettings(fieldSettings);
-      } else if (field.field_type === 'button_buy') {
+      } else if (field.field_type === "button_buy") {
         // Set default field identifier for button_buy field type
-        setSettings(prev => ({
+        setSettings((prev) => ({
           ...prev,
-          field_identifier: 'botao_comprar'
+          field_identifier: "botao_comprar"
         }));
       }
 
       setOptions(field.options || []);
-      
     } catch (err) {
-      console.error('Error loading field settings:', err);
-      setError('Error loading field settings');
+      console.error("Error loading field settings:", err);
+      setError("Error loading field settings");
     } finally {
       setLoading(false);
     }
@@ -169,7 +174,7 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
@@ -177,11 +182,13 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
       // Log the settings being saved
       console.log("Saving settings:", settings);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       const { error: updateError } = await supabase
-        .from('form_field_settings')
+        .from("form_field_settings")
         .upsert({
           ...settings,
           field_id: field.id
@@ -204,7 +211,10 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
       const updatedField: FormField = {
         ...field,
         label: settings.label_text,
-        description: field.field_type === 'section' ? field.description : settings.help_text,
+        description:
+          field.field_type === "section"
+            ? field.description
+            : settings.help_text,
         placeholder: settings.placeholder_text,
         is_required: settings.is_required,
         width,
@@ -214,7 +224,9 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
           ...field.validation_rules,
           type: settings.validation_type,
           pattern: settings.validation_regex,
-          input_mask: settings.input_mask_enabled ? settings.input_mask_pattern : undefined,
+          input_mask: settings.input_mask_enabled
+            ? settings.input_mask_pattern
+            : undefined,
           max_selections: settings.max_selections,
           inline_layout: settings.inline_layout,
           allowed_extensions: settings.allowed_extensions,
@@ -238,21 +250,16 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
 
       onSave(updatedField);
       onClose();
-      
     } catch (err) {
-      console.error('Error saving field settings:', err);
-      setError('Error saving field settings');
+      console.error("Error saving field settings:", err);
+      setError("Error saving field settings");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose}
-      className="max-w-[900px] m-4"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[900px] m-4">
       <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
         <div className="mb-6">
           <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
@@ -272,11 +279,15 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label>Label Text <span className="text-error-500">*</span></Label>
+              <Label>
+                Label Text <span className="text-error-500">*</span>
+              </Label>
               <Input
                 type="text"
                 value={settings.label_text}
-                onChange={(e) => setSettings({ ...settings, label_text: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, label_text: e.target.value })
+                }
                 required
               />
             </div>
@@ -286,11 +297,17 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
               <Input
                 type="text"
                 value={settings.marketplace_label || ""}
-                onChange={(e) => setSettings({ ...settings, marketplace_label: e.target.value })}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    marketplace_label: e.target.value
+                  })
+                }
                 placeholder="Custom label for marketplace table"
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Custom label to display in marketplace tables (leave empty to use default label)
+                Custom label to display in marketplace tables (leave empty to
+                use default label)
               </p>
             </div>
 
@@ -299,8 +316,14 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
               <Input
                 type="text"
                 value={settings.field_identifier || ""}
-                onChange={(e) => setSettings({ ...settings, field_identifier: e.target.value })}
-                placeholder={field.field_type === 'button_buy' ? "botao_comprar" : "website_url"}
+                onChange={(e) =>
+                  setSettings({ ...settings, field_identifier: e.target.value })
+                }
+                placeholder={
+                  field.field_type === "button_buy"
+                    ? "botao_comprar"
+                    : "website_url"
+                }
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Um identificador único para este campo (opcional)
@@ -315,7 +338,12 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
                   { value: "hidden", label: "Hidden" }
                 ]}
                 value={settings.label_visibility}
-                onChange={(value) => setSettings({ ...settings, label_visibility: value as "visible" | "hidden" })}
+                onChange={(value) =>
+                  setSettings({
+                    ...settings,
+                    label_visibility: value as "visible" | "hidden"
+                  })
+                }
               />
             </div>
 
@@ -328,35 +356,53 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
                   { value: "3", label: "3 Columns (33% width)" }
                 ]}
                 value={settings.columns?.toString() || "1"}
-                onChange={(value) => setSettings({ ...settings, columns: parseInt(value) as 1 | 2 | 3 })}
+                onChange={(value) =>
+                  setSettings({
+                    ...settings,
+                    columns: parseInt(value) as 1 | 2 | 3
+                  })
+                }
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Define how many columns this field should span
               </p>
             </div>
 
-            {field.field_type !== 'section' && field.field_type !== 'html' && field.field_type !== 'button_buy' && (
-              <>
-                <div>
-                  <Label>Placeholder Text</Label>
-                  <Input
-                    type="text"
-                    value={settings.placeholder_text || ""}
-                    onChange={(e) => setSettings({ ...settings, placeholder_text: e.target.value })}
-                    placeholder={field.field_type === 'url' ? 'https://example.com' : 'Enter placeholder text'}
-                  />
-                </div>
+            {field.field_type !== "section" &&
+              field.field_type !== "html" &&
+              field.field_type !== "button_buy" && (
+                <>
+                  <div>
+                    <Label>Placeholder Text</Label>
+                    <Input
+                      type="text"
+                      value={settings.placeholder_text || ""}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          placeholder_text: e.target.value
+                        })
+                      }
+                      placeholder={
+                        field.field_type === "url"
+                          ? "https://example.com"
+                          : "Enter placeholder text"
+                      }
+                    />
+                  </div>
 
-                <div>
-                  <Label>Help Text</Label>
-                  <Input
-                    type="text"
-                    value={settings.help_text || ""}
-                    onChange={(e) => setSettings({ ...settings, help_text: e.target.value })}
-                  />
-                </div>
-              </>
-            )}
+                  <div>
+                    <Label>Help Text</Label>
+                    <Input
+                      type="text"
+                      value={settings.help_text || ""}
+                      onChange={(e) =>
+                        setSettings({ ...settings, help_text: e.target.value })
+                      }
+                    />
+                  </div>
+                </>
+              )}
 
             <div>
               <Label>Visibility</Label>
@@ -368,11 +414,20 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
                   { value: "marketplace", label: "Marketplace Only" }
                 ]}
                 value={settings.visibility}
-                onChange={(value) => setSettings({ ...settings, visibility: value as "visible" | "hidden" | "admin" | "marketplace" })}
+                onChange={(value) =>
+                  setSettings({
+                    ...settings,
+                    visibility: value as
+                      | "visible"
+                      | "hidden"
+                      | "admin"
+                      | "marketplace"
+                  })
+                }
               />
             </div>
 
-            {field.field_type === 'url' && (
+            {field.field_type === "url" && (
               <div>
                 <Label>URL Validation</Label>
                 <Select
@@ -381,11 +436,14 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
                     { value: "any_url", label: "Allow any URL" }
                   ]}
                   value={settings.validation_type}
-                  onChange={(value) => setSettings({
-                    ...settings,
-                    validation_type: value,
-                    validation_regex: value === 'url' ? '^https?://' : undefined
-                  })}
+                  onChange={(value) =>
+                    setSettings({
+                      ...settings,
+                      validation_type: value,
+                      validation_regex:
+                        value === "url" ? "^https?://" : undefined
+                    })
+                  }
                 />
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Choose how URLs should be validated in this field
@@ -393,43 +451,45 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
               </div>
             )}
 
-            {field.field_type === 'text' && (
-              <InputMaskSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {field.field_type === "text" && (
+              <InputMaskSettings settings={settings} onChange={setSettings} />
             )}
 
-            {field.field_type !== 'section' && field.field_type !== 'html' && field.field_type !== 'button_buy' && (
-              <div className="space-y-4 md:col-span-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    label="Required Field"
-                    checked={settings.is_required}
-                    onChange={(checked) => setSettings({ ...settings, is_required: checked })}
-                  />
+            {field.field_type !== "section" &&
+              field.field_type !== "html" &&
+              field.field_type !== "button_buy" && (
+                <div className="space-y-4 md:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      label="Required Field"
+                      checked={settings.is_required}
+                      onChange={(checked) =>
+                        setSettings({ ...settings, is_required: checked })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      label="No Duplicates"
+                      checked={settings.no_duplicates}
+                      onChange={(checked) =>
+                        setSettings({ ...settings, no_duplicates: checked })
+                      }
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    label="No Duplicates"
-                    checked={settings.no_duplicates}
-                    onChange={(checked) => setSettings({ ...settings, no_duplicates: checked })}
-                  />
-                </div>
-              </div>
+            {field.field_type === "file" && (
+              <FileSettings settings={settings} onChange={setSettings} />
             )}
 
-            {field.field_type === 'file' && (
-              <FileSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
-            )}
-
-            {(field.field_type === 'select' || field.field_type === 'multiselect' || 
-              field.field_type === 'radio' || field.field_type === 'checkbox') && (
-              <OptionsSettings 
+            {(field.field_type === "select" ||
+              field.field_type === "multiselect" ||
+              field.field_type === "radio" ||
+              field.field_type === "checkbox") && (
+              <OptionsSettings
                 settings={settings}
                 options={options}
                 onChange={setSettings}
@@ -438,76 +498,58 @@ export default function FormFieldSettings({ field, isOpen, onClose, onSave }: Fo
               />
             )}
 
-            {field.field_type === 'product' && (
-              <ProductSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {field.field_type === "product" && (
+              <ProductSettings settings={settings} onChange={setSettings} />
             )}
 
-            {(field.field_type === 'date' || field.field_type === 'time') && (
-              <DateTimeSettings 
+            {(field.field_type === "date" || field.field_type === "time") && (
+              <DateTimeSettings
                 settings={settings}
                 onChange={setSettings}
                 type={field.field_type}
               />
             )}
 
-            {field.field_type === 'country' && (
-              <CountrySettings 
+            {field.field_type === "country" && (
+              <CountrySettings settings={settings} onChange={setSettings} />
+            )}
+
+            {field.field_type === "brazilian_states" && (
+              <BrazilianStatesSettings
                 settings={settings}
                 onChange={setSettings}
               />
             )}
 
-            {field.field_type === 'brazilian_states' && (
-              <BrazilianStatesSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {field.field_type === "button_buy" && (
+              <ButtonBuySettings settings={settings} onChange={setSettings} />
             )}
 
-            {field.field_type === 'button_buy' && (
-              <ButtonBuySettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {field.field_type === "brand" && (
+              <BrandSettings settings={settings} onChange={setSettings} />
             )}
 
-            {field.field_type === 'brand' && (
-              <BrandSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {[
+              "moz_da",
+              "semrush_as",
+              "ahrefs_dr",
+              "ahrefs_traffic",
+              "similarweb_traffic",
+              "google_traffic"
+            ].includes(field.field_type) && (
+              <ApiFieldSettings settings={settings} onChange={setSettings} />
             )}
 
-            {['moz_da', 'semrush_as', 'ahrefs_dr', 'ahrefs_traffic', 'similarweb_traffic', 'google_traffic'].includes(field.field_type) && (
-              <ApiFieldSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
-            )}
-
-            {field.field_type === 'url' && (
-              <UrlFieldSettings 
-                settings={settings}
-                onChange={setSettings}
-              />
+            {field.field_type === "url" && (
+              <UrlFieldSettings settings={settings} onChange={setSettings} />
             )}
           </div>
 
           <div className="flex justify-end gap-3 pt-6">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={onClose}
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-            >
+            <Button disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useSidebar } from "../context/SidebarContext";
-import { useLogos } from "../hooks/useLogos";
+import { useSidebar } from "../../context/SidebarContext";
+import { useLogos } from "../../hooks/useLogos";
 import HeaderLogo from "./HeaderLogo";
 import HeaderSearch from "./HeaderSearch";
 import HeaderActions from "./HeaderActions";
@@ -92,11 +92,11 @@ const Header: React.FC<HeaderProps> = ({ onToggle }) => {
 
           <HeaderSearch />
         </div>
-        
+
         <HeaderActions isOpen={isApplicationMenuOpen} />
       </div>
     </header>
   );
-}
+};
 
 export default Header;

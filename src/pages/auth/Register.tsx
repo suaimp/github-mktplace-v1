@@ -8,18 +8,17 @@ import Select from "../../components/form/Select";
 import PhoneInput from "../../components/form/group-input/PhoneInput";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
-import { Link } from "react-router";
 import { supabase } from "../../lib/supabase";
 import { EyeIcon, EyeCloseIcon } from "../../icons";
 
 const accountTypes = [
-  { 
-    value: "advertiser", 
+  {
+    value: "advertiser",
     label: "Anunciante",
     description: "Crie e gerencie campanhas publicitárias"
   },
-  { 
-    value: "publisher", 
+  {
+    value: "publisher",
     label: "Publisher",
     description: "Monetize seu conteúdo com anúncios"
   }
@@ -45,7 +44,7 @@ const brazilianPhoneCodes = [
   { code: "PE", label: "+51" },
   { code: "UY", label: "+598" },
   { code: "PY", label: "+595" },
-  { code: "BO", label: "+591" },
+  { code: "BO", label: "+591" }
 ];
 
 interface ValidationErrors {
@@ -73,7 +72,9 @@ export default function Register() {
   const [phone, setPhone] = useState("");
   const [accountType, setAccountType] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
 
   const validatePassword = (password: string): boolean => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -82,7 +83,13 @@ export default function Register() {
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     const hasMinLength = password.length >= 8;
 
-    return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar && hasMinLength;
+    return (
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumbers &&
+      hasSpecialChar &&
+      hasMinLength
+    );
   };
 
   const validateForm = (): boolean => {
@@ -111,7 +118,8 @@ export default function Register() {
       errors.password = "Senha é obrigatória";
       isValid = false;
     } else if (!validatePassword(password)) {
-      errors.password = "A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais";
+      errors.password =
+        "A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais";
       isValid = false;
     }
 
@@ -144,7 +152,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (!validateForm()) {
         return;
@@ -154,7 +162,10 @@ export default function Register() {
       setError("");
 
       // Create auth user first
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const {
+        data: { user },
+        error: signUpError
+      } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
@@ -170,23 +181,24 @@ export default function Register() {
 
       // Create platform user
       const { error: userError } = await supabase
-        .from('platform_users')
-        .insert([{
-          id: user.id,
-          email: email.trim(),
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          phone: phone.trim(),
-          role: accountType,
-          terms_accepted: true,
-          terms_accepted_at: new Date().toISOString()
-        }]);
+        .from("platform_users")
+        .insert([
+          {
+            id: user.id,
+            email: email.trim(),
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            phone: phone.trim(),
+            role: accountType,
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString()
+          }
+        ]);
 
       if (userError) throw userError;
 
       // Redirect to email verification page
       navigate("/verify-email");
-      
     } catch (err: any) {
       console.error("Erro ao criar conta:", err);
       setError(err.message || "Erro ao criar conta");
@@ -224,8 +236,10 @@ export default function Register() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
-                      <Label>Nome <span className="text-error-500">*</span></Label>
-                      <Input 
+                      <Label>
+                        Nome <span className="text-error-500">*</span>
+                      </Label>
+                      <Input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
@@ -236,8 +250,10 @@ export default function Register() {
                     </div>
 
                     <div>
-                      <Label>Sobrenome <span className="text-error-500">*</span></Label>
-                      <Input 
+                      <Label>
+                        Sobrenome <span className="text-error-500">*</span>
+                      </Label>
+                      <Input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
@@ -249,8 +265,10 @@ export default function Register() {
                   </div>
 
                   <div>
-                    <Label>Email <span className="text-error-500">*</span></Label>
-                    <Input 
+                    <Label>
+                      Email <span className="text-error-500">*</span>
+                    </Label>
+                    <Input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -261,9 +279,11 @@ export default function Register() {
                   </div>
 
                   <div>
-                    <Label>Senha <span className="text-error-500">*</span></Label>
+                    <Label>
+                      Senha <span className="text-error-500">*</span>
+                    </Label>
                     <div className="relative">
-                      <Input 
+                      <Input
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -286,9 +306,11 @@ export default function Register() {
                   </div>
 
                   <div>
-                    <Label>Confirmar Senha <span className="text-error-500">*</span></Label>
+                    <Label>
+                      Confirmar Senha <span className="text-error-500">*</span>
+                    </Label>
                     <div className="relative">
-                      <Input 
+                      <Input
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -298,7 +320,9 @@ export default function Register() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
                       >
                         {showConfirmPassword ? (
@@ -311,7 +335,9 @@ export default function Register() {
                   </div>
 
                   <div>
-                    <Label>Telefone <span className="text-error-500">*</span></Label>
+                    <Label>
+                      Telefone <span className="text-error-500">*</span>
+                    </Label>
                     <PhoneInput
                       countries={brazilianPhoneCodes}
                       value={phone}
@@ -319,12 +345,16 @@ export default function Register() {
                       placeholder="(99) 99999-9999"
                     />
                     {validationErrors.phone && (
-                      <p className="mt-1 text-sm text-error-500">{validationErrors.phone}</p>
+                      <p className="mt-1 text-sm text-error-500">
+                        {validationErrors.phone}
+                      </p>
                     )}
                   </div>
 
                   <div>
-                    <Label>Tipo de Conta <span className="text-error-500">*</span></Label>
+                    <Label>
+                      Tipo de Conta <span className="text-error-500">*</span>
+                    </Label>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {accountTypes.map((type) => (
                         <div
@@ -359,7 +389,9 @@ export default function Register() {
                       ))}
                     </div>
                     {validationErrors.accountType && (
-                      <p className="mt-1 text-sm text-error-500">{validationErrors.accountType}</p>
+                      <p className="mt-1 text-sm text-error-500">
+                        {validationErrors.accountType}
+                      </p>
                     )}
                   </div>
 
@@ -371,29 +403,37 @@ export default function Register() {
                     />
                     <span className="block text-sm text-gray-500 dark:text-gray-400">
                       Li e aceito os{" "}
-                      <Link to="/terms" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                      <Link
+                        to="/terms"
+                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                      >
                         Termos de Uso
                       </Link>{" "}
                       e a{" "}
-                      <Link to="/privacy" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                      <Link
+                        to="/privacy"
+                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                      >
                         Política de Privacidade
                       </Link>
                     </span>
                   </div>
                   {validationErrors.terms && (
-                    <p className="text-sm text-error-500">{validationErrors.terms}</p>
+                    <p className="text-sm text-error-500">
+                      {validationErrors.terms}
+                    </p>
                   )}
 
-                  <Button 
-                    className="w-full"
-                    disabled={loading}
-                  >
+                  <Button className="w-full" disabled={loading}>
                     {loading ? "Criando conta..." : "Criar Conta"}
                   </Button>
 
                   <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
                     Já tem uma conta?{" "}
-                    <Link to="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                    <Link
+                      to="/"
+                      className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                    >
                       Fazer Login
                     </Link>
                   </p>

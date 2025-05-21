@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import Button from '../ui/button/Button';
-import { CodeIcon } from '../../icons';
+import { useState } from "react";
+import Button from "../ui/button/Button";
+import { CodeIcon } from "../../icons";
 
 interface FormShortcodesProps {
   formId: string;
@@ -17,24 +17,27 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
   const userEntriesShortcode = `[user_form_entries id="${formId}"]`;
   const marketplaceShortcode = `[marketplace id="${formId}"]`;
 
-  const handleCopy = async (shortcode: string, type: 'form' | 'entries' | 'user_entries' | 'marketplace') => {
+  const handleCopy = async (
+    shortcode: string,
+    type: "form" | "entries" | "user_entries" | "marketplace"
+  ) => {
     try {
       await navigator.clipboard.writeText(shortcode);
-      if (type === 'form') {
+      if (type === "form") {
         setCopiedForm(true);
         setTimeout(() => setCopiedForm(false), 2000);
-      } else if (type === 'entries') {
+      } else if (type === "entries") {
         setCopiedEntries(true);
         setTimeout(() => setCopiedEntries(false), 2000);
-      } else if (type === 'user_entries') {
+      } else if (type === "user_entries") {
         setCopiedUserEntries(true);
         setTimeout(() => setCopiedUserEntries(false), 2000);
-      } else if (type === 'marketplace') {
+      } else if (type === "marketplace") {
         setCopiedMarketplace(true);
         setTimeout(() => setCopiedMarketplace(false), 2000);
       }
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
@@ -45,7 +48,7 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
           {formShortcode}
         </div>
         <Button
-          onClick={() => handleCopy(formShortcode, 'form')}
+          onClick={() => handleCopy(formShortcode, "form")}
           variant="outline"
           className="min-w-[100px]"
         >
@@ -59,7 +62,7 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
           {entriesShortcode}
         </div>
         <Button
-          onClick={() => handleCopy(entriesShortcode, 'entries')}
+          onClick={() => handleCopy(entriesShortcode, "entries")}
           variant="outline"
           className="min-w-[100px]"
         >
@@ -73,7 +76,7 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
           {userEntriesShortcode}
         </div>
         <Button
-          onClick={() => handleCopy(userEntriesShortcode, 'user_entries')}
+          onClick={() => handleCopy(userEntriesShortcode, "user_entries")}
           variant="outline"
           className="min-w-[100px]"
         >
@@ -87,7 +90,7 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
           {marketplaceShortcode}
         </div>
         <Button
-          onClick={() => handleCopy(marketplaceShortcode, 'marketplace')}
+          onClick={() => handleCopy(marketplaceShortcode, "marketplace")}
           variant="outline"
           className="min-w-[100px]"
         >
@@ -95,14 +98,27 @@ export default function FormShortcodes({ formId }: FormShortcodesProps) {
           {copiedMarketplace ? "Copiado!" : "Copiar"}
         </Button>
       </div>
-      
+
       <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        <p><strong>Shortcodes:</strong></p>
+        <p>
+          <strong>Shortcodes:</strong>
+        </p>
         <ul className="list-disc pl-5 mt-1">
-          <li><code>[form id="..."]</code> - Exibe o formulário para preenchimento</li>
-          <li><code>[form_entries id="..."]</code> - Exibe todas as entradas do formulário</li>
-          <li><code>[user_form_entries id="..."]</code> - Exibe apenas as entradas enviadas pelo usuário atual</li>
-          <li><code>[marketplace id="..."]</code> - Exibe as entradas verificadas em formato de marketplace</li>
+          <li>
+            <code>[form id="..."]</code> - Exibe o formulário para preenchimento
+          </li>
+          <li>
+            <code>[form_entries id="..."]</code> - Exibe todas as entradas do
+            formulário
+          </li>
+          <li>
+            <code>[user_form_entries id="..."]</code> - Exibe apenas as entradas
+            enviadas pelo usuário atual
+          </li>
+          <li>
+            <code>[marketplace id="..."]</code> - Exibe as entradas verificadas
+            em formato de marketplace
+          </li>
         </ul>
       </div>
     </div>

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { supabase } from '../../lib/supabase';
-import Button from '../../components/ui/button/Button';
-import Input from '../../components/form/input/InputField';
-import Label from '../../components/form/Label';
-import Select from '../../components/form/Select';
+import { supabase } from "../../lib/supabase";
+import Button from "../../components/ui/button/Button";
+import Input from "../../components/form/input/InputField";
+import Label from "../../components/form/Label";
+import Select from "../../components/form/Select";
 
 interface Form {
   id: string;
@@ -53,15 +53,15 @@ export default function FormSettings() {
   async function loadPages() {
     try {
       const { data: pages, error } = await supabase
-        .from('pages')
-        .select('id, title, slug, status')
-        .eq('status', 'published')
-        .order('title', { ascending: true });
+        .from("pages")
+        .select("id, title, slug, status")
+        .eq("status", "published")
+        .order("title", { ascending: true });
 
       if (error) throw error;
       setPages(pages || []);
     } catch (err) {
-      console.error('Error loading pages:', err);
+      console.error("Error loading pages:", err);
     }
   }
 
@@ -71,9 +71,9 @@ export default function FormSettings() {
       setError("");
 
       const { data: form, error } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('id', id)
+        .from("forms")
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) throw error;
@@ -89,11 +89,10 @@ export default function FormSettings() {
           no_data_message: form.no_data_message || "Nenhum registro encontrado"
         });
       }
-      
     } catch (err) {
-      console.error('Error loading form settings:', err);
-      setError('Error loading form settings');
-      navigate('/forms');
+      console.error("Error loading form settings:", err);
+      setError("Error loading form settings");
+      navigate("/forms");
     } finally {
       setLoading(false);
     }
@@ -101,17 +100,19 @@ export default function FormSettings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
       setSuccess(false);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       const { error: updateError } = await supabase
-        .from('forms')
+        .from("forms")
         .update({
           title: settings.title.trim(),
           description: settings.description.trim() || null,
@@ -119,23 +120,23 @@ export default function FormSettings() {
           success_message: settings.success_message.trim() || null,
           failure_message: settings.failure_message.trim() || null,
           redirect_page: settings.redirect_page || null,
-          no_data_message: settings.no_data_message.trim() || "Nenhum registro encontrado",
+          no_data_message:
+            settings.no_data_message.trim() || "Nenhum registro encontrado",
           updated_by: user.id
         })
-        .eq('id', id);
+        .eq("id", id);
 
       if (updateError) throw updateError;
 
       setSuccess(true);
-      
+
       // Navigate back after short delay
       setTimeout(() => {
         navigate(`/forms/edit/${id}`);
       }, 1500);
-
     } catch (err) {
-      console.error('Error saving form settings:', err);
-      setError('Error saving form settings');
+      console.error("Error saving form settings:", err);
+      setError("Error saving form settings");
     } finally {
       setLoading(false);
     }
@@ -176,7 +177,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.title}
-              onChange={(e) => setSettings({ ...settings, title: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, title: e.target.value })
+              }
               required
             />
           </div>
@@ -186,7 +189,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.description}
-              onChange={(e) => setSettings({ ...settings, description: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, description: e.target.value })
+              }
             />
           </div>
 
@@ -195,7 +200,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.submit_button_text}
-              onChange={(e) => setSettings({ ...settings, submit_button_text: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, submit_button_text: e.target.value })
+              }
               required
             />
           </div>
@@ -205,7 +212,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.success_message}
-              onChange={(e) => setSettings({ ...settings, success_message: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, success_message: e.target.value })
+              }
               placeholder="Form submitted successfully!"
             />
           </div>
@@ -215,7 +224,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.failure_message}
-              onChange={(e) => setSettings({ ...settings, failure_message: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, failure_message: e.target.value })
+              }
               placeholder="Error submitting form. Please try again."
             />
           </div>
@@ -225,7 +236,9 @@ export default function FormSettings() {
             <Input
               type="text"
               value={settings.no_data_message}
-              onChange={(e) => setSettings({ ...settings, no_data_message: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, no_data_message: e.target.value })
+              }
               placeholder="No entries found"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -238,13 +251,15 @@ export default function FormSettings() {
             <Select
               options={[
                 { value: "", label: "None (show success message)" },
-                ...pages.map(page => ({
+                ...pages.map((page) => ({
                   value: page.slug,
                   label: page.title
                 }))
               ]}
               value={settings.redirect_page}
-              onChange={(value) => setSettings({ ...settings, redirect_page: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, redirect_page: value })
+              }
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Select a page to redirect to after successful form submission
@@ -256,13 +271,10 @@ export default function FormSettings() {
               variant="outline"
               onClick={() => navigate(`/forms/edit/${id}`)}
             >
-              Cancel
+              Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save Settings"}
+            <Button disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </form>

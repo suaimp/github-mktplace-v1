@@ -6,9 +6,8 @@ import { supabase } from "../../lib/supabase";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
@@ -48,24 +47,23 @@ export default function Pages() {
       setError("");
 
       const { data: pages, error } = await supabase
-        .from('pages')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("pages")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       setPages(pages || []);
-      
     } catch (err) {
-      console.error('Error loading pages:', err);
-      setError('Error loading page list');
+      console.error("Error loading pages:", err);
+      setError("Error loading page list");
     } finally {
       setLoading(false);
     }
   }
 
   const handleCreate = () => {
-    navigate('/pages/new');
+    navigate("/pages/new");
   };
 
   const handleEdit = (page: Page) => {
@@ -73,7 +71,11 @@ export default function Pages() {
   };
 
   const handleDelete = async (pageId: string) => {
-    if (!confirm("Are you sure you want to delete this page? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this page? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -82,31 +84,27 @@ export default function Pages() {
       setError("");
       setSuccess("");
 
-      const { error } = await supabase
-        .from('pages')
-        .delete()
-        .eq('id', pageId);
+      const { error } = await supabase.from("pages").delete().eq("id", pageId);
 
       if (error) throw error;
 
       setSuccess("Page deleted successfully");
       await loadPages();
-
     } catch (err) {
-      console.error('Error deleting page:', err);
-      setError('Error deleting page');
+      console.error("Error deleting page:", err);
+      setError("Error deleting page");
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(date).toLocaleString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
@@ -119,7 +117,7 @@ export default function Pages() {
   }
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permission="pages.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
@@ -127,10 +125,7 @@ export default function Pages() {
         </div>
       }
     >
-      <PageMeta
-        title="Pages | Admin Panel"
-        description="Manage system pages"
-      />
+      <PageMeta title="Pages | Admin Panel" description="Manage system pages" />
       <PageBreadcrumb pageTitle="Pages" />
 
       {error && (
@@ -146,9 +141,7 @@ export default function Pages() {
       )}
 
       <div className="mb-6">
-        <Button onClick={handleCreate}>
-          New Page
-        </Button>
+        <Button onClick={handleCreate}>New Page</Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -157,57 +150,39 @@ export default function Pages() {
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Title
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  </th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Slug
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  </th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Status
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  </th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Visibility
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  </th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Last Update
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
+                  </th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Actions
-                  </TableCell>
+                  </th>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {pages.map((page) => (
                   <TableRow key={page.id}>
-                    <TableCell className="px-5 py-4 sm:px-6 text-start">
+                    <td className="px-5 py-4 sm:px-6 text-start">
                       <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {page.title}
                       </span>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       {page.slug}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge
                         color={
                           page.status === "published"
@@ -223,8 +198,8 @@ export default function Pages() {
                           ? "Archived"
                           : "Draft"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge
                         color={
                           page.visible_to === "all"
@@ -240,11 +215,11 @@ export default function Pages() {
                           ? "Publishers"
                           : "Advertisers"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                       {formatDate(page.updated_at)}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(page)}
@@ -261,15 +236,18 @@ export default function Pages() {
                           <TrashBinIcon className="w-5 h-5" />
                         </button>
                       </div>
-                    </TableCell>
+                    </td>
                   </TableRow>
                 ))}
 
                 {pages.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No pages found
-                    </TableCell>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
+                      Nenhuma página encontrada.
+                    </td>
                   </TableRow>
                 )}
               </TableBody>

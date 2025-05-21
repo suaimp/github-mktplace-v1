@@ -1,7 +1,7 @@
 import { useDrag, useDrop } from "react-dnd";
 import { useRef, useState } from "react";
-import * as Icons from "../../icons";
 import FormFieldSettings from "./FormFieldSettings";
+import * as Icons from "../../icons";
 
 interface FormField {
   id: string;
@@ -41,7 +41,6 @@ export default function FormField({
 }: FormFieldProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
   const [{ handlerId }, drop] = useDrop({
     accept: "form-field",

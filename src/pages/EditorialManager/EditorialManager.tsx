@@ -3,15 +3,6 @@ import { useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { supabase } from "../../lib/supabase";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../../components/ui/table";
-import Badge from "../../components/ui/badge/Badge";
-import { PencilIcon, TrashBinIcon, EyeIcon } from "../../icons";
 import PermissionGuard from "../../components/auth/PermissionGuard";
 import EntryViewModal from "../../components/EditorialManager/EntryViewModal";
 import EntryEditModal from "../../components/EditorialManager/EntryEditModal";
@@ -95,46 +86,49 @@ export default function EditorialManager() {
 
   async function checkUserRole() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('id', user.id)
+        .from("admins")
+        .select("id")
+        .eq("id", user.id)
         .maybeSingle();
 
       setIsAdmin(!!adminData);
     } catch (err) {
-      console.error('Error checking user role:', err);
+      console.error("Error checking user role:", err);
     }
   }
 
   async function loadForms() {
     try {
       const { data, error } = await supabase
-        .from('forms')
-        .select('id, title')
-        .order('title', { ascending: true });
+        .from("forms")
+        .select("id, title")
+        .order("title", { ascending: true });
 
       if (error) throw error;
       setForms(data || []);
-      
+
       // Set the first form as selected by default if available
       if (data && data.length > 0) {
         setSelectedFormId(data[0].id);
       }
     } catch (err) {
-      console.error('Error loading forms:', err);
-      setError('Error loading forms');
+      console.error("Error loading forms:", err);
+      setError("Error loading forms");
     }
   }
 
   async function loadFormFields(formId: string) {
     try {
       const { data, error } = await supabase
-        .from('form_fields')
-        .select(`
+        .from("form_fields")
+        .select(
+          `
           *,
           form_field_settings (
             no_duplicates,
@@ -142,14 +136,15 @@ export default function EditorialManager() {
             visibility,
             show_percentage
           )
-        `)
-        .eq('form_id', formId)
-        .order('position', { ascending: true });
+        `
+        )
+        .eq("form_id", formId)
+        .order("position", { ascending: true });
 
       if (error) throw error;
       setFields(data || []);
     } catch (err) {
-      console.error('Error loading form fields:', err);
+      console.error("Error loading form fields:", err);
     }
   }
 
@@ -160,8 +155,9 @@ export default function EditorialManager() {
 
       // Build the query
       let query = supabase
-        .from('form_entries')
-        .select(`
+        .from("form_entries")
+        .select(
+          `
           id,
           form_id,
           status,
@@ -179,12 +175,13 @@ export default function EditorialManager() {
             created_at,
             created_by
           )
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       // Apply form filter if selected
       if (selectedFormId) {
-        query = query.eq('form_id', selectedFormId);
+        query = query.eq("form_id", selectedFormId);
       }
 
       const { data, error } = await query;
@@ -192,57 +189,60 @@ export default function EditorialManager() {
       if (error) throw error;
 
       // Process entries to format values
-      const processedEntries = await Promise.all((data || []).map(async (entry: any) => {
-        const values: Record<string, any> = {};
-        
-        entry.values.forEach((value: any) => {
-          values[value.field_id] = value.value_json !== null ? value.value_json : value.value;
-        });
+      const processedEntries = await Promise.all(
+        (data || []).map(async (entry: any) => {
+          const values: Record<string, any> = {};
 
-        // Get publisher info if created_by exists
-        let publisher = null;
-        if (entry.created_by) {
-          // First try to get from platform_users
-          const { data: platformUserData, error: platformUserError } = await supabase
-            .from('platform_users')
-            .select('first_name, last_name, email')
-            .eq('id', entry.created_by)
-            .maybeSingle();
-          
-          if (!platformUserError && platformUserData) {
-            publisher = platformUserData;
-          } else {
-            // If not found in platform_users, try admins
-            const { data: adminData, error: adminError } = await supabase
-              .from('admins')
-              .select('first_name, last_name, email')
-              .eq('id', entry.created_by)
-              .maybeSingle();
-            
-            if (!adminError && adminData) {
-              publisher = adminData;
+          entry.values.forEach((value: any) => {
+            values[value.field_id] =
+              value.value_json !== null ? value.value_json : value.value;
+          });
+
+          // Get publisher info if created_by exists
+          let publisher = null;
+          if (entry.created_by) {
+            // First try to get from platform_users
+            const { data: platformUserData, error: platformUserError } =
+              await supabase
+                .from("platform_users")
+                .select("first_name, last_name, email")
+                .eq("id", entry.created_by)
+                .maybeSingle();
+
+            if (!platformUserError && platformUserData) {
+              publisher = platformUserData;
+            } else {
+              // If not found in platform_users, try admins
+              const { data: adminData, error: adminError } = await supabase
+                .from("admins")
+                .select("first_name, last_name, email")
+                .eq("id", entry.created_by)
+                .maybeSingle();
+
+              if (!adminError && adminData) {
+                publisher = adminData;
+              }
             }
           }
-        }
 
-        return {
-          id: entry.id,
-          form_id: entry.form_id,
-          created_at: entry.created_at,
-          status: entry.status,
-          created_by: entry.created_by,
-          publisher,
-          values,
-          form: entry.form,
-          notes: entry.notes || []
-        };
-      }));
+          return {
+            id: entry.id,
+            form_id: entry.form_id,
+            created_at: entry.created_at,
+            status: entry.status,
+            created_by: entry.created_by,
+            publisher,
+            values,
+            form: entry.form,
+            notes: entry.notes || []
+          };
+        })
+      );
 
       setEntries(processedEntries);
-      
     } catch (err) {
-      console.error('Error loading entries:', err);
-      setError('Error loading entries');
+      console.error("Error loading entries:", err);
+      setError("Error loading entries");
     } finally {
       setLoading(false);
     }
@@ -259,7 +259,11 @@ export default function EditorialManager() {
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this entry? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -269,18 +273,17 @@ export default function EditorialManager() {
       setSuccess("");
 
       const { error: deleteError } = await supabase
-        .from('form_entries')
+        .from("form_entries")
         .delete()
-        .eq('id', entryId);
+        .eq("id", entryId);
 
       if (deleteError) throw deleteError;
 
       setSuccess("Entry deleted successfully");
       await loadEntries();
-
     } catch (err) {
-      console.error('Error deleting entry:', err);
-      setError('Error deleting entry');
+      console.error("Error deleting entry:", err);
+      setError("Error deleting entry");
     } finally {
       setLoading(false);
     }
@@ -293,7 +296,7 @@ export default function EditorialManager() {
   };
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permission="forms.entries.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
@@ -320,14 +323,14 @@ export default function EditorialManager() {
       )}
 
       <div className="mb-6">
-        <FormFilter 
+        <FormFilter
           forms={forms}
           selectedFormId={selectedFormId}
           onSelectForm={setSelectedFormId}
         />
       </div>
 
-      <EntriesTable 
+      <EntriesTable
         entries={entries}
         fields={fields}
         loading={loading}
@@ -342,7 +345,7 @@ export default function EditorialManager() {
         <EntryViewModal
           isOpen={isViewModalOpen}
           onClose={() => setIsViewModalOpen(false)}
-          entry={{...selectedEntry, form_id: selectedEntry.form_id}}
+          entry={{ ...selectedEntry, form_id: selectedEntry.form_id }}
           isAdmin={isAdmin}
         />
       )}
@@ -352,7 +355,7 @@ export default function EditorialManager() {
         <EntryEditModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          entry={{...selectedEntry, form_id: selectedEntry.form_id}}
+          entry={{ ...selectedEntry, form_id: selectedEntry.form_id }}
           onSave={handleEntryUpdated}
           isAdmin={isAdmin}
         />

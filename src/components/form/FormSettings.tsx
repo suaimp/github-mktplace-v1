@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Modal } from '../ui/modal';
-import Button from '../ui/button/Button';
-import Input from './input/InputField';
-import Label from './Label';
-import Select from './Select';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect } from "react";
+import { Modal } from "../ui/modal";
+import Button from "../ui/button/Button";
+import Input from "./input/InputField";
+import Label from "./Label";
+import Select from "./Select";
+import { supabase } from "../../lib/supabase";
 
 interface FormSettingsProps {
   formId: string;
@@ -20,7 +20,12 @@ interface Page {
   status: string;
 }
 
-export default function FormSettings({ formId, isOpen, onClose, onUpdate }: FormSettingsProps) {
+export default function FormSettings({
+  formId,
+  isOpen,
+  onClose,
+  onUpdate
+}: FormSettingsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -44,15 +49,15 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
   async function loadPages() {
     try {
       const { data: pages, error } = await supabase
-        .from('pages')
-        .select('id, title, slug, status')
-        .eq('status', 'published')
-        .order('title', { ascending: true });
+        .from("pages")
+        .select("id, title, slug, status")
+        .eq("status", "published")
+        .order("title", { ascending: true });
 
       if (error) throw error;
       setPages(pages || []);
     } catch (err) {
-      console.error('Error loading pages:', err);
+      console.error("Error loading pages:", err);
     }
   }
 
@@ -62,9 +67,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
       setError("");
 
       const { data: form, error } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('id', formId)
+        .from("forms")
+        .select("*")
+        .eq("id", formId)
         .single();
 
       if (error) throw error;
@@ -79,10 +84,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
           redirect_page: form.redirect_page || ""
         });
       }
-      
     } catch (err) {
-      console.error('Error loading form settings:', err);
-      setError('Error loading form settings');
+      console.error("Error loading form settings:", err);
+      setError("Error loading form settings");
     } finally {
       setLoading(false);
     }
@@ -90,17 +94,19 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
       setSuccess(false);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       const { error: updateError } = await supabase
-        .from('forms')
+        .from("forms")
         .update({
           title: settings.title.trim(),
           description: settings.description.trim() || null,
@@ -110,32 +116,27 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
           redirect_page: settings.redirect_page || null,
           updated_by: user.id
         })
-        .eq('id', formId);
+        .eq("id", formId);
 
       if (updateError) throw updateError;
 
       setSuccess(true);
       onUpdate();
-      
+
       // Close modal after short delay
       setTimeout(() => {
         onClose();
       }, 1500);
-
     } catch (err) {
-      console.error('Error saving form settings:', err);
-      setError('Error saving form settings');
+      console.error("Error saving form settings:", err);
+      setError("Error saving form settings");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose}
-      className="max-w-[700px] m-4"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[700px] m-4">
       <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
         <div className="mb-6">
           <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
@@ -164,7 +165,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Input
               type="text"
               value={settings.title}
-              onChange={(e) => setSettings({ ...settings, title: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, title: e.target.value })
+              }
               required
             />
           </div>
@@ -174,7 +177,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Input
               type="text"
               value={settings.description}
-              onChange={(e) => setSettings({ ...settings, description: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, description: e.target.value })
+              }
             />
           </div>
 
@@ -183,7 +188,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Input
               type="text"
               value={settings.submit_button_text}
-              onChange={(e) => setSettings({ ...settings, submit_button_text: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, submit_button_text: e.target.value })
+              }
               required
             />
           </div>
@@ -193,7 +200,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Input
               type="text"
               value={settings.success_message}
-              onChange={(e) => setSettings({ ...settings, success_message: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, success_message: e.target.value })
+              }
               placeholder="Formulário enviado com sucesso!"
             />
           </div>
@@ -203,7 +212,9 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Input
               type="text"
               value={settings.failure_message}
-              onChange={(e) => setSettings({ ...settings, failure_message: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, failure_message: e.target.value })
+              }
               placeholder="Erro ao enviar formulário. Tente novamente."
             />
           </div>
@@ -213,30 +224,27 @@ export default function FormSettings({ formId, isOpen, onClose, onUpdate }: Form
             <Select
               options={[
                 { value: "", label: "Nenhuma (exibir mensagem de sucesso)" },
-                ...pages.map(page => ({
+                ...pages.map((page) => ({
                   value: page.slug,
                   label: page.title
                 }))
               ]}
               value={settings.redirect_page}
-              onChange={(value) => setSettings({ ...settings, redirect_page: value })}
+              onChange={(value) =>
+                setSettings({ ...settings, redirect_page: value })
+              }
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Selecione uma página para redirecionar após o envio bem-sucedido do formulário
+              Selecione uma página para redirecionar após o envio bem-sucedido
+              do formulário
             </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-6">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-            >
+            <Button disabled={loading}>
               {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
