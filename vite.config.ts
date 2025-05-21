@@ -4,6 +4,7 @@ import svgr from "vite-plugin-svgr";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/github-mktplace-v1/",
   plugins: [
     react(),
     svgr({
