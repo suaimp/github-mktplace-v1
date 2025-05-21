@@ -451,6 +451,11 @@ export default function FormRenderer({
       return "multiSelect";
     }
 
+    // Map service_table field to use serviceTable component
+    if (fieldType === "service_table") {
+      return "serviceTable";
+    }
+
     // Return original field type for standard fields
     return fieldType;
   };

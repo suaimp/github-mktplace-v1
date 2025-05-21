@@ -45,7 +45,13 @@ const fieldGroups = [
         type: "modal_button",
         title: "Botão modal",
         description: "Botão para abrir modal",
-        icon: "FileIcon"
+        icon: "TaskIcon"
+      },
+      {
+        type: "service_table",
+        title: "Tabela de Serviços",
+        description: "Tabela para exibir serviços",
+        icon: "TableIcon"
       }
     ]
   },
