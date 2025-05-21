@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { getPublisherServices } from "./services/publisher_services_get";
-import { TableIcon } from "../../../icons";
 
 interface ServiceTableFieldProps {
   field: any;
@@ -40,7 +39,6 @@ export default function ServiceTableField({}: ServiceTableFieldProps) {
         <thead>
           <tr className="bg-gray-100 dark:bg-gray-800">
             <th className="px-3 py-2 text-left dark:text-[#e4e7ec] border-b border-gray-200 dark:border-gray-700">
-              <TableIcon className="inline w-4 h-4 mr-1" />
               Título
             </th>
             <th className="px-3 py-2 text-left dark:text-[#e4e7ec] border-b border-gray-200 dark:border-gray-700">

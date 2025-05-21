@@ -91,10 +91,13 @@ export default function ButtonModalField({
       // Função para converter BRL formatado para string numérica (ex: "1234.56")
       const toNumericString = (str: string) => {
         if (!str) return "";
-        return str.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+        return str
+          .replace(/[^\d,.-]/g, "")
+          .replace(/\./g, "")
+          .replace(",", ".");
       };
       await postModalService({
-        publisherId: userId,
+        userId: userId,
         serviceTitle: serviceTitle,
         price: toNumericString(price),
         promoPrice: promoPrice ? toNumericString(promoPrice) : undefined,
