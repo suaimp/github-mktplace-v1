@@ -40,6 +40,7 @@ import Forms from "./pages/Forms/Forms";
 import EditForm from "./pages/Forms/EditForm";
 import FormSettings from "./pages/Forms/FormSettings";
 import FormPreview from "./pages/Forms/FormPreview";
+import ServicePackages from "./pages/ServicePackages/ServicePackages";
 import DynamicFavicon from "./components/common/DynamicFavicon";
 import EditorialManager from "./pages/EditorialManager/EditorialManager";
 import Checkout from "./pages/Checkout";
@@ -146,6 +147,7 @@ export default function App() {
           <Route path="/forms" element={<Forms />} />
           <Route path="/forms/edit/:id" element={<EditForm />} />
           <Route path="/forms/settings/:id" element={<FormSettings />} />
+          <Route path="/service-packages" element={<ServicePackages />} />
           <Route path="/editorial" element={<EditorialManager />} />
           <Route path="/checkout" element={<Checkout />} />
         </Route>

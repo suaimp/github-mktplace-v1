@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { postModalService } from "./services/ModalServicePost";
+import Button from "../../ui/button/Button";
 
 // Corrigir ButtonModalFieldProps para remover props não usadas
 interface ButtonModalFieldProps {
@@ -135,17 +136,18 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
       >
         {errorMsg}
       </div>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-brand-500 text-white rounded hover:bg-brand-600 transition-colors"
-      >
-        {field.label || "Abrir Modal"}
-      </button>
+
+      <div className="mb-6">
+        <Button onClick={() => setOpen(true)}>
+          {" "}
+          {field.label || "Abrir Modal"}
+        </Button>
+      </div>
+
       {open && (
         <div
           onMouseDown={() => setOpen(false)}
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#000000] bg-opacity-50  dark:text-white"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-400/50 backdrop-blur-[--background-blur] dark:text-white"
         >
           <div
             onMouseDown={(e) => e.stopPropagation()}

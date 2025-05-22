@@ -15,6 +15,8 @@
     --font-weight-bold: 700;
     --font-weight-extrabold: 800;
     --font-weight-black: 900;
+    /* defalut: opacity & blur */
+    --background-blur: 3px;
   }
 
   body {
@@ -27,7 +29,7 @@
   .avatar {
     @apply relative flex items-center justify-center;
   }
-  
+
   .avatar img {
     @apply w-full h-full object-cover;
   }
@@ -404,7 +406,9 @@
   font-weight: 500;
 }
 
-.flatpickr-month .flatpickr-current-month .flatpickr-monthDropdown-months:focus {
+.flatpickr-month
+  .flatpickr-current-month
+  .flatpickr-monthDropdown-months:focus {
   outline: none !important;
   border: 0 !important;
 }
@@ -579,7 +583,9 @@ span.flatpickr-weekday,
   @apply h-auto w-auto rounded-md border-0 bg-transparent px-5 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:shadow-none dark:text-gray-400;
 }
 
-.fc-header-toolbar.fc-toolbar .fc-toolbar-chunk:last-child .fc-button.fc-button-active {
+.fc-header-toolbar.fc-toolbar
+  .fc-toolbar-chunk:last-child
+  .fc-button.fc-button-active {
   @apply text-gray-900 bg-white dark:bg-gray-800 dark:text-white;
 }
 
