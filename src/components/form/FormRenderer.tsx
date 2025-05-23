@@ -443,19 +443,9 @@ export default function FormRenderer({
       return "buttonBuy";
     }
 
-    // Map modal_button field to use ButtonModalField component
-    if (fieldType === "modal_button") {
-      return "buttonModal";
-    }
-
     // Map multiselect field to use MultiSelectField component
     if (fieldType === "multiselect") {
       return "multiSelect";
-    }
-
-    // Map service_table field to use serviceTable component
-    if (fieldType === "service_table") {
-      return "serviceTable";
     }
 
     // Return original field type for standard fields

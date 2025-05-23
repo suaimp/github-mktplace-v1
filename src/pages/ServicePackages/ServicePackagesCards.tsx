@@ -1,84 +1,25 @@
-import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
-import {
-  getServiceCards,
-  ServiceCard as ServiceCardType,
-  deleteServiceCard
-} from "../../context/db-context/services/serviceCardService";
+
+import { getServiceCards } from "../../context/db-context/services/serviceCardService";
 /* components */
 import NewCardSettings from "../../components/ServicePackages/cards/NewCardSettings";
 import ServiceCard from "../../components/ServicePackages/cards/ServiceCard";
 import { PencilIcon, TrashBinIcon } from "../../icons";
+import { useServicePackage, useServiceCards } from "./cards/useServicePackage";
+import { useCardActions } from "./cards/useCardActions";
 
 const ServicePackageMePage = () => {
   const { id } = useParams();
-  const [packageData, setPackageData] = useState<any>(null);
-  const [cards, setCards] = useState<ServiceCardType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editCardId, setEditCardId] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const editModalTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const fetchPackage = async () => {
-      if (!id) {
-        console.log("ID da URL não encontrado");
-        return;
-      }
-      const { data, error } = await supabase
-        .from("publisher_services")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.log("Erro ao buscar pacote:", error);
-        setPackageData(null);
-      } else {
-        setPackageData(data);
-      }
-    };
-    fetchPackage();
-  }, [id]);
-
-  useEffect(() => {
-    async function fetchCards() {
-      setLoading(true);
-      const data = await getServiceCards();
-      setCards(data ? data.filter((card) => card.service_id === id) : []);
-      setLoading(false);
-    }
-    if (id) fetchCards();
-  }, [id]);
-
-  const handleEdit = (cardId: string) => {
-    setEditCardId(cardId);
-    setEditModalVisible(true);
-    setTimeout(() => setShowEditModal(true), 10); // Garante que o modal monte antes de animar
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    if (editModalTimeout.current) clearTimeout(editModalTimeout.current);
-    editModalTimeout.current = setTimeout(() => {
-      setEditModalVisible(false);
-    }, 300); // Tempo igual ao duration-300
-  };
-
-  const handleDelete = async (cardId: string) => {
-    const ok = window.confirm("Tem certeza que deseja excluir este pacote?");
-    if (!ok) return;
-    setLoading(true);
-    const success = await deleteServiceCard(cardId);
-    if (success) {
-      setCards((prev) => prev.filter((c) => c.id !== cardId));
-    } else {
-      alert("Erro ao excluir pacote.");
-    }
-    setLoading(false);
-  };
+  const packageData = useServicePackage(id);
+  const { cards, setCards, loading, setLoading } = useServiceCards(id);
+  const {
+    editCardId,
+    showEditModal,
+    editModalVisible,
+    handleEdit,
+    handleCloseEditModal,
+    handleDelete
+  } = useCardActions(setCards, setLoading, id, getServiceCards);
 
   if (!packageData) {
     return (
@@ -199,7 +140,6 @@ const ServicePackageMePage = () => {
                 }}
                 onSuccess={() => {
                   handleCloseEditModal();
-                  // Atualiza os cards após edição
                   if (id) {
                     setLoading(true);
                     getServiceCards().then((data) => {

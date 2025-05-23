@@ -40,18 +40,6 @@ const fieldGroups = [
         title: "Telefone",
         description: "Para números de telefone",
         icon: "FileIcon"
-      },
-      {
-        type: "modal_button",
-        title: "Botão modal",
-        description: "Botão para abrir modal",
-        icon: "TaskIcon"
-      },
-      {
-        type: "service_table",
-        title: "Tabela de Serviços",
-        description: "Tabela para exibir serviços",
-        icon: "TableIcon"
       }
     ]
   },
