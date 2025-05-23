@@ -7,9 +7,12 @@ export interface ServiceCard {
   service_id: string;
   title: string;
   subtitle: string | null;
-  price: number | null;
+  price: number;
+  price_per_word: number;
+  word_count: number;
   benefits: string[];
   not_benefits: string[];
+  period: string;
   created_at: string;
   updated_at: string;
 }

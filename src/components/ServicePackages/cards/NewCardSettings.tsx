@@ -1,18 +1,29 @@
-import { useState } from "react";
-import { createServiceCard } from "../../../context/db-context/services/serviceCardService";
+import { useState, useEffect } from "react";
+import {
+  createServiceCard,
+  getServiceCardById,
+  updateServiceCard
+} from "../../../context/db-context/services/serviceCardService";
 import ToastMessage from "../../ui/ToastMessage/ToastMessage";
 import { v4 as uuidv4 } from "uuid";
 
 // Corrigir ButtonModalFieldProps para remover props não usadas
 interface ButtonModalFieldProps {
-  field: { label?: string; service_id: string };
+  field: { label?: string; service_id: string; id?: string };
+  onSuccess?: () => void;
 }
 
-export default function ButtonModalField({ field }: ButtonModalFieldProps) {
+export default function ButtonModalField({
+  field,
+  onSuccess
+}: ButtonModalFieldProps) {
   const [serviceTitle, setServiceTitle] = useState("");
   const [pricePerWord, setPricePerWord] = useState<number | undefined>();
   const [wordCount, setWordCount] = useState<number | undefined>();
   const [subtitle, setSubtitle] = useState("");
+
+  const [period, setPeriod] = useState<string>("");
+  const [customPeriod, setCustomPeriod] = useState<string>("");
 
   const [toasts, setToasts] = useState<
     {
@@ -32,16 +43,30 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
 
   // Para benefícios (benefits)
   const [features, setFeatures] = useState<string[]>([""]);
-  const addFeature = () => setFeatures([...features, ""]);
+  const addFeature = () => {
+    if (features.length + notBenefits.length < 6)
+      setFeatures([...features, ""]);
+  };
   const updateFeature = (idx: number, value: string) => {
     setFeatures(features.map((f, i) => (i === idx ? value : f)));
+  };
+  const removeFeature = (idx: number) => {
+    if (features.length === 1) return;
+    setFeatures(features.filter((_, i) => i !== idx));
   };
 
   // Para recursos não inclusos (not_benefits)
   const [notBenefits, setNotBenefits] = useState<string[]>([""]);
-  const addNotBenefit = () => setNotBenefits([...notBenefits, ""]);
+  const addNotBenefit = () => {
+    if (features.length + notBenefits.length < 6)
+      setNotBenefits([...notBenefits, ""]);
+  };
   const updateNotBenefit = (idx: number, value: string) => {
     setNotBenefits(notBenefits.map((f, i) => (i === idx ? value : f)));
+  };
+  const removeNotBenefit = (idx: number) => {
+    if (notBenefits.length === 1) return;
+    setNotBenefits(notBenefits.filter((_, i) => i !== idx));
   };
 
   // Máscara simples para moeda BRL
@@ -56,13 +81,42 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
         });
   };
 
+  useEffect(() => {
+    async function fetchCard() {
+      if (field.id) {
+        const card = await getServiceCardById(field.id);
+        if (card) {
+          setServiceTitle(card.title);
+          setSubtitle(card.subtitle || "");
+          setPricePerWord(card.price_per_word ?? undefined);
+          setWordCount(card.word_count ?? undefined);
+          setFeatures(card.benefits.length ? card.benefits : [""]);
+          setNotBenefits(card.not_benefits.length ? card.not_benefits : [""]);
+          setPeriod(card.period);
+          setCustomPeriod("");
+        }
+      } else {
+        setServiceTitle("");
+        setSubtitle("");
+        setPricePerWord(undefined);
+        setWordCount(undefined);
+        setFeatures([""]);
+        setNotBenefits([""]);
+        setPeriod("");
+        setCustomPeriod("");
+      }
+    }
+    fetchCard();
+    // eslint-disable-next-line
+  }, [field.id]);
+
   const formSubmit = async () => {
     if (
       !serviceTitle.trim() ||
       pricePerWord === undefined ||
       wordCount === undefined ||
       features.some((f) => !f.trim()) ||
-      notBenefits.some((f) => !f.trim())
+      !(period === "custom" ? customPeriod.trim() : period)
     ) {
       addToast("Preencha todos os campos obrigatórios.", "error");
       return;
@@ -72,14 +126,31 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
       title: serviceTitle,
       subtitle: subtitle || null,
       price: Number((pricePerWord * wordCount).toFixed(2)),
+      price_per_word: pricePerWord,
+      word_count: wordCount,
       benefits: features.filter((f) => f.trim() !== ""),
-      not_benefits: notBenefits.filter((f) => f.trim() !== "")
+      not_benefits: notBenefits.filter((f) => f.trim() !== ""),
+      period: period === "custom" ? customPeriod : period
     };
-    const result = await createServiceCard(newCard);
-    if (result) {
-      addToast("Pacote criado com sucesso!", "success");
+    let result;
+    if (field.id) {
+      result = await updateServiceCard(field.id, newCard);
     } else {
-      addToast("Erro ao criar pacote", "error");
+      result = await createServiceCard(newCard);
+    }
+    if (result) {
+      addToast(
+        field.id
+          ? "Pacote atualizado com sucesso!"
+          : "Pacote criado com sucesso!",
+        "success"
+      );
+      if (onSuccess) onSuccess(); // Chama sempre que houver sucesso
+    } else {
+      addToast(
+        field.id ? "Erro ao atualizar pacote" : "Erro ao criar pacote",
+        "error"
+      );
     }
     setServiceTitle("");
     setSubtitle("");
@@ -87,6 +158,8 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
     setWordCount(undefined);
     setFeatures([""]);
     setNotBenefits([""]);
+    setPeriod("");
+    setCustomPeriod("");
   };
 
   return (
@@ -190,45 +263,111 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
               </label>
               <button
                 type="button"
-                className="text-brand-500 hover:underline text-sm mt-1 mb-2"
+                className={`text-brand-500 hover:underline text-sm mt-1 mb-2 ${
+                  features.length + notBenefits.length >= 6
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
                 onClick={addFeature}
+                disabled={features.length + notBenefits.length >= 6}
               >
                 + Adicionar benefício
               </button>
               {features.map((feature, idx) => (
-                <input
+                <div
                   key={idx}
-                  type="text"
-                  className="w-full border rounded px-3 py-2 mb-2 text-black"
-                  value={feature}
-                  onChange={(e) => updateFeature(idx, e.target.value)}
-                  placeholder={`Benefício ${idx + 1}`}
-                  required
-                />
+                  className="relative flex items-center gap-2 mb-2"
+                >
+                  <input
+                    type="text"
+                    className="w-full border rounded px-3 py-2 text-black pr-10"
+                    value={feature}
+                    onChange={(e) => updateFeature(idx, e.target.value)}
+                    placeholder={`Benefício ${idx + 1}`}
+                    required
+                  />
+                  {features.length > 1 && (
+                    <button
+                      type="button"
+                      className="absolute right-0 top-0 h-full bg-gray-100 flex items-center justify-center px-3 text-gray-900 transition-colors hover:bg-red-200 rounded-tr rounded-br"
+                      style={{ height: "100%" }}
+                      onClick={() => removeFeature(idx)}
+                      title="Remover benefício"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
-                Recursos NÃO inclusos no pacote
+                Recursos NÃO inclusos no pacote (opcional)
               </label>
               <button
                 type="button"
-                className="text-brand-500 hover:underline text-sm mt-1 mb-2"
+                className={`text-brand-500 hover:underline text-sm mt-1 mb-2 ${
+                  features.length + notBenefits.length >= 6
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
                 onClick={addNotBenefit}
+                disabled={features.length + notBenefits.length >= 6}
               >
                 + Adicionar recurso não incluso
               </button>
               {notBenefits.map((notBenefit, idx) => (
-                <input
+                <div
                   key={idx}
+                  className="relative flex items-center gap-2 mb-2"
+                >
+                  <input
+                    type="text"
+                    className="w-full border rounded px-3 py-2 text-black pr-10"
+                    value={notBenefit}
+                    onChange={(e) => updateNotBenefit(idx, e.target.value)}
+                    placeholder={`Recurso não incluso ${idx + 1}`}
+                  />
+                  {notBenefits.length > 1 && (
+                    <button
+                      type="button"
+                      className="absolute right-0 top-0 h-full bg-gray-100 flex items-center justify-center px-3 text-gray-900 transition-colors hover:bg-red-200 rounded-tr rounded-br"
+                      style={{ height: "100%" }}
+                      onClick={() => removeNotBenefit(idx)}
+                      title="Remover recurso não incluso"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Período do pacote
+              </label>
+              <select
+                className="w-full border rounded px-3 py-2 text-black mb-2"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                required
+              >
+                <option value="">Selecione o período</option>
+                <option value="por mês">Por mês</option>
+                <option value="por ano">Por ano</option>
+                <option value="pagamento único">Pagamento único</option>
+                <option value="custom">Outro (especificar)</option>
+              </select>
+              {period === "custom" && (
+                <input
                   type="text"
-                  className="w-full border rounded px-3 py-2 mb-2 text-black"
-                  value={notBenefit}
-                  onChange={(e) => updateNotBenefit(idx, e.target.value)}
-                  placeholder={`Recurso não incluso ${idx + 1}`}
+                  className="w-full border rounded px-3 py-2 text-black mt-2"
+                  value={customPeriod}
+                  onChange={(e) => setCustomPeriod(e.target.value)}
+                  placeholder="Digite o período personalizado"
                   required
                 />
-              ))}
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -240,6 +379,8 @@ export default function ButtonModalField({ field }: ButtonModalFieldProps) {
                   setWordCount(undefined);
                   setFeatures([""]);
                   setNotBenefits([""]);
+                  setPeriod("");
+                  setCustomPeriod("");
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors"
               >
