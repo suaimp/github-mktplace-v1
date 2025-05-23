@@ -4,6 +4,7 @@ import { supabase } from "../../../lib/supabase";
 
 export interface PublisherService {
   id: string;
+  current_id: string;
   service_title: string;
   service_type: string;
   product_type: string; // uuid do form relacionado
@@ -15,6 +16,7 @@ export async function getPublisherServices(): Promise<
   PublisherService[] | null
 > {
   const { data, error } = await supabase.from("publisher_services").select("*");
+
   if (error) {
     console.error("Erro ao buscar publisher_services:", error);
     return null;

@@ -1,64 +1,71 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "../../lib/supabase";
+import { useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
+/* components */
+import NewCardSettings from "../../components/ServicePackages/cards/NewCardSettings";
+import ServiceCard from "../../components/ServicePackages/cards/ServiceCard";
 
 const ServicePackageMePage = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [packages, setPackages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { id } = useParams();
+  const [packageData, setPackageData] = useState<any>(null);
 
   useEffect(() => {
-    const fetchUserAndPackages = async () => {
-      setLoading(true);
-      setError(null);
-      const user = await getCurrentUser();
-      if (user?.user?.id) {
-        setUserId(user.user.id);
-        console.log(userId);
-        // Busca todos os pacotes de serviço do usuário
-        const { data, error } = await supabase
-          .from("publisher_services")
-          .select("*")
-          .eq("publisher_id", user.user.id);
-        if (error) {
-          setError("Erro ao buscar pacotes de serviço.");
-          setPackages([]);
-        } else {
-          setPackages(data || []);
-        }
-      } else {
-        setError("Usuário não encontrado.");
+    const fetchPackage = async () => {
+      if (!id) {
+        console.log("ID da URL não encontrado");
+        return;
       }
-      setLoading(false);
+      const { data, error } = await supabase
+        .from("publisher_services")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.log("Erro ao buscar pacote:", error);
+        setPackageData(null);
+      } else {
+        setPackageData(data);
+      }
     };
-    fetchUserAndPackages();
-  }, []);
+    fetchPackage();
+  }, [id]);
 
-  if (loading) return <div>Carregando...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (!packageData) {
+    return (
+      <div>
+        <h1>Carregando...</h1>
+      </div>
+    );
+  }
 
-  return (
-    <div>
-      <h1>Cards de Serviço do Usuário</h1>
-      {packages.length === 0 ? (
-        <div>Nenhum pacote de serviço encontrado.</div>
-      ) : (
-        <ul className="mt-4 space-y-4">
-          {packages.map((pkg) => (
-            <li
-              key={pkg.id}
-              className="border rounded p-4 bg-white dark:bg-gray-900"
-            >
-              <div>
-                <strong>ID:</strong> {pkg.current_id}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  if (packageData.service_type === "Conteúdo") {
+    return (
+      <section className="flex min-h-screen">
+        <div className="flex-1 pr-0 md:pr-4 lg:pr-8 xl:pr-12 2xl:pr-16">
+          <h2
+            className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90"
+            x-text="pageName"
+          >
+            Adicionar pacotes para {packageData.service_title}
+          </h2>
+
+          {/* Conteúdo principal */}
+          <ServiceCard />
+        </div>
+        {/* Sidebar fixa à direita */}
+        <NewCardSettings
+          field={{ label: "Novo Pacote", service_id: packageData.id }}
+        />
+      </section>
+    );
+  } else {
+    return (
+      <div>
+        <h2>O serviço não é do tipo "Conteúdo"</h2>
+      </div>
+    );
+  }
 };
 
 export default ServicePackageMePage;

@@ -13,7 +13,7 @@ export default function ToastMessage({
   show,
   message,
   type = "success",
-  top = 24,
+  top = 90,
   onClose,
   className
 }: ToastMessageProps) {

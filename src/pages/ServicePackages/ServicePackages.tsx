@@ -18,6 +18,7 @@ const ServicePackages: React.FC = () => {
       setPackages(
         data.map((item) => ({
           id: item.id,
+          current_id: item.current_id, // Corrigido: agora o current_id é passado corretamente
           title: item.service_title,
           fields: 2, // ajuste conforme necessário
           service_type: item.service_type,

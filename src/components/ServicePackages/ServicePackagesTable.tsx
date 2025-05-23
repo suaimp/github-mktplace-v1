@@ -134,8 +134,8 @@ const ServicePackagesTable: React.FC<ServicePackagesTableProps> = ({
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                           title="Editar"
                           onClick={() => {
-                            console.log("current_id:", pkg.current_id);
-                            navigate(`/service-packages/${pkg.current_id}`);
+                            console.log("id:", pkg.id);
+                            navigate(`/service-packages/${pkg.id}`);
                           }}
                         >
                           <PencilIcon className="w-5 h-5" />
