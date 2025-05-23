@@ -2,9 +2,14 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate
+  Navigate,
+  Outlet
 } from "react-router-dom";
 import { useEffect, useState } from "react";
+/* Restrict */
+import AdminRoute from "./routes/AdminRoute";
+
+/* routes */
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
 import Images from "./pages/UiElements/Images";
@@ -41,6 +46,7 @@ import EditForm from "./pages/Forms/EditForm";
 import FormSettings from "./pages/Forms/FormSettings";
 import FormPreview from "./pages/Forms/FormPreview";
 import ServicePackages from "./pages/ServicePackages/ServicePackages";
+import ServicePackagesCards from "./pages/ServicePackages/ServicePackagesCards";
 import DynamicFavicon from "./components/common/DynamicFavicon";
 import EditorialManager from "./pages/EditorialManager/EditorialManager";
 import Checkout from "./pages/Checkout";
@@ -147,7 +153,21 @@ export default function App() {
           <Route path="/forms" element={<Forms />} />
           <Route path="/forms/edit/:id" element={<EditForm />} />
           <Route path="/forms/settings/:id" element={<FormSettings />} />
-          <Route path="/service-packages" element={<ServicePackages />} />
+
+          <Route /* adm route */
+            element={
+              <AdminRoute>
+                <Outlet />
+              </AdminRoute>
+            }
+          >
+            <Route path="/service-packages" element={<ServicePackages />} />
+            <Route
+              path="/service-packages/me"
+              element={<ServicePackagesCards />}
+            />
+          </Route>
+
           <Route path="/editorial" element={<EditorialManager />} />
           <Route path="/checkout" element={<Checkout />} />
         </Route>

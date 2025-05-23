@@ -54,6 +54,7 @@ import { ReactComponent as AlertHexaIcon } from "./alert-hexa.svg?react";
 import { ReactComponent as ErrorHexaIcon } from "./info-hexa.svg?react";
 import { ReactComponent as CodeIcon } from "./code.svg?react";
 import { ReactComponent as SettingsIcon } from "./settings.svg?react";
+import { ReactComponent as SettingsMinimalIcon } from "./settings-minimal.svg?react";
 import { ReactComponent as ChartIcon } from "./pie-chart.svg?react";
 import { ReactComponent as AhrefsTrafficIcon } from "./ahrefs-traffic.svg?react";
 import { ReactComponent as SimilarwebTrafficIcon } from "./similarweb-traffic.svg?react";
@@ -118,6 +119,7 @@ export {
   ChatIcon,
   CodeIcon,
   SettingsIcon,
+  SettingsMinimalIcon,
   ChartIcon,
   AhrefsTrafficIcon,
   SimilarwebTrafficIcon,
