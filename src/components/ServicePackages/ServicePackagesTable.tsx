@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser } from "../../lib/supabase";
+
 import {
   Table,
   TableHeader,
@@ -15,6 +15,7 @@ import { deletePublisherService } from "../../context/db-context/services/publis
 
 interface ServicePackage {
   id: string;
+  current_id: string;
   title: string;
   fields: number;
   service_type: string;
@@ -132,13 +133,9 @@ const ServicePackagesTable: React.FC<ServicePackagesTableProps> = ({
                         <button
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                           title="Editar"
-                          onClick={async () => {
-                            const user = await getCurrentUser();
-                            if (user?.user?.id) {
-                              navigate("/service-packages/me");
-                            } else {
-                              alert("Usuário não encontrado.");
-                            }
+                          onClick={() => {
+                            console.log("current_id:", pkg.current_id);
+                            navigate(`/service-packages/${pkg.current_id}`);
                           }}
                         >
                           <PencilIcon className="w-5 h-5" />

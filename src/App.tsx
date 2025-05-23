@@ -163,7 +163,7 @@ export default function App() {
           >
             <Route path="/service-packages" element={<ServicePackages />} />
             <Route
-              path="/service-packages/me"
+              path="/service-packages/:id"
               element={<ServicePackagesCards />}
             />
           </Route>
