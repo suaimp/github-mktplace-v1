@@ -3,31 +3,18 @@ import { v4 as uuidv4 } from "uuid";
 /* components */
 
 import ToastMessage from "../ui/ToastMessage/ToastMessage";
-/* db */
-import { getForms } from "../../context/db-context/services/formsService";
+
 import {
   updatePublisherService,
   getPublisherServiceById
 } from "../../context/db-context/services/publisherService";
 import { useServicePackages } from "../../context/ServicePackages/ServicePackagesContext";
 
-interface FormOption {
-  id: string;
-  name: string;
-}
-
 interface ServiceEditModalProps {
   serviceId: string;
   open: boolean;
   onClose: () => void;
 }
-
-const serviceTypes = [
-  { value: "Conteúdo", label: "Conteúdo" },
-  { value: "Patrocinio", label: "Patrocinio" },
-  { value: "Radio", label: "Radio" }
-  // Adicione outros tipos conforme necessário
-];
 
 export default function ServiceEditModal({
   serviceId,
@@ -37,7 +24,7 @@ export default function ServiceEditModal({
   const [serviceTitle, setServiceTitle] = useState("");
   const [serviceType, setServiceType] = useState("Conteúdo");
   const [productType, setProductType] = useState("");
-  const [formOptions, setFormOptions] = useState<FormOption[]>([]);
+
   const [toasts, setToasts] = useState<
     {
       id: string;
@@ -60,22 +47,6 @@ export default function ServiceEditModal({
       })();
     }
   }, [open, serviceId]);
-
-  // Carrega as opções de formulário
-  useEffect(() => {
-    async function fetchForms() {
-      const forms = await getForms();
-      if (forms) {
-        setFormOptions(
-          forms.map((form: any) => ({
-            id: form.id,
-            name: form.title
-          }))
-        );
-      }
-    }
-    fetchForms();
-  }, []);
 
   function addToast(message: string, type: "success" | "error") {
     const id = uuidv4();
