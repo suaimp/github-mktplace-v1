@@ -147,41 +147,7 @@ export default function ServiceEditModal({
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tipo de serviço
-                </label>
-                <select
-                  className="w-full border rounded px-3 py-2 text-black"
-                  value={serviceType}
-                  onChange={(e) => setServiceType(e.target.value)}
-                  required
-                >
-                  {serviceTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tipo de Produto
-                </label>
-                <select
-                  className="w-full border rounded px-3 py-2 text-black"
-                  value={productType}
-                  onChange={(e) => setProductType(e.target.value)}
-                  required
-                >
-                  <option value="">Selecione um formulário</option>
-                  {formOptions.map((form) => (
-                    <option key={form.id} value={form.id}>
-                      {form.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"

@@ -296,8 +296,8 @@ export default function ButtonModalField({
                         fontSize: 14,
                         lineHeight: 1
                       }}
-                      onClick={() => removeNotBenefit(idx)}
-                      title="Remover recurso não incluso"
+                      onClick={() => removeFeature(idx)}
+                      title="Remover benefício"
                     >
                       ×
                     </button>
@@ -365,7 +365,7 @@ export default function ButtonModalField({
                 <option value="">Selecione o período</option>
                 <option value="por mês">Por mês</option>
                 <option value="por ano">Por ano</option>
-                <option value="pagamento único">Pagamento único</option>
+
                 <option value="custom">Outro (especificar)</option>
               </select>
               {period === "custom" && (
