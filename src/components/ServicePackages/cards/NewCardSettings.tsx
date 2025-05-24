@@ -175,17 +175,17 @@ export default function ButtonModalField({
             formSubmit();
           }}
         >
-          <h2 className="text-lg font-semibold mb-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
             {field.label || "Novo Pacote"}
           </h2>
           <div className="space-y-4 flex-1">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Título do pacote
               </label>
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 text-black"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                 value={serviceTitle}
                 onChange={(e) => setServiceTitle(e.target.value)}
                 placeholder="Ex: Enterprise"
@@ -193,26 +193,26 @@ export default function ButtonModalField({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Subtítulo do pacote (opcional)
               </label>
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 text-black"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 placeholder="Ex: Ideal para empresas iniciantes"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Preço por palavra
               </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="w-full border rounded px-3 py-2 text-black"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                 value={pricePerWord ?? ""}
                 onChange={(e) =>
                   setPricePerWord(
@@ -224,13 +224,13 @@ export default function ButtonModalField({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Quantidade de palavras do pacote
               </label>
               <input
                 type="number"
                 min="1"
-                className="w-full border rounded px-3 py-2 text-black"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                 value={wordCount ?? ""}
                 onChange={(e) =>
                   setWordCount(
@@ -242,12 +242,12 @@ export default function ButtonModalField({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Preço total
               </label>
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 text-black bg-gray-100 cursor-not-allowed"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed"
                 value={
                   pricePerWord !== undefined && wordCount !== undefined
                     ? formatBRL((pricePerWord * wordCount).toFixed(2))
@@ -258,7 +258,7 @@ export default function ButtonModalField({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Benefícios do pacote
               </label>
               <button
@@ -280,7 +280,7 @@ export default function ButtonModalField({
                 >
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-2 text-black pr-10"
+                    className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 pr-10"
                     value={feature}
                     onChange={(e) => updateFeature(idx, e.target.value)}
                     placeholder={`Benefício ${idx + 1}`}
@@ -289,10 +289,15 @@ export default function ButtonModalField({
                   {features.length > 1 && (
                     <button
                       type="button"
-                      className="absolute right-0 top-0 h-full bg-gray-100 flex items-center justify-center px-3 text-gray-900 transition-colors hover:bg-red-200 rounded-tr rounded-br"
-                      style={{ height: "100%" }}
-                      onClick={() => removeFeature(idx)}
-                      title="Remover benefício"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors hover:bg-red-200 dark:hover:bg-red-900 rounded-tr rounded-br p-0"
+                      style={{
+                        width: 35,
+                        height: 35,
+                        fontSize: 14,
+                        lineHeight: 1
+                      }}
+                      onClick={() => removeNotBenefit(idx)}
+                      title="Remover recurso não incluso"
                     >
                       ×
                     </button>
@@ -301,7 +306,7 @@ export default function ButtonModalField({
               ))}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Recursos NÃO inclusos no pacote (opcional)
               </label>
               <button
@@ -323,7 +328,7 @@ export default function ButtonModalField({
                 >
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-2 text-black pr-10"
+                    className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 pr-10"
                     value={notBenefit}
                     onChange={(e) => updateNotBenefit(idx, e.target.value)}
                     placeholder={`Recurso não incluso ${idx + 1}`}
@@ -331,8 +336,13 @@ export default function ButtonModalField({
                   {notBenefits.length > 1 && (
                     <button
                       type="button"
-                      className="absolute right-0 top-0 h-full bg-gray-100 flex items-center justify-center px-3 text-gray-900 transition-colors hover:bg-red-200 rounded-tr rounded-br"
-                      style={{ height: "100%" }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors hover:bg-red-200 dark:hover:bg-red-900 rounded-tr rounded-br p-0"
+                      style={{
+                        width: 35,
+                        height: 35,
+                        fontSize: 14,
+                        lineHeight: 1
+                      }}
                       onClick={() => removeNotBenefit(idx)}
                       title="Remover recurso não incluso"
                     >
@@ -343,11 +353,11 @@ export default function ButtonModalField({
               ))}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Período do pacote
               </label>
               <select
-                className="w-full border rounded px-3 py-2 text-black mb-2"
+                className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 mb-2"
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
                 required
@@ -361,7 +371,7 @@ export default function ButtonModalField({
               {period === "custom" && (
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2 text-black mt-2"
+                  className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 mt-2"
                   value={customPeriod}
                   onChange={(e) => setCustomPeriod(e.target.value)}
                   placeholder="Digite o período personalizado"
@@ -382,7 +392,7 @@ export default function ButtonModalField({
                   setPeriod("");
                   setCustomPeriod("");
                 }}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors"
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
               >
                 Limpar
               </button>

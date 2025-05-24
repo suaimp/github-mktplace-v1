@@ -1,12 +1,25 @@
 import { useParams } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  rectSortingStrategy
+} from "@dnd-kit/sortable";
+
+import type { DragEndEvent } from "@dnd-kit/core";
 
 import { getServiceCards } from "../../context/db-context/services/serviceCardService";
 /* components */
 import NewCardSettings from "../../components/ServicePackages/cards/NewCardSettings";
-import ServiceCard from "../../components/ServicePackages/cards/ServiceCard";
-import { PencilIcon, TrashBinIcon } from "../../icons";
 import { useServicePackage, useServiceCards } from "./cards/useServicePackage";
 import { useCardActions } from "./cards/useCardActions";
+import { SortableCard } from "./cards/SortableCard";
 
 const ServicePackageMePage = () => {
   const { id } = useParams();
@@ -18,8 +31,27 @@ const ServicePackageMePage = () => {
     editModalVisible,
     handleEdit,
     handleCloseEditModal,
-    handleDelete
-  } = useCardActions(setCards, setLoading, id, getServiceCards);
+    handleDelete,
+    handleCardsOrderChange // novo método do hook
+  } = useCardActions(setCards, setLoading);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    })
+  );
+
+  const handleDndKitDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = cards.findIndex((c) => c.id === active.id);
+      const newIndex = cards.findIndex((c) => c.id === over.id);
+      const newOrder = arrayMove(cards, oldIndex, newIndex);
+      handleCardsOrderChange(newOrder); // usa o método do hook
+    }
+  };
 
   if (!packageData) {
     return (
@@ -35,12 +67,36 @@ const ServicePackageMePage = () => {
     return (
       <section className="flex min-h-screen">
         <div className="flex-1 pr-0 md:pr-4 lg:pr-8 xl:pr-12 2xl:pr-16">
-          <h2
-            className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90"
-            x-text="pageName"
-          >
-            Adicionar pacotes para {packageData.service_title}
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2
+              className="text-xl font-semibold text-gray-800 dark:text-white/90"
+              x-text="pageName"
+            >
+              Adicionar pacotes para {packageData.service_title}
+            </h2>
+            <button
+              type="button"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-brand-500 dark:hover:text-brand-400 transition-colors text-sm font-medium"
+              onClick={() => window.history.back()}
+            >
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                viewBox="0 0 18 18"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M11.25 15L5.25 9L11.25 3"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Voltar
+            </button>
+          </div>
           {loading ? (
             <div>Carregando pacotes...</div>
           ) : cards.length === 0 ? (
@@ -50,53 +106,27 @@ const ServicePackageMePage = () => {
               </h2>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {cards.map((card) => (
-                <div key={card.id} className="relative w-full">
-                  <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
-                    <button
-                      className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-gray-300 flex items-center justify-center shadow-md transition-colors duration-150"
-                      title="Editar"
-                      onClick={() => handleEdit(card.id)}
-                    >
-                      <input
-                        type="radio"
-                        name={`action-${card.id}`}
-                        className="sr-only"
-                        tabIndex={-1}
-                      />
-                      <PencilIcon className="w-5 h-5 text-brand-500" />
-                    </button>
-                    <button
-                      className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-gray-300 flex items-center justify-center shadow-md transition-colors duration-150"
-                      title="Excluir"
-                      onClick={() => handleDelete(card.id)}
-                    >
-                      <input
-                        type="radio"
-                        name={`action-${card.id}`}
-                        className="sr-only"
-                        tabIndex={-1}
-                      />
-                      <TrashBinIcon className="w-5 h-5 text-error-500" />
-                    </button>
-                  </div>
-                  <ServiceCard
-                    id={card.id}
-                    service_id={card.service_id}
-                    title={card.title}
-                    subtitle={card.subtitle}
-                    price={card.price}
-                    benefits={card.benefits}
-                    not_benefits={card.not_benefits}
-                    period={card.period}
-                    created_at={card.created_at}
-                    updated_at={card.updated_at}
-                    buttonText="Contratar"
-                  />
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDndKitDragEnd}
+            >
+              <SortableContext
+                items={cards.map((c) => c.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {cards.map((card) => (
+                    <SortableCard
+                      key={card.id}
+                      card={card}
+                      handleEdit={handleEdit}
+                      handleDelete={handleDelete}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
         <NewCardSettings

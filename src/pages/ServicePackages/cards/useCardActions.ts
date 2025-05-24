@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
-import { deleteServiceCard } from "../../../context/db-context/services/serviceCardService";
+import {
+  deleteServiceCard,
+  updateCardsOrder
+} from "../../../context/db-context/services/serviceCardService";
+import {
+  defaultCardColors,
+  mainCardColors
+} from "../../../components/ServicePackages/cards/cardColors";
 
-export function useCardActions(
-  setCards: any,
-  setLoading: any,
-  id: string | undefined,
-  getServiceCards: any
-) {
+export function useCardActions(setCards: any, setLoading: any) {
   const [editCardId, setEditCardId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -39,6 +41,30 @@ export function useCardActions(
     setLoading(false);
   };
 
+  // Novo: Atualiza a ordem dos cards no banco e no estado
+  const handleCardsOrderChange = async (newOrder: any[]) => {
+    setCards(newOrder);
+    await updateCardsOrder(
+      newOrder.map((card, idx) => ({
+        id: card.id,
+        order_layout: idx
+      }))
+    );
+    // Opcional: feedback
+    console.log("Ordem salva no banco!");
+  };
+
+  // Novo: Alterna o layout do card (tema visual)
+  const handleToggleCardLayout = (cardId: string, isMain: boolean) => {
+    setCards((prev: any[]) =>
+      prev.map((c) =>
+        c.id === cardId
+          ? { ...c, cardColors: isMain ? mainCardColors : defaultCardColors }
+          : c
+      )
+    );
+  };
+
   return {
     editCardId,
     setEditCardId,
@@ -49,6 +75,8 @@ export function useCardActions(
     editModalTimeout,
     handleEdit,
     handleCloseEditModal,
-    handleDelete
+    handleDelete,
+    handleCardsOrderChange, // exporta o novo método
+    handleToggleCardLayout
   };
 }

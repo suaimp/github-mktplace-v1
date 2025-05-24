@@ -4,6 +4,7 @@ import NewServiceBaseModal from "../../components/ServicePackages/NewServiceModa
 import ServicePackagesTable from "../../components/ServicePackages/ServicePackagesTable";
 /* db */
 import { getPublisherServices } from "../../context/db-context/services/publisherService";
+import { getServiceCards } from "../../context/db-context/services/serviceCardService";
 import { ServicePackagesContext } from "../../context/ServicePackages/ServicePackagesContext";
 
 const ServicePackages: React.FC = () => {
@@ -14,16 +15,37 @@ const ServicePackages: React.FC = () => {
   const fetchServices = async () => {
     setLoading(true);
     const data = await getPublisherServices();
+    let cards: any[] = [];
+    try {
+      cards = (await getServiceCards()) || [];
+    } catch (e) {
+      cards = [];
+    }
     if (data) {
       setPackages(
-        data.map((item) => ({
-          id: item.id,
-          current_id: item.current_id, // Corrigido: agora o current_id é passado corretamente
-          title: item.service_title,
-          fields: 2, // ajuste conforme necessário
-          service_type: item.service_type,
-          updated_at: item.updated_at
-        }))
+        data
+          .map((item) => {
+            const serviceId = item.id;
+            const cardsCount = cards.filter(
+              (c) => c.service_id === serviceId
+            ).length;
+            return {
+              id: item.id,
+              current_id: item.current_id, // Corrigido: agora o current_id é passado corretamente
+              title: item.service_title,
+              fields: cardsCount, // Agora mostra o número de cards
+              service_type: item.service_type,
+              updated_at: item.updated_at,
+              is_active: item.is_active, // Adicionado para passar o status
+              created_at: item.created_at, // Adicionado para ordenação na tabela
+              service_id: item.id // Garante que service_id está presente
+            };
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
+          )
       );
     } else {
       setPackages([]);
@@ -55,6 +77,7 @@ const ServicePackages: React.FC = () => {
           onDelete={(id: string) =>
             setPackages((prev) => prev.filter((p) => p.id !== id))
           }
+          onRefresh={fetchServices} // Passa fetchServices para a tabela
         />
         {loading && (
           <div className="fixed bottom-6 right-6 z-[9999] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg px-6 py-3 text-gray-500 dark:text-gray-200 animate-fade-in">

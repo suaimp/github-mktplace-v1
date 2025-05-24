@@ -1,5 +1,7 @@
 import React from "react";
+import { useCardColors } from "./cardColors";
 
+// Permite receber cardColors por props para customização dinâmica
 interface ServiceCardProps {
   id: string;
   service_id: string;
@@ -12,6 +14,7 @@ interface ServiceCardProps {
   created_at: string;
   updated_at: string;
   buttonText?: string;
+  cardColors?: any; // CardColors opcional
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -21,7 +24,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   subtitle,
   benefits,
   not_benefits,
-  buttonText
+  buttonText,
+  cardColors: cardColorsProp
 }) => {
   // Limita a soma de benefits e not_benefits a no máximo 6 itens exibidos
   const maxItems = 6;
@@ -31,43 +35,55 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   ];
   const itemsToShow = allItems.slice(0, maxItems);
 
+  // Hook de cores
+  const [defaultColors] = useCardColors();
+  const cardColors = cardColorsProp || defaultColors;
+
   return (
     <div
-      className="relative rounded-2xl border-2 border-brand-500 bg-white p-6 dark:border-brand-500 dark:bg-white/[0.03] xl:p-8"
+      className={`relative rounded-2xl border ${cardColors.border} ${cardColors.bg} p-6 ${cardColors.borderDark} ${cardColors.bgDark} xl:p-8`}
       style={{ height: 519 }}
     >
       <div className="flex items-start justify-between -mb-4">
         <span
-          className="block font-semibold text-gray-800 dark:text-white/90"
+          className={`block mb-3 font-semibold ${cardColors.title} text-theme-xl ${cardColors.titleDark}`}
           style={{ fontSize: 20 }}
         >
           {title}
         </span>
       </div>
-      <div className="flex items-end mt-6 gap-1">
-        <h2
-          className="font-bold text-gray-800 dark:text-white/90"
-          style={{ fontSize: 36, height: 43 }}
-        >
-          {price.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-          })}
-        </h2>
-        <span className="inline-block  text-sm text-gray-500 dark:text-gray-400">
-          /{period}
-        </span>
+      <div className="flex items-end justify-between mb-1">
+        <div className="flex items-end gap-1" style={{ gap: 5 }}>
+          <h2
+            className={`font-bold ${cardColors.price} text-title-md ${cardColors.priceDark}`}
+            style={{ fontSize: 36, height: 43 }}
+          >
+            {price.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL"
+            })}
+          </h2>
+          <span
+            className={`inline-block mb-1 text-sm ${cardColors.period} ${cardColors.periodDark}`}
+          >
+            /{period}
+          </span>
+        </div>
+        {/* Exemplo de preço riscado, pode remover se não usar */}
+        {/* <span className="font-semibold text-gray-400 line-through text-theme-xl">$59.00</span> */}
       </div>
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+      <p className={`text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}>
         {subtitle}
       </p>
-      <div className="w-full h-px my-6 bg-white/20"></div>
+      <div
+        className={`w-full h-px my-6 ${cardColors.divider} ${cardColors.dividerDark}`}
+      ></div>
       <ul className="mb-8 space-y-3">
         {itemsToShow.map((item, idx) =>
           item.type === "benefit" ? (
             <li
               key={"b-" + idx}
-              className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-400"
+              className={`flex items-center gap-3 text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}
             >
               <svg
                 width="1em"
@@ -90,7 +106,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           ) : (
             <li
               key={"nb-" + idx}
-              className="flex items-center gap-3 text-sm text-gray-400"
+              className={`flex items-center gap-3 text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}
             >
               <svg
                 width="1em"
@@ -98,7 +114,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
                 viewBox="0 0 17 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-gray-400"
+                className={cardColors.notBenefit}
               >
                 <path
                   fillRule="evenodd"
@@ -112,7 +128,9 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           )
         )}
       </ul>
-      <button className="absolute bottom-8 left-0 right-0 mx-auto flex w-[90%] items-center justify-center rounded-lg bg-brand-500 p-3.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 b-35 mt-[35px]">
+      <button
+        className={`absolute bottom-[30px] left-0 right-0 mx-auto flex w-[90%] items-center justify-center rounded-lg ${cardColors.button} p-3.5 text-sm font-medium text-white shadow-theme-xs transition-colors ${cardColors.buttonHover} ${cardColors.buttonDark} ${cardColors.buttonDarkHover}`}
+      >
         {buttonText}
       </button>
     </div>

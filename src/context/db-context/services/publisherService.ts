@@ -10,6 +10,7 @@ export interface PublisherService {
   product_type: string; // uuid do form relacionado
   created_at: string;
   updated_at: string;
+  is_active: boolean;
 }
 
 export async function getPublisherServices(): Promise<
@@ -81,4 +82,50 @@ export async function deletePublisherService(id: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+// Desativa todos os outros do mesmo service_type e publisher_id antes de ativar o novo
+export async function setActivePublisherService(
+  id: string,
+  current_id: string,
+  service_type: string,
+  checked: boolean
+) {
+  console.log("setActivePublisherService params:", {
+    id,
+    current_id,
+    service_type,
+    checked
+  });
+
+  // Só desativa todos se checked for true
+  if (checked) {
+    // 1. Busca outros registros com o mesmo current_id e service_type igual ao recebido, mas id diferente
+    const { data: otherServices, error } = await supabase
+      .from("publisher_services")
+      .select("id, is_active")
+      .eq("current_id", current_id)
+      .eq("service_type", service_type)
+      .neq("id", id);
+
+    if (error) {
+      console.error("Erro ao buscar outros serviços:", error);
+      return;
+    }
+
+    // 2 e 3. Se existir, desativa todos esses registros (is_active: false)
+    if (otherServices && otherServices.length > 0) {
+      const otherIds = otherServices.map((s: { id: string }) => s.id);
+      await supabase
+        .from("publisher_services")
+        .update({ is_active: false })
+        .in("id", otherIds);
+    }
+  }
+
+  // 4. Atualiza o registro alvo (id recebido) com o valor de checked
+  await supabase
+    .from("publisher_services")
+    .update({ is_active: checked })
+    .eq("id", id);
 }
