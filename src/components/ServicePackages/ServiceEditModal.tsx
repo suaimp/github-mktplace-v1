@@ -9,6 +9,9 @@ import {
   getPublisherServiceById
 } from "../../context/db-context/services/publisherService";
 import { useServicePackages } from "../../context/ServicePackages/ServicePackagesContext";
+import { getForms } from "../../context/db-context/services/formsService";
+import Select from "../form/Select";
+import Label from "../form/Label";
 
 interface ServiceEditModalProps {
   serviceId: string;
@@ -24,6 +27,9 @@ export default function ServiceEditModal({
   const [serviceTitle, setServiceTitle] = useState("");
   const [serviceType, setServiceType] = useState("Conteúdo");
   const [productType, setProductType] = useState("");
+  const [formOptions, setFormOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   const [toasts, setToasts] = useState<
     {
@@ -47,6 +53,36 @@ export default function ServiceEditModal({
       })();
     }
   }, [open, serviceId]);
+
+  // Carrega as opções de forms para o select
+  useEffect(() => {
+    async function fetchForms() {
+      const forms = await getForms();
+      if (forms) {
+        setFormOptions(
+          forms.map((form: any) => ({ value: form.id, label: form.title }))
+        );
+      }
+    }
+    if (open) fetchForms();
+  }, [open]);
+
+  // Atualiza automaticamente o tipo de produto conforme o tipo de serviço selecionado
+  useEffect(() => {
+    if (!serviceType || formOptions.length === 0) return;
+    let targetName = "";
+    if (serviceType === "Conteúdo") targetName = "cadastro de sites";
+    else if (serviceType === "Radio") targetName = "Radios";
+    else if (serviceType === "Patrocinio") targetName = "serv32";
+    if (targetName) {
+      // Ignora espaços extras e faz comparação case-insensitive
+      const found = formOptions.find(
+        (form) =>
+          form.label.trim().toLowerCase() === targetName.trim().toLowerCase()
+      );
+      if (found) setProductType(found.value);
+    }
+  }, [serviceType, formOptions]);
 
   function addToast(message: string, type: "success" | "error") {
     const id = uuidv4();
@@ -78,6 +114,13 @@ export default function ServiceEditModal({
       );
     }
   };
+
+  const serviceTypes = [
+    { value: "Conteúdo", label: "Conteúdo" },
+    { value: "Patrocinio", label: "Patrocinio" },
+    { value: "Radio", label: "Radio" }
+    // Adicione outros tipos conforme necessário
+  ];
 
   // Toasts empilhados e animados
   return (
@@ -112,10 +155,36 @@ export default function ServiceEditModal({
                 </label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2 text-black"
+                  className="w-full border rounded px-3 py-2 text-black dark:bg-gray-900 dark:border-gray-700 dark:text-white"
                   value={serviceTitle}
                   onChange={(e) => setServiceTitle(e.target.value)}
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tipo de serviço
+                </label>
+                <Select
+                  options={serviceTypes}
+                  value={serviceType}
+                  onChange={setServiceType}
+                  placeholder="Selecione o tipo de serviço"
+                  className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tipo de produto
+                </label>
+                <Select
+                  options={formOptions}
+                  value={productType}
+                  onChange={() => {}}
+                  placeholder="Selecione o formulário"
+                  className="pointer-events-none opacity-60 appearance-none !bg-none dark:bg-gray-900 dark:border-gray-700 dark:text-white"
                 />
               </div>
 

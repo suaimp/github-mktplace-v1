@@ -82,6 +82,23 @@ export default function NewServiceBaseModal({
     fetchUserRole();
   }, []);
 
+  // Atualiza automaticamente o tipo de produto conforme o tipo de serviço selecionado
+  useEffect(() => {
+    if (!serviceType || formOptions.length === 0) return;
+    let targetName = "";
+    if (serviceType === "Conteúdo") targetName = "cadastro de sites";
+    else if (serviceType === "Radio") targetName = "Radios";
+    else if (serviceType === "Patrocinio") targetName = "serv32";
+    if (targetName) {
+      // Ignora espaços extras e faz comparação case-insensitive
+      const found = formOptions.find(
+        (form) =>
+          form.name.trim().toLowerCase() === targetName.trim().toLowerCase()
+      );
+      if (found) setProductType(found.id);
+    }
+  }, [serviceType, formOptions]);
+
   // Substitui showSuccess/showError/successMsg/errorMsg por addToast
   function addToast(message: string, type: "success" | "error") {
     const id = uuidv4();
@@ -159,7 +176,7 @@ export default function NewServiceBaseModal({
                 </label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2 text-black"
+                  className="w-full border rounded px-3 py-2 text-black dark:bg-gray-900 dark:border-gray-700 dark:text-white"
                   value={serviceTitle}
                   onChange={(e) => setServiceTitle(e.target.value)}
                   required
@@ -170,7 +187,7 @@ export default function NewServiceBaseModal({
                   Tipo de serviço
                 </label>
                 <select
-                  className="w-full border rounded px-3 py-2 text-black"
+                  className="w-full border rounded px-3 py-2 text-black dark:bg-gray-900 dark:border-gray-700 dark:text-white"
                   value={serviceType}
                   onChange={(e) => setServiceType(e.target.value)}
                   required
@@ -187,10 +204,12 @@ export default function NewServiceBaseModal({
                   Tipo de Produto
                 </label>
                 <select
-                  className="w-full border rounded px-3 py-2 text-black"
+                  className="w-full border rounded px-3 py-2 text-black appearance-none !bg-none dark:bg-gray-900 dark:border-gray-700 dark:text-white"
                   value={productType}
                   onChange={(e) => setProductType(e.target.value)}
                   required
+                  disabled
+                  style={{ backgroundImage: "none" }}
                 >
                   <option value="">Selecione um formulário</option>
                   {formOptions.map((form) => (

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PageMeta from "../components/common/PageMeta";
-import PageBreadcrumb from "../components/common/PageBreadCrumb";
-import { useCart } from "../components/marketplace/ShoppingCartContext";
-import { formatCurrency } from "../components/marketplace/utils";
-import Button from "../components/ui/button/Button";
-import Input from "../components/form/input/InputField";
-import Label from "../components/form/Label";
-import Select from "../components/form/Select";
+/* components */
+import PageMeta from "../../components/common/PageMeta";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import { useCart } from "../../components/marketplace/ShoppingCartContext";
+import { formatCurrency } from "../../components/marketplace/utils";
+import Button from "../../components/ui/button/Button";
+import Input from "../../components/form/input/InputField";
+import Label from "../../components/form/Label";
+import Select from "../../components/form/Select";
+import CheckoutCards from "../../components/ServicePackages/cards/CheckoutCards";
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
@@ -149,6 +151,9 @@ export default function Checkout() {
       <PageBreadcrumb pageTitle="Checkout" />
 
       <div className="max-w-7xl mx-auto">
+        <div className="w-full bg-red-200">
+          <CheckoutCards />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Order Summary */}
           <div className="md:col-span-1">
@@ -196,7 +201,6 @@ export default function Checkout() {
               </div>
             </div>
           </div>
-
           {/* Checkout Form */}
           <div className="md:col-span-2">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">

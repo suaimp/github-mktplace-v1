@@ -49,7 +49,7 @@ import ServicePackages from "./pages/ServicePackages/ServicePackages";
 import ServicePackagesCards from "./pages/ServicePackages/ServicePackagesCards";
 import DynamicFavicon from "./components/common/DynamicFavicon";
 import EditorialManager from "./pages/EditorialManager/EditorialManager";
-import Checkout from "./pages/Checkout";
+import Checkout from "./pages/Checkout/Checkout";
 
 function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
