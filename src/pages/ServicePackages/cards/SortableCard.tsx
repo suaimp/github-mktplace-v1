@@ -14,11 +14,13 @@ import {
 export function CardView({
   card,
   handleEdit,
-  handleDelete
+  handleDelete,
+  editButtons = true // novo parâmetro, default true
 }: {
   card: any;
   handleEdit: (id: string) => void;
   handleDelete: (id: string) => void;
+  editButtons?: boolean;
 }) {
   // Estado local para o toggle de layout, inicializado pelo valor do card
   const [toggleChecked, setToggleChecked] = React.useState(
@@ -46,50 +48,52 @@ export function CardView({
 
   return (
     <div className="relative w-full">
-      <div className="absolute top-2 right-2 flex flex-row items-center gap-2 z-10">
-        {/* Toggle */}
-        <Switch
-          checked={toggleChecked}
-          onChange={handleToggleChange}
-          onColor="#f9f9f9"
-          offColor="#1d2939"
-          checkedIcon={false}
-          uncheckedIcon={false}
-          height={16}
-          width={32}
-          offHandleColor="#ededed" // cor da bolinha ligada
-          onHandleColor="#cacaca" // cor da bolinha desligada
-          disabled={toggleLoading}
-        />
-        {/* Botão Editar */}
-        <button
-          className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-gray-300 flex items-center justify-center shadow-md transition-colors duration-150"
-          title="Editar"
-          onClick={() => handleEdit(card.id)}
-        >
-          <input
-            type="radio"
-            name={`action-${card.id}`}
-            className="sr-only"
-            tabIndex={-1}
+      {editButtons && (
+        <div className="absolute top-2 right-2 flex flex-row items-center gap-2 z-10">
+          {/* Toggle */}
+          <Switch
+            checked={toggleChecked}
+            onChange={handleToggleChange}
+            onColor="#f9f9f9"
+            offColor="#1d2939"
+            checkedIcon={false}
+            uncheckedIcon={false}
+            height={16}
+            width={32}
+            offHandleColor="#ededed" // cor da bolinha ligada
+            onHandleColor="#cacaca" // cor da bolinha desligada
+            disabled={toggleLoading}
           />
-          <PencilIcon className="w-5 h-5 text-gray-600" />
-        </button>
-        {/* Botão Excluir */}
-        <button
-          className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-red-200 flex items-center justify-center shadow-md transition-colors duration-150"
-          title="Excluir"
-          onClick={() => handleDelete(card.id)}
-        >
-          <input
-            type="radio"
-            name={`action-${card.id}`}
-            className="sr-only"
-            tabIndex={-1}
-          />
-          <TrashBinIcon className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+          {/* Botão Editar */}
+          <button
+            className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-gray-300 flex items-center justify-center shadow-md transition-colors duration-150"
+            title="Editar"
+            onClick={() => handleEdit(card.id)}
+          >
+            <input
+              type="radio"
+              name={`action-${card.id}`}
+              className="sr-only"
+              tabIndex={-1}
+            />
+            <PencilIcon className="w-5 h-5 text-gray-600" />
+          </button>
+          {/* Botão Excluir */}
+          <button
+            className="w-10 h-10 rounded bg-gray-100 text-gray-700 hover:bg-red-200 flex items-center justify-center shadow-md transition-colors duration-150"
+            title="Excluir"
+            onClick={() => handleDelete(card.id)}
+          >
+            <input
+              type="radio"
+              name={`action-${card.id}`}
+              className="sr-only"
+              tabIndex={-1}
+            />
+            <TrashBinIcon className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      )}
       <ServiceCard
         id={card.id}
         service_id={card.service_id}
@@ -111,11 +115,13 @@ export function CardView({
 export function SortableCard({
   card,
   handleEdit,
-  handleDelete
+  handleDelete,
+  editButtons = true // novo parâmetro, default true
 }: {
   card: any;
   handleEdit: (id: string) => void;
   handleDelete: (id: string) => void;
+  editButtons?: boolean;
 }) {
   const {
     attributes,
@@ -137,13 +143,17 @@ export function SortableCard({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={"cursor-grab " + (isDragging ? "opacity-70" : "")}
+      className={
+        (editButtons ? "cursor-grab " : "cursor-default ") +
+        (isDragging ? "opacity-70" : "")
+      }
       {...listeners}
     >
       <CardView
         card={card}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
+        editButtons={editButtons}
       />
     </div>
   );

@@ -129,3 +129,18 @@ export async function setActivePublisherService(
     .update({ is_active: checked })
     .eq("id", id);
 }
+
+export async function getPublisherServicesByCurrentId(
+  current_id: string
+): Promise<PublisherService[] | null> {
+  const { data, error } = await supabase
+    .from("publisher_services")
+    .select("*")
+    .eq("current_id", current_id);
+
+  if (error) {
+    console.error("Erro ao buscar publisher_services por current_id:", error);
+    return null;
+  }
+  return data as PublisherService[];
+}

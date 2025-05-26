@@ -151,7 +151,7 @@ export default function Checkout() {
       <PageBreadcrumb pageTitle="Checkout" />
 
       <div className="max-w-7xl mx-auto">
-        <div className="w-full bg-red-200">
+        <div className="w-full mb-8">
           <CheckoutCards />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
