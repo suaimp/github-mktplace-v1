@@ -17,6 +17,8 @@ import BrandSettings from "./fields/settings/BrandSettings";
 import ApiFieldSettings from "./fields/settings/ApiFieldSettings";
 import UrlFieldSettings from "./fields/settings/UrlFieldSettings";
 import { supabase } from "../../lib/supabase";
+import NicheSettings from "./fields/settings/NicheSettings";
+import { createFormFieldNiche, updateFormFieldNiche } from "../../context/db-context/services/formFieldNicheService";
 
 interface FormField {
   id: string;
@@ -25,7 +27,9 @@ interface FormField {
   description?: string;
   placeholder?: string;
   default_value?: string;
+
   options?: any[];
+
   validation_rules?: Record<string, any>;
   is_required: boolean;
   position: number;
@@ -140,6 +144,13 @@ export default function FormFieldSettings({
     }
   }, [isOpen, field.id]);
 
+  // Sincroniza options com settings.options para campo niche
+  useEffect(() => {
+    if (field.field_type === "niche" && Array.isArray(settings.options)) {
+      setOptions(settings.options);
+    }
+  }, [settings.options, field.field_type]);
+
   async function loadFieldSettings() {
     try {
       setLoading(true);
@@ -175,6 +186,9 @@ export default function FormFieldSettings({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Loga as opções recebidas do NicheSettings no momento do submit
+    console.log("[FormFieldSettings] options prop on submit:", options);
+
     try {
       setLoading(true);
       setError("");
@@ -182,17 +196,47 @@ export default function FormFieldSettings({
       // Log the settings being saved
       console.log("Saving settings:", settings);
 
+      // Se for campo niche, usa o state 'options' para atualizar a tabela form_field_niche
+      if (field.field_type === "niche" && options && options.length > 0) {
+        try {
+          // Garante que options é um array de string
+          const optionsArr = options.map(opt =>
+            typeof opt === "string" ? opt : (opt.value || opt.label || "")
+          );
+          console.log("Niche options:", optionsArr);
+          // Salva options na tabela form_field_niche
+          // Primeiro tenta atualizar, se não existir faz insert
+          const updateResult = await updateFormFieldNiche(field.id, { options: optionsArr });
+          if (!updateResult) {
+            await createFormFieldNiche({
+              form_field_id: field.id,
+              options: optionsArr,
+            });
+          }
+        } catch (err) {
+          setError("Erro ao atualizar nichos: " + (err instanceof Error ? err.message : String(err)));
+          setLoading(false);
+          return;
+        }
+      }
+
       const {
         data: { user }
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Remove options e id antes de salvar em form_field_settings
+      const { options: _options, id: _id, ...settingsWithoutOptions } = settings;
+
       const { error: updateError } = await supabase
         .from("form_field_settings")
-        .upsert({
-          ...settings,
-          field_id: field.id
-        });
+        .upsert(
+          {
+            ...settingsWithoutOptions,
+            field_id: field.id
+          },
+          { onConflict: "field_id" }
+        );
 
       if (updateError) throw updateError;
 
@@ -540,9 +584,16 @@ export default function FormFieldSettings({
               <ApiFieldSettings settings={settings} onChange={setSettings} />
             )}
 
-            {field.field_type === "url" && (
+        {field.field_type === "url" && (
               <UrlFieldSettings settings={settings} onChange={setSettings} />
             )}
+
+            {field.field_type === "niche" && (
+  <NicheSettings
+    settings={settings || { niche: "", price: "" }}
+    onChange={setSettings}
+  />
+)}
           </div>
 
           <div className="flex justify-end gap-3 pt-6">

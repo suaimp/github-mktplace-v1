@@ -44,6 +44,6 @@ ADD CONSTRAINT form_fields_field_type_check CHECK (
   'button_buy',
   'commission',
   'product',
-  'modal_button'
+  'niche'
   )
 );

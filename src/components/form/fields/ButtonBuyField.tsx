@@ -1,6 +1,21 @@
+
 import { ShoppingCartIcon } from "../../../icons";
 
-export default function ButtonBuyField({ field, settings, error }: any) {
+interface ButtonBuyFieldProps {
+  field: { label?: string };
+  settings: {
+    custom_button_text?: boolean;
+    button_text?: string;
+    button_style?: string;
+  };
+  error?: string;
+}
+
+export default function ButtonBuyField({
+  field,
+  settings,
+  error,
+}: ButtonBuyFieldProps) {
   // Get button text from settings or field label
   const buttonText =
     settings?.custom_button_text && settings?.button_text

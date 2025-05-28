@@ -334,9 +334,12 @@ export default function FormRenderer({
     // Map field type to component type
     const fieldTypeMapped = mapFieldType(field.field_type);
 
+    const isNiche = fieldTypeMapped === "niche";
     const fieldProps = {
       field,
-      settings,
+      settings: isNiche
+        ? settings || { value: { niche: "", price: "" }, options: [], multiple: false }
+        : settings,
       value: formData[field.id],
       onChange: (value: any) => {
         setFormData({ ...formData, [field.id]: value });
@@ -446,6 +449,11 @@ export default function FormRenderer({
     // Map multiselect field to use MultiSelectField component
     if (fieldType === "multiselect") {
       return "multiSelect";
+    }
+
+     // Map niches end prices field to use NicheField component
+    if (fieldType === "niche") {
+      return "niche";
     }
 
     // Return original field type for standard fields

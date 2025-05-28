@@ -140,6 +140,12 @@ const fieldGroups = [
         title: "Botão de Compra",
         description: "Botão para comprar produtos",
         icon: "ShoppingCartIcon"
+      },
+      {
+        type: "niche",
+        title: "Nichos e preços",
+        description: "Adicionar os nichos e preços que o site aceita",
+        icon: "FileIcon"
       }
     ]
   },
