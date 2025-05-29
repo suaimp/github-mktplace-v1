@@ -77,8 +77,8 @@ export default function ResumeTable() {
                       style={{
                         position: "relative",
                         zIndex: 2,
-                        width: 10,
-                        height: 10
+                        width: 6,
+                        height: 6
                       }}
                     />
                     <span
