@@ -158,6 +158,7 @@ export default function FormEntriesRenderer({
           status,
           created_by,
           form_entry_values (
+            id,
             field_id,
             value,
             value_json
