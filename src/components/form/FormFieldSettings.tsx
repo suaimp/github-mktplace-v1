@@ -18,7 +18,10 @@ import ApiFieldSettings from "./fields/settings/ApiFieldSettings";
 import UrlFieldSettings from "./fields/settings/UrlFieldSettings";
 import { supabase } from "../../lib/supabase";
 import NicheSettings from "./fields/settings/NicheSettings";
-import { createFormFieldNiche, updateFormFieldNiche } from "../../context/db-context/services/formFieldNicheService";
+import {
+  createFormFieldNiche,
+  updateFormFieldNiche
+} from "../../context/db-context/services/formFieldNicheService";
 
 interface FormField {
   id: string;
@@ -75,6 +78,7 @@ interface FormFieldSettings {
   sort_by_field?: boolean;
   is_product_name?: boolean;
   is_site_url?: boolean;
+  options?: any[];
 }
 
 interface FormFieldSettingsProps {
@@ -200,21 +204,26 @@ export default function FormFieldSettings({
       if (field.field_type === "niche" && options && options.length > 0) {
         try {
           // Garante que options é um array de string
-          const optionsArr = options.map(opt =>
-            typeof opt === "string" ? opt : (opt.value || opt.label || "")
+          const optionsArr = options.map((opt) =>
+            typeof opt === "string" ? opt : opt.value || opt.label || ""
           );
           console.log("Niche options:", optionsArr);
           // Salva options na tabela form_field_niche
           // Primeiro tenta atualizar, se não existir faz insert
-          const updateResult = await updateFormFieldNiche(field.id, { options: optionsArr });
+          const updateResult = await updateFormFieldNiche(field.id, {
+            options: optionsArr
+          });
           if (!updateResult) {
             await createFormFieldNiche({
               form_field_id: field.id,
-              options: optionsArr,
+              options: optionsArr
             });
           }
         } catch (err) {
-          setError("Erro ao atualizar nichos: " + (err instanceof Error ? err.message : String(err)));
+          setError(
+            "Erro ao atualizar nichos: " +
+              (err instanceof Error ? err.message : String(err))
+          );
           setLoading(false);
           return;
         }
@@ -226,7 +235,11 @@ export default function FormFieldSettings({
       if (!user) throw new Error("User not authenticated");
 
       // Remove options e id antes de salvar em form_field_settings
-      const { options: _options, id: _id, ...settingsWithoutOptions } = settings;
+      const {
+        options: _options,
+        id: _id,
+        ...settingsWithoutOptions
+      } = settings;
 
       const { error: updateError } = await supabase
         .from("form_field_settings")
@@ -584,16 +597,16 @@ export default function FormFieldSettings({
               <ApiFieldSettings settings={settings} onChange={setSettings} />
             )}
 
-        {field.field_type === "url" && (
+            {field.field_type === "url" && (
               <UrlFieldSettings settings={settings} onChange={setSettings} />
             )}
 
             {field.field_type === "niche" && (
-  <NicheSettings
-    settings={settings || { niche: "", price: "" }}
-    onChange={setSettings}
-  />
-)}
+              <NicheSettings
+                settings={settings || { niche: "", price: "" }}
+                onChange={setSettings}
+              />
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-6">
