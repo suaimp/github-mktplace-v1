@@ -39,7 +39,6 @@ export default function ResumeTable() {
         </div>
         <div>
           {items.map((item) => {
-            const isRedacao = redacaoEscolha[item.id];
             return (
               <div
                 key={item.id}
