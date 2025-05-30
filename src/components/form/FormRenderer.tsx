@@ -266,9 +266,9 @@ export default function FormRenderer({
       // Create entry values
       const values = [];
       for (const [fieldId, value] of Object.entries(formData)) {
-        // Determine if value should be stored in value or value_json
+        const field = fields.find((f) => f.id === fieldId);
+        if (!field) continue;
         const isJsonValue = typeof value !== "string";
-
         values.push({
           entry_id: entry.id,
           field_id: fieldId,
@@ -338,7 +338,11 @@ export default function FormRenderer({
     const fieldProps = {
       field,
       settings: isNiche
-        ? settings || { value: { niche: "", price: "" }, options: [], multiple: false }
+        ? settings || {
+            value: { niche: "", price: "" },
+            options: [],
+            multiple: false
+          }
         : settings,
       value: formData[field.id],
       onChange: (value: any) => {
@@ -451,7 +455,7 @@ export default function FormRenderer({
       return "multiSelect";
     }
 
-     // Map niches end prices field to use NicheField component
+    // Map niches end prices field to use NicheField component
     if (fieldType === "niche") {
       return "niche";
     }

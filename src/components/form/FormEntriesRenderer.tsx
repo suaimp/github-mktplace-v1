@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import FormEntriesTable from "./FormEntriesTable";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Select from "./Select";
 import FormEntriesSkeleton from "./FormEntriesSkeleton";
-import * as FieldsImport from "./fields";
+import * as Fields from "./fields";
 import TextArea from "./input/TextArea";
-
-const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
 
 interface FormEntriesRendererProps {
   formId: string;
@@ -17,13 +16,16 @@ interface FormEntriesRendererProps {
 export default function FormEntriesRenderer({
   formId
 }: FormEntriesRendererProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [entries, setEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [noDataMessage, setNoDataMessage] = useState("No entries found");
   const [urlFields, setUrlFields] = useState<string[]>([]);
   const [editableFormValues, setEditableFormValues] = useState<
@@ -35,9 +37,11 @@ export default function FormEntriesRenderer({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     checkUserType();
+    getCurrentUser();
   }, []);
 
   useEffect(() => {
@@ -51,8 +55,22 @@ export default function FormEntriesRenderer({
     }
   }, [selectedEntry]);
 
+  async function getCurrentUser() {
+    try {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user);
+      }
+    } catch (err) {
+      console.error("Error getting current user:", err);
+    }
+  }
+
   async function checkUserType() {
     try {
+      setIsCheckingAdmin(true);
       const {
         data: { user }
       } = await supabase.auth.getUser();
@@ -72,6 +90,8 @@ export default function FormEntriesRenderer({
     } catch (err) {
       console.error("Error checking user type:", err);
       setError("Error checking permissions");
+    } finally {
+      setIsCheckingAdmin(false);
     }
   }
 
@@ -158,7 +178,6 @@ export default function FormEntriesRenderer({
           status,
           created_by,
           form_entry_values (
-            id,
             field_id,
             value,
             value_json
@@ -179,6 +198,14 @@ export default function FormEntriesRenderer({
             values[value.field_id] =
               value.value_json !== null ? value.value_json : value.value;
           });
+
+          // Garante que o campo niche sempre exista, mesmo que não venha do backend
+          const nicheField = fieldsData.find(
+            (f: any) => f.field_type === "niche"
+          );
+          if (nicheField && !(nicheField.id in values)) {
+            values[nicheField.id] = [];
+          }
 
           // Get publisher info if created_by exists
           let publisher = null;
@@ -344,14 +371,17 @@ export default function FormEntriesRenderer({
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;
 
-        // Determine if value should be stored in value or value_json
+        // Identifica se é campo do tipo "niche"
+        const isNicheValue = field.field_type === "niche";
+        // Determina se deve salvar em value ou value_json
         const isJsonValue = typeof value !== "string";
 
         updatedValues.push({
           entry_id: selectedEntry.id,
           field_id: fieldId,
-          value: isJsonValue ? null : value,
-          value_json: isJsonValue ? value : null
+          value: !isNicheValue && !isJsonValue ? value : null,
+          value_json: !isNicheValue && isJsonValue ? value : null,
+          niches: isNicheValue ? value : null
         });
       }
 
@@ -461,6 +491,15 @@ export default function FormEntriesRenderer({
       error,
       onErrorClear: handleErrorClear
     };
+    // Log para depuração do valor passado para o campo
+    console.log(
+      "[FormEntriesRenderer] field:",
+      field.label,
+      "type:",
+      field.field_type,
+      "value:",
+      value
+    );
 
     // Get the appropriate field component based on field type
     const fieldTypeMapped = mapFieldType(field.field_type);

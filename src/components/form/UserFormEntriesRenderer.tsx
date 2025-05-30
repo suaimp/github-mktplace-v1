@@ -202,9 +202,32 @@ export default function UserFormEntriesRenderer({
           const values: Record<string, any> = {};
 
           entry.form_entry_values.forEach((value: any) => {
-            values[value.field_id] =
+            let fieldValue =
               value.value_json !== null ? value.value_json : value.value;
+            // Se for campo niche, garantir array de objetos
+            const field = fieldsData.find((f: any) => f.id === value.field_id);
+            if (field && field.field_type === "niche") {
+              if (!Array.isArray(fieldValue)) {
+                fieldValue = [];
+              } else {
+                fieldValue = fieldValue.map((n: any) => {
+                  if (typeof n === "string") return { niche: n, price: "" };
+                  if (typeof n === "object" && n !== null && !("price" in n))
+                    return { ...n, price: "" };
+                  return n;
+                });
+              }
+            }
+            values[value.field_id] = fieldValue;
           });
+
+          // Garante que o campo niche sempre exista, mesmo que não venha do backend
+          const nicheField = fieldsData.find(
+            (f: any) => f.field_type === "niche"
+          );
+          if (nicheField && !(nicheField.id in values)) {
+            values[nicheField.id] = [];
+          }
 
           // Get publisher info
           let publisher = null;
@@ -423,6 +446,7 @@ export default function UserFormEntriesRenderer({
   };
 
   // Render field editor based on field type
+  // renderiza dinamicamente cada campo do formulário
   const renderFieldEditor = (field: any) => {
     const settings = fieldSettings[field.id] || {};
     const value = editableFormValues[field.id];
@@ -464,6 +488,8 @@ export default function UserFormEntriesRenderer({
       }
     };
 
+    //os valores dos inputs e checkboxes vem em value.
+    //
     const fieldProps = {
       field,
       settings,
@@ -475,6 +501,18 @@ export default function UserFormEntriesRenderer({
 
     // Get the appropriate field component based on field type
     const fieldTypeMapped = mapFieldType(field.field_type);
+
+    // Debug: log valor enviado para NicheField
+    if (fieldTypeMapped === "niche") {
+      console.log(
+        "[UserFormEntriesRenderer] Valor enviado para NicheField:",
+        value
+      );
+    }
+
+    // Log para depuração do valor enviado para o campo
+    console.log("[UserFormEntriesRenderer] fieldProps.value:", value);
+
     const FieldComponent = (Fields as Record<string, React.ComponentType<any>>)[
       `${
         fieldTypeMapped.charAt(0).toUpperCase() + fieldTypeMapped.slice(1)
@@ -597,7 +635,7 @@ export default function UserFormEntriesRenderer({
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
           <div className="mb-6">
             <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-              Editar Entrada
+              Editar Entradas
             </h4>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {formTitle}
