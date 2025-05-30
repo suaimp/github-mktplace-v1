@@ -1,65 +1,34 @@
-import { useEffect, useState } from "react";
-import { useCart } from "../../components/marketplace/ShoppingCartContext";
 import { formatCurrency } from "../../components/marketplace/utils";
 import Tooltip from "../ui/Tooltip";
-import { getFormEntryValuesByEntryId } from "../../context/db-context/services/formEntryValueService";
+import {
+  useResumeTableLogic,
+  getResumeTableData
+} from "./actions/ResumeTableAction";
+import { useEffect } from "react";
 
 export default function ResumeTable() {
-  const { items } = useCart();
-  const [redacaoEscolha, setRedacaoEscolha] = useState<{
-    [key: string]: boolean;
-  }>(() => Object.fromEntries(items.map((item) => [item.id, false])));
-  const [entryValues, setEntryValues] = useState<{
-    [entryId: string]: { niche?: string; price?: number };
-  }>({});
-  const [loading, setLoading] = useState(false);
+  const {
+    items,
+    redacaoEscolha,
+    handleRedacaoChange,
+    entryValues,
+    selectedNiches,
+    setSelectedNiches,
+    cartQuantities,
+    handleQuantityChange,
+    totalPrice
+  } = useResumeTableLogic();
 
+  // Atualiza e loga o objeto sempre que houver mudança relevante
   useEffect(() => {
-    async function fetchAllEntryValues() {
-      setLoading(true);
-      const valuesObj: {
-        [entryId: string]: { niche?: string; price?: number };
-      } = {};
-      for (const item of items) {
-        const entryId = item.entry_id || item.id;
-        const values = await getFormEntryValuesByEntryId(entryId);
-        const filteredValues = values.filter((v) => v.entry_id === entryId);
-
-        // Pega todos os value_json não nulos
-        const valueJsons = filteredValues
-          .map((v) => v.value_json)
-          .filter((v) => v !== null && v !== undefined);
-
-        console.log("Todos os value_json para entryId", entryId, valueJsons);
-
-        // Se quiser usar o primeiro value_json encontrado (caso queira só um campo niche)
-        const firstValueJson = valueJsons[0];
-        const nicheValue = firstValueJson?.niche;
-
-        const priceValue = filteredValues.find(
-          (v) => v.field_id === "price"
-        )?.value;
-        valuesObj[entryId] = {
-          niche: nicheValue,
-          price: priceValue ? Number(priceValue) : undefined
-        };
-      }
-      setEntryValues(valuesObj);
-      setLoading(false);
-    }
-    if (items.length > 0) fetchAllEntryValues();
-  }, [items]);
-
-  const handleRedacaoChange = (itemId: string) => {
-    setRedacaoEscolha((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
-  };
-
-  // Soma total considerando o preço do nicho (se existir), senão usa o preço do produto
-  const totalPrice = items.reduce((acc, item) => {
-    const entryId = item.entry_id || item.id;
-    const price = entryValues[entryId]?.price ?? item.product.price;
-    return acc + price * item.quantity;
-  }, 0);
+    const data = getResumeTableData({
+      items,
+      entryValues,
+      selectedNiches,
+      cartQuantities,
+      redacaoEscolha
+    });
+  }, [items, entryValues, selectedNiches, cartQuantities, redacaoEscolha]);
 
   return (
     <div className="overflow-hidden bg-white dark:bg-white/[0.03] p-6 rounded-xl border border-gray-200 dark:border-gray-800">
@@ -95,7 +64,22 @@ export default function ResumeTable() {
             {items.map((item) => {
               const entryId = item.entry_id || item.id;
               const niche = entryValues[entryId]?.niche || "-";
-              const price = entryValues[entryId]?.price ?? item.product.price;
+              let price = item.product.price;
+              if (Array.isArray(niche) && selectedNiches[entryId]) {
+                const selectedNiche = niche.find(
+                  (n: any) => n.niche === selectedNiches[entryId]
+                );
+                if (selectedNiche && selectedNiche.price !== undefined) {
+                  price = Number(
+                    String(selectedNiche.price)
+                      .replace(/[^0-9,.-]+/g, "")
+                      .replace(",", ".")
+                  );
+                }
+              } else if (entryValues[entryId]?.price !== undefined) {
+                price = entryValues[entryId]?.price ?? item.product.price;
+              }
+              const quantity = cartQuantities[item.id] ?? item.quantity ?? 1;
               return (
                 <tr key={item.id}>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-left">
@@ -118,13 +102,38 @@ export default function ResumeTable() {
                     <input
                       type="number"
                       min={1}
-                      value={item.quantity}
-                      readOnly
+                      value={quantity}
+                      onChange={(e) =>
+                        handleQuantityChange(item.id, Number(e.target.value))
+                      }
                       className="w-16 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 py-1 px-2"
                     />
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
-                    {niche}
+                    {Array.isArray(niche) && niche.length > 0 ? (
+                      <select
+                        required
+                        className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-2 py-1"
+                        value={selectedNiches[entryId] || ""}
+                        onChange={(e) =>
+                          setSelectedNiches((prev) => ({
+                            ...prev,
+                            [entryId]: e.target.value
+                          }))
+                        }
+                      >
+                        <option value="">Selecione...</option>
+                        {niche.map((n: any, idx: number) => (
+                          <option key={idx} value={n.niche}>
+                            {n.niche}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-gray-400 italic">
+                        Nicho não cadastrado
+                      </span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
                     <label
@@ -166,7 +175,7 @@ export default function ResumeTable() {
                     </label>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-800 dark:text-white/90 text-right">
-                    {formatCurrency(price * item.quantity)}
+                    {formatCurrency(Number(price) * Number(quantity))}
                   </td>
                 </tr>
               );

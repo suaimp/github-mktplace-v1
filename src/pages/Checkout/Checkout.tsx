@@ -157,7 +157,7 @@ export default function Checkout() {
             <ResumeTable />
           </div>
 
-          <div className="w-[600px] mx-auto   rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+          <div className="w-[450px] mx-auto   rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
             <CheckoutForm
               formData={formData}
               loading={loading}
