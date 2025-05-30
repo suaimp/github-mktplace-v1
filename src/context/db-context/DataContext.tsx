@@ -32,7 +32,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   return (
-    <DataContext.Provider value={{ forms, loading, fetchForms }}>
+    <DataContext.Provider
+      value={{
+        forms,
+        loading,
+        fetchForms
+      }}
+    >
       {children}
     </DataContext.Provider>
   );
