@@ -1,30 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getFormFieldNicheByFormFieldId } from "../../../context/db-context/services/formFieldNicheService";
-
-interface NicheFieldProps {
-  field: { id: string; label?: string };
-  settings: {
-    value: string | string[] | { niche: string; price: string }[];
-    options: { label: string; value: string }[];
-    multiple?: boolean;
-  };
-  error?: string;
-  onChange: (
-    value: string | string[] | { niche: string; price: string }[]
-  ) => void;
-}
 
 export default function NicheField({
   value,
   field,
-  settings,
+
   error,
   onChange
 }: any) {
   // Log para depuração do value recebido
   console.log("[NicheField] value recebido:", value);
 
-  const { value: initialValue } = settings;
   const [options, setOptions] = useState<{ label: string; value: string }[]>(
     []
   );

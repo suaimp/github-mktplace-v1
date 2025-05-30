@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+
 import { supabase } from "../../lib/supabase";
 import FormEntriesTable from "./FormEntriesTable";
 import { Modal } from "../ui/modal";
@@ -16,16 +16,15 @@ interface FormEntriesRendererProps {
 export default function FormEntriesRenderer({
   formId
 }: FormEntriesRendererProps) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
   const [entries, setEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+
   const [noDataMessage, setNoDataMessage] = useState("No entries found");
   const [urlFields, setUrlFields] = useState<string[]>([]);
   const [editableFormValues, setEditableFormValues] = useState<
@@ -37,7 +36,6 @@ export default function FormEntriesRenderer({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     checkUserType();
@@ -61,7 +59,6 @@ export default function FormEntriesRenderer({
         data: { user }
       } = await supabase.auth.getUser();
       if (user) {
-        setCurrentUser(user);
       }
     } catch (err) {
       console.error("Error getting current user:", err);
@@ -70,7 +67,6 @@ export default function FormEntriesRenderer({
 
   async function checkUserType() {
     try {
-      setIsCheckingAdmin(true);
       const {
         data: { user }
       } = await supabase.auth.getUser();
@@ -90,8 +86,6 @@ export default function FormEntriesRenderer({
     } catch (err) {
       console.error("Error checking user type:", err);
       setError("Error checking permissions");
-    } finally {
-      setIsCheckingAdmin(false);
     }
   }
 

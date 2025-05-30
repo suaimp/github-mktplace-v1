@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useCart } from "../../components/marketplace/ShoppingCartContext";
-import { getFormEntryValuesByEntryId } from "../../context/db-context/services/formEntryValueService";
+import { useCart } from "../../../../components/marketplace/ShoppingCartContext";
+import { getFormEntryValuesByEntryId } from "../formEntryValueService";
 
 export function useResumeTableLogic() {
   const { items } = useCart();
