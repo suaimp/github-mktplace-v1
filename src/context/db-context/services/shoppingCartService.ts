@@ -22,6 +22,7 @@ export async function getShoppingCartItemsByUser() {
   return data as ShoppingCartItem[];
 }
 
+//não é aqui que estamos inserindo o item no carrinho.
 export async function addShoppingCartItem(
   item: Omit<ShoppingCartItem, "id" | "created_at" | "user_id">
 ) {
@@ -36,6 +37,7 @@ export async function addShoppingCartItem(
     .select()
     .single();
   if (error) return null;
+
   return data as ShoppingCartItem;
 }
 

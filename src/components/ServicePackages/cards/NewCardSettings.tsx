@@ -6,6 +6,7 @@ import {
 } from "../../../context/db-context/services/serviceCardService";
 import ToastMessage from "../../ui/ToastMessage/ToastMessage";
 import { v4 as uuidv4 } from "uuid";
+import Tooltip from "../../ui/Tooltip";
 
 // Corrigir ButtonModalFieldProps para remover props não usadas
 interface ButtonModalFieldProps {
@@ -32,6 +33,8 @@ export default function ButtonModalField({
       type: "success" | "error";
     }[]
   >([]);
+
+  const [isFreeWord, setIsFreeWord] = useState(false);
 
   function addToast(message: string, type: "success" | "error") {
     const id = uuidv4();
@@ -94,6 +97,7 @@ export default function ButtonModalField({
           setNotBenefits(card.not_benefits.length ? card.not_benefits : [""]);
           setPeriod(card.period);
           setCustomPeriod("");
+          setIsFreeWord(!!card.is_free); // novo: carrega valor do banco
         }
       } else {
         setServiceTitle("");
@@ -130,7 +134,8 @@ export default function ButtonModalField({
       word_count: wordCount,
       benefits: features.filter((f) => f.trim() !== ""),
       not_benefits: notBenefits.filter((f) => f.trim() !== ""),
-      period: period === "custom" ? customPeriod : period
+      period: period === "custom" ? customPeriod : period,
+      is_free: isFreeWord // novo campo para persistir o valor do checkbox
     };
     let result;
     if (field.id) {
@@ -227,6 +232,27 @@ export default function ButtonModalField({
               <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">
                 Quantidade de palavras do pacote
               </label>
+              <div className="flex items-center mb-1 gap-1 relative z-[9999999]">
+                <input
+                  type="checkbox"
+                  id="free-word-checkbox"
+                  checked={isFreeWord}
+                  onChange={() => setIsFreeWord((prev) => !prev)}
+                  className="accent-brand-500"
+                />
+                <label
+                  htmlFor="free-word-checkbox"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-1 select-none"
+                  style={{ userSelect: "none" }}
+                >
+                  Grátis
+                </label>
+                <Tooltip content="Selecione caso a quantidade de palavras digitadas nesse campo, sejam gratuitas. a contagem de valor ocorrerá quando o cliente solicitar um número maior de palavras.">
+                  <span className="ml-0.5 text-xs text-brand-500 cursor-pointer align-middle select-none">
+                    ?
+                  </span>
+                </Tooltip>
+              </div>
               <input
                 type="number"
                 min="1"
@@ -249,7 +275,9 @@ export default function ButtonModalField({
                 type="text"
                 className="w-full border rounded px-3 py-2 text-black dark:text-white bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed"
                 value={
-                  pricePerWord !== undefined && wordCount !== undefined
+                  isFreeWord
+                    ? formatBRL("0.00")
+                    : pricePerWord !== undefined && wordCount !== undefined
                     ? formatBRL((pricePerWord * wordCount).toFixed(2))
                     : ""
                 }

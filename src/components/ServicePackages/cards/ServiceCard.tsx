@@ -1,5 +1,6 @@
 import React from "react";
 import { useCardColors } from "./cardColors";
+import { setService } from "./actions/setService";
 
 // Permite receber cardColors por props para customização dinâmica
 interface ServiceCardProps {
@@ -15,9 +16,15 @@ interface ServiceCardProps {
   updated_at: string;
   buttonText?: string;
   cardColors?: any; // CardColors opcional
+  button?: boolean; // nova prop
+  price_per_word?: number;
+  word_count?: number;
+  is_free?: boolean;
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
+  id,
+  service_id,
   title,
   price,
   period,
@@ -25,7 +32,13 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   benefits,
   not_benefits,
   buttonText,
-  cardColors: cardColorsProp
+  cardColors: cardColorsProp,
+  button = false,
+  created_at,
+  updated_at,
+  price_per_word, // <-- ADICIONE AQUI
+  word_count, // <-- ADICIONE AQUI
+  is_free
 }) => {
   // Limita a soma de benefits e not_benefits a no máximo 6 itens exibidos
   const maxItems = 6;
@@ -130,6 +143,27 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       </ul>
       <button
         className={`absolute bottom-[30px] left-0 right-0 mx-auto flex w-[90%] items-center justify-center rounded-lg ${cardColors.button} p-3.5 text-sm font-medium text-white shadow-theme-xs transition-colors ${cardColors.buttonHover} ${cardColors.buttonDark} ${cardColors.buttonDarkHover}`}
+        onClick={
+          button
+            ? () => {
+                setService({
+                  id,
+                  service_id,
+                  title,
+                  subtitle,
+                  price,
+                  benefits,
+                  not_benefits,
+                  period,
+                  created_at,
+                  updated_at,
+                  price_per_word,
+                  word_count,
+                  is_free
+                });
+              }
+            : undefined
+        }
       >
         {buttonText}
       </button>

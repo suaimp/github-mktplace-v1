@@ -5,8 +5,8 @@ import { getFormEntryValuesByEntryId } from "../../../context/db-context/service
 export function useResumeTableLogic() {
   const { items } = useCart();
   const [redacaoEscolha, setRedacaoEscolha] = useState<{
-    [key: string]: boolean;
-  }>(() => Object.fromEntries(items.map((item) => [item.id, false])));
+    [key: string]: string;
+  }>({});
   const [entryValues, setEntryValues] = useState<{
     [entryId: string]: { niche?: any[] | string; price?: number };
   }>({});
@@ -57,8 +57,8 @@ export function useResumeTableLogic() {
     );
   }, [items]);
 
-  const handleRedacaoChange = (itemId: string) => {
-    setRedacaoEscolha((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
+  const handleRedacaoChange = (itemId: string, value: string) => {
+    setRedacaoEscolha((prev) => ({ ...prev, [itemId]: value }));
   };
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
@@ -114,7 +114,7 @@ export function getResumeTableData({
   entryValues: any;
   selectedNiches: { [key: string]: string };
   cartQuantities: { [key: string]: number };
-  redacaoEscolha: { [key: string]: boolean };
+  redacaoEscolha: { [key: string]: string };
 }) {
   const result = items.map((item) => {
     const entryId = item.entry_id || item.id;
@@ -152,3 +152,7 @@ export function getResumeTableData({
   console.log("Resumo da tabela:", result);
   return result;
 }
+
+// Se houver lógica que lê niche_selected, considerar que agora é string[]
+// Exemplo de uso:
+// item.niche_selected?.[0] para obter o nicho selecionado principal

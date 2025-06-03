@@ -10,6 +10,7 @@ import Button from "../../components/ui/button/Button";
 import CheckoutCards from "../../components/ServicePackages/cards/CheckoutCards";
 import ResumeTable from "../../components/Checkout/ResumeTable";
 import CheckoutForm from "../../components/Checkout/CheckoutForm";
+import FinishOrder from "../../components/Checkout/FinishOrder";
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
@@ -56,6 +57,7 @@ export default function Checkout() {
       }, 3000);
     } catch (error) {
       console.error("Error processing checkout:", error);
+      console.log(CheckoutForm);
     } finally {
       setLoading(false);
     }
@@ -157,8 +159,17 @@ export default function Checkout() {
             <ResumeTable />
           </div>
 
-          <div className="w-[450px] mx-auto   rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <CheckoutForm
+          <div className="w-[450px] mx-auto       ">
+            {/*     <CheckoutForm
+              formData={formData}
+              loading={loading}
+              totalPrice={totalPrice}
+              handleChange={handleChange}
+              handleSelectChange={handleSelectChange}
+              handleSubmit={handleSubmit}
+            /> */}
+
+            <FinishOrder
               formData={formData}
               loading={loading}
               totalPrice={totalPrice}

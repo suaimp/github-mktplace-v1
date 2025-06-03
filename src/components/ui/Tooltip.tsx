@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 
 interface TooltipProps {
   content: React.ReactNode;
@@ -21,30 +22,38 @@ export default function Tooltip({
   }
 
   return (
-    <span
-      className={"relative inline-block " + className}
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-      onMouseMove={handleMouseMove}
-      style={{ cursor: "pointer" }}
-    >
-      {children}
-      {visible && (
-        <div
-          ref={tooltipRef}
-          className="fixed z-50 px-3 py-2 rounded-lg normal-case text-xs text-white bg-gray-900 dark:bg-gray-800 dark:text-white shadow-theme-sm transition-opacity duration-150 pointer-events-none"
-          style={{
-            left: coords.x,
-            top: coords.y,
-            minWidth: 180,
-            maxWidth: 260,
-            opacity: visible ? 1 : 0,
-            whiteSpace: "normal"
-          }}
-        >
-          {content}
-        </div>
-      )}
-    </span>
+    <>
+      <span
+        className={"relative inline-block " + className}
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onMouseMove={handleMouseMove}
+        style={{ cursor: "pointer" }}
+      >
+        {children}
+      </span>
+      {visible &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            ref={tooltipRef}
+            className="fixed z-[9999999] px-3 py-2 rounded-lg normal-case text-xs text-white bg-gray-900 dark:bg-gray-800 dark:text-white shadow-theme-sm transition-opacity duration-150 pointer-events-auto"
+            style={{
+              left: Math.min(coords.x, window.innerWidth - 260),
+              top: Math.min(coords.y, window.innerHeight - 40),
+              minWidth: 180,
+              maxWidth: 260,
+              opacity: visible ? 1 : 0,
+              whiteSpace: "normal",
+              position: "fixed",
+              pointerEvents: "auto",
+              zIndex: 9999999
+            }}
+          >
+            {content}
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

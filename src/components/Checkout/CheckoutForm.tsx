@@ -30,7 +30,20 @@ export default function CheckoutForm({
   handleSubmit
 }: CheckoutFormProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
+    <div
+      className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800"
+      style={{
+        position: "fixed",
+        top: "235px",
+        right: "32px",
+        maxWidth: "420px",
+        zIndex: 50,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        height: "auto",
+        maxHeight: "calc(100vh - 64px)",
+        overflowY: "auto"
+      }}
+    >
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
         Informações de Pagamento
       </h2>

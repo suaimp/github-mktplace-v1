@@ -13,7 +13,7 @@ export interface ServiceCard {
   benefits: string[];
   not_benefits: string[];
   period: string;
-  created_at: string;
+  is_free: boolean;
   updated_at: string;
 }
 

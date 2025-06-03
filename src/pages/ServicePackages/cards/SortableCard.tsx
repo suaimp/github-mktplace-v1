@@ -15,12 +15,14 @@ export function CardView({
   card,
   handleEdit,
   handleDelete,
-  editButtons = true // novo parâmetro, default true
+  editButtons = true,
+  button = false // nova prop
 }: {
   card: any;
   handleEdit: (id: string) => void;
   handleDelete: (id: string) => void;
   editButtons?: boolean;
+  button?: boolean;
 }) {
   // Estado local para o toggle de layout, inicializado pelo valor do card
   const [toggleChecked, setToggleChecked] = React.useState(
@@ -105,8 +107,12 @@ export function CardView({
         period={card.period}
         created_at={card.created_at}
         updated_at={card.updated_at}
+        price_per_word={card.price_per_word}
+        word_count={card.word_count}
+        is_free={card.is_free}
         buttonText="Contratar"
         cardColors={cardColors}
+        button={button}
       />
     </div>
   );
@@ -116,12 +122,14 @@ export function SortableCard({
   card,
   handleEdit,
   handleDelete,
-  editButtons = true // novo parâmetro, default true
+  editButtons = true,
+  button = false
 }: {
   card: any;
   handleEdit: (id: string) => void;
   handleDelete: (id: string) => void;
   editButtons?: boolean;
+  button?: boolean;
 }) {
   const {
     attributes,
@@ -153,7 +161,8 @@ export function SortableCard({
         card={card}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
-        editButtons={editButtons}
+        editButtons={editButtons} // garante que editButtons é passado
+        button={button}
       />
     </div>
   );

@@ -29,7 +29,8 @@ const CheckoutCards: React.FC = () => {
                     card={card}
                     handleEdit={() => {}}
                     handleDelete={() => {}}
-                    editButtons={false}
+                    editButtons={false} // checkout: não mostra botões de edição
+                    button={true} // força o botão a ser clicável no checkout
                   />
                 </div>
               </div>

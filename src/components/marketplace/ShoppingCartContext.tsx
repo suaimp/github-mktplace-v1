@@ -7,6 +7,7 @@ import {
 } from "react";
 import { supabase } from "../../lib/supabase";
 import { parsePrice } from "./utils";
+import { useShoppingCartToCheckoutResume } from "./actions/ShoppingCartToCheckoutResume";
 
 interface CartItem {
   id: string;
@@ -83,6 +84,8 @@ export function CartProvider({ children }: CartProviderProps) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const shoppingCartToCheckoutResume = useShoppingCartToCheckoutResume();
 
   // Load cart items when component mounts
   useEffect(() => {
@@ -305,14 +308,15 @@ export function CartProvider({ children }: CartProviderProps) {
       setLoading(true);
       setError(null);
 
-      if (productName && price && image && url) {
-        console.log(productName, price, image, url);
-      }
       const {
         data: { user }
       } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated");
+      }
+
+      if (!user) {
+        console.log(url, image, productName, price, quantity);
       }
 
       await retryOperation(async () => {
@@ -332,17 +336,24 @@ export function CartProvider({ children }: CartProviderProps) {
             .update({ quantity: newQuantity })
             .eq("id", existingItem.id);
 
+          await shoppingCartToCheckoutResume.edit({
+            user_id: user.id,
+            entry_id: entryId,
+            quantity: newQuantity
+          });
+
           if (updateError) throw updateError;
         } else {
           // Insert new item
+          const insertData = {
+            user_id: user.id,
+            entry_id: entryId,
+            quantity
+          };
           const { error: insertError } = await supabase
             .from("shopping_cart_items")
-            .insert({
-              user_id: user.id,
-              entry_id: entryId,
-              quantity
-            });
-
+            .insert(insertData);
+          shoppingCartToCheckoutResume.add(insertData);
           if (insertError) throw insertError;
         }
       });
@@ -378,6 +389,12 @@ export function CartProvider({ children }: CartProviderProps) {
           .eq("entry_id", entryId);
 
         if (deleteError) throw deleteError;
+      });
+
+      // Remove também do resumo do checkout
+      await shoppingCartToCheckoutResume.remove({
+        user_id: user.id,
+        entry_id: entryId
       });
 
       // Update local state
@@ -416,6 +433,13 @@ export function CartProvider({ children }: CartProviderProps) {
           .eq("entry_id", entryId);
 
         if (updateError) throw updateError;
+      });
+
+      // Atualiza também no resumo do checkout
+      await shoppingCartToCheckoutResume.edit({
+        user_id: user.id,
+        entry_id: entryId,
+        quantity
       });
 
       // Update local state
