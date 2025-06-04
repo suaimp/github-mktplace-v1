@@ -5,8 +5,10 @@ export function getSelectedNicheName(
   selectedNiches: { [id: string]: string | null }
 ): string {
   let selectedNicheName = selectedNiches[item.id];
+
   if (!selectedNicheName) {
     const preset = item.niche_selected;
+
     if (Array.isArray(preset) && preset.length > 0) {
       try {
         if (typeof preset[0] === "string") {
@@ -51,11 +53,13 @@ export function getNichePrice(
   if (!selectedNicheName || selectedNicheName === "Nenhum") return 0;
   const found = niches.find((n: any) => n.niche === selectedNicheName);
   if (found && found.price) {
-    return Number(
+    const nichePrice = Number(
       String(found.price)
         .replace(/[^0-9,.-]+/g, "")
         .replace(",", ".")
     );
+    // Sempre subtrai item.price do valor do nicho selecionado
+    return nichePrice - Number(item.price || 0);
   }
   return 0;
 }

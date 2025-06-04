@@ -105,6 +105,7 @@ export default function ResumeTable(props: any) {
   const totalProductPricesArray = resumeData.map((item: any) =>
     getTotalProductPrice({
       item,
+      price: item.price,
       quantities,
       selectedNiches,
       selectedService,
@@ -238,17 +239,13 @@ export default function ResumeTable(props: any) {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
-                      {niches.length > 0 ? (
+                      <div className="relative">
                         <select
-                          className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 w-full min-w-[120px] max-w-[180px] appearance-none"
-                          style={{
-                            background:
-                              "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.79175 7.396L10.0001 12.6043L15.2084 7.396' stroke='rgba(107,114,128,1)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") no-repeat right 0.75rem center/1.25rem 1.25rem, white",
-                            paddingRight: "2.5rem",
-                            WebkitAppearance: "none",
-                            MozAppearance: "none",
-                            appearance: "none"
-                          }}
+                          className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
+                            getSelectedNicheName(item, selectedNiches)
+                              ? "text-gray-800 dark:text-white/90"
+                              : "text-gray-400 dark:text-gray-400"
+                          } pl-4`}
                           value={getSelectedNicheName(item, selectedNiches)}
                           onChange={async (e) => {
                             const value = e.target.value;
@@ -287,94 +284,157 @@ export default function ResumeTable(props: any) {
                             );
                           }}
                         >
-                          <option value="">Nenhum</option>
+                          <option
+                            value="Artigo Padrão"
+                            className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+                          >
+                            Artigo Padrão
+                          </option>
                           {niches.map((n: any, idx: number) => (
-                            <option key={idx} value={n.niche}>
+                            <option
+                              key={idx}
+                              value={n.niche}
+                              className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+                            >
                               {n.niche} {n.price && `(${n.price})`}
                             </option>
                           ))}
                         </select>
-                      ) : (
-                        <span className="text-gray-400 italic">
-                          Nicho não cadastrado
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg
+                            className="stroke-gray-500 dark:stroke-gray-400"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
                         </span>
-                      )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
-                      <select
-                        className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 w-full min-w-[120px] max-w-[180px] appearance-none"
-                        style={{
-                          background:
-                            "url('data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.79175 7.396L10.0001 12.6043L15.2084 7.396' stroke='rgba(107,114,128,1)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E') no-repeat right 0.75rem center/1.25rem 1.25rem, white",
-                          paddingRight: "2.5rem",
-                          WebkitAppearance: "none",
-                          MozAppearance: "none",
-                          appearance: "none"
-                        }}
-                        value={getSelectedServiceTitle(item, selectedService)}
-                        onChange={async (e) => {
-                          const value = e.target.value;
-                          setSelectedService(
-                            (prev: { [id: string]: string }) => ({
-                              ...prev,
-                              [item.id]: value
-                            })
-                          );
-                          // Atualiza o word_count do pacote selecionado
-                          const selectedPkg = serviceCardsByActiveService?.find(
-                            (option: any) => option.title === value
-                          );
-                          setWordCounts((prev) => ({
-                            ...prev,
-                            [item.id]:
-                              selectedPkg &&
-                              selectedPkg.word_count !== undefined
-                                ? selectedPkg.word_count
-                                : ""
-                          }));
-                          // Atualiza no backend em background
-                          if (item.id) {
-                            const { updateCartCheckoutResume } = await import(
-                              "../../context/db-context/services/CartCheckoutResumeService"
+                      <div className="relative">
+                        <select
+                          className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
+                            getSelectedServiceTitle(item, selectedService)
+                              ? "text-gray-800 dark:text-white/90"
+                              : "text-gray-400 dark:text-gray-400"
+                          } pl-4`}
+                          value={getSelectedServiceTitle(item, selectedService)}
+                          onChange={async (e) => {
+                            const value = e.target.value;
+                            setSelectedService(
+                              (prev: { [id: string]: string }) => ({
+                                ...prev,
+                                [item.id]: value
+                              })
                             );
-                            // Se "Nenhum" ou vazio, envia array padrão
-                            const serviceArray =
-                              !value || value === "Nenhum" || value === ""
-                                ? [
-                                    {
-                                      title: "Nenhum",
-                                      price_per_word: 0,
-                                      word_count: 0,
-                                      is_free: true
-                                    }
-                                  ]
-                                : getServicePackageArray(
-                                    item,
-                                    { ...selectedService, [item.id]: value },
-                                    serviceCardsByActiveService ?? []
-                                  );
-                            await updateCartCheckoutResume(item.id, {
-                              service_selected: serviceArray
-                            });
-                          }
-                        }}
-                      >
-                        <option value="">
-                          Nenhum - Eu vou fornecer o conteúdo
-                        </option>
-                        {serviceCardsByActiveService &&
-                          serviceCardsByActiveService.length > 0 &&
-                          serviceCardsByActiveService.map(
-                            (option: any, idx: number) => (
-                              <option
-                                key={option.id || idx}
-                                value={option.title}
-                              >
-                                {option.title}
-                              </option>
-                            )
-                          )}
-                      </select>
+
+                            // Atualiza o word_count do pacote selecionado
+                            const selectedPkg =
+                              serviceCardsByActiveService?.find(
+                                (option: any) => option.title === value
+                              );
+                            setWordCounts((prev) => ({
+                              ...prev,
+                              [item.id]:
+                                selectedPkg &&
+                                selectedPkg.word_count !== undefined
+                                  ? selectedPkg.word_count
+                                  : ""
+                            }));
+                            // Atualiza no backend em background
+                            if (item.id) {
+                              const { updateCartCheckoutResume } = await import(
+                                "../../context/db-context/services/CartCheckoutResumeService"
+                              );
+                              // Se "Nenhum" ou vazio, envia array padrão
+                              let serviceArray;
+                              if (
+                                !value ||
+                                value ===
+                                  "Nenhum - eu vou fornecer o conteúdo" ||
+                                value === ""
+                              ) {
+                                serviceArray = [
+                                  {
+                                    title: "Nenhum",
+                                    price_per_word: 0,
+                                    word_count: 0,
+                                    is_free: true,
+                                    price: 0
+                                  }
+                                ];
+                              } else {
+                                serviceArray = getServicePackageArray(
+                                  item,
+                                  { ...selectedService, [item.id]: value },
+                                  serviceCardsByActiveService ?? []
+                                ).map((pkg: any) => ({
+                                  ...pkg,
+                                  price:
+                                    selectedPkg &&
+                                    selectedPkg.price !== undefined
+                                      ? selectedPkg.price
+                                      : 0
+                                }));
+                              }
+
+                              console.log(
+                                "serviceArray",
+                                JSON.parse(JSON.stringify(serviceArray))
+                              );
+                              await updateCartCheckoutResume(item.id, {
+                                service_selected: serviceArray
+                              });
+                            }
+                          }}
+                        >
+                          <option
+                            value="Nenhum - eu vou fornecer o conteúdo"
+                            className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+                          >
+                            Nenhum - eu vou fornecer o conteúdo
+                          </option>
+                          {serviceCardsByActiveService &&
+                            serviceCardsByActiveService.length > 0 &&
+                            serviceCardsByActiveService.map(
+                              (option: any, idx: number) => (
+                                <option
+                                  key={option.id || idx}
+                                  value={option.title}
+                                  className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+                                >
+                                  {option.title}
+                                </option>
+                              )
+                            )}
+                        </select>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg
+                            className="stroke-gray-500 dark:stroke-gray-400"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      </div>
                     </td>
                     {/* Coluna Palavras sempre visível, input só se houver option.title selecionado */}
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
@@ -407,6 +467,7 @@ export default function ResumeTable(props: any) {
                       {formatCurrency(
                         getTotalProductPrice({
                           item,
+                          price: item.price,
                           quantities,
                           selectedNiches,
                           selectedService,

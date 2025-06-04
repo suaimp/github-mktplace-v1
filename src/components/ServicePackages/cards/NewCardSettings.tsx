@@ -129,7 +129,7 @@ export default function ButtonModalField({
       service_id: field.service_id,
       title: serviceTitle,
       subtitle: subtitle || null,
-      price: Number((pricePerWord * wordCount).toFixed(2)),
+      price: isFreeWord ? 0 : Number((pricePerWord * wordCount).toFixed(2)),
       price_per_word: pricePerWord,
       word_count: wordCount,
       benefits: features.filter((f) => f.trim() !== ""),

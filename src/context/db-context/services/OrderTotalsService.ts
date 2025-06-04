@@ -4,6 +4,7 @@ export interface OrderTotal {
   id: string;
   user_id: string;
   total_product_price: number;
+  total_content_price: number;
   total_final_price: number;
   created_at: string;
   updated_at: string;

@@ -8,6 +8,7 @@ export async function setService(service: any) {
   // Extrai apenas os campos necessários
   const payload = {
     title: service.title,
+    price: service.price, // Inclui o campo price
     price_per_word: service.price_per_word,
     word_count: service.word_count,
     is_free: service.is_free

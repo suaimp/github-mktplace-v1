@@ -10,6 +10,7 @@ export function getTotalProductPrice({
   getNichePrice
 }: {
   item: any;
+  price: any;
   quantities: any;
   selectedNiches: any;
   selectedService: any;

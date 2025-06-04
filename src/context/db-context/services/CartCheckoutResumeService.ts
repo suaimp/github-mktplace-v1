@@ -18,6 +18,7 @@ export type CartCheckoutResume = {
   service_selected?:
     | {
         title: string;
+        price: number;
         price_per_word: number;
         word_count: number;
         is_free: boolean;
