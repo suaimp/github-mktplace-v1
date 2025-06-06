@@ -1,0 +1,525 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import PageMeta from "../../components/common/PageMeta";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import { supabase } from "../../lib/supabase";
+import PaymentInformationForm from "../../components/Checkout/PaymentInformationForm";
+import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";
+import OrderSummary from "../../components/Checkout/OrderSummary";
+import { createOrder } from "../../context/db-context/services/OrderService";
+
+// Mock function to simulate payment processing
+const processPayment = async (paymentMethod: string) => {
+  // In a real app, this would call your backend to process the payment
+  return new Promise<string>((resolve) => {
+    setTimeout(() => {
+      resolve(`payment_${Date.now()}`);
+    }, 1500);
+  });
+};
+
+export default function Payment() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("card");
+  const [processing, setProcessing] = useState(false);
+  const [stripePromise, setStripePromise] = useState<any>(null);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    documentNumber: ""
+  });
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [orderSummary, setOrderSummary] = useState({
+    items: [] as any[],
+    totalProductPrice: 0,
+    totalContentPrice: 0
+  });
+  const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
+  const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>(["card"]);
+
+  useEffect(() => {
+    loadPaymentSettings();
+    loadOrderTotal();
+    loadCompanyData();
+    loadCartItems();
+  }, []);
+
+  async function loadPaymentSettings() {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Check if form exists and is published
+      const { data, error } = await supabase
+        .from("payment_settings")
+        .select("stripe_public_key, stripe_enabled, stripe_test_mode, currency, payment_methods")
+        .single();
+
+      if (error) throw error;
+
+      if (data?.stripe_enabled && data?.stripe_public_key) {
+        // Initialize Stripe with the public key
+        const stripeInstance = loadStripe(data.stripe_public_key);
+        setStripePromise(stripeInstance);
+      }
+      
+      // Set available payment methods from settings
+      if (data?.payment_methods && Array.isArray(data.payment_methods)) {
+        setAvailablePaymentMethods(data.payment_methods);
+        
+        // Set default payment method to the first available one
+        if (data.payment_methods.length > 0) {
+          setPaymentMethod(data.payment_methods[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading payment settings:", err);
+      setError("Erro ao carregar configurações de pagamento");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadOrderTotal() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("order_totals")
+        .select("total_product_price, total_content_price, total_final_price")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Convert to cents for Stripe
+        setTotalAmount(Math.round(parseFloat(data.total_final_price) * 100));
+        setOrderSummary(prev => ({
+          ...prev,
+          totalProductPrice: Number(data.total_product_price),
+          totalContentPrice: Number(data.total_content_price)
+        }));
+      }
+    } catch (err) {
+      console.error("Error loading order total:", err);
+    }
+  }
+
+  async function loadCartItems() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get cart items
+      const { data: cartItems, error: cartError } = await supabase
+        .from("cart_checkout_resume")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (cartError) throw cartError;
+
+      if (cartItems && cartItems.length > 0) {
+        setOrderSummary(prev => ({
+          ...prev,
+          items: cartItems
+        }));
+      }
+    } catch (err) {
+      console.error("Error loading cart items:", err);
+    }
+  }
+
+  async function loadCompanyData() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // First check if user is admin
+      const { data: adminData } = await supabase
+        .from("admins")
+        .select("id, email, first_name, last_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (adminData) {
+        // Get company data for admin
+        const { data, error } = await supabase
+          .from("company_data")
+          .select("*")
+          .eq("admin_id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        setCompanyData(data);
+      } else {
+        // Get user data for platform user
+        const { data, error } = await supabase
+          .from("platform_users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        setCompanyData(data);
+      }
+    } catch (err) {
+      console.error("Error loading company data:", err);
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePaymentMethodChange = (method: string) => {
+    setPaymentMethod(method);
+    
+    // Generate PIX QR code if PIX is selected
+    if (method === "pix") {
+      generatePixQrCode();
+    } else {
+      setPixQrCodeUrl(null);
+      setPixCopiaECola(null);
+    }
+  };
+  
+  const generatePixQrCode = async () => {
+    try {
+      setProcessing(true);
+      
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No authenticated session found');
+      }
+      
+      // Get the total amount
+      const total = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+      
+      // Call the create-pix-qrcode function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-qrcode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          amount: Math.round(total * 100), // Convert to cents
+          description: `Pedido Marketplace - ${new Date().toISOString()}`
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate PIX QR code');
+      }
+      
+      const { pixQrCode, pixCopiaECola: pixCode } = await response.json();
+      
+      setPixQrCodeUrl(pixQrCode);
+      setPixCopiaECola(pixCode);
+      
+    } catch (err: any) {
+      console.error("Error generating PIX QR code:", err);
+      setError(err.message || "Erro ao gerar QR code PIX");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentId: string) => {
+    try {
+      setProcessing(true);
+      
+      // Create order in database
+      await createOrderInDatabase(paymentId);
+      
+      // Show success message
+      setSuccess(true);
+    } catch (err) {
+      console.error("Error processing successful payment:", err);
+      setError("Erro ao finalizar o pagamento");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePaymentError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
+  const createOrderInDatabase = async (paymentId?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+      
+      // Prepare order items
+      const orderItems = orderSummary.items.map(item => {
+        // Parse niche if it's a string
+        let nicheData = item.niche_selected || null;
+        if (typeof nicheData === 'string') {
+          try {
+            nicheData = JSON.parse(nicheData);
+          } catch (e) {
+            nicheData = null;
+          }
+        }
+        
+        // Parse service content if it's a string
+        let serviceData = item.service_selected || null;
+        if (typeof serviceData === 'string') {
+          try {
+            serviceData = JSON.parse(serviceData);
+          } catch (e) {
+            serviceData = null;
+          }
+        }
+        
+        return {
+          entry_id: item.entry_id,
+          product_name: item.product_url || "Produto",
+          product_url: item.product_url,
+          quantity: item.quantity || 1,
+          unit_price: Number(item.price) || 0,
+          total_price: (Number(item.price) || 0) * (item.quantity || 1),
+          niche: nicheData,
+          service_content: serviceData
+        };
+      });
+      
+      // Calculate total amount
+      const totalAmount = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+      
+      // Create order
+      const order = await createOrder({
+        payment_method: paymentMethod,
+        total_amount: totalAmount,
+        billing_name: formData.name,
+        billing_email: formData.email,
+        billing_address: formData.address,
+        billing_city: formData.city,
+        billing_state: formData.state,
+        billing_zip_code: formData.zipCode,
+        billing_document_number: formData.documentNumber,
+        payment_id: paymentId,
+        items: orderItems
+      });
+      
+      if (!order) {
+        throw new Error("Failed to create order");
+      }
+      
+      // Clear cart after successful order creation
+      await clearCart(user.id);
+      
+      return order;
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
+  };
+  
+  const clearCart = async (userId: string) => {
+    try {
+      // Delete all items from cart_checkout_resume
+      const { error: resumeError } = await supabase
+        .from("cart_checkout_resume")
+        .delete()
+        .eq("user_id", userId);
+        
+      if (resumeError) throw resumeError;
+      
+      // Delete all items from shopping_cart_items
+      const { error: cartError } = await supabase
+        .from("shopping_cart_items")
+        .delete()
+        .eq("user_id", userId);
+        
+      if (cartError) throw cartError;
+      
+      return true;
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form data
+    if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.state || !formData.zipCode || !formData.documentNumber) {
+      setError("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!termsAccepted) {
+      setError("Por favor, aceite os termos e condições para continuar");
+      return;
+    }
+    
+    if (paymentMethod !== "card") {
+      try {
+        setProcessing(true);
+        setError(null);
+        
+        // For boleto, navigate to the boleto success page
+        if (paymentMethod === "boleto") {
+          // Create order in database first
+          const order = await createOrderInDatabase();
+          
+          // Create mock boleto data
+          const boletoData = {
+            barCode: '42297.11504 00064.897317 04021.401122 1 11070000082900',
+            amount: orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+            expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'),
+            boletoUrl: '#'
+          };
+          
+          navigate('/checkout/boleto-success', { state: { boletoData } });
+          return;
+        }
+        
+        // Process payment with selected method
+        const paymentId = await processPayment(paymentMethod);
+        
+        handlePaymentSuccess(paymentId);
+      } catch (err: any) {
+        console.error("Payment error:", err);
+        setError(err.message || "Erro ao processar pagamento");
+      } finally {
+        setProcessing(false);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <PageMeta 
+          title="Pagamento | Marketplace" 
+          description="Página de pagamento"
+        />
+        <PageBreadcrumb pageTitle="Pagamento" />
+        
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl border border-gray-200 dark:border-gray-800 flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (success) {
+    return (
+      <>
+        <PageMeta 
+          title="Pagamento Concluído | Marketplace" 
+          description="Pagamento concluído com sucesso"
+        />
+        <PageBreadcrumb pageTitle="Pagamento Concluído" />
+        
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-success-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+              Pagamento Concluído!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Seu pagamento foi processado com sucesso. Você receberá um email com os detalhes da compra em breve.
+            </p>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
+            >
+              Voltar para o Dashboard
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageMeta 
+        title="Pagamento | Marketplace" 
+        description="Página de pagamento"
+      />
+      <PageBreadcrumb pageTitle="Pagamento" />
+      
+      <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto">
+        <div className="w-full md:w-3/5">
+          <PaymentInformationForm 
+            formData={formData}
+            onChange={handleInputChange}
+          />
+          
+          <PaymentMethodForm 
+            paymentMethod={paymentMethod}
+            stripePromise={stripePromise}
+            totalAmount={totalAmount}
+            pixQrCodeUrl={pixQrCodeUrl}
+            pixCopiaECola={pixCopiaECola}
+            total={orderSummary.totalProductPrice + orderSummary.totalContentPrice}
+            processing={processing}
+            error={error}
+            termsAccepted={termsAccepted}
+            availablePaymentMethods={availablePaymentMethods}
+            onPaymentMethodChange={handlePaymentMethodChange}
+            onTermsAcceptedChange={setTermsAccepted}
+            onSubmit={handleSubmit}
+            onPaymentSuccess={handlePaymentSuccess}
+            onPaymentError={handlePaymentError}
+          />
+        </div>
+        
+        <div className="w-full md:w-2/5">
+          <OrderSummary 
+            items={orderSummary.items}
+            totalProductPrice={orderSummary.totalProductPrice}
+            totalContentPrice={orderSummary.totalContentPrice}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
