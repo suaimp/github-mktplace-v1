@@ -59,7 +59,7 @@ export default function ViewPage() {
 
   const renderContent = (content: string) => {
     // Parse shortcodes in content
-    const parts = [];
+    const parts: React.ReactNode[] = [];
     let lastIndex = 0;
 
     // Match all shortcode types

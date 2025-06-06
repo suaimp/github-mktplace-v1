@@ -264,7 +264,12 @@ export default function FormRenderer({
       }
 
       // Create entry values
-      const values = [];
+      const values: Array<{
+        entry_id: any;
+        field_id: string;
+        value: string | null;
+        value_json: any;
+      }> = [];
       for (const [fieldId, value] of Object.entries(formData)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;

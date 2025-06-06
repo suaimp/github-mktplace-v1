@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "./StripePaymentForm";
 import { formatCurrency } from "../marketplace/utils";
@@ -56,11 +56,11 @@ export default function PaymentMethodForm({
     { id: "card", label: "Cartão de Crédito", icon: "credit-card" },
     { id: "pix", label: "PIX", icon: "pix" },
     { id: "boleto", label: "Boleto", icon: "barcode" }
-  ].filter(method => availablePaymentMethods.includes(method.id));
+  ].filter((method) => availablePaymentMethods.includes(method.id));
 
   const handleCardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCardData(prev => ({
+    setCardData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -68,13 +68,14 @@ export default function PaymentMethodForm({
 
   const handleCopyPixCode = () => {
     if (pixCopiaECola) {
-      navigator.clipboard.writeText(pixCopiaECola)
+      navigator.clipboard
+        .writeText(pixCopiaECola)
         .then(() => {
           setPixCopied(true);
           setTimeout(() => setPixCopied(false), 3000);
         })
-        .catch(err => {
-          console.error('Erro ao copiar código PIX:', err);
+        .catch((err) => {
+          console.error("Erro ao copiar código PIX:", err);
         });
     }
   };
@@ -82,26 +83,28 @@ export default function PaymentMethodForm({
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
       <div className="flex items-center mb-4">
-        <svg 
+        <svg
           className="w-6 h-6 mr-2 text-gray-800 dark:text-white"
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24" 
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth="2" 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
           />
         </svg>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white">Método de pagamento</h3>
+        <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+          Método de pagamento
+        </h3>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Selecione seu método de pagamento preferido
       </p>
-      
+
       <div className="mb-6">
         <div className="flex flex-wrap gap-4 mb-6">
           {filteredPaymentMethods.map((method) => (
@@ -116,58 +119,109 @@ export default function PaymentMethodForm({
               }`}
             >
               {method.id === "card" && (
-                <svg 
-                  className="w-6 h-6" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect x="2\" y="5\" width="20\" height="14\" rx="2\" stroke="currentColor\" strokeWidth="2"/>
-                  <path d="M2 10H22\" stroke="currentColor\" strokeWidth="2"/>
-                  <path d="M6 15H10\" stroke="currentColor\" strokeWidth="2\" strokeLinecap="round"/>
+                  <rect
+                    x="2\"
+                    y="5\"
+                    width="20\"
+                    height="14\"
+                    rx="2\"
+                    stroke="currentColor\"
+                    strokeWidth="2"
+                  />
+                  <path d="M2 10H22\" stroke="currentColor\" strokeWidth="2" />
+                  <path
+                    d="M6 15H10\"
+                    stroke="currentColor\"
+                    strokeWidth="2\"
+                    strokeLinecap="round"
+                  />
                 </svg>
               )}
               {method.id === "pix" && (
-                <svg 
-                  className="w-6 h-6" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M12 4L4 8L12 12L20 8L12 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4 16L12 20L20 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4 12L12 16L20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M12 4L4 8L12 12L20 8L12 4Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 16L12 20L20 16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 12L12 16L20 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               )}
               {method.id === "boleto" && (
-                <svg 
-                  className="w-6 h-6" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M4 10H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M4 14H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path
+                    d="M4 6H20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 10H20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 14H20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 18H20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               )}
               <span>{method.label}</span>
             </button>
           ))}
         </div>
-        
+
         {error && (
           <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
             {error}
           </div>
         )}
-        
+
         {paymentMethod === "card" && (
           <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
             {stripePromise ? (
               <Elements stripe={stripePromise}>
-                <StripePaymentForm 
+                <StripePaymentForm
                   amount={totalAmount}
                   currency="brl"
                   onSuccess={onPaymentSuccess}
@@ -187,7 +241,7 @@ export default function PaymentMethodForm({
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label>Número do cartão</Label>
                   <InputMask
@@ -200,7 +254,7 @@ export default function PaymentMethodForm({
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Data de expiração</Label>
@@ -214,7 +268,7 @@ export default function PaymentMethodForm({
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label>Código de segurança</Label>
                     <InputMask
@@ -228,7 +282,7 @@ export default function PaymentMethodForm({
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <Label>País</Label>
                   <Select
@@ -244,14 +298,16 @@ export default function PaymentMethodForm({
                       { value: "UY", label: "Uruguai" }
                     ]}
                     value={cardData.country}
-                    onChange={(value) => setCardData(prev => ({ ...prev, country: value }))}
+                    onChange={(value) =>
+                      setCardData((prev) => ({ ...prev, country: value }))
+                    }
                   />
                 </div>
               </form>
             )}
           </div>
         )}
-        
+
         {paymentMethod === "pix" && (
           <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
             <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
@@ -260,12 +316,12 @@ export default function PaymentMethodForm({
             <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
               Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar
             </p>
-            
+
             <div className="flex justify-center mb-6">
               {pixQrCodeUrl ? (
-                <img 
-                  src={pixQrCodeUrl} 
-                  alt="QR Code PIX" 
+                <img
+                  src={pixQrCodeUrl}
+                  alt="QR Code PIX"
                   className="w-48 h-48 border border-gray-200 dark:border-gray-700 p-2 rounded"
                 />
               ) : (
@@ -274,7 +330,7 @@ export default function PaymentMethodForm({
                 </div>
               )}
             </div>
-            
+
             <div className="mb-6">
               <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
                 Ou copie e cole o código abaixo no seu aplicativo bancário:
@@ -294,18 +350,18 @@ export default function PaymentMethodForm({
                 </button>
               </div>
             </div>
-            
+
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
               <div className="flex items-start">
-                <svg 
-                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2" 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20" 
+                <svg
+                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                     clipRule="evenodd"
                   />
                 </svg>
@@ -316,40 +372,48 @@ export default function PaymentMethodForm({
                   <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
                     <li>O pagamento via PIX é processado instantaneamente</li>
                     <li>O QR Code e o código PIX são válidos por 30 minutos</li>
-                    <li>Após o pagamento, você receberá um email de confirmação</li>
+                    <li>
+                      Após o pagamento, você receberá um email de confirmação
+                    </li>
                   </ul>
                 </div>
               </div>
             </div>
           </div>
         )}
-        
+
         {paymentMethod === "boleto" && (
           <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Instruções para Boleto</h3>
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+              Instruções para Boleto
+            </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Após clicar em "Pagar", você receberá o boleto por email. O pagamento pode levar até 3 dias úteis para ser processado.
+              Após clicar em "Pagar", você receberá o boleto por email. O
+              pagamento pode levar até 3 dias úteis para ser processado.
             </p>
             <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Valor: {formatCurrency(total)}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Vencimento: {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+                Vencimento:{" "}
+                {new Date(
+                  Date.now() + 3 * 24 * 60 * 60 * 1000
+                ).toLocaleDateString("pt-BR")}
               </p>
             </div>
-            
+
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
               <div className="flex items-start">
-                <svg 
-                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2" 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20" 
+                <svg
+                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                     clipRule="evenodd"
                   />
                 </svg>
@@ -359,7 +423,10 @@ export default function PaymentMethodForm({
                   </h4>
                   <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
                     <li>O boleto tem vencimento em 3 dias úteis</li>
-                    <li>Após o pagamento, a compensação pode levar até 3 dias úteis</li>
+                    <li>
+                      Após o pagamento, a compensação pode levar até 3 dias
+                      úteis
+                    </li>
                     <li>Você receberá o boleto por email</li>
                   </ul>
                 </div>
@@ -368,18 +435,18 @@ export default function PaymentMethodForm({
           </div>
         )}
       </div>
-      
+
       <div className="mb-4 space-y-2 text-gray-500 dark:text-gray-400">
         <label className="flex items-center">
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={termsAccepted}
             onChange={(e) => onTermsAcceptedChange(e.target.checked)}
             className="form-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
           />
           <span>
             Eu aceito os{" "}
-            <button 
+            <button
               type="button"
               className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
             >
@@ -393,14 +460,14 @@ export default function PaymentMethodForm({
           </div>
         )}
       </div>
-      
+
       <button
         type="button"
         onClick={onSubmit}
         disabled={processing || !termsAccepted}
         className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
       >
-        {processing ? 'Processando...' : `Pagar ${formatCurrency(total)}`}
+        {processing ? "Processando..." : `Pagar ${formatCurrency(total)}`}
       </button>
     </div>
   );

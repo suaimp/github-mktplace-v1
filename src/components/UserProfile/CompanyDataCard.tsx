@@ -195,15 +195,21 @@ export default function CompanyDataCard({
       </div>
 
       <div className="space-y-6 pt-8 border-t border-gray-200 dark:border-gray-800">
-   
-
         <PaymentMethodForm
           data={companyData}
           onChange={(data) => setCompanyData({ ...companyData, ...data })}
         />
 
         <div className="flex justify-end pt-6">
-          <Button disabled={loading} onClick={handleSubmit}>
+          <Button
+            disabled={loading}
+            onClick={(e) => {
+              if (e) {
+                e.preventDefault();
+              }
+              handleSubmit(e as any);
+            }}
+          >
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         </div>

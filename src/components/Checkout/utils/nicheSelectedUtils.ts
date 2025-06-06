@@ -1,5 +1,10 @@
 // Funções utilitárias para lidar com o valor selecionado de nicho e preço
 
+interface NicheItem {
+  niche: string;
+  price: string | number;
+}
+
 export function getSelectedNicheName(
   item: any,
   selectedNiches: { [id: string]: string | null }
@@ -43,7 +48,7 @@ export function getNichePrice(
   item: any,
   selectedNiches: { [id: string]: string | null }
 ): number {
-  let niches = [];
+  let niches: NicheItem[] = [];
   try {
     niches = item.niche ? JSON.parse(item.niche) : [];
   } catch {
@@ -51,7 +56,7 @@ export function getNichePrice(
   }
   const selectedNicheName = getSelectedNicheName(item, selectedNiches);
   if (!selectedNicheName || selectedNicheName === "Nenhum") return 0;
-  const found = niches.find((n: any) => n.niche === selectedNicheName);
+  const found = niches.find((n: NicheItem) => n.niche === selectedNicheName);
   if (found && found.price) {
     const nichePrice = Number(
       String(found.price)

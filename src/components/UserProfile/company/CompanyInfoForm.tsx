@@ -942,41 +942,6 @@ export default function CompanyInfoForm({
     onChange({ ...data, [field]: value });
   };
 
-  // Format document number based on type (CPF or CNPJ)
-  const formatDocumentNumber = (value: string): string => {
-    // Remove non-digits
-    const digits = value.replace(/\D/g, '');
-    
-    if (data.legal_status === 'business') {
-      // CNPJ format: 00.000.000/0000-00
-      if (digits.length <= 2) return digits;
-      if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
-      if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
-      if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
-      return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
-    } else {
-      // CPF format: 000.000.000-00
-      if (digits.length <= 3) return digits;
-      if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-      if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
-    }
-  };
-
-  // Format ZIP code (CEP)
-  const formatZipCode = (value: string): string => {
-    // Remove non-digits
-    const digits = value.replace(/\D/g, '');
-    
-    if (data.country === 'BR') {
-      // CEP format: 00000-000
-      if (digits.length <= 5) return digits;
-      return `${digits.slice(0, 5)}-${digits.slice(5, 8)}`;
-    }
-    
-    return value; // For other countries, return as is
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -1079,24 +1044,42 @@ export default function CompanyInfoForm({
 
         <div>
           <Label>
-            {data.country === "BR" ? (data.legal_status === "business" ? "CNPJ" : "CPF") : (data.legal_status === "business" ? "Tax ID" : "Document Number")}
+            {data.country === "BR"
+              ? data.legal_status === "business"
+                ? "CNPJ"
+                : "CPF"
+              : data.legal_status === "business"
+              ? "Tax ID"
+              : "Document Number"}
             {data.country === "BR" && <span className="text-error-500">*</span>}
           </Label>
           <div className="relative">
             {data.country === "BR" ? (
               <InputMask
-                mask={data.legal_status === "business" ? "99.999.999/9999-99" : "999.999.999-99"}
+                mask={
+                  data.legal_status === "business"
+                    ? "99.999.999/9999-99"
+                    : "999.999.999-99"
+                }
                 value={data.document_number}
-                onChange={(e) => handleChange("document_number", e.target.value)}
+                onChange={(e) =>
+                  handleChange("document_number", e.target.value)
+                }
                 className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                placeholder={data.legal_status === "business" ? "00.000.000/0000-00" : "000.000.000-00"}
+                placeholder={
+                  data.legal_status === "business"
+                    ? "00.000.000/0000-00"
+                    : "000.000.000-00"
+                }
                 required={data.country === "BR"}
               />
             ) : (
               <Input
                 type="text"
                 value={data.document_number}
-                onChange={(e) => handleChange("document_number", e.target.value)}
+                onChange={(e) =>
+                  handleChange("document_number", e.target.value)
+                }
                 required={data.country === "BR"}
                 maxLength={20}
                 placeholder={`Enter ${

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 export type Permission = {
   id: string;
@@ -27,55 +27,61 @@ export async function getUserPermissions(userId: string): Promise<Set<string>> {
   try {
     // First check if user is admin
     const { data: adminData } = await supabase
-      .from('admins')
-      .select('role_id')
-      .eq('id', userId)
+      .from("admins")
+      .select("role_id")
+      .eq("id", userId)
       .maybeSingle();
 
     // If not admin, check platform_users
     const { data: userData } = await supabase
-      .from('platform_users')
-      .select('role_id')
-      .eq('id', userId)
+      .from("platform_users")
+      .select("role_id")
+      .eq("id", userId)
       .maybeSingle();
 
     const roleId = adminData?.role_id || userData?.role_id;
-    
+
     if (!roleId) {
-      throw new Error('User role not found');
+      throw new Error("User role not found");
     }
 
     // Get permissions for role
     const { data: permissions } = await supabase
-      .from('permissions')
-      .select(`
+      .from("permissions")
+      .select(
+        `
         code,
         role_permissions!inner(
           role_id
         )
-      `)
-      .eq('role_permissions.role_id', roleId);
+      `
+      )
+      .eq("role_permissions.role_id", roleId);
 
-    // Create permission set
-    const permissionSet = new Set(permissions?.map(p => p.code) || []);
-    
+    // Create permission set with explicit type assertion
+    const permissionSet = new Set<string>(
+      permissions?.map((p: any) => p.code as string) || []
+    );
+
     // Cache permissions
     userPermissionsCache.set(userId, permissionSet);
 
     return permissionSet;
-
   } catch (error) {
-    console.error('Error getting user permissions:', error);
+    console.error("Error getting user permissions:", error);
     return new Set();
   }
 }
 
-export async function hasPermission(userId: string, permission: string): Promise<boolean> {
+export async function hasPermission(
+  userId: string,
+  permission: string
+): Promise<boolean> {
   try {
     const permissions = await getUserPermissions(userId);
     return permissions.has(permission);
   } catch (error) {
-    console.error('Error checking permission:', error);
+    console.error("Error checking permission:", error);
     return false;
   }
 }

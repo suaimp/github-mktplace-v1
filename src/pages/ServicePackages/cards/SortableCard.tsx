@@ -138,7 +138,12 @@ export function SortableCard({
     transform,
     transition,
     isDragging
-  } = useSortable({ id: card.id });
+  } = useSortable({
+    id: card.id,
+    resizeObserverConfig: {
+      disabled: false
+    }
+  });
 
   const style = {
     transform: transform ? CSS.Transform.toString(transform) : undefined,

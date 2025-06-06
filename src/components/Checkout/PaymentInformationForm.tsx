@@ -14,7 +14,9 @@ interface PaymentInformationFormProps {
     zipCode: string;
     documentNumber: string;
   };
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
 }
 
 export default function PaymentInformationForm({
@@ -22,8 +24,10 @@ export default function PaymentInformationForm({
   onChange
 }: PaymentInformationFormProps) {
   const [loading, setLoading] = useState(true);
-  const [companyData, setCompanyData] = useState<any>(null);
-  const [accountType, setAccountType] = useState<"individual" | "business">("individual");
+
+  const [accountType, setAccountType] = useState<"individual" | "business">(
+    "individual"
+  );
 
   const brazilianStates = [
     { value: "AC", label: "Acre" },
@@ -62,7 +66,9 @@ export default function PaymentInformationForm({
   async function loadUserData() {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // First check if user is admin
@@ -79,50 +85,53 @@ export default function PaymentInformationForm({
           .select("*")
           .eq("admin_id", user.id)
           .maybeSingle();
-        
+
         if (data) {
-          setCompanyData(data);
           setAccountType(data.legal_status || "individual");
-          
+
           // Update form data based on account type
           const event = {
             target: {
               name: "name",
-              value: data.legal_status === "business" 
-                ? (data.company_name || "") 
-                : `${adminData.first_name} ${adminData.last_name}`
+              value:
+                data.legal_status === "business"
+                  ? data.company_name || ""
+                  : `${adminData.first_name} ${adminData.last_name}`
             }
           } as React.ChangeEvent<HTMLInputElement>;
           onChange(event);
-          
+
           // Update email
           onChange({
             target: { name: "email", value: adminData.email }
           } as React.ChangeEvent<HTMLInputElement>);
-          
+
           // Update address
           onChange({
             target: { name: "address", value: data.address || "" }
           } as React.ChangeEvent<HTMLInputElement>);
-          
+
           // Update city
           onChange({
             target: { name: "city", value: data.city || "" }
           } as React.ChangeEvent<HTMLInputElement>);
-          
+
           // Update state
           onChange({
             target: { name: "state", value: data.state || "" }
           } as React.ChangeEvent<HTMLInputElement>);
-          
+
           // Update zipCode
           onChange({
             target: { name: "zipCode", value: data.zip_code || "" }
           } as React.ChangeEvent<HTMLInputElement>);
-          
+
           // Update documentNumber
           onChange({
-            target: { name: "documentNumber", value: data.document_number || "" }
+            target: {
+              name: "documentNumber",
+              value: data.document_number || ""
+            }
           } as React.ChangeEvent<HTMLInputElement>);
         }
       } else {
@@ -132,7 +141,7 @@ export default function PaymentInformationForm({
           .select("*")
           .eq("id", user.id)
           .maybeSingle();
-        
+
         if (platformUserData) {
           // Get company data for platform user
           const { data } = await supabase
@@ -140,60 +149,63 @@ export default function PaymentInformationForm({
             .select("*")
             .eq("user_id", user.id)
             .maybeSingle();
-          
+
           if (data) {
-            setCompanyData(data);
             setAccountType(data.legal_status || "individual");
-            
+
             // Update form data based on account type
             const event = {
               target: {
                 name: "name",
-                value: data.legal_status === "business" 
-                  ? (data.company_name || "") 
-                  : `${platformUserData.first_name} ${platformUserData.last_name}`
+                value:
+                  data.legal_status === "business"
+                    ? data.company_name || ""
+                    : `${platformUserData.first_name} ${platformUserData.last_name}`
               }
             } as React.ChangeEvent<HTMLInputElement>;
             onChange(event);
-            
+
             // Update email
             onChange({
               target: { name: "email", value: platformUserData.email }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             // Update address
             onChange({
               target: { name: "address", value: data.address || "" }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             // Update city
             onChange({
               target: { name: "city", value: data.city || "" }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             // Update state
             onChange({
               target: { name: "state", value: data.state || "" }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             // Update zipCode
             onChange({
               target: { name: "zipCode", value: data.zip_code || "" }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             // Update documentNumber
             onChange({
-              target: { name: "documentNumber", value: data.document_number || "" }
+              target: {
+                name: "documentNumber",
+                value: data.document_number || ""
+              }
             } as React.ChangeEvent<HTMLInputElement>);
           } else {
             // No company data, just use platform user data
             onChange({
-              target: { 
-                name: "name", 
-                value: `${platformUserData.first_name} ${platformUserData.last_name}` 
+              target: {
+                name: "name",
+                value: `${platformUserData.first_name} ${platformUserData.last_name}`
               }
             } as React.ChangeEvent<HTMLInputElement>);
-            
+
             onChange({
               target: { name: "email", value: platformUserData.email }
             } as React.ChangeEvent<HTMLInputElement>);
@@ -210,31 +222,38 @@ export default function PaymentInformationForm({
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 mb-6">
       <div className="flex items-center mb-4">
-        <svg 
+        <svg
           className="w-6 h-6 mr-2 text-gray-800 dark:text-white"
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24" 
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth="2" 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
           />
         </svg>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white">Informações de pagamento</h3>
+        <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+          Informações de pagamento
+        </h3>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        {loading ? "Carregando informações..." : accountType === "business" 
-          ? "Dados da Empresa" 
+        {loading
+          ? "Carregando informações..."
+          : accountType === "business"
+          ? "Dados da Empresa"
           : "Dados Pessoais"}
       </p>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label>{accountType === "business" ? "Nome da Empresa" : "Nome Completo"} <span className="text-error-500">*</span></Label>
+          <Label>
+            {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
+            <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="text"
             name="name"
@@ -243,9 +262,11 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-        
+
         <div>
-          <Label>Email <span className="text-error-500">*</span></Label>
+          <Label>
+            Email <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="email"
             name="email"
@@ -254,9 +275,11 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-        
+
         <div>
-          <Label>Endereço <span className="text-error-500">*</span></Label>
+          <Label>
+            Endereço <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="text"
             name="address"
@@ -265,9 +288,11 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-        
+
         <div>
-          <Label>Cidade <span className="text-error-500">*</span></Label>
+          <Label>
+            Cidade <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="text"
             name="city"
@@ -278,17 +303,25 @@ export default function PaymentInformationForm({
         </div>
 
         <div>
-          <Label>Estado <span className="text-error-500">*</span></Label>
+          <Label>
+            Estado <span className="text-error-500">*</span>
+          </Label>
           <Select
             options={brazilianStates}
             value={formData.state}
-            onChange={(value) => onChange({ target: { name: 'state', value } } as React.ChangeEvent<HTMLSelectElement>)}
+            onChange={(value) =>
+              onChange({
+                target: { name: "state", value }
+              } as React.ChangeEvent<HTMLSelectElement>)
+            }
             placeholder="Selecione um estado"
           />
         </div>
-        
+
         <div>
-          <Label>CEP <span className="text-error-500">*</span></Label>
+          <Label>
+            CEP <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="text"
             name="zipCode"
@@ -297,9 +330,12 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-        
+
         <div>
-          <Label>{accountType === "business" ? "CNPJ" : "CPF"} <span className="text-error-500">*</span></Label>
+          <Label>
+            {accountType === "business" ? "CNPJ" : "CPF"}{" "}
+            <span className="text-error-500">*</span>
+          </Label>
           <Input
             type="text"
             name="documentNumber"

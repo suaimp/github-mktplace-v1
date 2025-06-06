@@ -387,7 +387,14 @@ export default function UserFormEntriesRenderer({
       }
 
       // Update entry values
-      const updatedValues = [];
+      interface FormEntryValue {
+        entry_id: string;
+        field_id: string;
+        value: string | null;
+        value_json: any;
+      }
+
+      const updatedValues: FormEntryValue[] = [];
       for (const [fieldId, value] of Object.entries(editableFormValues)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;

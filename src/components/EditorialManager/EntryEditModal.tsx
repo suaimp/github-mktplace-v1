@@ -170,7 +170,12 @@ export default function EntryEditModal({
       if (updateError) throw updateError;
 
       // Update entry values
-      const updatedValues = [];
+      const updatedValues: Array<{
+        entry_id: any;
+        field_id: string;
+        value: string | null;
+        value_json: any;
+      }> = [];
       for (const [fieldId, value] of Object.entries(formValues)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;

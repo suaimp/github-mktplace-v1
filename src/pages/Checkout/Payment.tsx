@@ -10,6 +10,7 @@ import OrderSummary from "../../components/Checkout/OrderSummary";
 import { createOrder } from "../../context/db-context/services/OrderService";
 
 // Mock function to simulate payment processing
+// @ts-ignore
 const processPayment = async (paymentMethod: string) => {
   // In a real app, this would call your backend to process the payment
   return new Promise<string>((resolve) => {
@@ -28,7 +29,7 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [stripePromise, setStripePromise] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [companyData, setCompanyData] = useState<any>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -46,7 +47,9 @@ export default function Payment() {
   });
   const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
-  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>(["card"]);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
+    string[]
+  >(["card"]);
 
   useEffect(() => {
     loadPaymentSettings();
@@ -63,7 +66,9 @@ export default function Payment() {
       // Check if form exists and is published
       const { data, error } = await supabase
         .from("payment_settings")
-        .select("stripe_public_key, stripe_enabled, stripe_test_mode, currency, payment_methods")
+        .select(
+          "stripe_public_key, stripe_enabled, stripe_test_mode, currency, payment_methods"
+        )
         .single();
 
       if (error) throw error;
@@ -73,11 +78,11 @@ export default function Payment() {
         const stripeInstance = loadStripe(data.stripe_public_key);
         setStripePromise(stripeInstance);
       }
-      
+
       // Set available payment methods from settings
       if (data?.payment_methods && Array.isArray(data.payment_methods)) {
         setAvailablePaymentMethods(data.payment_methods);
-        
+
         // Set default payment method to the first available one
         if (data.payment_methods.length > 0) {
           setPaymentMethod(data.payment_methods[0]);
@@ -93,7 +98,9 @@ export default function Payment() {
 
   async function loadOrderTotal() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -107,7 +114,7 @@ export default function Payment() {
       if (data) {
         // Convert to cents for Stripe
         setTotalAmount(Math.round(parseFloat(data.total_final_price) * 100));
-        setOrderSummary(prev => ({
+        setOrderSummary((prev) => ({
           ...prev,
           totalProductPrice: Number(data.total_product_price),
           totalContentPrice: Number(data.total_content_price)
@@ -120,7 +127,9 @@ export default function Payment() {
 
   async function loadCartItems() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get cart items
@@ -132,7 +141,7 @@ export default function Payment() {
       if (cartError) throw cartError;
 
       if (cartItems && cartItems.length > 0) {
-        setOrderSummary(prev => ({
+        setOrderSummary((prev) => ({
           ...prev,
           items: cartItems
         }));
@@ -144,7 +153,9 @@ export default function Payment() {
 
   async function loadCompanyData() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // First check if user is admin
@@ -163,8 +174,8 @@ export default function Payment() {
           .maybeSingle();
 
         if (error) throw error;
-        
-        setCompanyData(data);
+
+        data;
       } else {
         // Get user data for platform user
         const { data, error } = await supabase
@@ -174,17 +185,19 @@ export default function Payment() {
           .maybeSingle();
 
         if (error) throw error;
-        
-        setCompanyData(data);
+
+        data;
       }
     } catch (err) {
       console.error("Error loading company data:", err);
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -192,7 +205,7 @@ export default function Payment() {
 
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
-    
+
     // Generate PIX QR code if PIX is selected
     if (method === "pix") {
       generatePixQrCode();
@@ -201,44 +214,49 @@ export default function Payment() {
       setPixCopiaECola(null);
     }
   };
-  
+
   const generatePixQrCode = async () => {
     try {
       setProcessing(true);
-      
+
       // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
       if (!session) {
-        throw new Error('No authenticated session found');
+        throw new Error("No authenticated session found");
       }
-      
+
       // Get the total amount
-      const total = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-      
+      const total =
+        orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+
       // Call the create-pix-qrcode function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-qrcode`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          amount: Math.round(total * 100), // Convert to cents
-          description: `Pedido Marketplace - ${new Date().toISOString()}`
-        }),
-      });
-      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-qrcode`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            amount: Math.round(total * 100), // Convert to cents
+            description: `Pedido Marketplace - ${new Date().toISOString()}`
+          })
+        }
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate PIX QR code');
+        throw new Error(errorData.error || "Failed to generate PIX QR code");
       }
-      
+
       const { pixQrCode, pixCopiaECola: pixCode } = await response.json();
-      
+
       setPixQrCodeUrl(pixQrCode);
       setPixCopiaECola(pixCode);
-      
     } catch (err: any) {
       console.error("Error generating PIX QR code:", err);
       setError(err.message || "Erro ao gerar QR code PIX");
@@ -250,10 +268,10 @@ export default function Payment() {
   const handlePaymentSuccess = async (paymentId: string) => {
     try {
       setProcessing(true);
-      
+
       // Create order in database
       await createOrderInDatabase(paymentId);
-      
+
       // Show success message
       setSuccess(true);
     } catch (err) {
@@ -270,31 +288,33 @@ export default function Payment() {
 
   const createOrderInDatabase = async (paymentId?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
-      
+
       // Prepare order items
-      const orderItems = orderSummary.items.map(item => {
+      const orderItems = orderSummary.items.map((item) => {
         // Parse niche if it's a string
         let nicheData = item.niche_selected || null;
-        if (typeof nicheData === 'string') {
+        if (typeof nicheData === "string") {
           try {
             nicheData = JSON.parse(nicheData);
           } catch (e) {
             nicheData = null;
           }
         }
-        
+
         // Parse service content if it's a string
         let serviceData = item.service_selected || null;
-        if (typeof serviceData === 'string') {
+        if (typeof serviceData === "string") {
           try {
             serviceData = JSON.parse(serviceData);
           } catch (e) {
             serviceData = null;
           }
         }
-        
+
         return {
           entry_id: item.entry_id,
           product_name: item.product_url || "Produto",
@@ -306,10 +326,11 @@ export default function Payment() {
           service_content: serviceData
         };
       });
-      
+
       // Calculate total amount
-      const totalAmount = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-      
+      const totalAmount =
+        orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+
       // Create order
       const order = await createOrder({
         payment_method: paymentMethod,
@@ -324,21 +345,21 @@ export default function Payment() {
         payment_id: paymentId,
         items: orderItems
       });
-      
+
       if (!order) {
         throw new Error("Failed to create order");
       }
-      
+
       // Clear cart after successful order creation
       await clearCart(user.id);
-      
+
       return order;
     } catch (error) {
       console.error("Error creating order:", error);
       throw error;
     }
   };
-  
+
   const clearCart = async (userId: string) => {
     try {
       // Delete all items from cart_checkout_resume
@@ -346,17 +367,17 @@ export default function Payment() {
         .from("cart_checkout_resume")
         .delete()
         .eq("user_id", userId);
-        
+
       if (resumeError) throw resumeError;
-      
+
       // Delete all items from shopping_cart_items
       const { error: cartError } = await supabase
         .from("shopping_cart_items")
         .delete()
         .eq("user_id", userId);
-        
+
       if (cartError) throw cartError;
-      
+
       return true;
     } catch (error) {
       console.error("Error clearing cart:", error);
@@ -366,9 +387,17 @@ export default function Payment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form data
-    if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.state || !formData.zipCode || !formData.documentNumber) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.address ||
+      !formData.city ||
+      !formData.state ||
+      !formData.zipCode ||
+      !formData.documentNumber
+    ) {
       setError("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -377,32 +406,34 @@ export default function Payment() {
       setError("Por favor, aceite os termos e condições para continuar");
       return;
     }
-    
+
     if (paymentMethod !== "card") {
       try {
         setProcessing(true);
         setError(null);
-        
+
         // For boleto, navigate to the boleto success page
         if (paymentMethod === "boleto") {
           // Create order in database first
-          const order = await createOrderInDatabase();
-          
+
           // Create mock boleto data
           const boletoData = {
-            barCode: '42297.11504 00064.897317 04021.401122 1 11070000082900',
-            amount: orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-            expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'),
-            boletoUrl: '#'
+            barCode: "42297.11504 00064.897317 04021.401122 1 11070000082900",
+            amount:
+              orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+            expirationDate: new Date(
+              Date.now() + 3 * 24 * 60 * 60 * 1000
+            ).toLocaleDateString("pt-BR"),
+            boletoUrl: "#"
           };
-          
-          navigate('/checkout/boleto-success', { state: { boletoData } });
+
+          navigate("/checkout/boleto-success", { state: { boletoData } });
           return;
         }
-        
+
         // Process payment with selected method
         const paymentId = await processPayment(paymentMethod);
-        
+
         handlePaymentSuccess(paymentId);
       } catch (err: any) {
         console.error("Payment error:", err);
@@ -416,12 +447,12 @@ export default function Payment() {
   if (loading) {
     return (
       <>
-        <PageMeta 
-          title="Pagamento | Marketplace" 
+        <PageMeta
+          title="Pagamento | Marketplace"
           description="Página de pagamento"
         />
         <PageBreadcrumb pageTitle="Pagamento" />
-        
+
         <div className="w-full max-w-4xl mx-auto">
           <div className="bg-white dark:bg-gray-900 p-8 rounded-xl border border-gray-200 dark:border-gray-800 flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
@@ -434,12 +465,12 @@ export default function Payment() {
   if (success) {
     return (
       <>
-        <PageMeta 
-          title="Pagamento Concluído | Marketplace" 
+        <PageMeta
+          title="Pagamento Concluído | Marketplace"
           description="Pagamento concluído com sucesso"
         />
         <PageBreadcrumb pageTitle="Pagamento Concluído" />
-        
+
         <div className="w-full max-w-4xl mx-auto">
           <div className="bg-white dark:bg-gray-900 p-8 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
             <div className="mb-6 flex justify-center">
@@ -464,7 +495,8 @@ export default function Payment() {
               Pagamento Concluído!
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Seu pagamento foi processado com sucesso. Você receberá um email com os detalhes da compra em breve.
+              Seu pagamento foi processado com sucesso. Você receberá um email
+              com os detalhes da compra em breve.
             </p>
             <button
               onClick={() => navigate("/dashboard")}
@@ -480,26 +512,28 @@ export default function Payment() {
 
   return (
     <>
-      <PageMeta 
-        title="Pagamento | Marketplace" 
+      <PageMeta
+        title="Pagamento | Marketplace"
         description="Página de pagamento"
       />
       <PageBreadcrumb pageTitle="Pagamento" />
-      
+
       <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto">
         <div className="w-full md:w-3/5">
-          <PaymentInformationForm 
+          <PaymentInformationForm
             formData={formData}
             onChange={handleInputChange}
           />
-          
-          <PaymentMethodForm 
+
+          <PaymentMethodForm
             paymentMethod={paymentMethod}
             stripePromise={stripePromise}
             totalAmount={totalAmount}
             pixQrCodeUrl={pixQrCodeUrl}
             pixCopiaECola={pixCopiaECola}
-            total={orderSummary.totalProductPrice + orderSummary.totalContentPrice}
+            total={
+              orderSummary.totalProductPrice + orderSummary.totalContentPrice
+            }
             processing={processing}
             error={error}
             termsAccepted={termsAccepted}
@@ -511,9 +545,9 @@ export default function Payment() {
             onPaymentError={handlePaymentError}
           />
         </div>
-        
+
         <div className="w-full md:w-2/5">
-          <OrderSummary 
+          <OrderSummary
             items={orderSummary.items}
             totalProductPrice={orderSummary.totalProductPrice}
             totalContentPrice={orderSummary.totalContentPrice}

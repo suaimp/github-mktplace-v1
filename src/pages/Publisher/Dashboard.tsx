@@ -21,14 +21,6 @@ export default function PublisherDashboard() {
 
       if (!user) return;
 
-      const { data: profileData, error } = await supabase
-        .from("platform_users")
-        .select("first_name, last_name")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      
       // Now profileData contains the user's profile information
       // You can use it as needed, for example setting it in state
     } catch (err) {
