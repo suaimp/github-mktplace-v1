@@ -13,6 +13,12 @@ interface FormEntriesRendererProps {
   formId: string;
 }
 
+interface Publisher {
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
 export default function FormEntriesRenderer({
   formId
 }: FormEntriesRendererProps) {
@@ -199,10 +205,8 @@ export default function FormEntriesRenderer({
           );
           if (nicheField && !(nicheField.id in values)) {
             values[nicheField.id] = [];
-          }
-
-          // Get publisher info if created_by exists
-          let publisher = null;
+          } // Get publisher info if created_by exists
+          let publisher: Publisher | null = null;
           if (entry.created_by) {
             // First try to get from platform_users
             const { data: platformUserData, error: platformUserError } =

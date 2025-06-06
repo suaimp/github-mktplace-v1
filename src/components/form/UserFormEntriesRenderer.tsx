@@ -14,6 +14,12 @@ interface UserFormEntriesRendererProps {
   formId: string;
 }
 
+interface Publisher {
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
 export default function UserFormEntriesRenderer({
   formId
 }: UserFormEntriesRendererProps) {
@@ -227,10 +233,8 @@ export default function UserFormEntriesRenderer({
           );
           if (nicheField && !(nicheField.id in values)) {
             values[nicheField.id] = [];
-          }
-
-          // Get publisher info
-          let publisher = null;
+          } // Get publisher info
+          let publisher: Publisher | null = null;
 
           // First try to get from platform_users
           const { data: platformUserData, error: platformUserError } =
