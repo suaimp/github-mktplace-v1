@@ -1,4 +1,13 @@
 import Input from "../input/InputField";
+import { FormFieldSettings } from "./types";
+
+interface ProductFieldProps {
+  value: any;
+  onChange: (value: any) => void;
+  error?: string;
+  onErrorClear?: () => void;
+  settings?: FormFieldSettings;
+}
 
 export default function ProductField({
   value,
@@ -6,7 +15,7 @@ export default function ProductField({
   error,
   onErrorClear,
   settings
-}: any) {
+}: ProductFieldProps) {
   // Parse value from string if needed
   const parsedValue =
     typeof value === "string" ? JSON.parse(value || "{}") : value || {};

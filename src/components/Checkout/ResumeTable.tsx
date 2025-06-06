@@ -11,7 +11,11 @@ import { getServicePackageArray } from "./utils/servicePackageSelectedUtils";
 import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 
-export default function ResumeTable(props: any) {
+interface ResumeTableProps {
+  onReload?: () => void;
+}
+
+export default function ResumeTable(props: ResumeTableProps) {
   const [reloadKey, setReloadKey] = useState(0);
 
   const logic = useResumeTableLogic();

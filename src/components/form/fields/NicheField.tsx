@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import { getFormFieldNicheByFormFieldId } from "../../../context/db-context/services/formFieldNicheService";
+import { FormField } from "./types";
+
+interface NicheFieldProps {
+  value: any;
+  field: FormField;
+  error?: string;
+  onChange: (value: any) => void;
+}
 
 export default function NicheField({
   value,
   field,
-
   error,
   onChange
-}: any) {
+}: NicheFieldProps) {
   // Log para depuração do value recebido
   console.log("[NicheField] value recebido:", value);
 

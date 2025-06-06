@@ -1,18 +1,20 @@
 import { supabase } from "../../lib/supabase";
 
 export interface ArticleDocument {
-  id: string;
+  id?: string;
   name: string;
-  bucket_id: string;
-  owner: string;
-  created_at: string;
-  updated_at: string;
-  last_accessed_at: string;
-  metadata: {
-    eTag: string;
-    size: number;
-    mimetype: string;
-    cacheControl: string;
+  bucket_id?: string;
+  owner?: string;
+  created_at?: string;
+  updated_at?: string;
+  last_accessed_at?: string;
+  metadata?: {
+    eTag?: string;
+    size?: number;
+    mimetype?: string;
+    cacheControl?: string;
+    httpStatusCode?: number;
+    lastModified?: string;
   };
 }
 
@@ -97,10 +99,9 @@ export class ArticleDocumentsService {
 
   /**
    * Listar arquivos do bucket
-   */
-  static async listFiles(
+   */ static async listFiles(
     path: string = ""
-  ): Promise<{ data: ArticleDocument[] | null; error: any }> {
+  ): Promise<{ data: any[] | null; error: any }> {
     try {
       const { data, error } = await supabase.storage
         .from(this.bucketName)
@@ -131,10 +132,9 @@ export class ArticleDocumentsService {
 
   /**
    * Obter informações de um arquivo
-   */
-  static async getFileInfo(
+   */ static async getFileInfo(
     filePath: string
-  ): Promise<{ data: ArticleDocument | null; error: any }> {
+  ): Promise<{ data: any | null; error: any }> {
     try {
       const { data, error } = await supabase.storage
         .from(this.bucketName)
@@ -146,7 +146,7 @@ export class ArticleDocumentsService {
       if (error) return { data: null, error };
 
       const fileInfo = data && data.length > 0 ? data[0] : null;
-      return { data: fileInfo as ArticleDocument, error: null };
+      return { data: fileInfo, error: null };
     } catch (error) {
       return { data: null, error };
     }

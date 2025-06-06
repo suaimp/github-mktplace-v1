@@ -86,11 +86,9 @@ export function useOrderDetails() {
         .select("*")
         .eq("order_id", orderId);
 
-      if (itemsError) throw itemsError;
-
-      // Add mock data for the new columns (in a real app, these would come from the database)
+      if (itemsError) throw itemsError; // Add mock data for the new columns (in a real app, these would come from the database)
       const itemsWithExtendedData = (itemsData || []).map(
-        (item: OrderItem) => ({
+        (item: any): OrderItem => ({
           ...item,
           article_doc: item.article_doc || null,
           article_document_path: item.article_document_path || null,

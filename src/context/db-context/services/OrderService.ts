@@ -31,6 +31,10 @@ export interface OrderItem {
   total_price: number;
   niche?: any;
   service_content?: any;
+  article_doc?: string;
+  article_document_path?: string;
+  article_url_status?: "pending" | "sent";
+  publication_status?: "approved" | "rejected" | "pending";
   created_at: string;
 }
 
@@ -58,10 +62,14 @@ export interface CreateOrderInput {
   }[];
 }
 
-export async function createOrder(input: CreateOrderInput): Promise<Order | null> {
+export async function createOrder(
+  input: CreateOrderInput
+): Promise<Order | null> {
   try {
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("User not authenticated");
     }
@@ -69,22 +77,24 @@ export async function createOrder(input: CreateOrderInput): Promise<Order | null
     // Create order
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .insert([{
-        user_id: user.id,
-        status: "pending",
-        payment_method: input.payment_method,
-        payment_status: "pending",
-        total_amount: input.total_amount,
-        billing_name: input.billing_name,
-        billing_email: input.billing_email,
-        billing_address: input.billing_address,
-        billing_city: input.billing_city,
-        billing_state: input.billing_state,
-        billing_zip_code: input.billing_zip_code,
-        billing_document_number: input.billing_document_number,
-        payment_id: input.payment_id,
-        metadata: input.metadata
-      }])
+      .insert([
+        {
+          user_id: user.id,
+          status: "pending",
+          payment_method: input.payment_method,
+          payment_status: "pending",
+          total_amount: input.total_amount,
+          billing_name: input.billing_name,
+          billing_email: input.billing_email,
+          billing_address: input.billing_address,
+          billing_city: input.billing_city,
+          billing_state: input.billing_state,
+          billing_zip_code: input.billing_zip_code,
+          billing_document_number: input.billing_document_number,
+          payment_id: input.payment_id,
+          metadata: input.metadata
+        }
+      ])
       .select()
       .single();
 
@@ -92,7 +102,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order | null
     if (!order) throw new Error("Failed to create order");
 
     // Insert order items
-    const orderItems = input.items.map(item => ({
+    const orderItems = input.items.map((item) => ({
       order_id: order.id,
       entry_id: item.entry_id,
       product_name: item.product_name,
@@ -149,7 +159,9 @@ export async function getOrdersByUser(userId: string): Promise<Order[] | null> {
   }
 }
 
-export async function getOrderItems(orderId: string): Promise<OrderItem[] | null> {
+export async function getOrderItems(
+  orderId: string
+): Promise<OrderItem[] | null> {
   try {
     const { data, error } = await supabase
       .from("order_items")
@@ -164,14 +176,18 @@ export async function getOrderItems(orderId: string): Promise<OrderItem[] | null
   }
 }
 
-export async function updateOrderStatus(orderId: string, status: string, paymentStatus?: string): Promise<boolean> {
+export async function updateOrderStatus(
+  orderId: string,
+  status: string,
+  paymentStatus?: string
+): Promise<boolean> {
   try {
     const updates: { status: string; payment_status?: string } = { status };
-    
+
     if (paymentStatus) {
       updates.payment_status = paymentStatus;
     }
-    
+
     const { error } = await supabase
       .from("orders")
       .update(updates)
@@ -185,7 +201,10 @@ export async function updateOrderStatus(orderId: string, status: string, payment
   }
 }
 
-export async function updateOrderPaymentId(orderId: string, paymentId: string): Promise<boolean> {
+export async function updateOrderPaymentId(
+  orderId: string,
+  paymentId: string
+): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("orders")

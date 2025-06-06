@@ -1,28 +1,29 @@
-import Input from '../input/InputField';
-import InputMask from 'react-input-mask';
+import Input from "../input/InputField";
+import InputMask from "react-input-mask";
+import { FormField, FormFieldSettings } from "./types";
 
 interface TextFieldProps {
-  field: any;
-  settings: any;
+  field: FormField;
+  settings: FormFieldSettings;
   value: string;
   onChange: (value: string) => void;
   error?: string;
   onErrorClear?: () => void;
 }
 
-export default function TextField({ 
-  field, 
-  settings, 
-  value, 
-  onChange, 
+export default function TextField({
+  field,
+  settings,
+  value,
+  onChange,
   error,
-  onErrorClear 
+  onErrorClear
 }: TextFieldProps) {
   if (settings?.input_mask_enabled && settings.input_mask_pattern) {
     return (
       <InputMask
         mask={settings.input_mask_pattern}
-        value={value || ''}
+        value={value || ""}
         onChange={(e) => {
           onChange(e.target.value);
           if (error && onErrorClear) {
@@ -38,7 +39,7 @@ export default function TextField({
   return (
     <Input
       type="text"
-      value={value || ''}
+      value={value || ""}
       onChange={(e) => {
         onChange(e.target.value);
         if (error && onErrorClear) {

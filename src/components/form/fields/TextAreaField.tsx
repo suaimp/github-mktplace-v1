@@ -1,7 +1,8 @@
-import TextArea from '../input/TextArea';
+import TextArea from "../input/TextArea";
+import { FormField } from "./types";
 
 interface TextAreaFieldProps {
-  field: any;
+  field: FormField;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -15,7 +16,7 @@ export default function TextAreaField({
 }: TextAreaFieldProps) {
   return (
     <TextArea
-      value={value || ''}
+      value={value || ""}
       onChange={onChange}
       placeholder={field.placeholder}
       required={field.is_required}

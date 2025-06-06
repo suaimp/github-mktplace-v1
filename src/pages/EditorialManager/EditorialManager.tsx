@@ -198,7 +198,7 @@ export default function EditorialManager() {
           });
 
           // Get publisher info if created_by exists
-          let publisher = null;
+          let publisher: any = null;
           if (entry.created_by) {
             // First try to get from platform_users
             const { data: platformUserData, error: platformUserError } =

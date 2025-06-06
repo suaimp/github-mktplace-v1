@@ -1,5 +1,14 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { FormFieldSettings } from "./types";
+
+interface FileFieldProps {
+  value: File[];
+  onChange: (value: File[]) => void;
+  error?: string;
+  onErrorClear?: () => void;
+  settings?: FormFieldSettings;
+}
 
 export default function FileField({
   value,
@@ -7,7 +16,7 @@ export default function FileField({
   error,
   onErrorClear,
   settings
-}: any) {
+}: FileFieldProps) {
   const maxFiles = settings?.max_files || 1;
   const maxSize = settings?.max_file_size || 5 * 1024 * 1024; // Default 5MB
   const allowMultiple = settings?.multiple_files || false;
@@ -48,18 +57,22 @@ export default function FileField({
     multiple: allowMultiple,
     maxFiles: maxFiles,
     maxSize: maxSize,
-    accept: allowedExtensions.length > 0
-      ? allowedExtensions.reduce((acc: Record<string, string[]>, ext: string) => {
-          const mimeType = getMimeType(ext);
-          if (mimeType) {
-            if (!acc[mimeType]) {
-              acc[mimeType] = [];
-            }
-            acc[mimeType].push(`.${ext}`);
-          }
-          return acc;
-        }, {})
-      : undefined
+    accept:
+      allowedExtensions.length > 0
+        ? allowedExtensions.reduce(
+            (acc: Record<string, string[]>, ext: string) => {
+              const mimeType = getMimeType(ext);
+              if (mimeType) {
+                if (!acc[mimeType]) {
+                  acc[mimeType] = [];
+                }
+                acc[mimeType].push(`.${ext}`);
+              }
+              return acc;
+            },
+            {}
+          )
+        : undefined
   });
 
   const removeFile = (index: number) => {
@@ -193,8 +206,8 @@ export default function FileField({
     if (!allowedExtensions || allowedExtensions.length === 0) {
       return "All files";
     }
-    
-    return allowedExtensions.map(ext => `.${ext}`).join(", ");
+
+    return allowedExtensions.map((ext) => `.${ext}`).join(", ");
   };
 
   return (
