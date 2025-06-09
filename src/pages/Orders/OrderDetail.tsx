@@ -8,9 +8,14 @@ import Select from "../../components/form/Select";
 import Tooltip from "../../components/ui/Tooltip";
 import { Modal } from "../../components/ui/modal";
 import { useState } from "react";
+import { ChatIcon } from "../../icons";
+import OrderChatModal from "../../components/orders/OrderChatModal";
 
 export default function OrderDetail() {
   const [isOrderInfoModalOpen, setIsOrderInfoModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedItemData, setSelectedItemData] = useState<any>(null);
 
   const {
     order,
@@ -43,13 +48,23 @@ export default function OrderDetail() {
     confirmingBoleto,
     handleConfirmBoletoPayment
   } = useOrderDetailLogic();
-
   const openOrderInfoModal = () => {
     setIsOrderInfoModalOpen(true);
   };
 
   const closeOrderInfoModal = () => {
     setIsOrderInfoModalOpen(false);
+  };
+  const openChatModal = (item: any) => {
+    setSelectedItemId(item.id);
+    setSelectedItemData(item);
+    setIsChatModalOpen(true);
+  };
+
+  const closeChatModal = () => {
+    setIsChatModalOpen(false);
+    setSelectedItemId("");
+    setSelectedItemData(null);
   };
 
   if (loading) {
@@ -148,9 +163,12 @@ export default function OrderDetail() {
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Status de Publicação
-                      </th>
+                      </th>{" "}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Ação
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Chat
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Total
@@ -322,6 +340,7 @@ export default function OrderDetail() {
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                          {" "}
                           <Select
                             options={[
                               { value: "pending", label: "Pendente" },
@@ -333,6 +352,15 @@ export default function OrderDetail() {
                               handleChangePublicationStatus(item.id, value)
                             }
                           />
+                        </td>{" "}
+                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                          <button
+                            onClick={() => openChatModal(item)}
+                            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Abrir chat do item"
+                          >
+                            <ChatIcon className="w-6 h-6" />
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
                           {formatCurrency(item.total_price)}
@@ -342,8 +370,9 @@ export default function OrderDetail() {
                   </tbody>
                   <tfoot>
                     <tr>
+                      {" "}
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-4 py-4 text-right font-medium text-gray-700 dark:text-gray-300"
                       >
                         Total:
@@ -715,9 +744,16 @@ export default function OrderDetail() {
                 </Button>
               </div>
             </div>
-          </div>
+          </div>{" "}
         </div>
-      </>
+      </>{" "}
+      {/* Order Chat Modal */}
+      <OrderChatModal
+        isOpen={isChatModalOpen}
+        onClose={closeChatModal}
+        itemId={selectedItemId}
+        itemData={selectedItemData}
+      />
     </div>
   );
 }
