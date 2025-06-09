@@ -7,8 +7,11 @@ import { getFaviconUrl } from "../../components/form/utils/formatters";
 import Select from "../../components/form/Select";
 import Tooltip from "../../components/ui/Tooltip";
 import { Modal } from "../../components/ui/modal";
+import { useState } from "react";
 
 export default function OrderDetail() {
+  const [isOrderInfoModalOpen, setIsOrderInfoModalOpen] = useState(false);
+
   const {
     order,
     orderItems,
@@ -36,8 +39,18 @@ export default function OrderDetail() {
     downloadLoading,
     downloadError,
     handleDownloadFile,
-    clearDownloadError
+    clearDownloadError,
+    confirmingBoleto,
+    handleConfirmBoletoPayment
   } = useOrderDetailLogic();
+
+  const openOrderInfoModal = () => {
+    setIsOrderInfoModalOpen(true);
+  };
+
+  const closeOrderInfoModal = () => {
+    setIsOrderInfoModalOpen(false);
+  };
 
   if (loading) {
     return (
@@ -66,31 +79,50 @@ export default function OrderDetail() {
       </div>
     );
   }
-
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <PageMeta
         title={`Pedido #${order.id.substring(0, 8)} | Marketplace`}
         description="Detalhes do pedido"
       />
       <PageBreadcrumb pageTitle={`Pedido #${order.id.substring(0, 8)}`} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="container mx-auto px-4 py-8">
         {/* Order Summary */}
-        <div className="lg:col-span-2">
+        <div className="w-full">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
                   Pedido #{order.id.substring(0, 8)}
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Realizado em {formatDate(order.created_at)}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Realizado em {formatDate(order.created_at)}
+                  </p>
+                  <div>{getStatusBadge(order.status)}</div>
+                </div>
               </div>
-              <div className="mt-4 sm:mt-0 flex flex-col sm:items-end">
-                <div className="mb-2">{getStatusBadge(order.status)}</div>
-                <div>{getPaymentStatusBadge(order.payment_status)}</div>
+              <div className="mt-4 sm:mt-0 flex items-center gap-3">
+                <button
+                  onClick={openOrderInfoModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                  title="Informações do pedido"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M5.99915 10.2451C6.96564 10.2451 7.74915 11.0286 7.74915 11.9951V12.0051C7.74915 12.9716 6.96564 13.7551 5.99915 13.7551C5.03265 13.7551 4.24915 12.9716 4.24915 12.0051V11.9951C4.24915 11.0286 5.03265 10.2451 5.99915 10.2451ZM17.9991 10.2451C18.9656 10.2451 19.7491 11.0286 19.7491 11.9951V12.0051C19.7491 12.9716 18.9656 13.7551 17.9991 13.7551C17.0326 13.7551 16.2491 12.9716 16.2491 12.0051V11.9951C16.2491 11.0286 17.0326 10.2451 17.9991 10.2451ZM13.7491 11.9951C13.7491 11.0286 12.9656 10.2451 11.9991 10.2451C11.0326 10.2451 10.2491 11.0286 10.2491 11.9951V12.0051C10.2491 12.9716 11.0326 13.7551 11.9991 13.7551C12.9656 13.7551 13.7491 12.9716 13.7491 12.0051V11.9951Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
 
@@ -324,110 +356,11 @@ export default function OrderDetail() {
                 </table>
               </div>
             </div>
-          </div>
+          </div>{" "}
         </div>
 
-        {/* Order Details Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-              Informações do Pedido
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  Método de Pagamento
-                </h4>
-                <p className="text-gray-800 dark:text-white">
-                  {getPaymentMethodLabel(order.payment_method)}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  Status do Pagamento
-                </h4>
-                <p className="text-gray-800 dark:text-white">
-                  {getPaymentStatusBadge(order.payment_status)}
-                </p>
-              </div>
-
-              {order.payment_id && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    ID do Pagamento
-                  </h4>
-                  <p className="text-gray-800 dark:text-white font-mono text-sm">
-                    {order.payment_id}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-gray-200 dark:border-gray-800 my-4 pt-4">
-              <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-                Informações de Cobrança
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Nome
-                  </h4>
-                  <p className="text-gray-800 dark:text-white">
-                    {order.billing_name}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Email
-                  </h4>
-                  <p className="text-gray-800 dark:text-white">
-                    {order.billing_email}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Endereço
-                  </h4>
-                  <p className="text-gray-800 dark:text-white">
-                    {order.billing_address}
-                  </p>
-                  <p className="text-gray-800 dark:text-white">
-                    {order.billing_city}, {order.billing_state}
-                  </p>
-                  <p className="text-gray-800 dark:text-white">
-                    CEP: {order.billing_zip_code}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Documento
-                  </h4>
-                  <p className="text-gray-800 dark:text-white">
-                    {order.billing_document_number}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate("/orders")}
-              >
-                Voltar para Pedidos
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Anteriormente era exibido o Order Details Sidebar aqui - agora será apenas no modal */}
       </div>
-
       {/* Download Error Notification */}
       {downloadError && (
         <div className="fixed top-4 right-4 z-50 bg-error-500 text-white p-4 rounded-lg shadow-lg flex items-center">
@@ -465,7 +398,6 @@ export default function OrderDetail() {
           </button>
         </div>
       )}
-
       {/* Document Upload Modal */}
       <Modal
         isOpen={isDocModalOpen}
@@ -587,10 +519,205 @@ export default function OrderDetail() {
               ) : (
                 "Enviar"
               )}
-            </Button>
+            </Button>{" "}
+          </div>
+        </div>{" "}
+      </Modal>{" "}
+      {/* Order Information Modal - Slide Panel */}
+      <>
+        {/* Backdrop */}
+        <div
+          className={`fixed inset-0 bg-black z-[999999] transition-all duration-300 ${
+            isOrderInfoModalOpen
+              ? "bg-opacity-50 visible"
+              : "bg-opacity-0 invisible"
+          }`}
+          onClick={closeOrderInfoModal}
+        />
+
+        {/* Slide Panel */}
+        <div
+          className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-transform duration-300 ease-in-out ${
+            isOrderInfoModalOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+                Informações do Pedido
+              </h3>
+              <button
+                onClick={closeOrderInfoModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Método de Pagamento
+                  </h4>
+                  <p className="text-gray-800 dark:text-white">
+                    {getPaymentMethodLabel(order.payment_method)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Status do Pagamento
+                  </h4>
+                  <div className="text-gray-800 dark:text-white">
+                    {getPaymentStatusBadge(order.payment_status)}
+                  </div>
+                </div>
+                {order.payment_id && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      ID do Pagamento
+                    </h4>
+                    <p className="text-gray-800 dark:text-white font-mono text-sm">
+                      {order.payment_id}
+                    </p>
+                  </div>
+                )}
+                {/* Botão de confirmação de boleto para admins */}
+                {order.payment_method === "boleto" &&
+                  order.payment_status === "pending" && (
+                    <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                            Aguardando Confirmação de Pagamento
+                          </h4>
+                          <p className="text-xs text-yellow-600 dark:text-yellow-300">
+                            Boleto aguardando confirmação bancária
+                          </p>
+                        </div>
+                        <Button
+                          onClick={handleConfirmBoletoPayment}
+                          disabled={confirmingBoleto}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {confirmingBoleto ? (
+                            <div className="flex items-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Confirmando...
+                            </div>
+                          ) : (
+                            "Confirmar Pagamento"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-800 my-4 pt-4">
+                <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+                  Informações de Cobrança
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Nome
+                    </h4>
+                    <p className="text-gray-800 dark:text-white">
+                      {order.billing_name}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Email
+                    </h4>
+                    <p className="text-gray-800 dark:text-white">
+                      {order.billing_email}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Endereço
+                    </h4>
+                    <p className="text-gray-800 dark:text-white">
+                      {order.billing_address}
+                    </p>
+                    <p className="text-gray-800 dark:text-white">
+                      {order.billing_city}, {order.billing_state}
+                    </p>
+                    <p className="text-gray-800 dark:text-white">
+                      CEP: {order.billing_zip_code}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Documento
+                    </h4>
+                    <p className="text-gray-800 dark:text-white">
+                      {order.billing_document_number}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex gap-2">
+                {" "}
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/orders")}
+                  className="flex-1"
+                >
+                  Voltar para Pedidos
+                </Button>
+                <Button onClick={closeOrderInfoModal} className="flex-1">
+                  Fechar
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </Modal>
-    </>
+      </>
+    </div>
   );
 }

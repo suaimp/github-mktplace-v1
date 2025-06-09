@@ -218,3 +218,45 @@ export async function updateOrderPaymentId(
     return false;
   }
 }
+
+export async function simulateBoletoPaymentConfirmation(
+  orderId: string
+): Promise<boolean> {
+  try {
+    console.log("📋 Simulando confirmação de pagamento de boleto:", orderId);
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        payment_status: "paid",
+        status: "processing"
+      })
+      .eq("id", orderId);
+
+    if (error) throw error;
+
+    console.log("✅ Pagamento de boleto confirmado com sucesso");
+    return true;
+  } catch (error) {
+    console.error("Error confirming boleto payment:", error);
+    return false;
+  }
+}
+
+// Função para listar pedidos pendentes de boleto (para admin)
+export async function getPendingBoletoOrders(): Promise<Order[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("payment_method", "boleto")
+      .eq("payment_status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error getting pending boleto orders:", error);
+    return null;
+  }
+}

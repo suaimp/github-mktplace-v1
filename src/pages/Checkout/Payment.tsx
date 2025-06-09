@@ -346,13 +346,41 @@ export default function Payment() {
       setProcessing(false);
     }
   };
-
   const handlePaymentSuccess = async (paymentId: string) => {
     try {
       setProcessing(true);
 
-      // Create order in database
-      await createOrderInDatabase(paymentId);
+      console.log("🎉 PAYMENT SUCCESS - Processando pagamento bem-sucedido:", {
+        paymentId: paymentId,
+        paymentMethod: paymentMethod,
+        timestamp: new Date().toISOString()
+      }); // Create order in database
+      const order = await createOrderInDatabase(paymentId);
+
+      if (order) {
+        // Update payment status to "paid" for successful payments
+        console.log("💳 Atualizando status do pagamento para 'paid':", {
+          orderId: order.id,
+          paymentMethod: paymentMethod
+        });
+
+        const { updateOrderStatus } = await import(
+          "../../context/db-context/services/OrderService"
+        );
+        const updateSuccess = await updateOrderStatus(
+          order.id,
+          "approved",
+          "paid"
+        );
+
+        if (updateSuccess) {
+          console.log(
+            "✅ Status do pagamento atualizado com sucesso para 'paid'"
+          );
+        } else {
+          console.error("❌ Falha ao atualizar status do pagamento");
+        }
+      }
 
       // Show success message
       setSuccess(true);
@@ -576,10 +604,19 @@ export default function Payment() {
                 orderSummary.totalProductPrice + orderSummary.totalContentPrice
             });
 
-            // Create order in database first
+            // Create order in database first - boleto stays as "pending" until paid
+            const boletoPaymentId = `boleto_${Date.now()}`;
+            const order = await createOrderInDatabase(boletoPaymentId);
+
+            console.log("📋 Pedido criado para boleto:", {
+              orderId: order?.id,
+              paymentId: boletoPaymentId,
+              status: "pending" // Boleto permanece pendente até confirmação
+            });
 
             // Create mock boleto data
             const boletoData = {
+              orderId: order?.id,
               barCode: "42297.11504 00064.897317 04021.401122 1 11070000082900",
               amount:
                 orderSummary.totalProductPrice + orderSummary.totalContentPrice,
@@ -603,6 +640,37 @@ export default function Payment() {
             });
             throw boletoError;
           }
+        }
+
+        // For PIX, create order immediately and mark as paid (since it's instant)
+        if (paymentMethod === "pix") {
+          console.log("💰 PIX PAYMENT PROCESSING:", {
+            paymentMethod: "pix",
+            timestamp: new Date().toISOString(),
+            message: "PIX é processado instantaneamente"
+          });
+
+          const pixPaymentId = `pix_${Date.now()}`;
+          const order = await createOrderInDatabase(pixPaymentId);
+          if (order) {
+            // PIX is instant, so mark as paid immediately
+            const { updateOrderStatus } = await import(
+              "../../context/db-context/services/OrderService"
+            );
+            const updateSuccess = await updateOrderStatus(
+              order.id,
+              "approved",
+              "paid"
+            );
+
+            console.log("🎉 PIX - Status atualizado para 'paid':", {
+              orderId: order.id,
+              updateSuccess: updateSuccess
+            });
+          }
+
+          setSuccess(true);
+          return;
         }
 
         // Process payment with selected method

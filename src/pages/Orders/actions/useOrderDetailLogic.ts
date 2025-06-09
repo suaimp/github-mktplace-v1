@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useOrderDetails } from "./useOrderDetails";
 import { useFileDownload } from "./useFileDownload";
+import { simulateBoletoPaymentConfirmation } from "../../../context/db-context/services/OrderService";
 
 export function useOrderDetailLogic() {
   const {
@@ -37,6 +38,7 @@ export function useOrderDetailLogic() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [confirmingBoleto, setConfirmingBoleto] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -139,6 +141,28 @@ export function useOrderDetailLogic() {
     }
   };
 
+  const handleConfirmBoletoPayment = async () => {
+    if (!order) return;
+
+    try {
+      setConfirmingBoleto(true);
+      console.log("🏦 Confirmando pagamento de boleto para pedido:", order.id);
+
+      const success = await simulateBoletoPaymentConfirmation(order.id);
+
+      if (success) {
+        console.log("✅ Pagamento confirmado com sucesso");
+        // Atualizar o estado local do pedido
+        window.location.reload(); // Simples reload para atualizar os dados
+      } else {
+        console.error("❌ Falha ao confirmar pagamento");
+      }
+    } catch (error) {
+      console.error("❌ Erro ao confirmar pagamento:", error);
+    } finally {
+      setConfirmingBoleto(false);
+    }
+  };
   return {
     order,
     orderItems,
@@ -169,6 +193,8 @@ export function useOrderDetailLogic() {
     downloadLoading,
     downloadError,
     handleDownloadFile,
-    clearDownloadError
+    clearDownloadError,
+    confirmingBoleto,
+    handleConfirmBoletoPayment
   };
 }
