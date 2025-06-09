@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Elements } from "@stripe/react-stripe-js";
-import StripePaymentForm from "./StripePaymentForm";
+import StripePaymentForm, { StripePaymentFormRef } from "./StripePaymentForm";
 import { formatCurrency } from "../marketplace/utils";
 import InputMask from "react-input-mask";
 import Label from "../form/Label";
@@ -50,6 +50,7 @@ export default function PaymentMethodForm({
     country: "BR"
   });
   const [pixCopied, setPixCopied] = useState(false);
+  const stripePaymentRef = useRef<StripePaymentFormRef>(null);
 
   // Filter payment methods based on available methods from settings
   const filteredPaymentMethods = [
@@ -65,7 +66,6 @@ export default function PaymentMethodForm({
       [name]: value
     }));
   };
-
   const handleCopyPixCode = () => {
     if (pixCopiaECola) {
       navigator.clipboard
@@ -77,6 +77,25 @@ export default function PaymentMethodForm({
         .catch((err) => {
           console.error("Erro ao copiar código PIX:", err);
         });
+    }
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (paymentMethod === "card" && stripePaymentRef.current) {
+      console.log("HANDLING CARD PAYMENT:", {
+        paymentMethod: paymentMethod,
+        stripeRefExists: !!stripePaymentRef.current,
+        timestamp: new Date().toISOString()
+      });
+      // For Stripe payments, use the ref to trigger payment
+      await stripePaymentRef.current.submitPayment();
+    } else {
+      console.log("HANDLING NON-CARD PAYMENT:", {
+        paymentMethod: paymentMethod,
+        timestamp: new Date().toISOString()
+      });
+      // For other payment methods, use the original onSubmit
+      onSubmit({ preventDefault: () => {} } as React.FormEvent);
     }
   };
 
@@ -104,7 +123,6 @@ export default function PaymentMethodForm({
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Selecione seu método de pagamento preferido
       </p>
-
       <div className="mb-6">
         <div className="flex flex-wrap gap-4 mb-6">
           {filteredPaymentMethods.map((method) => (
@@ -219,9 +237,11 @@ export default function PaymentMethodForm({
 
         {paymentMethod === "card" && (
           <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
+            {" "}
             {stripePromise ? (
               <Elements stripe={stripePromise}>
                 <StripePaymentForm
+                  ref={stripePaymentRef}
                   amount={totalAmount}
                   currency="brl"
                   onSuccess={onPaymentSuccess}
@@ -435,7 +455,6 @@ export default function PaymentMethodForm({
           </div>
         )}
       </div>
-
       <div className="mb-4 space-y-2 text-gray-500 dark:text-gray-400">
         <label className="flex items-center">
           <input
@@ -459,11 +478,10 @@ export default function PaymentMethodForm({
             Por favor, aceite os termos e condições para continuar
           </div>
         )}
-      </div>
-
+      </div>{" "}
       <button
         type="button"
-        onClick={onSubmit}
+        onClick={handlePaymentSubmit}
         disabled={processing || !termsAccepted}
         className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
       >

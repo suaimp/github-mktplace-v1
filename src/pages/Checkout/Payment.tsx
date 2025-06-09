@@ -8,6 +8,7 @@ import PaymentInformationForm from "../../components/Checkout/PaymentInformation
 import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";
 import OrderSummary from "../../components/Checkout/OrderSummary";
 import { createOrder } from "../../context/db-context/services/OrderService";
+import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 
 // Mock function to simulate payment processing
 // @ts-ignore
@@ -57,11 +58,15 @@ export default function Payment() {
     loadCompanyData();
     loadCartItems();
   }, []);
-
   async function loadPaymentSettings() {
     try {
       setLoading(true);
       setError("");
+
+      console.log("LOADING PAYMENT SETTINGS:", {
+        timestamp: new Date().toISOString(),
+        message: "Starting to load payment settings from database"
+      });
 
       // Check if form exists and is published
       const { data, error } = await supabase
@@ -71,25 +76,73 @@ export default function Payment() {
         )
         .single();
 
+      console.log("PAYMENT SETTINGS DATABASE RESPONSE:", {
+        hasData: !!data,
+        hasError: !!error,
+        stripeEnabled: data?.stripe_enabled,
+        hasStripeKey: !!data?.stripe_public_key,
+        stripeKeyPrefix: data?.stripe_public_key?.substring(0, 20),
+        paymentMethods: data?.payment_methods,
+        timestamp: new Date().toISOString()
+      });
+
       if (error) throw error;
 
       if (data?.stripe_enabled && data?.stripe_public_key) {
+        console.log("INITIALIZING STRIPE:", {
+          stripeEnabled: data.stripe_enabled,
+          stripeKeyPrefix: data.stripe_public_key.substring(0, 20),
+          timestamp: new Date().toISOString()
+        });
+
         // Initialize Stripe with the public key
         const stripeInstance = loadStripe(data.stripe_public_key);
         setStripePromise(stripeInstance);
+
+        console.log("STRIPE INSTANCE CREATED:", {
+          stripeInstanceCreated: true,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log("STRIPE NOT INITIALIZED:", {
+          stripeEnabled: data?.stripe_enabled,
+          hasStripeKey: !!data?.stripe_public_key,
+          reason: !data?.stripe_enabled
+            ? "Stripe not enabled"
+            : "No Stripe public key",
+          timestamp: new Date().toISOString()
+        });
       }
 
       // Set available payment methods from settings
       if (data?.payment_methods && Array.isArray(data.payment_methods)) {
         setAvailablePaymentMethods(data.payment_methods);
 
+        console.log("PAYMENT METHODS SET:", {
+          paymentMethods: data.payment_methods,
+          defaultMethod: data.payment_methods[0],
+          timestamp: new Date().toISOString()
+        });
+
         // Set default payment method to the first available one
         if (data.payment_methods.length > 0) {
           setPaymentMethod(data.payment_methods[0]);
         }
+      } else {
+        console.log("NO PAYMENT METHODS FOUND:", {
+          hasPaymentMethods: !!data?.payment_methods,
+          isArray: Array.isArray(data?.payment_methods),
+          paymentMethodsData: data?.payment_methods,
+          timestamp: new Date().toISOString()
+        });
       }
     } catch (err) {
       console.error("Error loading payment settings:", err);
+      console.log("PAYMENT SETTINGS LOADING ERROR:", {
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       setError("Erro ao carregar configurações de pagamento");
     } finally {
       setLoading(false);
@@ -122,6 +175,11 @@ export default function Payment() {
       }
     } catch (err) {
       console.error("Error loading order total:", err);
+      console.log("ORDER TOTAL LOADING ERROR:", {
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
@@ -148,6 +206,11 @@ export default function Payment() {
       }
     } catch (err) {
       console.error("Error loading cart items:", err);
+      console.log("CART ITEMS LOADING ERROR:", {
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
@@ -190,6 +253,11 @@ export default function Payment() {
       }
     } catch (err) {
       console.error("Error loading company data:", err);
+      console.log("COMPANY DATA LOADING ERROR:", {
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
@@ -259,7 +327,19 @@ export default function Payment() {
       setPixCopiaECola(pixCode);
     } catch (err: any) {
       console.error("Error generating PIX QR code:", err);
-      setError(err.message || "Erro ao gerar QR code PIX");
+      console.log("PIX QR CODE GENERATION ERROR:", {
+        errorMessage: err.message,
+        errorStack: err.stack,
+        paymentMethod: "pix",
+        timestamp: new Date().toISOString(),
+        totalAmount:
+          orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+        sessionInfo: "PIX QR Code generation failed"
+      });
+      const sanitizedMessage = sanitizeErrorMessage(
+        err.message || "Erro ao gerar QR code PIX"
+      );
+      setError(sanitizedMessage);
     } finally {
       setProcessing(false);
     }
@@ -276,14 +356,30 @@ export default function Payment() {
       setSuccess(true);
     } catch (err) {
       console.error("Error processing successful payment:", err);
+      console.log("PAYMENT SUCCESS PROCESSING ERROR:", {
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        paymentId: paymentId,
+        timestamp: new Date().toISOString(),
+        orderSummary: orderSummary,
+        formData: formData
+      });
       setError("Erro ao finalizar o pagamento");
     } finally {
       setProcessing(false);
     }
   };
-
   const handlePaymentError = (errorMessage: string) => {
-    setError(errorMessage);
+    console.log("PAYMENT ERROR RECEIVED:", {
+      errorMessage: errorMessage,
+      paymentMethod: paymentMethod,
+      timestamp: new Date().toISOString(),
+      formData: formData,
+      orderSummary: orderSummary
+    });
+    // Sanitize the error message before displaying to user
+    const sanitizedMessage = sanitizeErrorMessage(errorMessage);
+    setError(sanitizedMessage);
   };
 
   const createOrderInDatabase = async (paymentId?: string) => {
@@ -348,14 +444,30 @@ export default function Payment() {
 
       if (!order) {
         throw new Error("Failed to create order");
-      }
-
-      // Clear cart after successful order creation
+      } // Clear cart after successful order creation
       await clearCart(user.id);
 
       return order;
     } catch (error) {
       console.error("Error creating order:", error);
+      console.log("ORDER CREATION ERROR:", {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        paymentMethod: paymentMethod,
+        paymentId: paymentId,
+        timestamp: new Date().toISOString(),
+        totalAmount:
+          orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+        billingInfo: {
+          name: formData.name,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          documentNumber: formData.documentNumber
+        }
+      });
       throw error;
     }
   };
@@ -381,14 +493,18 @@ export default function Payment() {
       return true;
     } catch (error) {
       console.error("Error clearing cart:", error);
+      console.log("CART CLEARING ERROR:", {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        userId: userId,
+        timestamp: new Date().toISOString()
+      });
       return false;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate form data
+    e.preventDefault(); // Validate form data
     if (
       !formData.name ||
       !formData.email ||
@@ -398,37 +514,93 @@ export default function Payment() {
       !formData.zipCode ||
       !formData.documentNumber
     ) {
+      console.log("FORM VALIDATION ERROR:", {
+        errorType: "missing_required_fields",
+        timestamp: new Date().toISOString(),
+        paymentMethod: paymentMethod,
+        formData: formData,
+        missingFields: {
+          name: !formData.name,
+          email: !formData.email,
+          address: !formData.address,
+          city: !formData.city,
+          state: !formData.state,
+          zipCode: !formData.zipCode,
+          documentNumber: !formData.documentNumber
+        }
+      });
       setError("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     if (!termsAccepted) {
+      console.log("TERMS VALIDATION ERROR:", {
+        errorType: "terms_not_accepted",
+        timestamp: new Date().toISOString(),
+        paymentMethod: paymentMethod,
+        termsAccepted: termsAccepted
+      });
       setError("Por favor, aceite os termos e condições para continuar");
+      return;
+    }
+
+    if (paymentMethod === "card") {
+      console.log("CARD PAYMENT - WILL BE HANDLED BY STRIPE:", {
+        paymentMethod: "card",
+        timestamp: new Date().toISOString(),
+        formData: formData,
+        message: "Card payment will be processed by Stripe component"
+      });
+      // Card payments are handled directly by the StripePaymentForm component
+      // This function should not be called for card payments
+      setError(
+        "Erro interno: pagamento com cartão deve ser processado pelo Stripe"
+      );
       return;
     }
 
     if (paymentMethod !== "card") {
       try {
         setProcessing(true);
-        setError(null);
-
-        // For boleto, navigate to the boleto success page
+        setError(null); // For boleto, navigate to the boleto success page
         if (paymentMethod === "boleto") {
-          // Create order in database first
+          try {
+            console.log("BOLETO PAYMENT PROCESSING:", {
+              paymentMethod: "boleto",
+              timestamp: new Date().toISOString(),
+              formData: formData,
+              orderSummary: orderSummary,
+              totalAmount:
+                orderSummary.totalProductPrice + orderSummary.totalContentPrice
+            });
 
-          // Create mock boleto data
-          const boletoData = {
-            barCode: "42297.11504 00064.897317 04021.401122 1 11070000082900",
-            amount:
-              orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-            expirationDate: new Date(
-              Date.now() + 3 * 24 * 60 * 60 * 1000
-            ).toLocaleDateString("pt-BR"),
-            boletoUrl: "#"
-          };
+            // Create order in database first
 
-          navigate("/checkout/boleto-success", { state: { boletoData } });
-          return;
+            // Create mock boleto data
+            const boletoData = {
+              barCode: "42297.11504 00064.897317 04021.401122 1 11070000082900",
+              amount:
+                orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+              expirationDate: new Date(
+                Date.now() + 3 * 24 * 60 * 60 * 1000
+              ).toLocaleDateString("pt-BR"),
+              boletoUrl: "#"
+            };
+
+            navigate("/checkout/boleto-success", { state: { boletoData } });
+            return;
+          } catch (boletoError: any) {
+            console.error("Boleto processing error:", boletoError);
+            console.log("BOLETO PROCESSING ERROR:", {
+              errorMessage: boletoError.message,
+              errorStack: boletoError.stack,
+              paymentMethod: "boleto",
+              timestamp: new Date().toISOString(),
+              formData: formData,
+              orderSummary: orderSummary
+            });
+            throw boletoError;
+          }
         }
 
         // Process payment with selected method
@@ -437,7 +609,20 @@ export default function Payment() {
         handlePaymentSuccess(paymentId);
       } catch (err: any) {
         console.error("Payment error:", err);
-        setError(err.message || "Erro ao processar pagamento");
+        console.log("PAYMENT ERROR DETAILS:", {
+          errorMessage: err.message,
+          errorStack: err.stack,
+          paymentMethod: paymentMethod,
+          timestamp: new Date().toISOString(),
+          userFormData: formData,
+          orderSummary: orderSummary,
+          totalAmount:
+            orderSummary.totalProductPrice + orderSummary.totalContentPrice
+        });
+        const sanitizedMessage = sanitizeErrorMessage(
+          err.message || "Erro ao processar pagamento"
+        );
+        setError(sanitizedMessage);
       } finally {
         setProcessing(false);
       }

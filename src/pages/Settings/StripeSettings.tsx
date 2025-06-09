@@ -27,7 +27,9 @@ export default function StripeSettings() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [settings, setSettings] = useState<StripeSettings>({
     stripe_public_key: "",
     stripe_secret_key: "",
@@ -57,17 +59,35 @@ export default function StripeSettings() {
           // No settings found, create default settings
           const { data: newSettings, error: createError } = await supabase
             .from("payment_settings")
-            .insert([{
-              stripe_enabled: false,
-              stripe_test_mode: true,
-              currency: "BRL",
-              payment_methods: ["card"]
-            }])
+            .insert([
+              {
+                stripe_enabled: false,
+                stripe_test_mode: true,
+                currency: "BRL",
+                payment_methods: ["card"]
+              }
+            ])
             .select()
             .single();
 
           if (createError) throw createError;
-          setSettings(newSettings || {
+          setSettings(
+            newSettings || {
+              stripe_public_key: "",
+              stripe_secret_key: "",
+              stripe_webhook_secret: "",
+              stripe_enabled: false,
+              stripe_test_mode: true,
+              currency: "BRL",
+              payment_methods: ["card"]
+            }
+          );
+        } else {
+          throw error;
+        }
+      } else {
+        setSettings(
+          data || {
             stripe_public_key: "",
             stripe_secret_key: "",
             stripe_webhook_secret: "",
@@ -75,19 +95,16 @@ export default function StripeSettings() {
             stripe_test_mode: true,
             currency: "BRL",
             payment_methods: ["card"]
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        setSettings(data || {
-          stripe_public_key: "",
-          stripe_secret_key: "",
-          stripe_webhook_secret: "",
-          stripe_enabled: false,
-          stripe_test_mode: true,
-          currency: "BRL",
-          payment_methods: ["card"]
+          }
+        );
+
+        // Debug: Log current settings after loading
+        console.log("STRIPE SETTINGS LOADED:", {
+          stripe_enabled: data?.stripe_enabled,
+          stripe_test_mode: data?.stripe_test_mode,
+          public_key_type: data?.stripe_public_key?.substring(0, 8),
+          secret_key_type: data?.stripe_secret_key?.substring(0, 8),
+          timestamp: new Date().toISOString()
         });
       }
     } catch (err: any) {
@@ -97,7 +114,6 @@ export default function StripeSettings() {
       setLoading(false);
     }
   }
-
   const validateSettings = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
@@ -106,24 +122,58 @@ export default function StripeSettings() {
       if (!settings.stripe_public_key?.trim()) {
         errors.stripe_public_key = "Chave pública do Stripe é obrigatória";
         isValid = false;
-      } else if (!settings.stripe_public_key.startsWith('pk_')) {
-        errors.stripe_public_key = "Chave pública do Stripe deve começar com 'pk_'";
+      } else if (!settings.stripe_public_key.startsWith("pk_")) {
+        errors.stripe_public_key =
+          "Chave pública do Stripe deve começar com 'pk_'";
         isValid = false;
+      } else {
+        // Validar consistência entre modo de teste e tipo de chave
+        const isTestMode = settings.stripe_test_mode;
+        const isTestKey = settings.stripe_public_key.startsWith("pk_test_");
+        const isLiveKey = settings.stripe_public_key.startsWith("pk_live_");
+
+        if (isTestMode && isLiveKey) {
+          errors.stripe_public_key =
+            "Modo de teste ativo: use chave de teste (pk_test_...)";
+          isValid = false;
+        } else if (!isTestMode && isTestKey) {
+          errors.stripe_public_key =
+            "Modo de produção ativo: use chave de produção (pk_live_...)";
+          isValid = false;
+        }
       }
 
       if (!settings.stripe_secret_key?.trim()) {
         errors.stripe_secret_key = "Chave secreta do Stripe é obrigatória";
         isValid = false;
-      } else if (!settings.stripe_secret_key.startsWith('sk_')) {
-        errors.stripe_secret_key = "Chave secreta do Stripe deve começar com 'sk_'";
+      } else if (!settings.stripe_secret_key.startsWith("sk_")) {
+        errors.stripe_secret_key =
+          "Chave secreta do Stripe deve começar com 'sk_'";
         isValid = false;
+      } else {
+        // Validar consistência entre modo de teste e tipo de chave
+        const isTestMode = settings.stripe_test_mode;
+        const isTestKey = settings.stripe_secret_key.startsWith("sk_test_");
+        const isLiveKey = settings.stripe_secret_key.startsWith("sk_live_");
+
+        if (isTestMode && isLiveKey) {
+          errors.stripe_secret_key =
+            "Modo de teste ativo: use chave de teste (sk_test_...)";
+          isValid = false;
+        } else if (!isTestMode && isTestKey) {
+          errors.stripe_secret_key =
+            "Modo de produção ativo: use chave de produção (sk_live_...)";
+          isValid = false;
+        }
       }
 
       if (!settings.stripe_webhook_secret?.trim()) {
-        errors.stripe_webhook_secret = "Chave de webhook do Stripe é obrigatória";
+        errors.stripe_webhook_secret =
+          "Chave de webhook do Stripe é obrigatória";
         isValid = false;
-      } else if (!settings.stripe_webhook_secret.startsWith('whsec_')) {
-        errors.stripe_webhook_secret = "Chave de webhook do Stripe deve começar com 'whsec_'";
+      } else if (!settings.stripe_webhook_secret.startsWith("whsec_")) {
+        errors.stripe_webhook_secret =
+          "Chave de webhook do Stripe deve começar com 'whsec_'";
         isValid = false;
       }
     }
@@ -140,26 +190,54 @@ export default function StripeSettings() {
       setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
-
   const handleToggleChange = (name: string, checked: boolean) => {
-    setSettings((prev) => ({ ...prev, [name]: checked }));
+    setSettings((prev) => {
+      const newSettings = { ...prev, [name]: checked };
+
+      // Se alterou o modo de teste, limpar as chaves para evitar inconsistências
+      if (name === "stripe_test_mode") {
+        const currentPublicKey = prev.stripe_public_key || "";
+        const currentSecretKey = prev.stripe_secret_key || "";
+
+        // Verificar se as chaves atuais são inconsistentes com o novo modo
+        const isTestMode = checked;
+        const hasLivePublicKey = currentPublicKey.startsWith("pk_live_");
+        const hasTestPublicKey = currentPublicKey.startsWith("pk_test_");
+        const hasLiveSecretKey = currentSecretKey.startsWith("sk_live_");
+        const hasTestSecretKey = currentSecretKey.startsWith("sk_test_");
+
+        // Se mudou para modo de teste mas tem chaves de produção, limpar
+        if (isTestMode && (hasLivePublicKey || hasLiveSecretKey)) {
+          newSettings.stripe_public_key = "";
+          newSettings.stripe_secret_key = "";
+        }
+
+        // Se mudou para modo de produção mas tem chaves de teste, limpar
+        if (!isTestMode && (hasTestPublicKey || hasTestSecretKey)) {
+          newSettings.stripe_public_key = "";
+          newSettings.stripe_secret_key = "";
+        }
+      }
+
+      return newSettings;
+    });
   };
 
   const handlePaymentMethodsChange = (method: string, checked: boolean) => {
     setSettings((prev) => {
       let updatedMethods = [...prev.payment_methods];
-      
+
       if (checked && !updatedMethods.includes(method)) {
         updatedMethods.push(method);
       } else if (!checked && updatedMethods.includes(method)) {
-        updatedMethods = updatedMethods.filter(m => m !== method);
+        updatedMethods = updatedMethods.filter((m) => m !== method);
       }
-      
+
       // Ensure card is always included
       if (!updatedMethods.includes("card")) {
         updatedMethods.push("card");
       }
-      
+
       return { ...prev, payment_methods: updatedMethods };
     });
   };
@@ -190,7 +268,8 @@ export default function StripeSettings() {
           .update({
             stripe_public_key: settings.stripe_public_key?.trim() || null,
             stripe_secret_key: settings.stripe_secret_key?.trim() || null,
-            stripe_webhook_secret: settings.stripe_webhook_secret?.trim() || null,
+            stripe_webhook_secret:
+              settings.stripe_webhook_secret?.trim() || null,
             stripe_enabled: settings.stripe_enabled,
             stripe_test_mode: settings.stripe_test_mode,
             currency: settings.currency,
@@ -203,15 +282,18 @@ export default function StripeSettings() {
         // Insert new settings
         const { error: insertError } = await supabase
           .from("payment_settings")
-          .insert([{
-            stripe_public_key: settings.stripe_public_key?.trim() || null,
-            stripe_secret_key: settings.stripe_secret_key?.trim() || null,
-            stripe_webhook_secret: settings.stripe_webhook_secret?.trim() || null,
-            stripe_enabled: settings.stripe_enabled,
-            stripe_test_mode: settings.stripe_test_mode,
-            currency: settings.currency,
-            payment_methods: settings.payment_methods || ["card"]
-          }]);
+          .insert([
+            {
+              stripe_public_key: settings.stripe_public_key?.trim() || null,
+              stripe_secret_key: settings.stripe_secret_key?.trim() || null,
+              stripe_webhook_secret:
+                settings.stripe_webhook_secret?.trim() || null,
+              stripe_enabled: settings.stripe_enabled,
+              stripe_test_mode: settings.stripe_test_mode,
+              currency: settings.currency,
+              payment_methods: settings.payment_methods || ["card"]
+            }
+          ]);
 
         if (insertError) throw insertError;
       }
@@ -255,37 +337,79 @@ export default function StripeSettings() {
             <Switch
               label="Ativar Stripe"
               checked={settings.stripe_enabled}
-              onChange={(checked) => handleToggleChange("stripe_enabled", checked)}
+              onChange={(checked) =>
+                handleToggleChange("stripe_enabled", checked)
+              }
             />
           </div>
-          
+
           <div className="p-4 mb-6 text-sm text-gray-600 bg-gray-50 rounded-lg dark:bg-gray-800 dark:text-gray-400">
             <p>
-              O Stripe é uma plataforma de pagamentos online que permite processar pagamentos de forma segura.
-              Para configurar a integração, você precisará criar uma conta no Stripe e obter as chaves de API.
+              O Stripe é uma plataforma de pagamentos online que permite
+              processar pagamentos de forma segura. Para configurar a
+              integração, você precisará criar uma conta no Stripe e obter as
+              chaves de API.
             </p>
-            <a 
-              href="https://dashboard.stripe.com/apikeys" 
-              target="_blank" 
+            <a
+              href="https://dashboard.stripe.com/apikeys"
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-block mt-2 text-brand-500 hover:text-brand-600 dark:text-brand-400"
             >
               Acessar Dashboard do Stripe →
             </a>
           </div>
-        </div>
-
+        </div>{" "}
         <div>
           <Switch
             label="Modo de Teste"
             checked={settings.stripe_test_mode}
-            onChange={(checked) => handleToggleChange("stripe_test_mode", checked)}
+            onChange={(checked) =>
+              handleToggleChange("stripe_test_mode", checked)
+            }
           />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            No modo de teste, as transações não serão reais. Use para testar a integração.
-          </p>
+          <div
+            className={`mt-2 p-3 rounded-lg text-sm ${
+              settings.stripe_test_mode
+                ? "bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-500/15 dark:text-yellow-400 dark:border-yellow-500/30"
+                : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30"
+            }`}
+          >
+            {settings.stripe_test_mode ? (
+              <div>
+                <p className="font-medium">🧪 Modo de Teste Ativo</p>
+                <p>
+                  • Use chaves que começam com{" "}
+                  <code className="bg-yellow-100 px-1 rounded dark:bg-yellow-500/20">
+                    pk_test_
+                  </code>{" "}
+                  e{" "}
+                  <code className="bg-yellow-100 px-1 rounded dark:bg-yellow-500/20">
+                    sk_test_
+                  </code>
+                </p>
+                <p>• Use cartões de teste do Stripe (ex: 4242424242424242)</p>
+                <p>• Transações não serão reais</p>
+              </div>
+            ) : (
+              <div>
+                <p className="font-medium">🚀 Modo de Produção Ativo</p>
+                <p>
+                  • Use chaves que começam com{" "}
+                  <code className="bg-red-100 px-1 rounded dark:bg-red-500/20">
+                    pk_live_
+                  </code>{" "}
+                  e{" "}
+                  <code className="bg-red-100 px-1 rounded dark:bg-red-500/20">
+                    sk_live_
+                  </code>
+                </p>
+                <p>• Use cartões reais</p>
+                <p>• ⚠️ Transações serão cobradas de verdade</p>
+              </div>
+            )}
+          </div>
         </div>
-
         <div>
           <Label>Chave Pública do Stripe</Label>
           <Input
@@ -293,13 +417,14 @@ export default function StripeSettings() {
             name="stripe_public_key"
             value={settings.stripe_public_key || ""}
             onChange={handleChange}
-            placeholder={settings.stripe_test_mode ? "pk_test_..." : "pk_live_..."}
+            placeholder={
+              settings.stripe_test_mode ? "pk_test_..." : "pk_live_..."
+            }
             error={!!validationErrors.stripe_public_key}
             hint={validationErrors.stripe_public_key}
             disabled={!settings.stripe_enabled}
           />
         </div>
-
         <div>
           <Label>Chave Secreta do Stripe</Label>
           <Input
@@ -307,13 +432,14 @@ export default function StripeSettings() {
             name="stripe_secret_key"
             value={settings.stripe_secret_key || ""}
             onChange={handleChange}
-            placeholder={settings.stripe_test_mode ? "sk_test_..." : "sk_live_..."}
+            placeholder={
+              settings.stripe_test_mode ? "sk_test_..." : "sk_live_..."
+            }
             error={!!validationErrors.stripe_secret_key}
             hint={validationErrors.stripe_secret_key}
             disabled={!settings.stripe_enabled}
           />
         </div>
-
         <div>
           <Label>Chave de Webhook do Stripe</Label>
           <Input
@@ -330,7 +456,6 @@ export default function StripeSettings() {
             Configure um webhook no Stripe para receber notificações de eventos.
           </p>
         </div>
-
         <div>
           <Label>Moeda</Label>
           <Select
@@ -344,7 +469,6 @@ export default function StripeSettings() {
             disabled={!settings.stripe_enabled}
           />
         </div>
-
         <div>
           <Label>Métodos de Pagamento</Label>
           <div className="mt-2 space-y-2">
@@ -353,15 +477,19 @@ export default function StripeSettings() {
                 <input
                   type="checkbox"
                   id={`method-${method.value}`}
-                  checked={(settings.payment_methods || ["card"]).includes(method.value)}
-                  onChange={(e) => handlePaymentMethodsChange(method.value, e.target.checked)}
-                  disabled={!settings.stripe_enabled || (method.value === "card")}
+                  checked={(settings.payment_methods || ["card"]).includes(
+                    method.value
+                  )}
+                  onChange={(e) =>
+                    handlePaymentMethodsChange(method.value, e.target.checked)
+                  }
+                  disabled={!settings.stripe_enabled || method.value === "card"}
                   className="w-4 h-4 text-brand-500 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
                 />
                 <label
                   htmlFor={`method-${method.value}`}
                   className={`ml-2 text-sm font-medium ${
-                    !settings.stripe_enabled || (method.value === "card")
+                    !settings.stripe_enabled || method.value === "card"
                       ? "text-gray-400 dark:text-gray-600"
                       : "text-gray-700 dark:text-gray-400"
                   }`}
@@ -373,10 +501,10 @@ export default function StripeSettings() {
             ))}
           </div>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Selecione os métodos de pagamento que deseja aceitar. Cartão de crédito é obrigatório.
+            Selecione os métodos de pagamento que deseja aceitar. Cartão de
+            crédito é obrigatório.
           </p>
         </div>
-
         <div className="flex justify-end pt-6">
           <Button disabled={loading}>
             {loading ? "Salvando..." : "Salvar Configurações"}
