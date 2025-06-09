@@ -1,4 +1,7 @@
-import { updateOrderTotal } from "../../../context/db-context/services/OrderTotalsService";
+import {
+  updateOrderTotal,
+  createOrderTotal
+} from "../../../context/db-context/services/OrderTotalsService";
 import { supabase } from "../../../lib/supabase";
 import { getCartCheckoutResumeByUser } from "../../../context/db-context/services/CartCheckoutResumeService";
 
@@ -17,6 +20,11 @@ export async function calculateTotal(arr: any[]) {
       data: { user }
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuário não autenticado");
+
+    console.log("calculateTotal: ===== USUÁRIO NO CALCULATE TOTAL =====");
+    console.log("calculateTotal: User ID:", user.id);
+    console.log("calculateTotal: User Email:", user.email);
+    console.log("calculateTotal: ===========================================");
 
     // Buscar todos os itens do carrinho do usuário
     const cartItems = await getCartCheckoutResumeByUser(user.id);
@@ -51,23 +59,38 @@ export async function calculateTotal(arr: any[]) {
       }
     }
 
-    // Buscar o único registro do usuário
-    const { data, error } = await supabase
+    // Buscar o registro do usuário ou criar se não existir
+    let { data, error } = await supabase
       .from("order_totals")
       .select("id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)
       .single();
+
+    // Se não existe registro, criar um novo
     if (error || !data) {
-      console.error(
-        "Nenhum registro encontrado para atualizar em order_totals.",
-        error
+      console.log(
+        "Criando novo registro em order_totals para o usuário:",
+        user.id
       );
+      const newRecord = await createOrderTotal({
+        user_id: user.id,
+        total_product_price: soma,
+        total_content_price,
+        total_final_price: soma + total_content_price
+      });
+
+      if (!newRecord) {
+        console.error("Erro ao criar registro em order_totals");
+        return soma;
+      }
+
+      console.log("Novo registro criado:", newRecord);
       return soma;
     }
 
-    // Atualizar o registro encontrado
+    // Atualizar o registro existente
     const result = await updateOrderTotal(data.id, {
       user_id: user.id,
       total_product_price: soma,

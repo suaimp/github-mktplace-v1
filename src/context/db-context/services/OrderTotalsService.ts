@@ -13,11 +13,17 @@ export interface OrderTotal {
 export async function getOrderTotalsByUser(
   user_id: string
 ): Promise<OrderTotal[] | null> {
+  console.log("getOrderTotalsByUser: Buscando totais para user_id:", user_id);
+
   const { data, error } = await supabase
     .from("order_totals")
     .select("*")
     .eq("user_id", user_id)
     .order("created_at", { ascending: false });
+
+  console.log("getOrderTotalsByUser: Resultado da busca:", data);
+  console.log("getOrderTotalsByUser: Erro da busca:", error);
+
   if (error) {
     console.error("Erro ao buscar order_totals por user_id:", error);
     return null;
@@ -51,6 +57,10 @@ export async function createOrderTotal(
   if (error) {
     console.error("Erro ao criar order_total:", error);
     return null;
+  }
+  // Dispara evento global para atualizar UI
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("order-totals-updated"));
   }
   return data as OrderTotal;
 }

@@ -57,6 +57,34 @@ export default function ResumeTable(props: ResumeTableProps) {
     getNichePrice
   } = logic;
 
+  // Calcular e atualizar totais quando os dados mudarem
+  useEffect(() => {
+    if (resumeData.length > 0) {
+      const totalProductPricesArray = resumeData.map((item: any) =>
+        getTotalProductPrice({
+          item,
+          price: item.price,
+          quantities,
+          selectedNiches,
+          selectedService,
+          wordCounts,
+          serviceCardsByActiveService,
+          getServicePackageArray,
+          getNichePrice
+        })
+      );
+
+      calculateTotal(totalProductPricesArray);
+    }
+  }, [
+    resumeData,
+    quantities,
+    selectedNiches,
+    selectedService,
+    wordCounts,
+    serviceCardsByActiveService
+  ]);
+
   const { removeItem } = useCart();
 
   const handleRemove = async (id: string, entryId?: string) => {
@@ -104,23 +132,6 @@ export default function ResumeTable(props: ResumeTableProps) {
       currency: "BRL"
     }).format(value);
   }
-
-  // Calcular todos os totais dos produtos
-  const totalProductPricesArray = resumeData.map((item: any) =>
-    getTotalProductPrice({
-      item,
-      price: item.price,
-      quantities,
-      selectedNiches,
-      selectedService,
-      wordCounts,
-      serviceCardsByActiveService,
-      getServicePackageArray,
-      getNichePrice
-    })
-  );
-
-  calculateTotal(totalProductPricesArray);
 
   return (
     <div className="overflow-hidden bg-white dark:bg-white/[0.03] p-6 rounded-xl border border-gray-200 dark:border-gray-800">

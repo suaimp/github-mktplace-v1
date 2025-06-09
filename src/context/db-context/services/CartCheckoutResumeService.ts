@@ -1,9 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-// Para ambiente Vite/Frontend, use import.meta.env
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "../../../lib/supabase";
 
 export type CartCheckoutResume = {
   id: string;
@@ -29,11 +24,19 @@ export type CartCheckoutResume = {
 export async function getCartCheckoutResumeByUser(
   userId: string
 ): Promise<CartCheckoutResume[] | null> {
+  console.log(
+    "getCartCheckoutResumeByUser: Buscando cart items para user_id:",
+    userId
+  );
+
   const { data, error } = await supabase
     .from("cart_checkout_resume")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
+
+  console.log("getCartCheckoutResumeByUser: Resultado da busca:", data);
+  console.log("getCartCheckoutResumeByUser: Erro da busca:", error);
 
   if (error) {
     console.error("Erro ao buscar cart_checkout_resume:", error.message);

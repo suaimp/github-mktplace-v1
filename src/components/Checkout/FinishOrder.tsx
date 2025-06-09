@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
 import { supabase } from "../../lib/supabase";
+import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
 
 interface CheckoutFormProps {
   formData: {
@@ -27,21 +27,92 @@ export default function CheckoutForm({}: CheckoutFormProps) {
   const [totalContentPrice, setTotalContentPrice] = useState<number | null>(
     null
   );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
-
   useEffect(() => {
     async function fetchTotal() {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const totals = await getOrderTotalsByUser(user.id);
-      if (totals && totals.length > 0) {
-        setTotalProductPrice(Number(totals[0].total_product_price));
-        setTotalContentPrice(Number(totals[0].total_content_price ?? 0));
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("🔍 FinishOrder: Iniciando busca de totais...");
+
+        // Obter usuário autenticado diretamente do Supabase
+        const {
+          data: { user },
+          error: userError
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("❌ FinishOrder: Erro ao buscar usuário:", userError);
+          setError("Erro ao verificar usuário logado");
+          return;
+        }
+
+        if (!user) {
+          console.warn("⚠️ FinishOrder: Usuário não está logado");
+          setError("Usuário não está logado");
+          return;
+        }
+        console.log("👤 FinishOrder: Usuário logado:", {
+          id: user.id,
+          email: user.email
+        });
+
+        // Usar o serviço OrderTotalsService para buscar os totais
+        console.log("📊 FinishOrder: Buscando totais via serviço...");
+        const orderTotals = await getOrderTotalsByUser(user.id);
+
+        console.log("📊 FinishOrder: Resultado do serviço:", {
+          userId: user.id,
+          results: orderTotals
+        });
+
+        if (orderTotals && orderTotals.length > 0) {
+          const latestTotal = orderTotals[0];
+          console.log("✅ FinishOrder: Total encontrado:", latestTotal);
+
+          // Verificar se o user_id do registro corresponde ao usuário logado
+          if (latestTotal.user_id === user.id) {
+            const productPrice = Number(latestTotal.total_product_price) || 0;
+            const contentPrice = Number(latestTotal.total_content_price) || 0;
+
+            setTotalProductPrice(productPrice);
+            setTotalContentPrice(contentPrice);
+
+            console.log("💰 FinishOrder: Valores definidos:", {
+              totalProductPrice: productPrice,
+              totalContentPrice: contentPrice,
+              total: productPrice + contentPrice
+            });
+          } else {
+            console.error(
+              "❌ FinishOrder: user_id do registro não corresponde ao usuário logado!",
+              {
+                recordUserId: latestTotal.user_id,
+                loggedUserId: user.id
+              }
+            );
+            setTotalProductPrice(0);
+            setTotalContentPrice(0);
+          }
+        } else {
+          console.log("📭 FinishOrder: Nenhum total encontrado para o usuário");
+          setTotalProductPrice(0);
+          setTotalContentPrice(0);
+        }
+      } catch (err) {
+        console.error("💥 FinishOrder: Erro inesperado ao buscar totais:", err);
+        setError("Erro ao carregar totais do pedido");
+        setTotalProductPrice(0);
+        setTotalContentPrice(0);
+      } finally {
+        setLoading(false);
       }
     }
+
     fetchTotal();
   }, [refreshKey]);
 
@@ -80,45 +151,65 @@ export default function CheckoutForm({}: CheckoutFormProps) {
         overflowY: "auto"
       }}
     >
-      <div className="absolute right-1 top-2.5"></div>
+      <div className="absolute right-1 top-2.5"></div>{" "}
       <div className="mb-3">
         <h3 className="flex items-center text-base font-medium text-gray-900 dark:text-white">
           Resumo do Pedido
         </h3>
       </div>
-
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
       <div className="py-2"></div>
       <div className="my-2 border-t border-b border-t-gray-300 border-b-gray-300 dark:border-t-gray-700 dark:border-b-gray-700 py-5">
         <div className="flex items-center justify-between">
           <div className="text-gray-700 dark:text-gray-300">Valor</div>
           <div className="text-gray-900 dark:text-white">
-            R$&nbsp;
-            {totalProductPrice !== null
-              ? totalProductPrice.toLocaleString("pt-BR", {
-                  minimumFractionDigits: 2
-                })
-              : "-"}
+            {loading ? (
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-16 rounded"></div>
+            ) : (
+              <>
+                R$&nbsp;
+                {totalProductPrice !== null
+                  ? totalProductPrice.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2
+                    })
+                  : "0,00"}
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between">
           <div className="text-gray-700 dark:text-gray-300">Conteúdo</div>
           <div className="text-gray-900 dark:text-white">
-            R$&nbsp;
-            {totalContentPrice !== null
-              ? totalContentPrice.toLocaleString("pt-BR", {
-                  minimumFractionDigits: 2
-                })
-              : "-"}
+            {loading ? (
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-16 rounded"></div>
+            ) : (
+              <>
+                R$&nbsp;
+                {totalContentPrice !== null
+                  ? totalContentPrice.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2
+                    })
+                  : "0,00"}
+              </>
+            )}
           </div>
         </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="font-medium text-gray-800 dark:text-white">Total</div>
         <div>
-          <span className="text-gray-900 dark:text-white font-bold">
-            R$&nbsp;
-            {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
+          {loading ? (
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-20 rounded"></div>
+          ) : (
+            <span className="text-gray-900 dark:text-white font-bold">
+              R$&nbsp;
+              {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          )}
         </div>
       </div>
       <button
