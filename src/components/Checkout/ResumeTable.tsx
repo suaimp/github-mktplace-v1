@@ -94,32 +94,10 @@ export default function ResumeTable(props: ResumeTableProps) {
   // Calcular e atualizar totais apenas após debounce
   useEffect(() => {
     if (debouncedCalculationTrigger > 0 && resumeData.length > 0) {
-      console.log("🔄 ResumeTable: Executando cálculo de totais (debounced)");
-
-      // Calcular valores de produto (sem conteúdo extra)
+      // Calcular valores de produto (APENAS item.price × quantidade, sem nichos ou conteúdo)
       const totalProductPricesArray = resumeData.map((item: any) => {
-        const totalPrice = getTotalProductPrice({
-          item,
-          price: item.price,
-          quantities,
-          selectedNiches,
-          selectedService,
-          wordCounts,
-          serviceCardsByActiveService,
-          getServicePackageArray,
-          getNichePrice
-        });
-
-        // Subtrair o valor de conteúdo do total para obter apenas o preço do produto
-        const contentPrice = getContentPrice({
-          item,
-          wordCounts,
-          selectedService,
-          serviceCardsByActiveService,
-          getServicePackageArray
-        });
-
-        return totalPrice - contentPrice;
+        const quantity = quantities[item.id] ?? item.quantity ?? 1;
+        return Number(item.price) * quantity; // APENAS preço base × quantidade
       });
 
       // Calcular valores de conteúdo separadamente
@@ -482,10 +460,6 @@ export default function ResumeTable(props: ResumeTableProps) {
                                 }));
                               }
 
-                              console.log(
-                                "serviceArray",
-                                JSON.parse(JSON.stringify(serviceArray))
-                              );
                               await updateCartCheckoutResume(item.id, {
                                 service_selected: serviceArray
                               });

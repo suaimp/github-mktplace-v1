@@ -159,7 +159,7 @@ export default function Checkout() {
             <ResumeTable />
           </div>
 
-          <div className="w-[450px] mx-auto       ">
+          <div className="w-[450px] mx-auto mt-[80px]     ">
             {/*     <CheckoutForm
               formData={formData}
               loading={loading}

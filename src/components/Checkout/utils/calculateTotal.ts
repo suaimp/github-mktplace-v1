@@ -19,7 +19,6 @@ export async function calculateTotal(
     totalFinalArray.length === 0
   ) {
     // Apenas calcula e retorna, não envia ao banco
-    console.log("Array vazio ou inválido.");
     return 0;
   }
 
@@ -37,30 +36,14 @@ export async function calculateTotal(
     ? totalWordCountArray.reduce((acc, curr) => acc + Number(curr || 0), 0)
     : 0;
 
-  console.log("Valores finais do array:", totalFinalArray);
-  console.log("Soma total final:", somaFinal);
-  console.log("Soma produtos:", somaProduct);
-  console.log("Soma conteúdo:", somaContent);
-  console.log("Soma contagem palavras:", somaWordCount);
-
   // Obter o usuário logado
   const {
     data: { user }
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Usuário não autenticado");
 
-  console.log("calculateTotal: ===== USUÁRIO NO CALCULATE TOTAL =====");
-  console.log("calculateTotal: User ID:", user.id);
-  console.log("calculateTotal: User Email:", user.email);
-  console.log("calculateTotal: ===========================================");
-
   // Verificar se já há uma operação pendente para este usuário
   if (pendingOperations.has(user.id)) {
-    console.log(
-      "Operação já pendente para usuário:",
-      user.id,
-      "- aguardando..."
-    );
     return await pendingOperations.get(user.id)!;
   }
 
@@ -92,7 +75,7 @@ async function performCalculation(
 ): Promise<number> {
   try {
     // Usar upsert para garantir apenas um registro por usuário
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("order_totals")
       .upsert(
         {
@@ -125,29 +108,24 @@ async function performCalculation(
 
       if (existingData) {
         // Atualizar registro existente
-        const result = await updateOrderTotal(existingData.id, {
+        await updateOrderTotal(existingData.id, {
           user_id: userId,
           total_product_price: somaProduct,
           total_content_price: somaContent,
           total_final_price: somaFinal,
           total_word_count: somaWordCount
         });
-        console.log("Registro atualizado via fallback:", result);
       } else {
         // Criar novo registro
-        console.log("Criando novo registro via fallback para usuário:", userId);
-        const newRecord = await createOrderTotal({
+        await createOrderTotal({
           user_id: userId,
           total_product_price: somaProduct,
           total_content_price: somaContent,
           total_final_price: somaFinal,
           total_word_count: somaWordCount
         });
-        console.log("Novo registro criado via fallback:", newRecord);
       }
     } else {
-      console.log("Upsert bem-sucedido:", data);
-
       // Disparar evento global para atualizar UI
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("order-totals-updated"));

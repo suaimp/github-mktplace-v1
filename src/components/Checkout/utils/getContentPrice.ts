@@ -22,33 +22,26 @@ export function getContentPrice({
   if (selected.length === 0) {
     return 0;
   }
-
   const isFree = selected[0].is_free;
   const word_count = selected[0].word_count;
   const pricePerWord = selected[0].price_per_word;
 
-  // Se não é free, não há cobrança de conteúdo extra (já está no preço base)
-  if (!isFree) {
-    return 0;
-  }
-
   // Captura o valor digitado no input de word_count para este item
   const wordCountInput = wordCounts[item.id] ?? "";
 
-  // Se é free e o valor digitado ultrapassa o limite gratuito
-  if (Number(wordCountInput) > Number(word_count)) {
+  if (!wordCountInput || Number(wordCountInput) <= 0) {
+    return 0;
+  }
+
+  // Se é um serviço free e o valor digitado ultrapassa o limite gratuito
+  if (isFree && Number(wordCountInput) > Number(word_count)) {
     const extraWords = Number(wordCountInput) - Number(word_count);
-    const contentPrice = pricePerWord * extraWords;
+    return pricePerWord * extraWords;
+  }
 
-    console.log("getContentPrice - Item:", item.id, {
-      wordCountInput,
-      word_count,
-      extraWords,
-      pricePerWord,
-      contentPrice
-    });
-
-    return contentPrice;
+  // Se NÃO é free, cobra pelo total de palavras
+  if (!isFree) {
+    return pricePerWord * Number(wordCountInput);
   }
 
   return 0;

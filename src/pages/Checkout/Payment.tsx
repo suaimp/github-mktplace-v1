@@ -46,7 +46,8 @@ export default function Payment() {
   const [orderSummary, setOrderSummary] = useState({
     items: [] as any[],
     totalProductPrice: 0,
-    totalContentPrice: 0
+    totalContentPrice: 0,
+    totalFinalPrice: 0
   });
   const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
@@ -172,7 +173,8 @@ export default function Payment() {
         setOrderSummary((prev) => ({
           ...prev,
           totalProductPrice: Number(data.total_product_price),
-          totalContentPrice: Number(data.total_content_price)
+          totalContentPrice: Number(data.total_content_price),
+          totalFinalPrice: Number(data.total_final_price)
         }));
       }
     } catch (err) {
@@ -942,10 +944,12 @@ export default function Payment() {
         </div>
 
         <div className="w-full md:w-2/5">
+          {" "}
           <OrderSummary
             items={orderSummary.items}
             totalProductPrice={orderSummary.totalProductPrice}
             totalContentPrice={orderSummary.totalContentPrice}
+            totalFinalPrice={orderSummary.totalFinalPrice}
           />
         </div>
       </div>

@@ -4,14 +4,17 @@ interface OrderSummaryProps {
   items: any[];
   totalProductPrice: number;
   totalContentPrice: number;
+  totalFinalPrice: number;
 }
 
 export default function OrderSummary({
   items,
   totalProductPrice,
-  totalContentPrice
+  totalContentPrice,
+  totalFinalPrice
 }: OrderSummaryProps) {
-  const total = totalProductPrice + totalContentPrice;
+  // Usar o total_final_price em vez de calcular manualmente
+  const total = totalFinalPrice;
 
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 sticky top-24">
