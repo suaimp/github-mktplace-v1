@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
-import { getCartCheckoutResumeByUser } from "../../context/db-context/services/CartCheckoutResumeService";
-import { formatCurrency } from "../marketplace/utils";
 
 interface CheckoutFormProps {
   formData: {
@@ -23,7 +21,6 @@ interface CheckoutFormProps {
 }
 
 export default function CheckoutForm({}: CheckoutFormProps) {
-  const [orderData, setOrderData] = useState<{ items: any[] } | null>(null);
   const [totalProductPrice, setTotalProductPrice] = useState<number | null>(
     null
   );
