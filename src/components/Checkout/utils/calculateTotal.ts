@@ -3,102 +3,160 @@ import {
   createOrderTotal
 } from "../../../context/db-context/services/OrderTotalsService";
 import { supabase } from "../../../lib/supabase";
-import { getCartCheckoutResumeByUser } from "../../../context/db-context/services/CartCheckoutResumeService";
 
-export async function calculateTotal(arr: any[]) {
-  if (!arr || !Array.isArray(arr) || arr.length === 0) {
+// Cache para evitar múltiplas operações simultâneas para o mesmo usuário
+const pendingOperations = new Map<string, Promise<number>>();
+
+export async function calculateTotal(
+  totalFinalArray: any[],
+  totalProductArray?: any[],
+  totalContentArray?: any[],
+  totalWordCountArray?: any[]
+): Promise<number> {
+  if (
+    !totalFinalArray ||
+    !Array.isArray(totalFinalArray) ||
+    totalFinalArray.length === 0
+  ) {
     // Apenas calcula e retorna, não envia ao banco
     console.log("Array vazio ou inválido.");
     return 0;
-  } else {
-    const soma = arr.reduce((acc, curr) => acc + Number(curr), 0);
-    console.log("Valores do array:", arr);
-    console.log("Soma total:", soma);
+  }
 
-    // Obter o usuário logado
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("Usuário não autenticado");
+  const somaFinal = totalFinalArray.reduce(
+    (acc, curr) => acc + Number(curr),
+    0
+  );
+  const somaProduct = totalProductArray
+    ? totalProductArray.reduce((acc, curr) => acc + Number(curr), 0)
+    : somaFinal;
+  const somaContent = totalContentArray
+    ? totalContentArray.reduce((acc, curr) => acc + Number(curr), 0)
+    : 0;
+  const somaWordCount = totalWordCountArray
+    ? totalWordCountArray.reduce((acc, curr) => acc + Number(curr || 0), 0)
+    : 0;
 
-    console.log("calculateTotal: ===== USUÁRIO NO CALCULATE TOTAL =====");
-    console.log("calculateTotal: User ID:", user.id);
-    console.log("calculateTotal: User Email:", user.email);
-    console.log("calculateTotal: ===========================================");
+  console.log("Valores finais do array:", totalFinalArray);
+  console.log("Soma total final:", somaFinal);
+  console.log("Soma produtos:", somaProduct);
+  console.log("Soma conteúdo:", somaContent);
+  console.log("Soma contagem palavras:", somaWordCount);
 
-    // Buscar todos os itens do carrinho do usuário
-    const cartItems = await getCartCheckoutResumeByUser(user.id);
-    let total_content_price = 0;
-    if (cartItems && Array.isArray(cartItems)) {
-      for (const item of cartItems) {
-        let serviceSelected = item.service_selected;
-        // Pode vir como string JSON, array de string, ou array de objeto
-        if (typeof serviceSelected === "string") {
-          try {
-            serviceSelected = JSON.parse(serviceSelected);
-          } catch {}
-        }
-        if (Array.isArray(serviceSelected)) {
-          for (const s of serviceSelected) {
-            let obj = s;
-            if (typeof s === "string") {
-              try {
-                obj = JSON.parse(s);
-              } catch {}
-            }
-            if (
-              obj &&
-              typeof obj === "object" &&
-              "price" in obj &&
-              obj.price !== undefined
-            ) {
-              total_content_price += Number(obj.price);
-            }
-          }
-        }
-      }
-    }
+  // Obter o usuário logado
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Usuário não autenticado");
 
-    // Buscar o registro do usuário ou criar se não existir
-    let { data, error } = await supabase
+  console.log("calculateTotal: ===== USUÁRIO NO CALCULATE TOTAL =====");
+  console.log("calculateTotal: User ID:", user.id);
+  console.log("calculateTotal: User Email:", user.email);
+  console.log("calculateTotal: ===========================================");
+
+  // Verificar se já há uma operação pendente para este usuário
+  if (pendingOperations.has(user.id)) {
+    console.log(
+      "Operação já pendente para usuário:",
+      user.id,
+      "- aguardando..."
+    );
+    return await pendingOperations.get(user.id)!;
+  }
+
+  // Criar promessa para esta operação
+  const operation = performCalculation(
+    user.id,
+    somaProduct,
+    somaContent,
+    somaFinal,
+    somaWordCount
+  );
+  pendingOperations.set(user.id, operation);
+
+  try {
+    const result = await operation;
+    return result;
+  } finally {
+    // Limpar a operação pendente após completar
+    pendingOperations.delete(user.id);
+  }
+}
+
+async function performCalculation(
+  userId: string,
+  somaProduct: number,
+  somaContent: number,
+  somaFinal: number,
+  somaWordCount: number
+): Promise<number> {
+  try {
+    // Usar upsert para garantir apenas um registro por usuário
+    const { data, error } = await supabase
       .from("order_totals")
-      .select("id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .upsert(
+        {
+          user_id: userId,
+          total_product_price: somaProduct,
+          total_content_price: somaContent,
+          total_final_price: somaFinal,
+          total_word_count: somaWordCount,
+          updated_at: new Date().toISOString()
+        },
+        {
+          onConflict: "user_id",
+          ignoreDuplicates: false
+        }
+      )
+      .select()
       .single();
 
-    // Se não existe registro, criar um novo
-    if (error || !data) {
-      console.log(
-        "Criando novo registro em order_totals para o usuário:",
-        user.id
-      );
-      const newRecord = await createOrderTotal({
-        user_id: user.id,
-        total_product_price: soma,
-        total_content_price,
-        total_final_price: soma + total_content_price
-      });
+    if (error) {
+      console.error("Erro no upsert de order_totals:", error);
 
-      if (!newRecord) {
-        console.error("Erro ao criar registro em order_totals");
-        return soma;
+      // Fallback: tentar buscar e atualizar manualmente
+      const { data: existingData } = await supabase
+        .from("order_totals")
+        .select("id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (existingData) {
+        // Atualizar registro existente
+        const result = await updateOrderTotal(existingData.id, {
+          user_id: userId,
+          total_product_price: somaProduct,
+          total_content_price: somaContent,
+          total_final_price: somaFinal,
+          total_word_count: somaWordCount
+        });
+        console.log("Registro atualizado via fallback:", result);
+      } else {
+        // Criar novo registro
+        console.log("Criando novo registro via fallback para usuário:", userId);
+        const newRecord = await createOrderTotal({
+          user_id: userId,
+          total_product_price: somaProduct,
+          total_content_price: somaContent,
+          total_final_price: somaFinal,
+          total_word_count: somaWordCount
+        });
+        console.log("Novo registro criado via fallback:", newRecord);
       }
+    } else {
+      console.log("Upsert bem-sucedido:", data);
 
-      console.log("Novo registro criado:", newRecord);
-      return soma;
+      // Disparar evento global para atualizar UI
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("order-totals-updated"));
+      }
     }
 
-    // Atualizar o registro existente
-    const result = await updateOrderTotal(data.id, {
-      user_id: user.id,
-      total_product_price: soma,
-      total_content_price,
-      total_final_price: soma + total_content_price
-    });
-    console.log("Resultado do updateOrderTotal:", result);
-
-    return soma;
+    return somaFinal;
+  } catch (error) {
+    console.error("Erro em performCalculation:", error);
+    return somaFinal;
   }
 }

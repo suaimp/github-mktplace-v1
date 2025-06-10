@@ -9,14 +9,33 @@ import { useCart } from "../marketplace/ShoppingCartContext";
 
 import { getServicePackageArray } from "./utils/servicePackageSelectedUtils";
 import { getTotalProductPrice } from "./utils/getTotalProductPrice";
+import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 
 interface ResumeTableProps {
   onReload?: () => void;
 }
 
+// Hook personalizado para debounce
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function ResumeTable(props: ResumeTableProps) {
   const [reloadKey, setReloadKey] = useState(0);
+  const [calculationTrigger, setCalculationTrigger] = useState(0);
 
   const logic = useResumeTableLogic();
 
@@ -57,10 +76,71 @@ export default function ResumeTable(props: ResumeTableProps) {
     getNichePrice
   } = logic;
 
-  // Calcular e atualizar totais quando os dados mudarem
+  // Debounced trigger para cálculos - espera 500ms de inatividade
+  const debouncedCalculationTrigger = useDebounce(calculationTrigger, 500);
+
+  // Trigger de mudanças para atualizar o cálculo
   useEffect(() => {
-    if (resumeData.length > 0) {
-      const totalProductPricesArray = resumeData.map((item: any) =>
+    setCalculationTrigger((prev) => prev + 1);
+  }, [
+    resumeData,
+    quantities,
+    selectedNiches,
+    selectedService,
+    wordCounts,
+    serviceCardsByActiveService
+  ]);
+
+  // Calcular e atualizar totais apenas após debounce
+  useEffect(() => {
+    if (debouncedCalculationTrigger > 0 && resumeData.length > 0) {
+      console.log("🔄 ResumeTable: Executando cálculo de totais (debounced)");
+
+      // Calcular valores de produto (sem conteúdo extra)
+      const totalProductPricesArray = resumeData.map((item: any) => {
+        const totalPrice = getTotalProductPrice({
+          item,
+          price: item.price,
+          quantities,
+          selectedNiches,
+          selectedService,
+          wordCounts,
+          serviceCardsByActiveService,
+          getServicePackageArray,
+          getNichePrice
+        });
+
+        // Subtrair o valor de conteúdo do total para obter apenas o preço do produto
+        const contentPrice = getContentPrice({
+          item,
+          wordCounts,
+          selectedService,
+          serviceCardsByActiveService,
+          getServicePackageArray
+        });
+
+        return totalPrice - contentPrice;
+      });
+
+      // Calcular valores de conteúdo separadamente
+      const totalContentPricesArray = resumeData.map((item: any) =>
+        getContentPrice({
+          item,
+          wordCounts,
+          selectedService,
+          serviceCardsByActiveService,
+          getServicePackageArray
+        })
+      );
+
+      // Calcular contagem total de palavras
+      const totalWordCountArray = resumeData.map((item: any) => {
+        const itemWordCount = wordCounts[item.id];
+        return typeof itemWordCount === "number" ? itemWordCount : 0;
+      });
+
+      // Calcular total final (produto + conteúdo)
+      const totalFinalPricesArray = resumeData.map((item: any) =>
         getTotalProductPrice({
           item,
           price: item.price,
@@ -74,16 +154,16 @@ export default function ResumeTable(props: ResumeTableProps) {
         })
       );
 
-      calculateTotal(totalProductPricesArray);
+      calculateTotal(
+        totalFinalPricesArray,
+        totalProductPricesArray,
+        totalContentPricesArray,
+        totalWordCountArray
+      ).catch((error) => {
+        console.error("Erro ao calcular totais:", error);
+      });
     }
-  }, [
-    resumeData,
-    quantities,
-    selectedNiches,
-    selectedService,
-    wordCounts,
-    serviceCardsByActiveService
-  ]);
+  }, [debouncedCalculationTrigger]);
 
   const { removeItem } = useCart();
 

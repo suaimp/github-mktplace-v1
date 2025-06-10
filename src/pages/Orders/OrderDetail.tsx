@@ -309,6 +309,7 @@ export default function OrderDetail() {
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
                           <div className="flex items-center">
                             <Tooltip content="Insira a URL do artigo">
+                              {" "}
                               <input
                                 type="text"
                                 value={articleUrl[item.id] || ""}
@@ -318,7 +319,7 @@ export default function OrderDetail() {
                                     e.target.value
                                   )
                                 }
-                                className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded"
+                                className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
                                 placeholder="URL do artigo"
                               />
                             </Tooltip>

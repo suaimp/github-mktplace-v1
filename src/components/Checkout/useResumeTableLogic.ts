@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { getCartCheckoutResumeByUser } from "../../context/db-context/services/CartCheckoutResumeService";
+import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
 import { useCheckoutCardsActions } from "../ServicePackages/cards/checkoutCardsActions";
 import { useResumeTableEdit } from "./actions/ResumeTableEdit";
 import { getSelectedServiceTitle } from "./utils/servicePackageSelectedUtils";
@@ -48,6 +49,25 @@ export function useResumeTableLogic() {
         }
         const data = await getCartCheckoutResumeByUser(user.id);
         setResumeData(data || []);
+
+        // Buscar dados existentes do order_totals para pressetar valores
+        try {
+          const orderTotals = await getOrderTotalsByUser(user.id);
+          if (orderTotals && orderTotals.length > 0) {
+            const latestTotal = orderTotals[0];
+            console.log(
+              "💾 useResumeTableLogic: Preset encontrado:",
+              latestTotal
+            );
+            // Note: Os valores de wordCounts serão pressetados individualmente
+            // pelos dados de service_selected de cada item no próximo useEffect
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ useResumeTableLogic: Erro ao buscar order_totals para preset:",
+            err
+          );
+        }
       } catch (err: any) {
         setError("Erro ao buscar dados do resumo.");
         setResumeData([]);

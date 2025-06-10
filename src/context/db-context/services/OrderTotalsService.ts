@@ -6,6 +6,7 @@ export interface OrderTotal {
   total_product_price: number;
   total_content_price: number;
   total_final_price: number;
+  total_word_count: number;
   created_at: string;
   updated_at: string;
 }
