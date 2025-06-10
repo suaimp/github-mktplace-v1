@@ -111,6 +111,7 @@ const fieldGroups = [
         description: "Campo para preço do produto",
         icon: "BoxIcon"
       },
+
       {
         type: "commission",
         title: "Comissão de Venda",

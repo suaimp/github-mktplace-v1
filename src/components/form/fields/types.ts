@@ -43,6 +43,7 @@ export interface FormFieldSettings {
   commission_rate?: number;
   product_currency?: string;
   product_description?: string;
+  promotional_price_description?: string;
   disable_quantity?: boolean;
   date_format?: string;
   time_format?: string;

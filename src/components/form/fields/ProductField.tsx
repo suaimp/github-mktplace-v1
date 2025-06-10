@@ -1,5 +1,11 @@
 import Input from "../input/InputField";
 import { FormFieldSettings } from "./types";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import {
+  applyCurrencyMask,
+  formatInputCurrency
+} from "../../../utils/currency";
 
 interface ProductFieldProps {
   value: any;
@@ -16,75 +22,97 @@ export default function ProductField({
   onErrorClear,
   settings
 }: ProductFieldProps) {
+  const location = useLocation();
+  const [validationError, setValidationError] = useState<string>("");
+  const [priceInputValue, setPriceInputValue] = useState<string>("");
+  const [promotionalPriceInputValue, setPromotionalPriceInputValue] =
+    useState<string>("");
+
+  // Log value on mount
+  useEffect(() => {
+    console.log("ProductField value on mount:", value);
+  }, []);
+
+  // Sync input values with parsedValue only on external changes
+  useEffect(() => {
+    console.log("Value prop changed:", value);
+    const parsedValue =
+      typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+    console.log("Parsed value:", parsedValue);
+
+    // Only update if the input is not currently focused or if there's no current value
+    if (
+      !priceInputValue ||
+      document.activeElement?.getAttribute("name") !== "price"
+    ) {
+      setPriceInputValue(formatInputCurrency(parsedValue.price || ""));
+    }
+
+    if (
+      !promotionalPriceInputValue ||
+      document.activeElement?.getAttribute("name") !== "promotional_price"
+    ) {
+      setPromotionalPriceInputValue(
+        formatInputCurrency(parsedValue.promotional_price || "")
+      );
+    }
+  }, [value]);
+
   // Parse value from string if needed
   const parsedValue =
     typeof value === "string" ? JSON.parse(value || "{}") : value || {};
 
-  // Format number as Brazilian Real
-  const formatCurrency = (value: string) => {
-    if (!value) return "";
+  // Convert price to number for calculations
+  const priceToNumber = (priceStr: string | number): number => {
+    if (!priceStr) return 0;
 
-    // Remove non-digits except comma and period
-    const cleanedValue = value.replace(/[^\d,.]/g, "");
+    const str = priceStr.toString();
 
-    // If there's a comma, assume it's a decimal separator (Brazilian format)
-    if (cleanedValue.includes(",")) {
-      // Split by comma to get integer and decimal parts
-      const parts = cleanedValue.split(",");
-      // Get integer part and remove any existing dots
-      const integerPart = parts[0].replace(/\./g, "");
-      // Format integer part with dots for thousands
-      const formattedInteger = integerPart.replace(
-        /\B(?=(\d{3})+(?!\d))/g,
-        "."
-      );
-      // Get decimal part (default to '00' if not provided)
-      const decimalPart = parts[1] || "00";
+    // Remove any non-numeric characters except dots and commas
+    let cleaned = str.replace(/[^\d,.]/g, "");
 
-      // Format with Brazilian Real
-      return `R$ ${formattedInteger},${decimalPart
-        .padEnd(2, "0")
-        .substring(0, 2)}`;
-    } else {
-      // If no comma, treat as regular number
-      // Remove any dots first
-      const number = cleanedValue.replace(/\./g, "");
-
-      if (number === "") return "";
-
-      // Parse as integer and divide by 100 to get decimal value
-      const value = parseInt(number);
-      if (isNaN(value)) return "";
-
-      // Format with Brazilian Real
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      }).format(value / 100);
+    // Handle Brazilian format: 1.500,50 -> 1500.50 or simple numbers
+    if (cleaned.includes(",")) {
+      // Remove thousand separators (dots) and convert comma to dot
+      cleaned = cleaned.replace(/\./g, "").replace(",", ".");
     }
-  };
 
-  // Parse Brazilian Real to number
-  const parseCurrency = (value: string) => {
-    if (!value) return "";
-
-    // Remove currency symbol and non-numeric characters except comma and period
-    const cleanedValue = value.replace(/[^\d,.]/g, "");
-
-    // If there's a comma, preserve the original format
-    if (cleanedValue.includes(",")) {
-      return cleanedValue;
-    } else {
-      // If no comma, treat as regular number
-      return cleanedValue;
-    }
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    console.log("Price input change - inputValue:", inputValue);
+    console.log("Price input change - current value prop:", value);
+
+    // Aplica máscara de moeda
+    const maskedValue = applyCurrencyMask(inputValue);
+
+    // Update local state with masked value
+    setPriceInputValue(maskedValue);
+
     const newValue = {
       ...parsedValue,
-      price: parseCurrency(e.target.value)
+      price: maskedValue
     };
+
+    console.log("Price input change - newValue:", newValue);
+
+    // Clear validation error when changing values
+    setValidationError("");
+
+    // Re-validate promotional price if it exists
+    if (parsedValue.promotional_price && maskedValue) {
+      const promotionalPrice = priceToNumber(parsedValue.promotional_price);
+      const regularPrice = priceToNumber(maskedValue);
+
+      if (regularPrice > 0 && promotionalPrice >= regularPrice) {
+        setValidationError(
+          "Preço promocional deve ser menor que o preço normal"
+        );
+      }
+    }
 
     onChange(JSON.stringify(newValue));
 
@@ -93,16 +121,146 @@ export default function ProductField({
     }
   };
 
+  const handlePriceBlur = () => {
+    // No formatting on blur - keep raw value
+  };
+
+  const handlePromotionalPriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const inputValue = e.target.value;
+
+    // Aplica máscara de moeda
+    const maskedValue = applyCurrencyMask(inputValue);
+
+    // Block input if promotional price would be greater than or equal to regular price
+    if (maskedValue && parsedValue.price) {
+      const promotionalPrice = priceToNumber(maskedValue);
+      const regularPrice = priceToNumber(parsedValue.price);
+
+      if (regularPrice > 0 && promotionalPrice >= regularPrice) {
+        // Don't update the input value, just show error
+        setValidationError(
+          "Preço promocional deve ser menor que o preço normal"
+        );
+        return; // Block the input
+      }
+    }
+
+    // Update local state with masked value
+    setPromotionalPriceInputValue(maskedValue);
+
+    const newValue = {
+      ...parsedValue,
+      promotional_price: maskedValue
+    };
+
+    // Clear validation error for valid inputs
+    setValidationError("");
+
+    onChange(JSON.stringify(newValue));
+
+    if (error && onErrorClear) {
+      onErrorClear();
+    }
+  };
+
+  const handlePromotionalPriceBlur = () => {
+    // No formatting on blur - keep raw value
+  };
+
+  // Helper function to get product descriptions
+  const getProductDescriptions = () => {
+    if (settings?.product_description) {
+      // Se for string JSON, parse para objeto
+      if (typeof settings.product_description === "string") {
+        try {
+          const parsed = JSON.parse(settings.product_description);
+          return {
+            price_description: parsed.price_description || "",
+            promotional_price_description:
+              parsed.promotional_price_description || ""
+          };
+        } catch (e) {
+          return {
+            price_description: settings.product_description,
+            promotional_price_description: ""
+          };
+        }
+      }
+      // Se já for objeto
+      if (typeof settings.product_description === "object") {
+        const productDesc = settings.product_description as {
+          price_description?: string;
+          promotional_price_description?: string;
+        };
+        return {
+          price_description: productDesc.price_description || "",
+          promotional_price_description:
+            productDesc.promotional_price_description || ""
+        };
+      }
+    }
+    return { price_description: "", promotional_price_description: "" };
+  };
+
+  const productDescriptions = getProductDescriptions();
+
+  // Check if promotional price field should be shown
+  // Only show when current route contains "meus-websites"
+  const shouldShowPromotionalPrice =
+    location.pathname.includes("meus-websites");
+
+  // Get the main price (promotional if available, otherwise regular)
+  const getMainPrice = () => {
+    // If promotional price is filled, it becomes the main price
+    if (parsedValue.promotional_price && parsedValue.promotional_price !== "") {
+      return parsedValue.promotional_price;
+    }
+    return parsedValue.price || "";
+  };
+
   return (
-    <div>
-      <Input
-        type="text"
-        value={parsedValue.price ? formatCurrency(parsedValue.price) : ""}
-        onChange={handlePriceChange}
-        placeholder="R$ 0,00"
-        error={!!error}
-        hint={error || settings?.product_description}
-      />
+    <div className="flex gap-4">
+      <div className="flex-1">
+        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-400">
+          Preço
+        </label>
+        <Input
+          type="text"
+          name="price"
+          value={priceInputValue}
+          onChange={handlePriceChange}
+          onBlur={handlePriceBlur}
+          placeholder="0,00"
+          error={!!error}
+          hint={error || productDescriptions.price_description}
+        />
+      </div>
+
+      {shouldShowPromotionalPrice && (
+        <div className="flex-1">
+          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-400">
+            Preço Promocional
+          </label>
+          <Input
+            type="text"
+            name="promotional_price"
+            value={promotionalPriceInputValue}
+            onChange={handlePromotionalPriceChange}
+            onBlur={handlePromotionalPriceBlur}
+            placeholder="0,00"
+            error={!!validationError}
+            hint={
+              validationError ||
+              productDescriptions.promotional_price_description
+            }
+          />
+        </div>
+      )}
+
+      {/* Hidden field to store the main price for form processing */}
+      <input type="hidden" name="main_price" value={getMainPrice()} />
     </div>
   );
 }

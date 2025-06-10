@@ -385,7 +385,7 @@ export default function EntryEditModal({
       <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
         <div className="mb-6">
           <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-            Editar Entrada do id: #{entry.id}
+            Editar Entrada  
           </h4>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {entry.form?.title || "Formulário sem título"}
