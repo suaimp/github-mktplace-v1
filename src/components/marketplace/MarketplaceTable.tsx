@@ -156,7 +156,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 typeof parsedValue === "object" &&
                 parsedValue.promotional_price
               ) {
-                values[value.field_id] = parsedValue.promotional_price;
+                // Para campos do tipo product, mantém o formato de objeto com a propriedade price
+                // para que o formatador de marketplace funcione corretamente
+                values[value.field_id] = {
+                  price: parsedValue.promotional_price
+                };
               } else {
                 values[value.field_id] = value.value;
               }

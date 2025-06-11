@@ -616,11 +616,14 @@ export default function UserFormEntriesRenderer({
     // Map brand field to use BrandField component
     if (fieldType === "brand") {
       return "brand";
-    }
-
-    // Map button_buy field to use ButtonBuyField component
+    } // Map button_buy field to use ButtonBuyField component
     if (fieldType === "button_buy") {
       return "buttonBuy";
+    }
+
+    // Map multiselect field to use MultiSelectField component
+    if (fieldType === "multiselect") {
+      return "multiSelect";
     }
 
     // Return original field type for standard fields

@@ -169,13 +169,16 @@ export default function EntryEditModal({
         .eq("id", entry.id);
 
       if (updateError) throw updateError;
-
       console.log(
         "[EntryEditModal] handleSubmit - formValues to process:",
         formValues
-      );
-
-      // Em vez de DELETE + INSERT, vamos fazer UPDATE ou INSERT individual
+      ); // Implementa estratégia DELETE+INSERT (igual ao UserFormEntriesRenderer que funciona)
+      const updatedValues: Array<{
+        entry_id: any;
+        field_id: string;
+        value: string | null;
+        value_json: any;
+      }> = [];
       for (const [fieldId, value] of Object.entries(formValues)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;
@@ -192,46 +195,42 @@ export default function EntryEditModal({
         // Determine if value should be stored in value or value_json
         const isJsonValue = typeof value !== "string";
 
-        const valueData = {
+        updatedValues.push({
           entry_id: entry.id,
           field_id: fieldId,
           value: isJsonValue ? null : value,
           value_json: isJsonValue ? value : null
-        };
-
-        // Primeiro tenta fazer UPDATE
-        const { data: updateResult, error: updateValueError } = await supabase
-          .from("form_entry_values")
-          .update({
-            value: valueData.value,
-            value_json: valueData.value_json,
-            updated_at: new Date().toISOString()
-          })
-          .eq("entry_id", entry.id)
-          .eq("field_id", fieldId)
-          .select();
-
-        // Se o UPDATE não encontrou nenhum registro (array vazio), faz INSERT
-        if (!updateValueError && (!updateResult || updateResult.length === 0)) {
-          const { error: insertValueError } = await supabase
-            .from("form_entry_values")
-            .insert([valueData]);
-
-          if (insertValueError) {
-            console.error(
-              `Error inserting field ${fieldId}:`,
-              insertValueError
-            );
-            throw insertValueError;
-          }
-        } else if (updateValueError) {
-          console.error(`Error updating field ${fieldId}:`, updateValueError);
-          throw updateValueError;
-        }
+        });
       }
 
       console.log(
-        "[EntryEditModal] handleSubmit - All field values processed successfully"
+        "[EntryEditModal] Prepared values for DELETE+INSERT:",
+        updatedValues
+      );
+
+      // Delete existing values
+      const { error: deleteError } = await supabase
+        .from("form_entry_values")
+        .delete()
+        .eq("entry_id", entry.id);
+
+      if (deleteError) {
+        console.error("[EntryEditModal] Delete error:", deleteError);
+        throw deleteError;
+      }
+
+      // Insert new values
+      const { error: insertError } = await supabase
+        .from("form_entry_values")
+        .insert(updatedValues);
+
+      if (insertError) {
+        console.error("[EntryEditModal] Insert error:", insertError);
+        throw insertError;
+      }
+
+      console.log(
+        "[EntryEditModal] handleSubmit - All field values processed successfully using DELETE+INSERT"
       );
 
       // Add note if provided
