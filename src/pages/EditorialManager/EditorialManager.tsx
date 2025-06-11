@@ -193,8 +193,33 @@ export default function EditorialManager() {
           const values: Record<string, any> = {};
 
           entry.values.forEach((value: any) => {
-            values[value.field_id] =
-              value.value_json !== null ? value.value_json : value.value;
+            if (value.value_json !== null) {
+              values[value.field_id] = value.value_json;
+            } else {
+              // Verifica se value.value contém um objeto com promotional_price
+              try {
+                const parsedValue = JSON.parse(value.value);
+                if (
+                  parsedValue &&
+                  typeof parsedValue === "object" &&
+                  parsedValue.promotional_price
+                ) {
+                  // Se tem promotional_price e price, é provavelmente um campo de produto
+                  // Retorna o objeto completo para preservar ambos os valores
+                  if (parsedValue.price) {
+                    values[value.field_id] = parsedValue;
+                  } else {
+                    // Se só tem promotional_price, retorna apenas esse valor
+                    values[value.field_id] = parsedValue.promotional_price;
+                  }
+                } else {
+                  values[value.field_id] = value.value;
+                }
+              } catch {
+                // Se não conseguir fazer parse, usa o valor original
+                values[value.field_id] = value.value;
+              }
+            }
           });
 
           // Get publisher info if created_by exists

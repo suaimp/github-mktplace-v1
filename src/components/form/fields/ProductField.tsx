@@ -36,31 +36,65 @@ export default function ProductField({
   // Sync input values with parsedValue only on external changes
   useEffect(() => {
     console.log("Value prop changed:", value);
-    const parsedValue =
-      typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+    let parsedValue: { price?: string; promotional_price?: string } = {};
+
+    try {
+      if (typeof value === "string") {
+        // Tenta fazer parse do JSON
+        parsedValue = JSON.parse(value || "{}");
+      } else if (typeof value === "object" && value !== null) {
+        // Se já é um objeto, usa diretamente
+        parsedValue = value;
+      } else if (value) {
+        // Se é um valor simples e não vazio, pode ser promotional_price
+        // Mas APENAS se não estivermos em modo de edição (quando há objeto completo)
+        parsedValue = { promotional_price: String(value) };
+      } else {
+        // Valor vazio ou null
+        parsedValue = {};
+      }
+    } catch (error) {
+      // Se falhar o parse, assume que é um valor simples
+      console.log("Failed to parse JSON, treating as simple value:", value);
+      if (value) {
+        parsedValue = { promotional_price: String(value) };
+      } else {
+        parsedValue = {};
+      }
+    }
+
     console.log("Parsed value:", parsedValue);
 
-    // Only update if the input is not currently focused or if there's no current value
-    if (
-      !priceInputValue ||
-      document.activeElement?.getAttribute("name") !== "price"
-    ) {
-      setPriceInputValue(formatInputCurrency(parsedValue.price || ""));
-    }
-
-    if (
-      !promotionalPriceInputValue ||
-      document.activeElement?.getAttribute("name") !== "promotional_price"
-    ) {
-      setPromotionalPriceInputValue(
-        formatInputCurrency(parsedValue.promotional_price || "")
-      );
-    }
+    // Always update both fields when value changes (importante para modo de edição)
+    setPriceInputValue(formatInputCurrency(parsedValue.price || ""));
+    setPromotionalPriceInputValue(
+      formatInputCurrency(parsedValue.promotional_price || "")
+    );
   }, [value]);
 
   // Parse value from string if needed
-  const parsedValue =
-    typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+  let parsedValue: { price?: string; promotional_price?: string } = {};
+  try {
+    if (typeof value === "string") {
+      parsedValue = JSON.parse(value || "{}");
+    } else if (typeof value === "object" && value !== null) {
+      parsedValue = value;
+    } else if (value) {
+      parsedValue = { promotional_price: String(value) };
+    } else {
+      parsedValue = {};
+    }
+  } catch (error) {
+    console.log(
+      "Failed to parse JSON in parsedValue, treating as promotional_price value:",
+      value
+    );
+    if (value) {
+      parsedValue = { promotional_price: String(value) };
+    } else {
+      parsedValue = {};
+    }
+  }
 
   // Convert price to number for calculations
   const priceToNumber = (priceStr: string | number): number => {

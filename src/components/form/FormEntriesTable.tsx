@@ -77,7 +77,31 @@ export default function FormEntriesTable({
         try {
           const productData =
             typeof value === "string" ? JSON.parse(value) : value;
-          const price = parseFloat(productData.price);
+
+          let priceValue;
+
+          // Verifica se productData.price é um objeto que contém promotional_price
+          if (
+            productData.price === productData.price &&
+            productData.promotional_price !== undefined
+          ) {
+            console.log("Product Data:", productData.promotional_price);
+            // Se promotional_price tem valor setado (não vazio)
+            if (
+              productData.promotional_price &&
+              productData.promotional_price.toString().trim() !== ""
+            ) {
+              priceValue = productData.promotional_price;
+            } else {
+              // Se promotional_price não tem valor setado, usa price normal
+              priceValue = productData.price;
+            }
+          } else {
+            // Se não for objeto, retorna productData.price diretamente
+            priceValue = productData.price;
+          }
+
+          const price = parseFloat(priceValue);
 
           if (!isNaN(price)) {
             return new Intl.NumberFormat("pt-BR", {

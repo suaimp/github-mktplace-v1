@@ -206,10 +206,38 @@ export default function UserFormEntriesRenderer({
       const processedEntries = await Promise.all(
         (entriesData || []).map(async (entry: any) => {
           const values: Record<string, any> = {};
-
           entry.form_entry_values.forEach((value: any) => {
-            let fieldValue =
-              value.value_json !== null ? value.value_json : value.value;
+            let fieldValue;
+            if (value.value_json !== null) {
+              fieldValue = value.value_json;
+            } else {
+              // Verifica se value.value contém um objeto com promotional_price
+              try {
+                const parsedValue = JSON.parse(value.value);
+                if (
+                  parsedValue &&
+                  typeof parsedValue === "object" &&
+                  parsedValue.promotional_price
+                ) {
+                  // Verifica se é um campo de produto para retornar o objeto completo
+                  const field = fieldsData.find(
+                    (f: any) => f.id === value.field_id
+                  );
+                  if (field && field.field_type === "product") {
+                    // Para campos de produto, retorna o objeto completo para preservar ambos os valores
+                    fieldValue = parsedValue;
+                  } else {
+                    // Para outros campos, retorna apenas o promotional_price
+                    fieldValue = parsedValue.promotional_price;
+                  }
+                } else {
+                  fieldValue = value.value;
+                }
+              } catch {
+                // Se não conseguir fazer parse, usa o valor original
+                fieldValue = value.value;
+              }
+            }
             // Se for campo niche, garantir array de objetos
             const field = fieldsData.find((f: any) => f.id === value.field_id);
             if (field && field.field_type === "niche") {

@@ -145,8 +145,26 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         const values: Record<string, any> = {};
 
         entry.form_entry_values.forEach((value: any) => {
-          values[value.field_id] =
-            value.value_json !== null ? value.value_json : value.value;
+          if (value.value_json !== null) {
+            values[value.field_id] = value.value_json;
+          } else {
+            // Verifica se value.value contém um objeto com promotional_price
+            try {
+              const parsedValue = JSON.parse(value.value);
+              if (
+                parsedValue &&
+                typeof parsedValue === "object" &&
+                parsedValue.promotional_price
+              ) {
+                values[value.field_id] = parsedValue.promotional_price;
+              } else {
+                values[value.field_id] = value.value;
+              }
+            } catch {
+              // Se não conseguir fazer parse, usa o valor original
+              values[value.field_id] = value.value;
+            }
+          }
         });
 
         return {

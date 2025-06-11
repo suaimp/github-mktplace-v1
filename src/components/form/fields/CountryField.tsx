@@ -17,7 +17,17 @@ export default function CountryField({
   settings
 }: CountryFieldProps) {
   // Parse value from string if needed
-  const parsedValue = typeof value === "string" ? JSON.parse(value) : value;
+  let parsedValue = {};
+  try {
+    parsedValue =
+      typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+  } catch (error) {
+    console.log(
+      "Failed to parse JSON in CountryField, using empty object:",
+      value
+    );
+    parsedValue = {};
+  }
   const selectedCount = Object.keys(parsedValue).length;
   const maxSelections = settings?.max_selections;
   const isMaxReached = maxSelections && selectedCount >= maxSelections;

@@ -39,8 +39,17 @@ export default function BrazilianStatesField({
   const [loading, setLoading] = useState(false);
 
   // Parse value from string if needed
-  const parsedValue =
-    typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+  let parsedValue: Record<string, any> = {};
+  try {
+    parsedValue =
+      typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+  } catch (error) {
+    console.log(
+      "Failed to parse JSON in BrazilianStatesField, using empty object:",
+      value
+    );
+    parsedValue = {};
+  }
   const multiSelect = settings?.max_selections !== 1;
 
   useEffect(() => {

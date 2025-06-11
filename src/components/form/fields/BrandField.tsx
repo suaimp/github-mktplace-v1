@@ -26,8 +26,17 @@ export default function BrandField({
   // Parse value from string if needed
   useEffect(() => {
     try {
-      const parsedValue =
-        typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+      let parsedValue: { name?: string; logo?: string } = {};
+      try {
+        parsedValue =
+          typeof value === "string" ? JSON.parse(value || "{}") : value || {};
+      } catch (parseError) {
+        console.log(
+          "Failed to parse JSON in BrandField, using empty object:",
+          value
+        );
+        parsedValue = {};
+      }
       setBrandName(parsedValue.name || "");
       setLogoUrl(parsedValue.logo || "");
 
