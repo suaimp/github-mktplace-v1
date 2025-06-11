@@ -129,9 +129,25 @@ export default function ProductField({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const inputValue = e.target.value;
+    console.log(
+      "[ProductField] Promotional price input change - inputValue:",
+      inputValue
+    );
+    console.log(
+      "[ProductField] Promotional price input change - current value prop:",
+      value
+    );
+    console.log(
+      "[ProductField] Promotional price input change - parsedValue:",
+      parsedValue
+    );
 
     // Aplica máscara de moeda
     const maskedValue = applyCurrencyMask(inputValue);
+    console.log(
+      "[ProductField] Promotional price input change - maskedValue:",
+      maskedValue
+    );
 
     // Block input if promotional price would be greater than or equal to regular price
     if (maskedValue && parsedValue.price) {
@@ -154,6 +170,15 @@ export default function ProductField({
       ...parsedValue,
       promotional_price: maskedValue
     };
+
+    console.log(
+      "[ProductField] Promotional price input change - newValue:",
+      newValue
+    );
+    console.log(
+      "[ProductField] Promotional price input change - calling onChange with:",
+      JSON.stringify(newValue)
+    );
 
     // Clear validation error for valid inputs
     setValidationError("");
@@ -207,9 +232,10 @@ export default function ProductField({
   const productDescriptions = getProductDescriptions();
 
   // Check if promotional price field should be shown
-  // Only show when current route contains "meus-websites"
-  const shouldShowPromotionalPrice =
-    location.pathname.includes("meus-websites");
+  // Don't show when current route contains "pages/cadastro-de-sitewebsite"
+  const shouldShowPromotionalPrice = !location.pathname.includes(
+    "pages/cadastro-de-sitewebsite"
+  );
 
   // Get the main price (promotional if available, otherwise regular)
   const getMainPrice = () => {

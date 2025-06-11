@@ -5,6 +5,7 @@ import Button from "../../components/ui/button/Button";
 import Select from "../../components/form/Select";
 import TextArea from "../../components/form/input/TextArea";
 import * as Fields from "../../components/form/fields";
+import { useShoppingCartToCheckoutResume } from "../marketplace/actions/ShoppingCartToCheckoutResume";
 
 interface EntryEditModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export default function EntryEditModal({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+
+  const { syncPriceFromValue } = useShoppingCartToCheckoutResume();
 
   useEffect(() => {
     if (entry && isOpen) {
@@ -159,9 +162,7 @@ export default function EntryEditModal({
         setValidationErrors(errors);
         setLoading(false);
         return;
-      }
-
-      // Update entry status
+      } // Update entry status
       const { error: updateError } = await supabase
         .from("form_entries")
         .update({ status })
@@ -169,42 +170,69 @@ export default function EntryEditModal({
 
       if (updateError) throw updateError;
 
-      // Update entry values
-      const updatedValues: Array<{
-        entry_id: any;
-        field_id: string;
-        value: string | null;
-        value_json: any;
-      }> = [];
+      console.log(
+        "[EntryEditModal] handleSubmit - formValues to process:",
+        formValues
+      );
+
+      // Em vez de DELETE + INSERT, vamos fazer UPDATE ou INSERT individual
       for (const [fieldId, value] of Object.entries(formValues)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;
 
+        console.log(
+          "[EntryEditModal] handleSubmit - processing field:",
+          fieldId,
+          "value:",
+          value,
+          "type:",
+          field.field_type
+        );
+
         // Determine if value should be stored in value or value_json
         const isJsonValue = typeof value !== "string";
 
-        updatedValues.push({
+        const valueData = {
           entry_id: entry.id,
           field_id: fieldId,
           value: isJsonValue ? null : value,
           value_json: isJsonValue ? value : null
-        });
+        };
+
+        // Primeiro tenta fazer UPDATE
+        const { data: updateResult, error: updateValueError } = await supabase
+          .from("form_entry_values")
+          .update({
+            value: valueData.value,
+            value_json: valueData.value_json,
+            updated_at: new Date().toISOString()
+          })
+          .eq("entry_id", entry.id)
+          .eq("field_id", fieldId)
+          .select();
+
+        // Se o UPDATE não encontrou nenhum registro (array vazio), faz INSERT
+        if (!updateValueError && (!updateResult || updateResult.length === 0)) {
+          const { error: insertValueError } = await supabase
+            .from("form_entry_values")
+            .insert([valueData]);
+
+          if (insertValueError) {
+            console.error(
+              `Error inserting field ${fieldId}:`,
+              insertValueError
+            );
+            throw insertValueError;
+          }
+        } else if (updateValueError) {
+          console.error(`Error updating field ${fieldId}:`, updateValueError);
+          throw updateValueError;
+        }
       }
 
-      // Delete existing values
-      const { error: deleteError } = await supabase
-        .from("form_entry_values")
-        .delete()
-        .eq("entry_id", entry.id);
-
-      if (deleteError) throw deleteError;
-
-      // Insert new values
-      const { error: insertError } = await supabase
-        .from("form_entry_values")
-        .insert(updatedValues);
-
-      if (insertError) throw insertError;
+      console.log(
+        "[EntryEditModal] handleSubmit - All field values processed successfully"
+      );
 
       // Add note if provided
       if (note.trim()) {
@@ -221,8 +249,25 @@ export default function EntryEditModal({
               created_by: user?.id
             }
           ]);
-
         if (noteError) throw noteError;
+      }
+
+      // NOVA FUNCIONALIDADE: Sincronizar preços no cart_checkout_resume
+      console.log(
+        "[EntryEditModal] Sincronizando preços para entry_id:",
+        entry.entry_id
+      );
+      if (entry.entry_id) {
+        try {
+          await syncPriceFromValue(entry.entry_id);
+          console.log("[EntryEditModal] Preços sincronizados com sucesso");
+        } catch (syncError) {
+          console.error(
+            "[EntryEditModal] Erro ao sincronizar preços:",
+            syncError
+          );
+          // Não bloqueia o salvamento se a sincronização falhar
+        }
       }
 
       onSave();
@@ -260,12 +305,24 @@ export default function EntryEditModal({
     if (field.field_type === "button_buy") {
       return null;
     }
-
     const handleChange = (newValue: any) => {
+      console.log("[EntryEditModal] Field change - field.id:", field.id);
+      console.log(
+        "[EntryEditModal] Field change - field.field_type:",
+        field.field_type
+      );
+      console.log("[EntryEditModal] Field change - newValue:", newValue);
+      console.log(
+        "[EntryEditModal] Field change - current formValues before:",
+        formValues
+      );
+
       setFormValues((prev) => ({
         ...prev,
         [field.id]: newValue
       }));
+
+      console.log("[EntryEditModal] Field change - formValues will be updated");
 
       // Clear validation error
       if (error) {
@@ -385,7 +442,7 @@ export default function EntryEditModal({
       <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
         <div className="mb-6">
           <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-            Editar Entrada  
+            Editar Entrada
           </h4>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {entry.form?.title || "Formulário sem título"}

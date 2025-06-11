@@ -3,6 +3,7 @@ import { supabase } from "../../../lib/supabase";
 export type CartCheckoutResume = {
   id: string;
   user_id: string;
+  entry_id?: string; // Adicionado entry_id
   product_url: string | null;
   quantity: number;
   niche: string | null;

@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShoppingCartIcon } from "../../icons";
 import { useCart } from "../marketplace/ShoppingCartContext";
+import { useShoppingCartToCheckoutResume } from "../marketplace/actions/ShoppingCartToCheckoutResume";
 import CartItem from "./CartItem";
-import { formatCurrency } from "../marketplace/utils";
 import Button from "../ui/button/Button";
 
 export default function ShoppingCart() {
   const [isOpen, setIsOpen] = useState(false);
   const { items, totalItems, totalPrice, loading, error } = useCart();
+  const shoppingCartToCheckoutResume = useShoppingCartToCheckoutResume();
   const navigate = useNavigate();
 
   // Close cart when clicking outside
@@ -50,9 +51,26 @@ export default function ShoppingCart() {
     setIsOpen(!isOpen);
   }
 
-  const handleCheckout = () => {
-    setIsOpen(false);
-    navigate("/checkout");
+  const handleCheckout = async () => {
+    try {
+      console.log("🛒 Iniciando sincronização de preços promocionais...");
+
+      // Sincronizar preços promocionais para todos os itens do carrinho
+      for (const item of items) {
+        console.log(`🔄 Sincronizando preços para entry_id: ${item.entry_id}`);
+        await shoppingCartToCheckoutResume.syncPriceFromValue(item.entry_id);
+      }
+
+      console.log("✅ Sincronização de preços concluída!");
+
+      setIsOpen(false);
+      navigate("/checkout");
+    } catch (error) {
+      console.error("❌ Erro ao sincronizar preços promocionais:", error);
+      // Mesmo com erro, navega para o checkout
+      setIsOpen(false);
+      navigate("/checkout");
+    }
   };
 
   console.log("Itens no carrinho:", items);
@@ -177,7 +195,7 @@ export default function ShoppingCart() {
                 Subtotal
               </p>
               <p className="font-bold text-gray-800 dark:text-white/90">
-                {formatCurrency(totalPrice)}
+                R$ {totalPrice.toFixed(2)}
               </p>
             </div>
             <Button

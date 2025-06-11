@@ -6,6 +6,7 @@ import {
   getCartCheckoutResumeByUser
 } from "../../../context/db-context/services/CartCheckoutResumeService";
 import { getFormEntryValuesByEntryId } from "../../../context/db-context/services/formEntryValueService";
+import { supabase } from "../../../lib/supabase";
 
 // Adiciona entry_id na tipagem do CartCheckoutResume para facilitar buscas
 export type CartCheckoutResumeWithEntry =
@@ -39,20 +40,44 @@ export function useShoppingCartToCheckoutResume() {
       if (valueWithPrice && typeof valueWithPrice.value === "string") {
         try {
           const parsed = JSON.parse(valueWithPrice.value);
+
+          // NOVA LÓGICA: verifica se promotional_price existe e não está vazio
+          let priceToUse = parsed.price; // valor padrão
+
+          if (
+            parsed.promotional_price &&
+            parsed.promotional_price !== "" &&
+            parsed.promotional_price !== null &&
+            parsed.promotional_price !== undefined
+          ) {
+            // Se promotional_price tem valor válido, usa ele
+            priceToUse = parsed.promotional_price;
+            console.log(
+              "ShoppingCartToCheckoutResume.ts - usando promotional_price:",
+              parsed.promotional_price
+            );
+          } else {
+            // Se promotional_price está vazio/null/undefined, usa price normal
+            console.log(
+              "ShoppingCartToCheckoutResume.ts - usando price normal:",
+              parsed.price
+            );
+          }
+
           // Converte para número, removendo vírgula e pontos se necessário
-          if (typeof parsed.price === "string") {
-            const normalized = parsed.price
+          if (typeof priceToUse === "string") {
+            const normalized = priceToUse
               .replace(/\./g, "")
               .replace(",", ".")
               .replace(/[^0-9.]/g, "");
             price = parseFloat(normalized);
-          } else if (typeof parsed.price === "number") {
-            price = parsed.price;
+          } else if (typeof priceToUse === "number") {
+            price = priceToUse;
           }
         } catch {}
       }
       console.log(
-        "ShoppingCartToCheckoutResume.ts - valor do campo price (number):",
+        "ShoppingCartToCheckoutResume.ts - valor final enviado para cart_checkout_resume.price:",
         price
       );
       // NOVA LÓGICA: busca url https e remove https://
@@ -198,10 +223,125 @@ export function useShoppingCartToCheckoutResume() {
     []
   );
 
+  // Função para sincronizar preços quando value é atualizado
+  const syncPriceFromValue = useCallback(async (entry_id: string) => {
+    try {
+      // Busca os valores atualizados do entry_id
+      const allEntryValues = await getFormEntryValuesByEntryId(entry_id);
+      const filteredByEntryId = Array.isArray(allEntryValues)
+        ? allEntryValues.filter((v) => v.entry_id === entry_id)
+        : [];
+
+      // Busca o primeiro que tenha value como string JSON e que, ao fazer parse, seja objeto com campo price
+      const valueWithPrice = filteredByEntryId.find((v) => {
+        if (typeof v.value === "string") {
+          try {
+            const parsed = JSON.parse(v.value);
+            return parsed && typeof parsed === "object" && "price" in parsed;
+          } catch {
+            return false;
+          }
+        }
+        return false;
+      });
+
+      if (!valueWithPrice || typeof valueWithPrice.value !== "string") {
+        console.warn(
+          "syncPriceFromValue: Nenhum valor de preço encontrado para entry_id:",
+          entry_id
+        );
+        return;
+      }
+
+      let price = 0;
+      try {
+        const parsed = JSON.parse(valueWithPrice.value);
+
+        // MESMA LÓGICA: verifica se promotional_price existe e não está vazio
+        let priceToUse = parsed.price; // valor padrão
+
+        if (
+          parsed.promotional_price &&
+          parsed.promotional_price !== "" &&
+          parsed.promotional_price !== null &&
+          parsed.promotional_price !== undefined
+        ) {
+          // Se promotional_price tem valor válido, usa ele
+          priceToUse = parsed.promotional_price;
+          console.log(
+            "syncPriceFromValue - usando promotional_price:",
+            parsed.promotional_price
+          );
+        } else {
+          // Se promotional_price está vazio/null/undefined, usa price normal
+          console.log(
+            "syncPriceFromValue - usando price normal:",
+            parsed.price
+          );
+        }
+
+        // Converte para número, removendo vírgula e pontos se necessário
+        if (typeof priceToUse === "string") {
+          const normalized = priceToUse
+            .replace(/\./g, "")
+            .replace(",", ".")
+            .replace(/[^0-9.]/g, "");
+          price = parseFloat(normalized);
+        } else if (typeof priceToUse === "number") {
+          price = priceToUse;
+        }
+      } catch (error) {
+        console.error(
+          "syncPriceFromValue: Erro ao fazer parse do value:",
+          error
+        );
+        return;
+      }
+
+      console.log("syncPriceFromValue - novo preço calculado:", price);
+
+      // Busca todos os registros de cart_checkout_resume que tenham esse entry_id
+      const { data: resumesToUpdate, error: queryError } = await supabase
+        .from("cart_checkout_resume")
+        .select("*")
+        .filter("entry_id", "eq", entry_id);
+
+      if (queryError) {
+        console.error(
+          "syncPriceFromValue - erro ao buscar registros:",
+          queryError
+        );
+        return;
+      }
+
+      console.log(
+        "syncPriceFromValue - registros encontrados para atualizar:",
+        resumesToUpdate
+      );
+
+      // Atualiza o preço em todos os registros encontrados
+      for (const resume of resumesToUpdate || []) {
+        await updateCartCheckoutResume(resume.id, { price });
+        console.log(
+          `syncPriceFromValue - preço atualizado para registro ${resume.id}:`,
+          price
+        );
+      }
+
+      // Dispara evento para recarregar as tabelas/componentes que dependem dos dados
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("resume-table-reload"));
+        window.dispatchEvent(new Event("cart-updated"));
+      }
+    } catch (error) {
+      console.error("syncPriceFromValue: Erro ao sincronizar preço:", error);
+    }
+  }, []);
+
   // Função para buscar itens
   const get = useCallback((user_id: string) => {
     console.log("ShoppingCartToCheckoutResume.ts - get for user:", user_id);
   }, []);
 
-  return { add, edit, remove, get };
+  return { add, edit, remove, get, syncPriceFromValue };
 }

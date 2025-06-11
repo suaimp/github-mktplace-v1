@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useCart } from "../marketplace/ShoppingCartContext";
-import { formatCurrency } from "../marketplace/utils";
 import { getFaviconUrl } from "../form/utils/formatters";
 import { TrashBinIcon } from "../../icons";
 
@@ -114,7 +113,7 @@ export default function CartItem({
 
       {/* Preço */}
       <p className="whitespace-nowrap font-bold min-w-[80px] text-right">
-        {formatCurrency(price)}
+        R$ {price.toFixed(2)}
       </p>
 
       {/* Botão Remover */}

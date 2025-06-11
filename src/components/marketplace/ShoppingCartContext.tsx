@@ -248,14 +248,42 @@ export function CartProvider({ children }: CartProviderProps) {
               );
               if (priceValue) {
                 try {
-                  if (priceValue.value_json) {
+                  // Os dados do preço estão na coluna 'value', não 'value_json'
+                  if (priceValue.value) {
+                    // Parse do JSON que vem da coluna value
+                    const priceData =
+                      typeof priceValue.value === "string"
+                        ? JSON.parse(priceValue.value)
+                        : priceValue.value;
+
+                    console.log("🔍 Dados do preço:", priceData);
+                    console.log(
+                      "🔍 promotional_price:",
+                      priceData.promotional_price
+                    );
+                    console.log("🔍 price:", priceData.price);
+
+                    // Verifica se promotional_price tem valor válido
+                    if (
+                      priceData.promotional_price &&
+                      priceData.promotional_price !== ""
+                    ) {
+                      console.log(
+                        "🔥 USANDO PREÇO PROMOCIONAL:",
+                        priceData.promotional_price
+                      );
+                      productPrice = parsePrice(priceData.promotional_price);
+                    } else {
+                      console.log("📦 USANDO PREÇO NORMAL:", priceData.price);
+                      productPrice = parsePrice(priceData.price);
+                    }
+                  } else if (priceValue.value_json) {
+                    // Fallback para value_json se value não existir
                     const priceData =
                       typeof priceValue.value_json === "string"
                         ? JSON.parse(priceValue.value_json)
                         : priceValue.value_json;
                     productPrice = parsePrice(priceData);
-                  } else if (priceValue.value) {
-                    productPrice = parsePrice(priceValue.value);
                   }
                 } catch (e) {
                   console.error("Error parsing product price:", e);
