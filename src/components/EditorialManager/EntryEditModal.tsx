@@ -310,50 +310,6 @@ export default function EntryEditModal({
         }
       }
 
-      // --- Lógica para aplicar comissão nos preços dentro de value_json ---
-      // 1. Identificar o campo que possui value_json com price e promotional_price
-      let commissionValue = 0;
-      if (commissionFieldId) {
-        const commissionObj = updatedValues.find(
-          (item) => item.field_id === commissionFieldId
-        );
-        commissionValue = commissionObj
-          ? parseFloat(commissionObj.value || commissionObj.value_json || "0")
-          : 0;
-      }
-      // 2. Atualizar price e promotional_price dentro de value_json
-      updatedValues.forEach((item) => {
-        if (
-          item.value_json &&
-          typeof item.value_json === "object" &&
-          item.value_json.price
-        ) {
-          // Corrige formato para número
-          const price = parseFloat(
-            String(item.value_json.price).replace(/\./g, "").replace(",", ".")
-          );
-          const promo = parseFloat(
-            String(item.value_json.promotional_price)
-              .replace(/\./g, "")
-              .replace(",", ".")
-          );
-          if (!isNaN(price)) {
-            item.value_json.price = (
-              price +
-              (price * commissionValue) / 100
-            ).toString();
-          }
-          // Só aplica comissão no promotional_price se for um número válido E diferente de 0
-          if (!isNaN(promo) && promo !== 0) {
-            item.value_json.promotional_price = (
-              promo +
-              (promo * commissionValue) / 100
-            ).toString();
-          }
-        }
-      });
-      // --- Fim da lógica de comissão ---
-
       onSave();
       onClose();
     } catch (err) {
