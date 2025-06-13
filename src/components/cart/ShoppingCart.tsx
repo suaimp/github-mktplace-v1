@@ -53,15 +53,10 @@ export default function ShoppingCart() {
 
   const handleCheckout = async () => {
     try {
-      console.log("🛒 Iniciando sincronização de preços promocionais...");
-
       // Sincronizar preços promocionais para todos os itens do carrinho
       for (const item of items) {
-        console.log(`🔄 Sincronizando preços para entry_id: ${item.entry_id}`);
         await shoppingCartToCheckoutResume.syncPriceFromValue(item.entry_id);
       }
-
-      console.log("✅ Sincronização de preços concluída!");
 
       setIsOpen(false);
       navigate("/checkout");
@@ -72,12 +67,6 @@ export default function ShoppingCart() {
       navigate("/checkout");
     }
   };
-
-  console.log("Itens no carrinho:", items);
-  console.log("Total items:", totalItems);
-  if (items.length > 0) {
-    console.log("Primeiro item:", items[0]);
-  }
 
   return (
     <div className="relative">

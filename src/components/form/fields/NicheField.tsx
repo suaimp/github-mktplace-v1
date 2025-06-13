@@ -15,9 +15,6 @@ export default function NicheField({
   error,
   onChange
 }: NicheFieldProps) {
-  // Log para depuração do value recebido
-  console.log("[NicheField] value recebido:", value);
-
   const [options, setOptions] = useState<{ label: string; value: string }[]>(
     []
   );
@@ -89,10 +86,6 @@ export default function NicheField({
   } else {
     safeInitialValue = [];
   }
-
-  // Log detalhado para depuração
-  console.log("[NicheField] value recebido:", value);
-  console.log("[NicheField] Valor parseado final:", safeInitialValue);
 
   // Atualiza seleção inicial se vier do value recebido
   useEffect(() => {

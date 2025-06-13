@@ -256,25 +256,13 @@ export function CartProvider({ children }: CartProviderProps) {
                         ? JSON.parse(priceValue.value)
                         : priceValue.value;
 
-                    console.log("🔍 Dados do preço:", priceData);
-                    console.log(
-                      "🔍 promotional_price:",
-                      priceData.promotional_price
-                    );
-                    console.log("🔍 price:", priceData.price);
-
                     // Verifica se promotional_price tem valor válido
                     if (
                       priceData.promotional_price &&
                       priceData.promotional_price !== ""
                     ) {
-                      console.log(
-                        "🔥 USANDO PREÇO PROMOCIONAL:",
-                        priceData.promotional_price
-                      );
                       productPrice = parsePrice(priceData.promotional_price);
                     } else {
-                      console.log("📦 USANDO PREÇO NORMAL:", priceData.price);
                       productPrice = parsePrice(priceData.price);
                     }
                   } else if (priceValue.value_json) {
@@ -341,10 +329,6 @@ export function CartProvider({ children }: CartProviderProps) {
       } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated");
-      }
-
-      if (!user) {
-        console.log(url, image, productName, price, quantity);
       }
 
       await retryOperation(async () => {

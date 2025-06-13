@@ -3,6 +3,7 @@ import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon } from "../../icons";
 import { getFlagUrl, getFaviconUrl } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
+import { processProductValue } from "./actions";
 
 interface FormEntry {
   id: string;
@@ -74,45 +75,7 @@ export default function FormEntriesTable({
         return value ? "Sim" : "Não";
 
       case "product":
-        try {
-          const productData =
-            typeof value === "string" ? JSON.parse(value) : value;
-
-          let priceValue;
-
-          // Verifica se productData.price é um objeto que contém promotional_price
-          if (
-            productData.price === productData.price &&
-            productData.promotional_price !== undefined
-          ) {
-            console.log("Product Data:", productData.promotional_price);
-            // Se promotional_price tem valor setado (não vazio)
-            if (
-              productData.promotional_price &&
-              productData.promotional_price.toString().trim() !== ""
-            ) {
-              priceValue = productData.promotional_price;
-            } else {
-              // Se promotional_price não tem valor setado, usa price normal
-              priceValue = productData.price;
-            }
-          } else {
-            // Se não for objeto, retorna productData.price diretamente
-            priceValue = productData.price;
-          }
-
-          const price = parseFloat(priceValue);
-
-          if (!isNaN(price)) {
-            return new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL"
-            }).format(price);
-          }
-        } catch (err) {
-          console.error("Error formatting price:", err);
-        }
-        return value.toString();
+        return processProductValue(value);
 
       case "commission":
         const commission = parseFloat(value);

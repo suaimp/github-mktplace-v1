@@ -86,7 +86,7 @@ export function useShoppingCartToCheckoutResume() {
             (v) => typeof v.value === "string" && v.value.startsWith("https://")
           )
         : undefined;
-      let urlWithoutHttps = null;
+      let urlWithoutHttps: string | null = null;
       if (urlEntry && typeof urlEntry.value === "string") {
         urlWithoutHttps = urlEntry.value.replace(/^https:\/\//, "");
       }

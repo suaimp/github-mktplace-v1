@@ -6,6 +6,8 @@ import Select from "../../components/form/Select";
 import TextArea from "../../components/form/input/TextArea";
 import * as Fields from "../../components/form/fields";
 import { useShoppingCartToCheckoutResume } from "../marketplace/actions/ShoppingCartToCheckoutResume";
+import { getCommissionField } from "../../context/db-context/services/formFieldsService";
+import { applyCommissionToFormValues } from "./actions/commissionLogic";
 
 interface EntryEditModalProps {
   isOpen: boolean;
@@ -35,15 +37,42 @@ export default function EntryEditModal({
   >({});
 
   const { syncPriceFromValue } = useShoppingCartToCheckoutResume();
-
   useEffect(() => {
     if (entry && isOpen) {
       setStatus(entry.status || "em_analise");
       setNote("");
-      setFormValues(entry.values || {});
+
+      // Parse entry values similar to UserFormEntriesRenderer
+      if (entry?.values) {
+        const parsedValues: Record<string, any> = {};
+
+        Object.entries(entry.values).forEach(
+          ([fieldId, value]: [string, any]) => {
+            let fieldValue = value;
+
+            // Se o valor é uma string, tenta fazer parse para ver se é JSON
+            if (typeof value === "string") {
+              try {
+                const parsedValue = JSON.parse(value);
+                if (parsedValue && typeof parsedValue === "object") {
+                  fieldValue = parsedValue;
+                }
+              } catch {
+                // Se não conseguir fazer parse, mantém o valor original
+                fieldValue = value;
+              }
+            }
+
+            parsedValues[fieldId] = fieldValue;
+          }
+        );
+
+        setFormValues(parsedValues);
+      } else {
+        setFormValues({});
+      }
+
       loadFormFields();
-      // Loga os dados recebidos do entry (por id)
-      console.log("[EntryEditModal] Dados recebidos para edição:", entry);
     }
   }, [entry, isOpen]);
 
@@ -75,9 +104,41 @@ export default function EntryEditModal({
           settingsMap[field.id] = field.form_field_settings;
         }
       });
-
       setFields(fieldsData || []);
       setFieldSettings(settingsMap);
+
+      // Atualizar form values com tratamento adicional para campos específicos
+      setFormValues((prev) => {
+        const updatedValues = { ...prev };
+
+        fieldsData.forEach((field: any) => {
+          // Se for campo niche, garantir array de objetos
+          if (field.field_type === "niche") {
+            if (!Array.isArray(updatedValues[field.id])) {
+              updatedValues[field.id] = [];
+            } else {
+              updatedValues[field.id] = updatedValues[field.id].map(
+                (n: any) => {
+                  if (typeof n === "string") return { niche: n, price: "" };
+                  if (typeof n === "object" && n !== null && !("price" in n))
+                    return { ...n, price: "" };
+                  return n;
+                }
+              );
+            }
+          }
+        });
+
+        // Garante que o campo niche sempre exista, mesmo que não venha do backend
+        const nicheField = fieldsData.find(
+          (f: any) => f.field_type === "niche"
+        );
+        if (nicheField && !(nicheField.id in updatedValues)) {
+          updatedValues[nicheField.id] = [];
+        }
+
+        return updatedValues;
+      });
     } catch (err) {
       console.error("Error loading form fields:", err);
       setError("Error loading form fields");
@@ -134,6 +195,7 @@ export default function EntryEditModal({
         if (isNaN(commission) || commission < 0 || commission > 1000) {
           return "Commission must be between 0 and 1000";
         }
+
         break;
     }
 
@@ -147,6 +209,12 @@ export default function EntryEditModal({
       setLoading(true);
       setError("");
       setValidationErrors({});
+
+      // Buscar o field_id do campo de comissão
+      const commissionField = await getCommissionField();
+      const commissionFieldId = commissionField?.id;
+
+      console.log("commissionFieldId:", commissionFieldId);
 
       // Validate all fields
       const errors: Record<string, string> = {};
@@ -167,32 +235,28 @@ export default function EntryEditModal({
         .from("form_entries")
         .update({ status })
         .eq("id", entry.id);
-
       if (updateError) throw updateError;
-      console.log(
-        "[EntryEditModal] handleSubmit - formValues to process:",
-        formValues
-      ); // Implementa estratégia DELETE+INSERT (igual ao UserFormEntriesRenderer que funciona)
+
       const updatedValues: Array<{
         entry_id: any;
         field_id: string;
         value: string | null;
         value_json: any;
       }> = [];
-      for (const [fieldId, value] of Object.entries(formValues)) {
+      console.log(
+        "EntryEditModal.tsx - formValues sendo processados:",
+        formValues
+      ); // Aplicar comissão aos valores usando a função do commissionLogic
+      const formValuesWithCommission = applyCommissionToFormValues(
+        formValues,
+        commissionFieldId || null
+      );
+
+      for (const [fieldId, value] of Object.entries(formValuesWithCommission)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;
 
-        console.log(
-          "[EntryEditModal] handleSubmit - processing field:",
-          fieldId,
-          "value:",
-          value,
-          "type:",
-          field.field_type
-        );
-
-        // Determine if value should be stored in value or value_json
+        // Determine if value should be stored in value or value_json - same logic as UserFormEntriesRenderer
         const isJsonValue = typeof value !== "string";
 
         updatedValues.push({
@@ -203,19 +267,13 @@ export default function EntryEditModal({
         });
       }
 
-      console.log(
-        "[EntryEditModal] Prepared values for DELETE+INSERT:",
-        updatedValues
-      );
-
+      console.log("Objeto enviado ao DB (updatedValues):", updatedValues);
       // Delete existing values
       const { error: deleteError } = await supabase
         .from("form_entry_values")
         .delete()
         .eq("entry_id", entry.id);
-
       if (deleteError) {
-        console.error("[EntryEditModal] Delete error:", deleteError);
         throw deleteError;
       }
 
@@ -223,15 +281,9 @@ export default function EntryEditModal({
       const { error: insertError } = await supabase
         .from("form_entry_values")
         .insert(updatedValues);
-
       if (insertError) {
-        console.error("[EntryEditModal] Insert error:", insertError);
         throw insertError;
       }
-
-      console.log(
-        "[EntryEditModal] handleSubmit - All field values processed successfully using DELETE+INSERT"
-      );
 
       // Add note if provided
       if (note.trim()) {
@@ -249,25 +301,58 @@ export default function EntryEditModal({
             }
           ]);
         if (noteError) throw noteError;
-      }
-
-      // NOVA FUNCIONALIDADE: Sincronizar preços no cart_checkout_resume
-      console.log(
-        "[EntryEditModal] Sincronizando preços para entry_id:",
-        entry.entry_id
-      );
+      } // NOVA FUNCIONALIDADE: Sincronizar preços no cart_checkout_resume
       if (entry.entry_id) {
         try {
           await syncPriceFromValue(entry.entry_id);
-          console.log("[EntryEditModal] Preços sincronizados com sucesso");
         } catch (syncError) {
-          console.error(
-            "[EntryEditModal] Erro ao sincronizar preços:",
-            syncError
-          );
           // Não bloqueia o salvamento se a sincronização falhar
         }
       }
+
+      // --- Lógica para aplicar comissão nos preços dentro de value_json ---
+      // 1. Identificar o campo que possui value_json com price e promotional_price
+      let commissionValue = 0;
+      if (commissionFieldId) {
+        const commissionObj = updatedValues.find(
+          (item) => item.field_id === commissionFieldId
+        );
+        commissionValue = commissionObj
+          ? parseFloat(commissionObj.value || commissionObj.value_json || "0")
+          : 0;
+      }
+      // 2. Atualizar price e promotional_price dentro de value_json
+      updatedValues.forEach((item) => {
+        if (
+          item.value_json &&
+          typeof item.value_json === "object" &&
+          item.value_json.price
+        ) {
+          // Corrige formato para número
+          const price = parseFloat(
+            String(item.value_json.price).replace(/\./g, "").replace(",", ".")
+          );
+          const promo = parseFloat(
+            String(item.value_json.promotional_price)
+              .replace(/\./g, "")
+              .replace(",", ".")
+          );
+          if (!isNaN(price)) {
+            item.value_json.price = (
+              price +
+              (price * commissionValue) / 100
+            ).toString();
+          }
+          // Só aplica comissão no promotional_price se for um número válido E diferente de 0
+          if (!isNaN(promo) && promo !== 0) {
+            item.value_json.promotional_price = (
+              promo +
+              (promo * commissionValue) / 100
+            ).toString();
+          }
+        }
+      });
+      // --- Fim da lógica de comissão ---
 
       onSave();
       onClose();
@@ -305,23 +390,10 @@ export default function EntryEditModal({
       return null;
     }
     const handleChange = (newValue: any) => {
-      console.log("[EntryEditModal] Field change - field.id:", field.id);
-      console.log(
-        "[EntryEditModal] Field change - field.field_type:",
-        field.field_type
-      );
-      console.log("[EntryEditModal] Field change - newValue:", newValue);
-      console.log(
-        "[EntryEditModal] Field change - current formValues before:",
-        formValues
-      );
-
       setFormValues((prev) => ({
         ...prev,
         [field.id]: newValue
       }));
-
-      console.log("[EntryEditModal] Field change - formValues will be updated");
 
       // Clear validation error
       if (error) {
