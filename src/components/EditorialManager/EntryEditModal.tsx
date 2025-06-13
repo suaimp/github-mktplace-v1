@@ -208,13 +208,9 @@ export default function EntryEditModal({
     try {
       setLoading(true);
       setError("");
-      setValidationErrors({});
-
-      // Buscar o field_id do campo de comissão
+      setValidationErrors({}); // Buscar o field_id do campo de comissão
       const commissionField = await getCommissionField();
       const commissionFieldId = commissionField?.id;
-
-      console.log("commissionFieldId:", commissionFieldId);
 
       // Validate all fields
       const errors: Record<string, string> = {};
@@ -243,20 +239,14 @@ export default function EntryEditModal({
         value: string | null;
         value_json: any;
       }> = [];
-      console.log(
-        "EntryEditModal.tsx - formValues sendo processados:",
-        formValues
-      ); // Aplicar comissão aos valores usando a função do commissionLogic
+      // Aplicar comissão aos valores usando a função do commissionLogic
       const formValuesWithCommission = applyCommissionToFormValues(
         formValues,
         commissionFieldId || null
       );
-
       for (const [fieldId, value] of Object.entries(formValuesWithCommission)) {
         const field = fields.find((f) => f.id === fieldId);
-        if (!field) continue;
-
-        // Determine if value should be stored in value or value_json - same logic as UserFormEntriesRenderer
+        if (!field) continue; // Determine if value should be stored in value or value_json - same logic as UserFormEntriesRenderer
         const isJsonValue = typeof value !== "string";
 
         updatedValues.push({
@@ -267,7 +257,6 @@ export default function EntryEditModal({
         });
       }
 
-      console.log("Objeto enviado ao DB (updatedValues):", updatedValues);
       // Delete existing values
       const { error: deleteError } = await supabase
         .from("form_entry_values")

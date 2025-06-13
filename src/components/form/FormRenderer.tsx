@@ -261,25 +261,84 @@ export default function FormRenderer({
 
       if (!entry) {
         throw new Error("Failed to create entry. Please try again.");
-      }
-
-      // Create entry values
+      } // Create entry values
       const values: Array<{
         entry_id: any;
         field_id: string;
         value: string | null;
         value_json: any;
       }> = [];
+
+      console.log(
+        "📤 [FormRenderer] Preparando para salvar formData:",
+        formData
+      );
+
       for (const [fieldId, value] of Object.entries(formData)) {
         const field = fields.find((f) => f.id === fieldId);
         if (!field) continue;
-        const isJsonValue = typeof value !== "string";
-        values.push({
-          entry_id: entry.id,
-          field_id: fieldId,
-          value: isJsonValue ? null : value,
-          value_json: isJsonValue ? value : null
-        });
+
+        console.log(
+          `📝 [FormRenderer] Processando campo ${field.label} (${field.field_type}):`,
+          value
+        );
+
+        // Para campos do tipo product, garante que seja salvo como JSON se for objeto
+        if (field.field_type === "product") {
+          let processedValue = value;
+
+          if (typeof value === "string") {
+            try {
+              processedValue = JSON.parse(value);
+              console.log(
+                `🏷️ [FormRenderer] Campo produto (${field.label}) - JSON parseado:`,
+                processedValue
+              );
+            } catch (e) {
+              console.log(
+                `❌ [FormRenderer] Campo produto (${field.label}) - Erro no parse, mantendo string:`,
+                value
+              );
+            }
+          }
+
+          if (typeof processedValue === "object" && processedValue !== null) {
+            console.log(
+              `💾 [FormRenderer] Campo produto (${field.label}) - Salvando como value_json:`,
+              processedValue
+            );
+            values.push({
+              entry_id: entry.id,
+              field_id: fieldId,
+              value: null,
+              value_json: processedValue
+            });
+          } else {
+            console.log(
+              `💾 [FormRenderer] Campo produto (${field.label}) - Salvando como value:`,
+              processedValue
+            );
+            values.push({
+              entry_id: entry.id,
+              field_id: fieldId,
+              value: String(processedValue),
+              value_json: null
+            });
+          }
+        } else {
+          // Para outros tipos de campo, usar lógica original
+          const isJsonValue = typeof value !== "string";
+          console.log(
+            `💾 [FormRenderer] Campo ${field.label} - isJsonValue: ${isJsonValue}, value:`,
+            value
+          );
+          values.push({
+            entry_id: entry.id,
+            field_id: fieldId,
+            value: isJsonValue ? null : value,
+            value_json: isJsonValue ? value : null
+          });
+        }
       }
 
       const { error: valuesError } = await supabase

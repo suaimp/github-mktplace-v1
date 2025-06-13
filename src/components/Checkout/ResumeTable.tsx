@@ -97,6 +97,7 @@ export default function ResumeTable(props: ResumeTableProps) {
       // Calcular valores de produto (APENAS item.price × quantidade, sem nichos ou conteúdo)
       const totalProductPricesArray = resumeData.map((item: any) => {
         const quantity = quantities[item.id] ?? item.quantity ?? 1;
+
         return Number(item.price) * quantity; // APENAS preço base × quantidade
       });
 
@@ -118,8 +119,8 @@ export default function ResumeTable(props: ResumeTableProps) {
       });
 
       // Calcular total final (produto + conteúdo)
-      const totalFinalPricesArray = resumeData.map((item: any) =>
-        getTotalProductPrice({
+      const totalFinalPricesArray = resumeData.map((item: any) => {
+        return getTotalProductPrice({
           item,
           price: item.price,
           quantities,
@@ -129,8 +130,8 @@ export default function ResumeTable(props: ResumeTableProps) {
           serviceCardsByActiveService,
           getServicePackageArray,
           getNichePrice
-        })
-      );
+        });
+      });
 
       calculateTotal(
         totalFinalPricesArray,
@@ -533,19 +534,25 @@ export default function ResumeTable(props: ResumeTableProps) {
                       })()}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-800 dark:text-white/90 text-right">
-                      {formatCurrency(
-                        getTotalProductPrice({
-                          item,
-                          price: item.price,
-                          quantities,
-                          selectedNiches,
-                          selectedService,
-                          wordCounts,
-                          serviceCardsByActiveService,
-                          getServicePackageArray,
-                          getNichePrice
-                        })
-                      )}
+                      {(() => {
+                        console.log(
+                          "[ResumeTable] Calculando total para item.price:",
+                          item.price
+                        );
+                        return formatCurrency(
+                          getTotalProductPrice({
+                            item,
+                            price: item.price,
+                            quantities,
+                            selectedNiches,
+                            selectedService,
+                            wordCounts,
+                            serviceCardsByActiveService,
+                            getServicePackageArray,
+                            getNichePrice
+                          })
+                        );
+                      })()}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-center">
                       <button

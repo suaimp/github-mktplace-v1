@@ -6,8 +6,8 @@ import {
   ReactNode
 } from "react";
 import { supabase } from "../../lib/supabase";
-import { parsePrice } from "./utils";
 import { useShoppingCartToCheckoutResume } from "./actions/ShoppingCartToCheckoutResume";
+import { calculateCartProductPrice } from "./actions/cartPriceCalculator";
 
 interface CartItem {
   id: string;
@@ -240,44 +240,11 @@ export function CartProvider({ children }: CartProviderProps) {
               }
             }
 
-            // Get product price
-            let productPrice = 0;
-            if (productPriceField) {
-              const priceValue = entryValues.find(
-                (v) => v.field_id === productPriceField.id
-              );
-              if (priceValue) {
-                try {
-                  // Os dados do preço estão na coluna 'value', não 'value_json'
-                  if (priceValue.value) {
-                    // Parse do JSON que vem da coluna value
-                    const priceData =
-                      typeof priceValue.value === "string"
-                        ? JSON.parse(priceValue.value)
-                        : priceValue.value;
-
-                    // Verifica se promotional_price tem valor válido
-                    if (
-                      priceData.promotional_price &&
-                      priceData.promotional_price !== ""
-                    ) {
-                      productPrice = parsePrice(priceData.promotional_price);
-                    } else {
-                      productPrice = parsePrice(priceData.price);
-                    }
-                  } else if (priceValue.value_json) {
-                    // Fallback para value_json se value não existir
-                    const priceData =
-                      typeof priceValue.value_json === "string"
-                        ? JSON.parse(priceValue.value_json)
-                        : priceValue.value_json;
-                    productPrice = parsePrice(priceData);
-                  }
-                } catch (e) {
-                  console.error("Error parsing product price:", e);
-                }
-              }
-            }
+            // Get product price usando a função centralizada
+            const productPrice = calculateCartProductPrice(
+              entryValues,
+              productPriceField
+            );
 
             return {
               id: item.id,
@@ -331,6 +298,16 @@ export function CartProvider({ children }: CartProviderProps) {
         throw new Error("User not authenticated");
       }
 
+      // Log dos dados recebidos para debug
+      console.log("Adding item to cart with details:", {
+        entryId,
+        productName,
+        price,
+        quantity,
+        image,
+        url
+      });
+
       await retryOperation(async () => {
         // Check if item already exists in cart
         const { data: existingItem } = await supabase
@@ -343,30 +320,72 @@ export function CartProvider({ children }: CartProviderProps) {
         if (existingItem) {
           // Update quantity
           const newQuantity = existingItem.quantity + quantity;
+
+          console.log("🔄 [UPDATE] Atualizando quantidade no carrinho:", {
+            existingItem,
+            oldQuantity: existingItem.quantity,
+            addingQuantity: quantity,
+            newQuantity,
+            entryId,
+            userId: user.id
+          });
+
           const { error: updateError } = await supabase
             .from("shopping_cart_items")
             .update({ quantity: newQuantity })
             .eq("id", existingItem.id);
 
+          if (updateError) throw updateError;
+
+          // Só chama edit se o update foi bem-sucedido
           await shoppingCartToCheckoutResume.edit({
             user_id: user.id,
             entry_id: entryId,
             quantity: newQuantity
           });
-
-          if (updateError) throw updateError;
         } else {
-          // Insert new item
+          // Insert new item - usando apenas as colunas que existem na tabela
           const insertData = {
             user_id: user.id,
             entry_id: entryId,
             quantity
+            // Nota: productName, price, image, url não são salvos na tabela atual
+            // mas são usados para logging e cache local
           };
+
+          console.log("➕ [INSERT] Inserindo novo item no carrinho:", {
+            insertData,
+            productName,
+            price,
+            image,
+            url,
+            note: "productName, price, image, url não são salvos na tabela"
+          });
+
           const { error: insertError } = await supabase
             .from("shopping_cart_items")
             .insert(insertData);
-          shoppingCartToCheckoutResume.add(insertData);
+
           if (insertError) throw insertError;
+
+          // Só chama add se o insert foi bem-sucedido
+          await shoppingCartToCheckoutResume.add(insertData);
+
+          // Atualizar cache local imediatamente com os dados fornecidos
+          const newCartItem = {
+            id: `temp-${Date.now()}`, // ID temporário até recarregar
+            entry_id: entryId,
+            quantity,
+            product: {
+              name: productName,
+              price: price,
+              image: image,
+              url: url
+            }
+          };
+
+          // Adicionar o item ao cache local para feedback imediato
+          setItems((prevItems) => [...prevItems, newCartItem]);
         }
       });
 
@@ -394,6 +413,21 @@ export function CartProvider({ children }: CartProviderProps) {
       }
 
       await retryOperation(async () => {
+        const itemToRemove = items.find((item) => item.entry_id === entryId);
+
+        console.log("🗑️ [DELETE] Removendo item do carrinho:", {
+          entryId,
+          userId: user.id,
+          itemToRemove: itemToRemove
+            ? {
+                id: itemToRemove.id,
+                quantity: itemToRemove.quantity,
+                productName: itemToRemove.product.name,
+                productPrice: itemToRemove.product.price
+              }
+            : "Item não encontrado no cache local"
+        });
+
         const { error: deleteError } = await supabase
           .from("shopping_cart_items")
           .delete()
@@ -438,6 +472,15 @@ export function CartProvider({ children }: CartProviderProps) {
       }
 
       await retryOperation(async () => {
+        console.log("🔄 [UPDATE QUANTITY] Atualizando quantidade:", {
+          entryId,
+          oldQuantity:
+            items.find((item) => item.entry_id === entryId)?.quantity ||
+            "não encontrado",
+          newQuantity: quantity,
+          userId: user.id
+        });
+
         const { error: updateError } = await supabase
           .from("shopping_cart_items")
           .update({ quantity })
@@ -482,6 +525,18 @@ export function CartProvider({ children }: CartProviderProps) {
       }
 
       await retryOperation(async () => {
+        console.log("🧹 [CLEAR CART] Limpando todo o carrinho:", {
+          userId: user.id,
+          currentItems: items.map((item) => ({
+            id: item.id,
+            entry_id: item.entry_id,
+            quantity: item.quantity,
+            productName: item.product.name,
+            productPrice: item.product.price
+          })),
+          totalItems: items.length
+        });
+
         const { error: deleteError } = await supabase
           .from("shopping_cart_items")
           .delete()

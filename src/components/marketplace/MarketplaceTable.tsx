@@ -8,6 +8,7 @@ import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
 import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
+import { extractProductPrice } from "./actions/priceCalculator";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -151,16 +152,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
             // Verifica se value.value contém um objeto com promotional_price
             try {
               const parsedValue = JSON.parse(value.value);
+
               if (
                 parsedValue &&
                 typeof parsedValue === "object" &&
                 parsedValue.promotional_price
               ) {
-                // Para campos do tipo product, mantém o formato de objeto com a propriedade price
+                // Para campos do tipo product, preserva o objeto completo com ambos price e promotional_price
                 // para que o formatador de marketplace funcione corretamente
-                values[value.field_id] = {
-                  price: parsedValue.promotional_price
-                };
+                values[value.field_id] = parsedValue;
               } else {
                 values[value.field_id] = value.value;
               }
@@ -545,34 +545,12 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 let productUrl = productUrlField
                   ? entry.values[productUrlField.id]
                   : "";
-                let productPrice = 0;
 
-                if (productPriceField) {
-                  try {
-                    const priceValue = entry.values[productPriceField.id];
-                    if (typeof priceValue === "string") {
-                      // Try to parse price from string
-                      const cleanPrice = priceValue
-                        .replace(/[^\d,\.]/g, "")
-                        .replace(",", ".");
-                      productPrice = parseFloat(cleanPrice) || 0;
-                    } else if (
-                      typeof priceValue === "object" &&
-                      priceValue.price
-                    ) {
-                      // Try to parse price from object
-                      const cleanPrice =
-                        typeof priceValue.price === "string"
-                          ? priceValue.price
-                              .replace(/[^\d,\.]/g, "")
-                              .replace(",", ".")
-                          : priceValue.price;
-                      productPrice = parseFloat(cleanPrice) || 0;
-                    }
-                  } catch (e) {
-                    console.error("Error parsing product price:", e);
-                  }
-                }
+                // Usar a nova função para calcular o preço
+                const productPrice = extractProductPrice(
+                  entry,
+                  productPriceField
+                );
 
                 // Check if item is in cart
                 const isInCart = items.some(

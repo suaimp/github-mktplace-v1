@@ -58,6 +58,8 @@ export default function ShoppingCart() {
         await shoppingCartToCheckoutResume.syncPriceFromValue(item.entry_id);
       }
 
+      // Navegar para o checkout
+
       setIsOpen(false);
       navigate("/checkout");
     } catch (error) {

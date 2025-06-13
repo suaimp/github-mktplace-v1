@@ -15,11 +15,19 @@ export type CartCheckoutResumeWithEntry =
   };
 
 export function useShoppingCartToCheckoutResume() {
+  console.log("📦 [ShoppingCartToCheckoutResume] HOOK inicializado");
+
   // Função para adicionar item ao checkout resume
+
   const add = useCallback(
     async (item: { user_id: string; entry_id: string; quantity: number }) => {
+      console.log(
+        "🟢 [ShoppingCartToCheckoutResume] FUNÇÃO ADD executada com item:",
+        item
+      );
       // Busca os valores do entry_id
       const allEntryValues = await getFormEntryValuesByEntryId(item.entry_id);
+      console.log("allEntryValues:", allEntryValues);
       // Filtra apenas os que possuem o entry_id correspondente
       const filteredByEntryId = Array.isArray(allEntryValues)
         ? allEntryValues.filter((v) => v.entry_id === item.entry_id)
@@ -48,7 +56,9 @@ export function useShoppingCartToCheckoutResume() {
             parsed.promotional_price &&
             parsed.promotional_price !== "" &&
             parsed.promotional_price !== null &&
-            parsed.promotional_price !== undefined
+            parsed.promotional_price !== undefined &&
+            !isNaN(Number(parsed.promotional_price)) &&
+            Number(parsed.promotional_price) > 0
           ) {
             // Se promotional_price tem valor válido, usa ele
             priceToUse = parsed.promotional_price;
@@ -62,6 +72,8 @@ export function useShoppingCartToCheckoutResume() {
               "ShoppingCartToCheckoutResume.ts - usando price normal:",
               parsed.price
             );
+
+            priceToUse = parsed.price;
           }
 
           // Converte para número, removendo vírgula e pontos se necessário
@@ -182,6 +194,7 @@ export function useShoppingCartToCheckoutResume() {
         price: price, // agora sempre number
         service_content: ""
       };
+      console.log("ShoppingCartToCheckoutResume.ts - price no payload:", price);
       await createCartCheckoutResume(payload);
     },
     []
@@ -190,6 +203,10 @@ export function useShoppingCartToCheckoutResume() {
   // Função para editar item (update)
   const edit = useCallback(
     async (item: { user_id: string; entry_id: string; quantity: number }) => {
+      console.log(
+        "🟡 [ShoppingCartToCheckoutResume] FUNÇÃO EDIT executada com item:",
+        item
+      );
       // Busca o registro do resumo pelo user_id e entry_id
       const resumes = (await getCartCheckoutResumeByUser(
         item.user_id
@@ -208,6 +225,10 @@ export function useShoppingCartToCheckoutResume() {
   // Função para remover item (delete)
   const remove = useCallback(
     async (item: { user_id: string; entry_id: string }) => {
+      console.log(
+        "🔴 [ShoppingCartToCheckoutResume] FUNÇÃO REMOVE executada com item:",
+        item
+      );
       // Busca o registro do resumo pelo user_id e entry_id
       const resumes = (await getCartCheckoutResumeByUser(
         item.user_id
@@ -225,27 +246,65 @@ export function useShoppingCartToCheckoutResume() {
 
   // Função para sincronizar preços quando value é atualizado
   const syncPriceFromValue = useCallback(async (entry_id: string) => {
+    console.log(
+      "🔵 [ShoppingCartToCheckoutResume] FUNÇÃO SYNCPRICEFROMVALUE executada com entry_id:",
+      entry_id
+    );
     try {
       // Busca os valores atualizados do entry_id
       const allEntryValues = await getFormEntryValuesByEntryId(entry_id);
       const filteredByEntryId = Array.isArray(allEntryValues)
         ? allEntryValues.filter((v) => v.entry_id === entry_id)
         : [];
+      console.log("filteredByEntryId:", filteredByEntryId);
 
-      // Busca o primeiro que tenha value como string JSON e que, ao fazer parse, seja objeto com campo price
-      const valueWithPrice = filteredByEntryId.find((v) => {
-        if (typeof v.value === "string") {
-          try {
-            const parsed = JSON.parse(v.value);
-            return parsed && typeof parsed === "object" && "price" in parsed;
-          } catch {
-            return false;
+      // NOVA LÓGICA: Busca dados de preço considerando value_json e value
+      // Prioriza promotional_price quando existir e for > 0
+      let productData: any = null;
+      let sourceInfo = "";
+
+      // Primeiro, procura por dados de produto em value_json
+      for (const item of filteredByEntryId) {
+        if (item.value_json && typeof item.value_json === "object") {
+          if (item.value_json.price || item.value_json.promotional_price) {
+            productData = item.value_json;
+            sourceInfo = "value_json";
+            console.log(
+              "🔍 [syncPriceFromValue] Dados encontrados em value_json:",
+              productData
+            );
+            break;
           }
         }
-        return false;
-      });
+      }
 
-      if (!valueWithPrice || typeof valueWithPrice.value !== "string") {
+      // Se não encontrou em value_json, procura em value (JSON string)
+      if (!productData) {
+        for (const item of filteredByEntryId) {
+          if (typeof item.value === "string") {
+            try {
+              const parsed = JSON.parse(item.value);
+              if (
+                parsed &&
+                typeof parsed === "object" &&
+                (parsed.price || parsed.promotional_price)
+              ) {
+                productData = parsed;
+                sourceInfo = "value (JSON string)";
+                console.log(
+                  "🔍 [syncPriceFromValue] Dados encontrados em value:",
+                  productData
+                );
+                break;
+              }
+            } catch {
+              // Ignora erros de parse
+            }
+          }
+        }
+      }
+
+      if (!productData) {
         console.warn(
           "syncPriceFromValue: Nenhum valor de preço encontrado para entry_id:",
           entry_id
@@ -253,43 +312,72 @@ export function useShoppingCartToCheckoutResume() {
         return;
       }
 
+      console.log(
+        "📊 [syncPriceFromValue] Dados do produto origem:",
+        sourceInfo
+      );
+      console.log("📊 [syncPriceFromValue] Dados do produto:", productData);
+
       let price = 0;
       try {
-        const parsed = JSON.parse(valueWithPrice.value);
+        console.log(
+          "🔍 [syncPriceFromValue] productData.price:",
+          productData.price
+        );
+        console.log(
+          "🔍 [syncPriceFromValue] productData.promotional_price:",
+          productData.promotional_price
+        );
 
-        // MESMA LÓGICA: verifica se promotional_price existe e não está vazio
-        let priceToUse = parsed.price; // valor padrão
+        // NOVA LÓGICA REFATORADA: prioriza promotional_price quando existir e for > 0
+        let priceToUse = productData.price; // valor padrão
 
+        // Verifica se promotional_price existe e é válido
         if (
-          parsed.promotional_price &&
-          parsed.promotional_price !== "" &&
-          parsed.promotional_price !== null &&
-          parsed.promotional_price !== undefined
+          productData.promotional_price &&
+          productData.promotional_price !== "" &&
+          productData.promotional_price !== null &&
+          productData.promotional_price !== undefined &&
+          !isNaN(Number(productData.promotional_price)) &&
+          Number(productData.promotional_price) > 0
         ) {
-          // Se promotional_price tem valor válido, usa ele
-          priceToUse = parsed.promotional_price;
+          // Se promotional_price tem valor válido e maior que 0, usa ele
+          priceToUse = productData.promotional_price;
           console.log(
-            "syncPriceFromValue - usando promotional_price:",
-            parsed.promotional_price
+            "✅ [syncPriceFromValue] USANDO promotional_price:",
+            productData.promotional_price
           );
         } else {
-          // Se promotional_price está vazio/null/undefined, usa price normal
+          // Se promotional_price está vazio/null/undefined/zero, usa price normal
           console.log(
-            "syncPriceFromValue - usando price normal:",
-            parsed.price
+            "⚠️ [syncPriceFromValue] USANDO price normal:",
+            productData.price
           );
         }
 
+        console.log("💰 [syncPriceFromValue] priceToUse final:", priceToUse);
+
         // Converte para número, removendo vírgula e pontos se necessário
         if (typeof priceToUse === "string") {
+          console.log(
+            "🔄 [syncPriceFromValue] Convertendo string para número:",
+            priceToUse
+          );
           const normalized = priceToUse
             .replace(/\./g, "")
             .replace(",", ".")
             .replace(/[^0-9.]/g, "");
+          console.log("🔄 [syncPriceFromValue] Valor normalizado:", normalized);
           price = parseFloat(normalized);
+          console.log("🔄 [syncPriceFromValue] Valor final parseado:", price);
         } else if (typeof priceToUse === "number") {
+          console.log(
+            "🔢 [syncPriceFromValue] Usando valor numérico direto:",
+            priceToUse
+          );
           price = priceToUse;
         }
+        console.log("💯 [syncPriceFromValue] PRICE FINAL CALCULADO:", price);
       } catch (error) {
         console.error(
           "syncPriceFromValue: Erro ao fazer parse do value:",
@@ -340,7 +428,10 @@ export function useShoppingCartToCheckoutResume() {
 
   // Função para buscar itens
   const get = useCallback((user_id: string) => {
-    console.log("ShoppingCartToCheckoutResume.ts - get for user:", user_id);
+    console.log(
+      "🟣 [ShoppingCartToCheckoutResume] FUNÇÃO GET executada com user_id:",
+      user_id
+    );
   }, []);
 
   return { add, edit, remove, get, syncPriceFromValue };

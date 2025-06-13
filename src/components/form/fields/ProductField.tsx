@@ -148,6 +148,14 @@ export default function ProductField({
       }
     }
 
+    console.log(
+      "[ProductField] handlePriceChange - Enviando newValue:",
+      newValue
+    );
+    console.log(
+      "[ProductField] handlePriceChange - JSON stringified:",
+      JSON.stringify(newValue)
+    );
     onChange(JSON.stringify(newValue));
 
     if (error && onErrorClear) {

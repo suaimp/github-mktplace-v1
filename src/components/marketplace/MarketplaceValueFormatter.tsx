@@ -190,16 +190,41 @@ export function formatMarketplaceValue(
       try {
         const productData =
           typeof value === "string" ? JSON.parse(value) : value;
-        const price = parseFloat(productData.price);
 
-        if (!isNaN(price)) {
+        // Primeiro verifica se existe promotional_price válido
+        let priceToUse: number | null = null;
+
+        if (productData.promotional_price) {
+          const promotionalPrice = parseFloat(productData.promotional_price);
+          if (!isNaN(promotionalPrice) && promotionalPrice > 0) {
+            priceToUse = promotionalPrice;
+          }
+        }
+
+        // Se não há promotional_price válido, usa o price
+        if (priceToUse === null && productData.price) {
+          const regularPrice = parseFloat(productData.price);
+          if (!isNaN(regularPrice)) {
+            priceToUse = regularPrice;
+          }
+        }
+
+        if (priceToUse !== null) {
           return new Intl.NumberFormat("pt-BR", {
             style: "currency",
             currency: "BRL"
-          }).format(price);
+          }).format(priceToUse);
         }
       } catch (err) {
         console.error("Error formatting price:", err);
+        // Se houver erro no parse e o valor for um número, tenta formatar diretamente
+        const directPrice = parseFloat(value);
+        if (!isNaN(directPrice)) {
+          return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          }).format(directPrice);
+        }
       }
       return value.toString();
 

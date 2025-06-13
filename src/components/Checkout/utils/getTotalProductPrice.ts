@@ -22,7 +22,6 @@ export function getTotalProductPrice({
   const itemPrice = item.price * (quantities[item.id] ?? item.quantity ?? 1);
   const nichePrice = getNichePrice(item, selectedNiches);
 
-  // Usa getServicePackageArray e faz console.log do resultado
   const selected = getServicePackageArray(
     item,
     selectedService,
@@ -33,9 +32,7 @@ export function getTotalProductPrice({
 
   // Captura o valor digitado no input de word_count para este item
   const wordCountInput = wordCounts[item.id] ?? "";
-  console.log(wordCountInput);
   const word_count = selected.length > 0 && selected[0].word_count;
-  console.log(word_count);
 
   const wordCountCalc = (() => {
     if (isFree) {
@@ -45,20 +42,15 @@ export function getTotalProductPrice({
           Number(wordCountInput) - Number(word_count)
         );
       }
-      console.log("é free");
       return 0;
     } else {
-      console.log("não é free");
       return Number(wordCountInput);
     }
   })();
 
   const pricePerWord = selected.length > 0 && selected[0].price_per_word;
-  console.log(pricePerWord);
 
   const wordCountPrice = pricePerWord * wordCountCalc;
-
-  console.log("wordCountPrice:", wordCountPrice);
 
   const totalProductPrice = itemPrice + nichePrice + wordCountPrice;
 

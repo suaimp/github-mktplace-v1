@@ -7,6 +7,8 @@ import Button from "../ui/button/Button";
 import FormEntriesSkeleton from "./FormEntriesSkeleton";
 import * as FieldsImport from "./fields";
 import TextArea from "./input/TextArea";
+import { getCommissionField } from "../../context/db-context/services/formFieldsService";
+import { applyCommissionToFormValues } from "../EditorialManager/actions/commissionLogic";
 
 const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
 
@@ -27,6 +29,7 @@ export default function UserFormEntriesRenderer({
   const [error, setError] = useState("");
   const [entries, setEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
+  const [allFields, setAllFields] = useState<any[]>([]); // Todos os campos, incluindo ocultos
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -142,9 +145,7 @@ export default function UserFormEntriesRenderer({
         }
       });
 
-      setFieldSettings(settingsMap);
-
-      // Filter out fields that should be hidden from entries
+      setFieldSettings(settingsMap); // Filter out fields that should be hidden from entries
       // This includes both hidden fields and admin-only fields for non-admin users
       const visibleFields = (fieldsData || []).filter((field) => {
         const settings = field.form_field_settings;
@@ -164,7 +165,13 @@ export default function UserFormEntriesRenderer({
         return true;
       });
 
+      // Para cálculos, incluir todos os campos (incluindo comissão) mesmo que não sejam visíveis
+      const allFieldsForCalculation = fieldsData || [];
+
       setFields(visibleFields);
+
+      // Armazenar todos os campos para uso nos cálculos
+      setAllFields(allFieldsForCalculation);
 
       // Identify URL fields
       const urlFieldIds = fieldsData
@@ -380,7 +387,6 @@ export default function UserFormEntriesRenderer({
 
     return null;
   };
-
   const handleSaveEdit = async () => {
     if (!selectedEntry || !currentUser) return;
 
@@ -389,7 +395,14 @@ export default function UserFormEntriesRenderer({
       setError("");
       setValidationErrors({});
 
-      // Validate all fields
+      // Buscar o field_id do campo de comissão
+      const commissionField = await getCommissionField();
+      const commissionFieldId = commissionField?.id;
+
+      console.log("🔍 [DEBUG] Commission Field:", commissionField);
+      console.log("🆔 [DEBUG] Commission Field ID:", commissionFieldId);
+
+      // Validate all visible fields
       const errors: Record<string, string> = {};
       fields.forEach((field) => {
         const error = validateField(field, editableFormValues[field.id]);
@@ -418,6 +431,62 @@ export default function UserFormEntriesRenderer({
         throw new Error("Você só pode editar suas próprias entradas");
       }
 
+      // Carregar todos os valores originais da entrada para garantir que temos o valor da comissão
+      const { data: allEntryValues, error: allValuesError } = await supabase
+        .from("form_entry_values")
+        .select("field_id, value, value_json")
+        .eq("entry_id", selectedEntry.id);
+
+      if (allValuesError) throw allValuesError;
+
+      // Criar um objeto com todos os valores originais
+      const allOriginalValues: Record<string, any> = {};
+      allEntryValues.forEach((entryValue: any) => {
+        let fieldValue;
+        if (entryValue.value_json !== null) {
+          fieldValue = entryValue.value_json;
+        } else {
+          fieldValue = entryValue.value;
+        }
+        allOriginalValues[entryValue.field_id] = fieldValue;
+      });
+
+      console.log("📄 [DEBUG] All original values:", allOriginalValues);
+      console.log("✏️ [DEBUG] Editable form values:", editableFormValues);
+
+      // Combinar valores editados com valores originais (priorizando editados)
+      const completeFormValues = {
+        ...allOriginalValues,
+        ...editableFormValues
+      };
+
+      console.log(
+        "🔗 [DEBUG] Complete form values before commission:",
+        completeFormValues
+      );
+
+      if (commissionFieldId && completeFormValues[commissionFieldId]) {
+        console.log(
+          "💰 [DEBUG] Commission value found:",
+          completeFormValues[commissionFieldId]
+        );
+      } else {
+        console.log(
+          "❌ [DEBUG] Commission value NOT found or commissionFieldId is null"
+        );
+      }
+
+      // Aplicar comissão aos valores usando a função do commissionLogic
+      const formValuesWithCommission = applyCommissionToFormValues(
+        completeFormValues,
+        commissionFieldId || null
+      );
+
+      console.log(
+        "✅ [DEBUG] Form values WITH commission:",
+        formValuesWithCommission
+      );
+
       // Update entry values
       interface FormEntryValue {
         entry_id: string;
@@ -427,8 +496,9 @@ export default function UserFormEntriesRenderer({
       }
 
       const updatedValues: FormEntryValue[] = [];
-      for (const [fieldId, value] of Object.entries(editableFormValues)) {
-        const field = fields.find((f) => f.id === fieldId);
+      for (const [fieldId, value] of Object.entries(formValuesWithCommission)) {
+        // Procurar o campo em todos os campos (incluindo ocultos)
+        const field = allFields.find((f) => f.id === fieldId);
         if (!field) continue;
 
         // Determine if value should be stored in value or value_json
