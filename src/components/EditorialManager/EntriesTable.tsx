@@ -57,17 +57,29 @@ export default function EntriesTable({
     );
   }
 
-  // Display first two fields from the selected form
+  // Display fields: prioritize price and commission fields, then first two other fields
   // Filter out admin-only and button_buy fields
-  const displayFields = fields
+  const priceField = fields.find((field) => field.field_type === "product");
+  const commissionField = fields.find(
+    (field) => field.field_type === "commission"
+  );
+
+  const otherFields = fields
     .filter((field) => {
-      const settings = field.form_field_settings;
       return (
         field.field_type !== "button_buy" &&
-        (!settings || settings.visibility !== "admin")
+        field.field_type !== "product" &&
+        field.field_type !== "commission"
       );
     })
     .slice(0, 2);
+
+  // Combine priority fields with other fields
+  const displayFields = [
+    ...(priceField ? [priceField] : []),
+    ...(commissionField ? [commissionField] : []),
+    ...otherFields
+  ];
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -124,23 +136,8 @@ export default function EntriesTable({
                     </span>
                   </TableCell>
 
-                  {/* Display first two fields from the selected form */}
+                  {/* Display fields from the selected form */}
                   {displayFields.map((field) => {
-                    // Skip admin-only fields
-                    const settings = field.form_field_settings;
-                    if (settings?.visibility === "admin") {
-                      return (
-                        <TableCell
-                          key={field.id}
-                          className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
-                        >
-                          <span className="text-gray-400 dark:text-gray-600 italic">
-                            Admin only
-                          </span>
-                        </TableCell>
-                      );
-                    }
-
                     return (
                       <TableCell
                         key={field.id}
@@ -205,7 +202,7 @@ export default function EntriesTable({
               {entries.length === 0 && (
                 <TableRow>
                   <td
-                    colSpan={5 + displayFields.length}
+                    colSpan={3 + displayFields.length}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     {selectedFormId

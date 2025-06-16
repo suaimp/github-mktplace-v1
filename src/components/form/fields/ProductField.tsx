@@ -28,14 +28,8 @@ export default function ProductField({
   const [promotionalPriceInputValue, setPromotionalPriceInputValue] =
     useState<string>("");
 
-  // Log value on mount
-  useEffect(() => {
-    console.log("ProductField value on mount:", value);
-  }, []);
-
   // Sync input values with parsedValue only on external changes
   useEffect(() => {
-    console.log("Value prop changed:", value);
     let parsedValue: { price?: string; promotional_price?: string } = {};
 
     try {
@@ -55,15 +49,12 @@ export default function ProductField({
       }
     } catch (error) {
       // Se falhar o parse, assume que é um valor simples
-      console.log("Failed to parse JSON, treating as simple value:", value);
       if (value) {
         parsedValue = { promotional_price: String(value) };
       } else {
         parsedValue = {};
       }
     }
-
-    console.log("Parsed value:", parsedValue);
 
     // Always update both fields when value changes (importante para modo de edição)
     setPriceInputValue(formatInputCurrency(parsedValue.price || ""));
@@ -85,10 +76,6 @@ export default function ProductField({
       parsedValue = {};
     }
   } catch (error) {
-    console.log(
-      "Failed to parse JSON in parsedValue, treating as promotional_price value:",
-      value
-    );
     if (value) {
       parsedValue = { promotional_price: String(value) };
     } else {
@@ -117,8 +104,6 @@ export default function ProductField({
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    console.log("Price input change - inputValue:", inputValue);
-    console.log("Price input change - current value prop:", value);
 
     // Aplica máscara de moeda
     const maskedValue = applyCurrencyMask(inputValue);
@@ -130,8 +115,6 @@ export default function ProductField({
       ...parsedValue,
       price: maskedValue
     };
-
-    console.log("Price input change - newValue:", newValue);
 
     // Clear validation error when changing values
     setValidationError("");
@@ -148,14 +131,6 @@ export default function ProductField({
       }
     }
 
-    console.log(
-      "[ProductField] handlePriceChange - Enviando newValue:",
-      newValue
-    );
-    console.log(
-      "[ProductField] handlePriceChange - JSON stringified:",
-      JSON.stringify(newValue)
-    );
     onChange(JSON.stringify(newValue));
 
     if (error && onErrorClear) {
@@ -171,25 +146,9 @@ export default function ProductField({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const inputValue = e.target.value;
-    console.log(
-      "[ProductField] Promotional price input change - inputValue:",
-      inputValue
-    );
-    console.log(
-      "[ProductField] Promotional price input change - current value prop:",
-      value
-    );
-    console.log(
-      "[ProductField] Promotional price input change - parsedValue:",
-      parsedValue
-    );
 
     // Aplica máscara de moeda
     const maskedValue = applyCurrencyMask(inputValue);
-    console.log(
-      "[ProductField] Promotional price input change - maskedValue:",
-      maskedValue
-    );
 
     // Block input if promotional price would be greater than or equal to regular price
     if (maskedValue && parsedValue.price) {
@@ -212,15 +171,6 @@ export default function ProductField({
       ...parsedValue,
       promotional_price: maskedValue
     };
-
-    console.log(
-      "[ProductField] Promotional price input change - newValue:",
-      newValue
-    );
-    console.log(
-      "[ProductField] Promotional price input change - calling onChange with:",
-      JSON.stringify(newValue)
-    );
 
     // Clear validation error for valid inputs
     setValidationError("");

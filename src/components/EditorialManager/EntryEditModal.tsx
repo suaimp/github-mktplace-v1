@@ -358,6 +358,14 @@ export default function EntryEditModal({
           return next;
         });
       }
+    }; // Função para extrair dados do produto dos formValues
+    const extractProductDataFromForm = () => {
+      // Procura por campo de produto nos formValues
+      const productField = fields.find((f) => f.field_type === "product");
+      if (productField && formValues[productField.id]) {
+        return formValues[productField.id];
+      }
+      return null;
     };
 
     const fieldProps = {
@@ -366,7 +374,9 @@ export default function EntryEditModal({
       value,
       onChange: handleChange,
       error,
-      onErrorClear: handleErrorClear
+      onErrorClear: handleErrorClear,
+      // Parâmetros adicionais para CommissionField (simulador de preço)
+      productData: extractProductDataFromForm()
     };
 
     // Get the appropriate field component based on field type
