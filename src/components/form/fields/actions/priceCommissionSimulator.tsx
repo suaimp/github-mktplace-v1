@@ -115,12 +115,16 @@ export function extractProductPrice(productData: any): ProductPrice | null {
       return null;
     }
   }
-
   // Se é objeto, extrai os preços
   if (typeof productData === "object") {
-    const price = parseFloat(productData.price);
-    const promotional_price = productData.promotional_price
-      ? parseFloat(productData.promotional_price)
+    // Prioriza old_price (valor sem comissão) sobre price
+    const priceValue = productData.old_price || productData.price;
+    const promotionalPriceValue =
+      productData.old_promotional_price || productData.promotional_price;
+
+    const price = parseFloat(priceValue);
+    const promotional_price = promotionalPriceValue
+      ? parseFloat(promotionalPriceValue)
       : undefined;
 
     if (isNaN(price)) return null;

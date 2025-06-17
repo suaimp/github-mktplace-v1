@@ -72,11 +72,17 @@ export function applyCommissionToFormValues(
       typeof obj === "object" &&
       (obj.price || obj.promotional_price)
     ) {
-      console.log(`💰 [DEBUG] ${fieldId} - Encontrou objeto com preços:`, obj); // Processa o price
-      if (obj.price) {
-        console.log(`💵 [DEBUG] ${fieldId} - Processando price:`, obj.price);
+      console.log(`💰 [DEBUG] ${fieldId} - Encontrou objeto com preços:`, obj);
 
-        const priceStr = String(obj.price).replace(/\./g, "").replace(",", ".");
+      // Processa o price usando old_price como base
+      if (obj.old_price || obj.price) {
+        const basePrice = obj.old_price || obj.price;
+        console.log(
+          `💵 [DEBUG] ${fieldId} - Processando price usando old_price:`,
+          basePrice
+        );
+
+        const priceStr = String(basePrice).replace(/\./g, "").replace(",", ".");
         const price = parseFloat(priceStr);
 
         console.log(
@@ -91,13 +97,20 @@ export function applyCommissionToFormValues(
             Math.trunc(result * 100) / 100
           ).replace(".", ",");
 
-          console.log(`💵 [DEBUG] ${fieldId} - Price original:`, price);
+          console.log(
+            `💵 [DEBUG] ${fieldId} - Price original (old_price):`,
+            price
+          );
           console.log(`💵 [DEBUG] ${fieldId} - Price com comissão:`, result);
           console.log(
             `💵 [DEBUG] ${fieldId} - Price formatado final:`,
             formattedResult
           );
 
+          // Preserva old_price e atualiza price com comissão
+          if (!obj.old_price) {
+            obj.old_price = String(price).replace(".", ",");
+          }
           obj.price = formattedResult;
         } else {
           console.log(
@@ -105,14 +118,16 @@ export function applyCommissionToFormValues(
             price
           );
         }
-      } // Processa o promotional_price
-      if (obj.promotional_price) {
+      } // Processa o promotional_price usando old_promotional_price como base
+      if (obj.old_promotional_price || obj.promotional_price) {
+        const basePromotionalPrice =
+          obj.old_promotional_price || obj.promotional_price;
         console.log(
-          `🏷️ [DEBUG] ${fieldId} - Processando promotional_price:`,
-          obj.promotional_price
+          `🏷️ [DEBUG] ${fieldId} - Processando promotional_price usando old_promotional_price:`,
+          basePromotionalPrice
         );
 
-        const promoStr = String(obj.promotional_price)
+        const promoStr = String(basePromotionalPrice)
           .replace(/\./g, "")
           .replace(",", ".");
         const promo = parseFloat(promoStr);
@@ -134,7 +149,7 @@ export function applyCommissionToFormValues(
           ).replace(".", ",");
 
           console.log(
-            `🏷️ [DEBUG] ${fieldId} - Promotional_price original:`,
+            `🏷️ [DEBUG] ${fieldId} - Promotional_price original (old_promotional_price):`,
             promo
           );
           console.log(
@@ -146,6 +161,10 @@ export function applyCommissionToFormValues(
             formattedResult
           );
 
+          // Preserva old_promotional_price e atualiza promotional_price com comissão
+          if (!obj.old_promotional_price) {
+            obj.old_promotional_price = String(promo).replace(".", ",");
+          }
           obj.promotional_price = formattedResult;
         } else {
           console.log(

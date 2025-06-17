@@ -281,9 +281,7 @@ export default function FormRenderer({
         console.log(
           `📝 [FormRenderer] Processando campo ${field.label} (${field.field_type}):`,
           value
-        );
-
-        // Para campos do tipo product, garante que seja salvo como JSON se for objeto
+        ); // Para campos do tipo product, garante que seja salvo como JSON se for objeto
         if (field.field_type === "product") {
           let processedValue = value;
 
@@ -322,6 +320,41 @@ export default function FormRenderer({
               entry_id: entry.id,
               field_id: fieldId,
               value: String(processedValue),
+              value_json: null
+            });
+          }
+        }
+        // Para campos do tipo niche, garante que arrays sejam salvos como JSON
+        else if (field.field_type === "niche") {
+          console.log(
+            `🎯 [FormRenderer] Campo nicho (${field.label}) - Valor recebido:`,
+            value,
+            `Tipo: ${typeof value}`
+          );
+
+          if (
+            Array.isArray(value) ||
+            (typeof value === "object" && value !== null)
+          ) {
+            console.log(
+              `💾 [FormRenderer] Campo nicho (${field.label}) - Salvando como value_json:`,
+              value
+            );
+            values.push({
+              entry_id: entry.id,
+              field_id: fieldId,
+              value: null,
+              value_json: value
+            });
+          } else {
+            console.log(
+              `💾 [FormRenderer] Campo nicho (${field.label}) - Salvando como value:`,
+              value
+            );
+            values.push({
+              entry_id: entry.id,
+              field_id: fieldId,
+              value: String(value),
               value_json: null
             });
           }

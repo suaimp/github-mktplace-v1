@@ -126,6 +126,8 @@ export default function FormField({
         return <Icons.EyeCloseIcon className="w-5 h-5" />;
       case "html":
         return <Icons.CodeIcon className="w-5 h-5" />;
+      case "niche":
+        return <Icons.GridIcon className="w-5 h-5" />;
       default:
         return <Icons.FileIcon className="w-5 h-5" />;
     }
@@ -161,6 +163,8 @@ export default function FormField({
         return "Campo Oculto";
       case "html":
         return "HTML";
+      case "niche":
+        return "Nichos";
       default:
         return type.charAt(0).toUpperCase() + type.slice(1);
     }

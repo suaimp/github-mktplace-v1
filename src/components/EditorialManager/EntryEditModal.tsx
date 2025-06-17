@@ -110,21 +110,58 @@ export default function EntryEditModal({
       // Atualizar form values com tratamento adicional para campos específicos
       setFormValues((prev) => {
         const updatedValues = { ...prev };
-
         fieldsData.forEach((field: any) => {
-          // Se for campo niche, garantir array de objetos
+          // Se for campo niche, garantir array de objetos usando parseNicheData
           if (field.field_type === "niche") {
             if (!Array.isArray(updatedValues[field.id])) {
               updatedValues[field.id] = [];
             } else {
-              updatedValues[field.id] = updatedValues[field.id].map(
-                (n: any) => {
-                  if (typeof n === "string") return { niche: n, price: "" };
-                  if (typeof n === "object" && n !== null && !("price" in n))
-                    return { ...n, price: "" };
-                  return n;
-                }
+              // Usar parseNicheData para processar corretamente os dados de nicho
+              console.log(
+                "[EntryEditModal] Raw niche data:",
+                updatedValues[field.id]
               );
+
+              // Transformar o array de objetos {niche, price} para o formato esperado pelo parseNicheData
+              const nicheItems = updatedValues[field.id].map((item: any) => {
+                if (typeof item === "string") {
+                  return { text: item, icon: undefined };
+                }
+
+                if (typeof item === "object" && item.niche) {
+                  // Se niche é uma string JSON, tenta fazer parse
+                  if (
+                    typeof item.niche === "string" &&
+                    item.niche.startsWith("{")
+                  ) {
+                    try {
+                      const parsedNiche = JSON.parse(item.niche);
+                      return {
+                        text: parsedNiche.text || item.niche,
+                        icon: parsedNiche.icon,
+                        price: item.price || ""
+                      };
+                    } catch {
+                      return {
+                        text: item.niche,
+                        icon: undefined,
+                        price: item.price || ""
+                      };
+                    }
+                  } else {
+                    return {
+                      text: item.niche,
+                      icon: undefined,
+                      price: item.price || ""
+                    };
+                  }
+                }
+
+                return item;
+              });
+
+              console.log("[EntryEditModal] Processed niche data:", nicheItems);
+              updatedValues[field.id] = nicheItems;
             }
           }
         });

@@ -145,7 +145,16 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       const processedEntries = (entriesData || []).map((entry: any) => {
         const values: Record<string, any> = {};
 
+        console.log(`[MarketplaceTable] Processing entry ${entry.id}:`, entry);
+
         entry.form_entry_values.forEach((value: any) => {
+          console.log(`[MarketplaceTable] Processing field value:`, {
+            fieldId: value.field_id,
+            value: value.value,
+            valueJson: value.value_json,
+            valueType: typeof value.value
+          });
+
           if (value.value_json !== null) {
             values[value.field_id] = value.value_json;
           } else {
@@ -169,6 +178,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               values[value.field_id] = value.value;
             }
           }
+
+          console.log(
+            `[MarketplaceTable] Final processed value for field ${value.field_id}:`,
+            values[value.field_id]
+          );
         });
 
         return {
@@ -638,11 +652,24 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           key={field.id}
                           className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
                         >
-                          {formatMarketplaceValue(
-                            entry.values[field.id],
-                            field.field_type,
-                            true
-                          )}
+                          {(() => {
+                            const fieldValue = entry.values[field.id];
+                            console.log(
+                              `[MarketplaceTable] Field: ${field.label} (${field.field_type})`,
+                              {
+                                fieldId: field.id,
+                                fieldType: field.field_type,
+                                value: fieldValue,
+                                valueType: typeof fieldValue
+                              }
+                            );
+
+                            return formatMarketplaceValue(
+                              fieldValue,
+                              field.field_type,
+                              true
+                            );
+                          })()}
                         </td>
                       );
                     })}

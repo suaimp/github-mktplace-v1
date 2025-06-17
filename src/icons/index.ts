@@ -62,6 +62,15 @@ import GoogleTrafficIcon from "./google-traffic.svg?react";
 import FilterIcon from "./filter.svg?react";
 import ShoppingCartIcon from "./shopping-cart.svg?react";
 
+// Niche Icons
+import {
+  FinanceIcon,
+  HeartIcon,
+  CasinoIcon,
+  TechIcon,
+  EntertainmentIcon
+} from "./niche-icons";
+
 export {
   ErrorHexaIcon,
   AlertHexaIcon,
@@ -125,5 +134,10 @@ export {
   SimilarwebTrafficIcon,
   GoogleTrafficIcon,
   FilterIcon,
-  ShoppingCartIcon
+  ShoppingCartIcon, // Niche Icons
+  FinanceIcon,
+  HeartIcon,
+  CasinoIcon,
+  TechIcon,
+  EntertainmentIcon
 };

@@ -30,7 +30,12 @@ export default function ProductField({
 
   // Sync input values with parsedValue only on external changes
   useEffect(() => {
-    let parsedValue: { price?: string; promotional_price?: string } = {};
+    let parsedValue: {
+      price?: string;
+      promotional_price?: string;
+      old_price?: string;
+      old_promotional_price?: string;
+    } = {};
 
     try {
       if (typeof value === "string") {
@@ -56,15 +61,23 @@ export default function ProductField({
       }
     }
 
+    // Prioriza old_price e old_promotional_price para exibição (valores sem comissão)
+    const displayPrice = parsedValue.old_price || parsedValue.price || "";
+    const displayPromotionalPrice =
+      parsedValue.old_promotional_price || parsedValue.promotional_price || "";
+
     // Always update both fields when value changes (importante para modo de edição)
-    setPriceInputValue(formatInputCurrency(parsedValue.price || ""));
-    setPromotionalPriceInputValue(
-      formatInputCurrency(parsedValue.promotional_price || "")
-    );
+    setPriceInputValue(formatInputCurrency(displayPrice));
+    setPromotionalPriceInputValue(formatInputCurrency(displayPromotionalPrice));
   }, [value]);
 
   // Parse value from string if needed
-  let parsedValue: { price?: string; promotional_price?: string } = {};
+  let parsedValue: {
+    price?: string;
+    promotional_price?: string;
+    old_price?: string;
+    old_promotional_price?: string;
+  } = {};
   try {
     if (typeof value === "string") {
       parsedValue = JSON.parse(value || "{}");
@@ -113,15 +126,16 @@ export default function ProductField({
 
     const newValue = {
       ...parsedValue,
-      price: maskedValue
+      price: maskedValue, // Sempre usa o valor atual do input
+      old_price: maskedValue // Atualiza o valor original também
     };
 
     // Clear validation error when changing values
     setValidationError("");
 
     // Re-validate promotional price if it exists
-    if (parsedValue.promotional_price && maskedValue) {
-      const promotionalPrice = priceToNumber(parsedValue.promotional_price);
+    if (parsedValue.old_promotional_price && maskedValue) {
+      const promotionalPrice = priceToNumber(parsedValue.old_promotional_price);
       const regularPrice = priceToNumber(maskedValue);
 
       if (regularPrice > 0 && promotionalPrice >= regularPrice) {
@@ -151,9 +165,9 @@ export default function ProductField({
     const maskedValue = applyCurrencyMask(inputValue);
 
     // Block input if promotional price would be greater than or equal to regular price
-    if (maskedValue && parsedValue.price) {
+    if (maskedValue && parsedValue.old_price) {
       const promotionalPrice = priceToNumber(maskedValue);
-      const regularPrice = priceToNumber(parsedValue.price);
+      const regularPrice = priceToNumber(parsedValue.old_price);
 
       if (regularPrice > 0 && promotionalPrice >= regularPrice) {
         // Don't update the input value, just show error
@@ -169,7 +183,8 @@ export default function ProductField({
 
     const newValue = {
       ...parsedValue,
-      promotional_price: maskedValue
+      promotional_price: maskedValue, // Sempre usa o valor atual do input
+      old_promotional_price: maskedValue // Atualiza o valor original também
     };
 
     // Clear validation error for valid inputs
@@ -231,7 +246,18 @@ export default function ProductField({
 
   // Get the main price (promotional if available, otherwise regular)
   const getMainPrice = () => {
-    // If promotional price is filled, it becomes the main price
+    // Prioriza old_promotional_price se disponível, senão old_price
+    if (
+      parsedValue.old_promotional_price &&
+      parsedValue.old_promotional_price !== ""
+    ) {
+      return parsedValue.old_promotional_price;
+    }
+    if (parsedValue.old_price && parsedValue.old_price !== "") {
+      return parsedValue.old_price;
+    }
+
+    // Fallback para valores antigos
     if (parsedValue.promotional_price && parsedValue.promotional_price !== "") {
       return parsedValue.promotional_price;
     }

@@ -1,5 +1,59 @@
+import React from "react";
 import { getFaviconUrl, getFlagUrl } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
+import * as NicheIcons from "../../icons/niche-icons";
+import {
+  parseNicheData,
+  type NicheOption
+} from "../../context/db-context/services/formFieldNicheService";
+
+// Cache para armazenar todos os nichos disponíveis
+let allAvailableNiches: NicheOption[] = [];
+let nichesLoaded = false;
+
+// Função para buscar todos os nichos disponíveis do banco de dados
+async function loadAllAvailableNiches(): Promise<NicheOption[]> {
+  if (nichesLoaded && allAvailableNiches.length > 0) {
+    return allAvailableNiches;
+  }
+
+  try {
+    console.log("[loadAllAvailableNiches] Fetching niches from database...");
+
+    const { data: nicheFields, error } = await supabase
+      .from("form_field_niche")
+      .select("options");
+
+    if (error) {
+      console.error("[loadAllAvailableNiches] Error fetching niches:", error);
+      return [];
+    }
+
+    const uniqueNiches = new Map<string, NicheOption>();
+
+    // Processa todos os nichos de todos os campos
+    nicheFields?.forEach((field) => {
+      if (field.options && Array.isArray(field.options)) {
+        const parsedNiches = parseNicheData(field.options);
+        parsedNiches.forEach((niche) => {
+          if (niche.text && niche.text.trim() !== "") {
+            // Usa o texto como chave para evitar duplicatas
+            uniqueNiches.set(niche.text, niche);
+          }
+        });
+      }
+    });
+
+    allAvailableNiches = Array.from(uniqueNiches.values());
+    nichesLoaded = true;
+
+    console.log("[loadAllAvailableNiches] Loaded niches:", allAvailableNiches);
+    return allAvailableNiches;
+  } catch (error) {
+    console.error("[loadAllAvailableNiches] Error:", error);
+    return [];
+  }
+}
 
 // Render URL with favicon
 export function renderUrlWithFavicon(url: string) {
@@ -133,6 +187,138 @@ export function renderCountryFlags(
   );
 }
 
+// Render niche with icon (agora busca dados do banco)
+export function renderNicheWithIcon(value: any) {
+  console.log("[renderNicheWithIcon] Raw value received:", value);
+  console.log("[renderNicheWithIcon] Value type:", typeof value);
+  console.log(
+    "[renderNicheWithIcon] Value stringified:",
+    JSON.stringify(value)
+  );
+
+  if (!value) {
+    console.log("[renderNicheWithIcon] No value, returning '-'");
+    return "-";
+  }
+
+  // Componente que renderiza os nichos com dados do banco
+  const NicheRenderer = () => {
+    const [allNiches, setAllNiches] = React.useState<NicheOption[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+      loadAllAvailableNiches().then((niches) => {
+        setAllNiches(niches);
+        setLoading(false);
+      });
+    }, []);
+
+    if (loading) {
+      return (
+        <div className="flex gap-1">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"
+            />
+          ))}
+        </div>
+      );
+    }
+
+    try {
+      // Parse os dados do nicho atual
+      let nicheData: NicheOption[];
+
+      if (typeof value === "string") {
+        console.log("[renderNicheWithIcon] Processing string value:", value);
+
+        // Verifica se parece ser JSON
+        if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
+          try {
+            const parsed = JSON.parse(value);
+            console.log("[renderNicheWithIcon] Parsed JSON:", parsed);
+            nicheData = parseNicheData(
+              Array.isArray(parsed) ? parsed : [parsed]
+            );
+          } catch {
+            console.log(
+              "[renderNicheWithIcon] Failed to parse JSON, skipping malformed data"
+            );
+            return <span>-</span>;
+          }
+        } else {
+          // String simples, trata como texto
+          console.log("[renderNicheWithIcon] Simple string, treating as text");
+          nicheData = [{ text: value, icon: undefined }];
+        }
+      } else if (Array.isArray(value)) {
+        console.log("[renderNicheWithIcon] Processing array value:", value);
+        nicheData = parseNicheData(value);
+      } else {
+        console.log("[renderNicheWithIcon] Processing object value:", value);
+        nicheData = parseNicheData([value]);
+      }
+
+      // Filtra dados válidos
+      const validNicheData = nicheData.filter((niche) => {
+        const hasText = niche.text && niche.text.trim() !== "";
+        const hasIcon = niche.icon && niche.icon.trim() !== "";
+        return hasText || hasIcon;
+      });
+
+      console.log("[renderNicheWithIcon] Valid nicheData:", validNicheData);
+      console.log("[renderNicheWithIcon] All available niches:", allNiches);
+
+      if (!validNicheData || validNicheData.length === 0) {
+        return <span>-</span>;
+      }
+
+      // Pega os textos dos nichos que o site possui
+      const siteNicheTexts = validNicheData
+        .map((niche) => niche.text)
+        .filter((text) => text && text.trim() !== "");
+
+      console.log("[renderNicheWithIcon] Site niche texts:", siteNicheTexts);
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {allNiches.map((niche, index) => {
+            const isActive = siteNicheTexts.includes(niche.text);
+            const IconComponent = niche.icon
+              ? (NicheIcons as any)[niche.icon]
+              : null;
+
+            // Se não tem ícone, não renderiza
+            if (!IconComponent) {
+              return null;
+            }
+
+            return (
+              <div
+                key={`${niche.text}-${index}`}
+                className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all ${
+                  isActive
+                    ? "bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
+                }`}
+                title={niche.text}
+              >
+                <IconComponent className="w-4 h-4" />
+              </div>
+            );
+          })}
+        </div>
+      );
+    } catch (error) {
+      console.error("[renderNicheWithIcon] Error rendering niche:", error);
+      return <span>-</span>;
+    }
+  };
+
+  return <NicheRenderer />;
+}
+
 // Format value for display
 export function formatMarketplaceValue(
   value: any,
@@ -156,9 +342,19 @@ export function formatMarketplaceValue(
     return renderBrandWithLogo(value);
   }
 
+  // Special handling for niche fields
+  if (fieldType === "niche") {
+    return renderNicheWithIcon(value);
+  }
+
   // Handle country fields
   if (fieldType === "country" && typeof value === "object") {
     return renderCountryFlags(value, showCountryCodes);
+  }
+
+  // Handle niche fields
+  if (fieldType === "niche") {
+    return renderNicheWithIcon(value);
   }
 
   switch (fieldType) {

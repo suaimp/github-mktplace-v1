@@ -20,7 +20,8 @@ import { supabase } from "../../lib/supabase";
 import NicheSettings from "./fields/settings/NicheSettings";
 import {
   createFormFieldNiche,
-  updateFormFieldNiche
+  updateFormFieldNiche,
+  sanitizeNicheOptions
 } from "../../context/db-context/services/formFieldNicheService";
 
 interface FormField {
@@ -203,11 +204,15 @@ export default function FormFieldSettings({
       // Se for campo niche, usa o state 'options' para atualizar a tabela form_field_niche
       if (field.field_type === "niche" && options && options.length > 0) {
         try {
-          // Garante que options é um array de string
-          const optionsArr = options.map((opt) =>
-            typeof opt === "string" ? opt : opt.value || opt.label || ""
+          console.log("[FormFieldSettings] Raw options received:", options);
+
+          // Usa a função sanitizeNicheOptions para limpar os dados
+          const optionsArr = sanitizeNicheOptions(options);
+          console.log(
+            "[FormFieldSettings] Sanitized options for DB:",
+            optionsArr
           );
-          console.log("Niche options:", optionsArr);
+
           // Salva options na tabela form_field_niche
           // Primeiro tenta atualizar, se não existir faz insert
           const updateResult = await updateFormFieldNiche(field.id, {

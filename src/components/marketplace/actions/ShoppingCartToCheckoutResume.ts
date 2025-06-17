@@ -49,31 +49,37 @@ export function useShoppingCartToCheckoutResume() {
         try {
           const parsed = JSON.parse(valueWithPrice.value);
 
-          // NOVA LÓGICA: verifica se promotional_price existe e não está vazio
-          let priceToUse = parsed.price; // valor padrão
+          // NOVA LÓGICA: Usa old_promotional_price e old_price (valores sem comissão)
+          let priceToUse = parsed.old_price || parsed.price; // valor padrão
 
           if (
-            parsed.promotional_price &&
-            parsed.promotional_price !== "" &&
-            parsed.promotional_price !== null &&
-            parsed.promotional_price !== undefined &&
-            !isNaN(Number(parsed.promotional_price)) &&
-            Number(parsed.promotional_price) > 0
+            (parsed.old_promotional_price || parsed.promotional_price) &&
+            (parsed.old_promotional_price !== "" ||
+              parsed.promotional_price !== "") &&
+            (parsed.old_promotional_price !== null ||
+              parsed.promotional_price !== null) &&
+            (parsed.old_promotional_price !== undefined ||
+              parsed.promotional_price !== undefined) &&
+            !isNaN(
+              Number(parsed.old_promotional_price || parsed.promotional_price)
+            ) &&
+            Number(parsed.old_promotional_price || parsed.promotional_price) > 0
           ) {
-            // Se promotional_price tem valor válido, usa ele
-            priceToUse = parsed.promotional_price;
+            // Se promotional_price tem valor válido, usa old_promotional_price ou promotional_price
+            priceToUse =
+              parsed.old_promotional_price || parsed.promotional_price;
             console.log(
-              "ShoppingCartToCheckoutResume.ts - usando promotional_price:",
-              parsed.promotional_price
+              "ShoppingCartToCheckoutResume.ts - usando old_promotional_price:",
+              parsed.old_promotional_price || parsed.promotional_price
             );
           } else {
-            // Se promotional_price está vazio/null/undefined, usa price normal
+            // Se promotional_price está vazio/null/undefined, usa old_price ou price normal
             console.log(
-              "ShoppingCartToCheckoutResume.ts - usando price normal:",
-              parsed.price
+              "ShoppingCartToCheckoutResume.ts - usando old_price:",
+              parsed.old_price || parsed.price
             );
 
-            priceToUse = parsed.price;
+            priceToUse = parsed.old_price || parsed.price;
           }
 
           // Converte para número, removendo vírgula e pontos se necessário
@@ -321,37 +327,48 @@ export function useShoppingCartToCheckoutResume() {
       let price = 0;
       try {
         console.log(
-          "🔍 [syncPriceFromValue] productData.price:",
-          productData.price
+          "🔍 [syncPriceFromValue] productData.old_price:",
+          productData.old_price || productData.price
         );
         console.log(
-          "🔍 [syncPriceFromValue] productData.promotional_price:",
-          productData.promotional_price
+          "🔍 [syncPriceFromValue] productData.old_promotional_price:",
+          productData.old_promotional_price || productData.promotional_price
         );
 
-        // NOVA LÓGICA REFATORADA: prioriza promotional_price quando existir e for > 0
-        let priceToUse = productData.price; // valor padrão
+        // NOVA LÓGICA REFATORADA: prioriza old_promotional_price quando existir e for > 0
+        let priceToUse = productData.old_price || productData.price; // valor padrão
 
-        // Verifica se promotional_price existe e é válido
+        // Verifica se old_promotional_price existe e é válido
         if (
-          productData.promotional_price &&
-          productData.promotional_price !== "" &&
-          productData.promotional_price !== null &&
-          productData.promotional_price !== undefined &&
-          !isNaN(Number(productData.promotional_price)) &&
-          Number(productData.promotional_price) > 0
+          (productData.old_promotional_price ||
+            productData.promotional_price) &&
+          (productData.old_promotional_price !== "" ||
+            productData.promotional_price !== "") &&
+          (productData.old_promotional_price !== null ||
+            productData.promotional_price !== null) &&
+          (productData.old_promotional_price !== undefined ||
+            productData.promotional_price !== undefined) &&
+          !isNaN(
+            Number(
+              productData.old_promotional_price || productData.promotional_price
+            )
+          ) &&
+          Number(
+            productData.old_promotional_price || productData.promotional_price
+          ) > 0
         ) {
-          // Se promotional_price tem valor válido e maior que 0, usa ele
-          priceToUse = productData.promotional_price;
+          // Se promotional_price tem valor válido e maior que 0, usa old_promotional_price
+          priceToUse =
+            productData.old_promotional_price || productData.promotional_price;
           console.log(
-            "✅ [syncPriceFromValue] USANDO promotional_price:",
-            productData.promotional_price
+            "✅ [syncPriceFromValue] USANDO old_promotional_price:",
+            productData.old_promotional_price || productData.promotional_price
           );
         } else {
-          // Se promotional_price está vazio/null/undefined/zero, usa price normal
+          // Se promotional_price está vazio/null/undefined/zero, usa old_price normal
           console.log(
-            "⚠️ [syncPriceFromValue] USANDO price normal:",
-            productData.price
+            "⚠️ [syncPriceFromValue] USANDO old_price normal:",
+            productData.old_price || productData.price
           );
         }
 
