@@ -1,5 +1,5 @@
 import Input from "../input/InputField";
-import { extractProductPrice } from "./actions/priceCommissionSimulator";
+import { usePriceCalculation } from "../../EditorialManager/actions/PriceSimulationDisplay";
 
 interface CommissionFieldProps {
   value: string;
@@ -8,15 +8,6 @@ interface CommissionFieldProps {
   onErrorClear?: () => void;
   // Props adicionais para a simulação de preço
   productData?: any;
-}
-
-interface PriceInfo {
-  originalPrice: number;
-  promotionalPrice?: number;
-  finalPrice: number;
-  marginValue: number;
-  priceWithCommission: number;
-  discountPercentage: number;
 }
 
 export default function CommissionField({
@@ -38,38 +29,8 @@ export default function CommissionField({
     }
   };
 
-  // Extrai dados do produto para o simulador
-  const extractedProductPrice = extractProductPrice(productData);
   const commissionValue = parseFloat(value) || 0;
-
-  // Calcula valores para exibição inline
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(value);
-  };
-
-  let priceInfo: PriceInfo | null = null;
-  if (extractedProductPrice && commissionValue > 0) {
-    const originalPrice = extractedProductPrice.price;
-    const promotionalPrice = extractedProductPrice.promotional_price;
-    const finalPrice = promotionalPrice || originalPrice;
-    const marginValue = (finalPrice * commissionValue) / 100;
-    const priceWithCommission = finalPrice + marginValue;
-    const discountPercentage = promotionalPrice
-      ? Math.round(((originalPrice - promotionalPrice) / originalPrice) * 100)
-      : 0;
-
-    priceInfo = {
-      originalPrice,
-      promotionalPrice,
-      finalPrice,
-      marginValue,
-      priceWithCommission,
-      discountPercentage
-    };
-  }
+  const priceInfo = usePriceCalculation(commissionValue, productData);
 
   return (
     <div>
@@ -96,14 +57,14 @@ export default function CommissionField({
             {/* Preço original como label (se houver desconto) */}
             {priceInfo.promotionalPrice && (
               <div className="text-xs text-gray-500 line-through mb-1">
-                {formatCurrency(priceInfo.originalPrice)}
+                {priceInfo.formatCurrency(priceInfo.originalPrice)}
               </div>
             )}
 
             {/* Preço final com comissão e porcentagem */}
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                {formatCurrency(priceInfo.priceWithCommission)}
+                {priceInfo.formatCurrency(priceInfo.priceWithCommission)}
               </span>
               {priceInfo.promotionalPrice && (
                 <span className="text-green-600 text-xs font-medium dark:text-green-400">
@@ -118,7 +79,7 @@ export default function CommissionField({
       {/* Label da margem embaixo do input */}
       {priceInfo && (
         <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Margem: {formatCurrency(priceInfo.marginValue)}
+          Margem: {priceInfo.formatCurrency(priceInfo.marginValue)}
         </div>
       )}
     </div>

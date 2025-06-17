@@ -9,6 +9,7 @@ import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
+import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -145,31 +146,22 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       const processedEntries = (entriesData || []).map((entry: any) => {
         const values: Record<string, any> = {};
 
-        console.log(`[MarketplaceTable] Processing entry ${entry.id}:`, entry);
-
         entry.form_entry_values.forEach((value: any) => {
-          console.log(`[MarketplaceTable] Processing field value:`, {
-            fieldId: value.field_id,
-            value: value.value,
-            valueJson: value.value_json,
-            valueType: typeof value.value
-          });
-
           if (value.value_json !== null) {
             values[value.field_id] = value.value_json;
           } else {
-            // Verifica se value.value contém um objeto com promotional_price
+            // Verifica se value.value contém um objeto com promotional_price ou price
             try {
               const parsedValue = JSON.parse(value.value);
 
-              if (
-                parsedValue &&
-                typeof parsedValue === "object" &&
-                parsedValue.promotional_price
-              ) {
-                // Para campos do tipo product, preserva o objeto completo com ambos price e promotional_price
-                // para que o formatador de marketplace funcione corretamente
-                values[value.field_id] = parsedValue;
+              if (parsedValue && typeof parsedValue === "object") {
+                // Para campos do tipo product, preserva o objeto completo
+                // Verifica se tem price ou promotional_price para ser um produto
+                if (parsedValue.price || parsedValue.promotional_price) {
+                  values[value.field_id] = parsedValue;
+                } else {
+                  values[value.field_id] = parsedValue;
+                }
               } else {
                 values[value.field_id] = value.value;
               }
@@ -178,11 +170,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               values[value.field_id] = value.value;
             }
           }
-
-          console.log(
-            `[MarketplaceTable] Final processed value for field ${value.field_id}:`,
-            values[value.field_id]
-          );
         });
 
         return {
@@ -265,6 +252,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   );
   const productPriceField = fields.find(
     (field) => field.field_type === "product"
+  );
+  const commissionField = fields.find(
+    (field) => field.field_type === "commission"
   );
 
   // Find button buy field that should be positioned in last column
@@ -654,15 +644,26 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         >
                           {(() => {
                             const fieldValue = entry.values[field.id];
-                            console.log(
-                              `[MarketplaceTable] Field: ${field.label} (${field.field_type})`,
-                              {
-                                fieldId: field.id,
-                                fieldType: field.field_type,
-                                value: fieldValue,
-                                valueType: typeof fieldValue
-                              }
-                            );
+
+                            // Uso do componente reutilizável para campos do tipo "product"
+                            if (field.field_type === "product") {
+                              const commissionValue = commissionField
+                                ? parseFloat(
+                                    entry.values[commissionField.id]
+                                  ) || 0
+                                : 0;
+
+                              // Sempre usa o componente de simulação para produtos (mesmo sem comissão)
+                              return (
+                                <PriceSimulationDisplay
+                                  commission={commissionValue}
+                                  productData={fieldValue}
+                                  layout="inline"
+                                  showMarginBelow={false}
+                                  showOriginalPrice={true}
+                                />
+                              );
+                            }
 
                             return formatMarketplaceValue(
                               fieldValue,
