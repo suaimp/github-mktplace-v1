@@ -46,7 +46,6 @@ export default function OrderList() {
   if (currentPage > totalPages && totalPages > 0) {
     setCurrentPage(totalPages);
   }
-
   useEffect(() => {
     loadOrders();
   }, []);
@@ -472,7 +471,7 @@ export default function OrderList() {
                 className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Next
-              </button>
+              </button>{" "}
             </div>
           </div>
         )}

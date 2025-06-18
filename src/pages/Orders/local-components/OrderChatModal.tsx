@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Modal } from "../ui/modal";
-import { ChatIcon } from "../../icons";
+import { Modal } from "../../../components/ui/modal";
+import { ChatIcon } from "../../../icons";
 
 interface OrderChatModalProps {
   isOpen: boolean;

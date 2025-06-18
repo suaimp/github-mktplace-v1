@@ -260,3 +260,77 @@ export async function getPendingBoletoOrders(): Promise<Order[] | null> {
     return null;
   }
 }
+
+/**
+ * Deletes all order items for a specific order
+ */
+export async function deleteOrderItems(orderId: string): Promise<boolean> {
+  try {
+    console.log("🗑️ Deleting order items for order:", orderId);
+
+    const { error } = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", orderId);
+
+    if (error) {
+      console.error("❌ Error deleting order items:", error);
+      throw error;
+    }
+
+    console.log("✅ Order items deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Error deleting order items:", error);
+    return false;
+  }
+}
+
+/**
+ * Deletes an order by ID (must delete order items first)
+ */
+export async function deleteOrderById(orderId: string): Promise<boolean> {
+  try {
+    console.log("🗑️ Deleting order:", orderId);
+
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+
+    if (error) {
+      console.error("❌ Error deleting order:", error);
+      throw error;
+    }
+
+    console.log("✅ Order deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    return false;
+  }
+}
+
+/**
+ * Deletes an order and all its items (complete deletion)
+ */
+export async function deleteCompleteOrder(orderId: string): Promise<boolean> {
+  try {
+    console.log("🗑️ Starting complete order deletion:", orderId);
+
+    // First, delete all order items (foreign key constraint)
+    const itemsDeleted = await deleteOrderItems(orderId);
+    if (!itemsDeleted) {
+      throw new Error("Failed to delete order items");
+    }
+
+    // Then, delete the order itself
+    const orderDeleted = await deleteOrderById(orderId);
+    if (!orderDeleted) {
+      throw new Error("Failed to delete order");
+    }
+
+    console.log("✅ Complete order deletion successful");
+    return true;
+  } catch (error) {
+    console.error("❌ Error in complete order deletion:", error);
+    return false;
+  }
+}
