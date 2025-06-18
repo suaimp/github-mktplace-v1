@@ -9,6 +9,13 @@ import * as FieldsImport from "./fields";
 import TextArea from "./input/TextArea";
 import { getCommissionField } from "../../context/db-context/services/formFieldsService";
 import { applyCommissionToFormValues } from "../EditorialManager/actions/commissionLogic";
+import {
+  filterFieldsForTable,
+  filterVisibleFields,
+  getUrlFields,
+  createFieldSettingsMap,
+  shouldShowFieldInEdit
+} from "./actions/userFormEntriesActions";
 
 const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
 
@@ -135,49 +142,26 @@ export default function UserFormEntriesRenderer({
         .eq("form_id", formId)
         .order("position", { ascending: true });
 
-      if (fieldsError) throw fieldsError;
+      if (fieldsError) throw fieldsError; // Create settings map for all fields
+      const settingsMap = createFieldSettingsMap(fieldsData);
+      setFieldSettings(settingsMap);
 
-      // Create settings map for all fields
-      const settingsMap: Record<string, any> = {};
-      fieldsData.forEach((field) => {
-        if (field.form_field_settings) {
-          settingsMap[field.id] = field.form_field_settings;
-        }
-      });
+      // Filter visible fields based on visibility settings and user role
+      const visibleFields = filterVisibleFields(fieldsData || [], isAdmin);
 
-      setFieldSettings(settingsMap); // Filter out fields that should be hidden from entries
-      // This includes both hidden fields and admin-only fields for non-admin users
-      const visibleFields = (fieldsData || []).filter((field) => {
-        const settings = field.form_field_settings;
-
-        // If no settings, show the field
-        if (!settings) return true;
-
-        // Hide fields with visibility = 'hidden'
-        if (settings.visibility === "hidden") return false;
-
-        // Hide admin-only fields for non-admin users
-        if (settings.visibility === "admin" && !isAdmin) return false;
-
-        // Hide marketplace-only fields for non-admin users
-        if (settings.visibility === "marketplace" && !isAdmin) return false;
-
-        return true;
-      });
+      // Filter fields specifically for table display (only URL fields + auto-generated columns)
+      const tableFields = filterFieldsForTable(visibleFields);
 
       // Para cálculos, incluir todos os campos (incluindo comissão) mesmo que não sejam visíveis
       const allFieldsForCalculation = fieldsData || [];
 
-      setFields(visibleFields);
+      setFields(tableFields); // Apenas campos necessários para a tabela
 
-      // Armazenar todos os campos para uso nos cálculos
+      // Armazenar todos os campos para uso nos cálculos e edição
       setAllFields(allFieldsForCalculation);
 
       // Identify URL fields
-      const urlFieldIds = fieldsData
-        .filter((field) => field.field_type === "url")
-        .map((field) => field.id);
-
+      const urlFieldIds = getUrlFields(fieldsData || []);
       setUrlFields(urlFieldIds);
 
       // Load form entries with their values - ONLY FOR CURRENT USER
@@ -553,7 +537,6 @@ export default function UserFormEntriesRenderer({
       setLoading(false);
     }
   };
-
   // Render field editor based on field type
   // renderiza dinamicamente cada campo do formulário
   const renderFieldEditor = (field: any) => {
@@ -561,13 +544,8 @@ export default function UserFormEntriesRenderer({
     const value = editableFormValues[field.id];
     const error = validationErrors[field.id];
 
-    // Skip admin-only fields for regular users
-    if (settings.visibility === "admin" && !isAdmin) {
-      return null;
-    }
-
-    // Skip marketplace-only fields for regular users
-    if (settings.visibility === "marketplace" && !isAdmin) {
+    // Skip fields that shouldn't be shown in edit mode
+    if (!shouldShowFieldInEdit(field, isAdmin)) {
       return null;
     }
 
@@ -765,10 +743,11 @@ export default function UserFormEntriesRenderer({
               <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                 <h5 className="text-lg font-medium text-gray-800 dark:text-white/90 mb-4">
                   Dados do Formulário
-                </h5>
-
+                </h5>{" "}
                 <div className="grid grid-cols-1 gap-6">
-                  {fields.map((field) => renderFieldEditor(field))}
+                  {allFields
+                    .filter((field) => shouldShowFieldInEdit(field, isAdmin))
+                    .map((field) => renderFieldEditor(field))}
                 </div>
               </div>
 

@@ -54,7 +54,6 @@ export function useOrderDetails() {
       loadOrderDetails(id);
     }
   }, [id]);
-
   async function loadOrderDetails(orderId: string) {
     try {
       setLoading(true);
@@ -66,17 +65,56 @@ export function useOrderDetails() {
       if (!user) {
         throw new Error("User not authenticated");
       }
+      console.log("🔍 Debug - Buscando pedido:", { orderId, userId: user.id });
+
+      // Check if user is admin
+      const { data: adminData } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const userIsAdmin = !!adminData;
+      console.log("🔍 Debug - Usuário é admin:", userIsAdmin);
+
+      // First, let's check what orders exist for this ID (without user filter)
+      const { data: allOrdersWithId, error: debugError } = await supabase
+        .from("orders")
+        .select("id, user_id")
+        .eq("id", orderId);
+
+      if (debugError) {
+        console.error("❌ Debug - Erro ao buscar pedidos:", debugError);
+      } else {
+        console.log(
+          "🔍 Debug - Pedidos encontrados com este ID:",
+          allOrdersWithId
+        );
+      }
+
+      // Build query based on user permissions
+      let orderQuery = supabase.from("orders").select("*").eq("id", orderId);
+
+      // If not admin, filter by user_id
+      if (!userIsAdmin) {
+        orderQuery = orderQuery.eq("user_id", user.id);
+      }
 
       // Get order details
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId)
-        .eq("user_id", user.id)
-        .single();
+      const { data: orderData, error: orderError } = await orderQuery.single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("❌ Debug - Erro na query principal:", orderError);
+        // If it's the specific error about multiple/no rows, provide more info
+        if (orderError.message?.includes("multiple (or no) rows returned")) {
+          throw new Error(
+            `Pedido não encontrado ou você não tem permissão para visualizá-lo. ID do pedido: ${orderId}`
+          );
+        }
+        throw orderError;
+      }
       if (!orderData) throw new Error("Order not found");
+      console.log("✅ Debug - Pedido carregado com sucesso:", orderData);
 
       setOrder(orderData);
 
@@ -86,7 +124,19 @@ export function useOrderDetails() {
         .select("*")
         .eq("order_id", orderId);
 
-      if (itemsError) throw itemsError; // Add mock data for the new columns (in a real app, these would come from the database)
+      if (itemsError) {
+        console.error(
+          "❌ Debug - Erro ao carregar itens do pedido:",
+          itemsError
+        );
+        throw itemsError;
+      }
+
+      console.log(
+        "✅ Debug - Itens do pedido carregados:",
+        itemsData?.length || 0,
+        "itens"
+      ); // Add mock data for the new columns (in a real app, these would come from the database)
       const itemsWithExtendedData = (itemsData || []).map(
         (item: any): OrderItem => ({
           ...item,

@@ -152,11 +152,10 @@ export default function PriceSimulationDisplay({
               <div className="text-xs text-gray-500 line-through mb-1">
                 {formatCurrency(priceInfo.originalPrice)}
               </div>
-            )}
-
+            )}{" "}
           {/* Preço final com comissão e porcentagem */}
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">
               {formatCurrency(priceInfo.priceWithCommission)}
             </span>
             {(showOriginalPrice || priceInfo.promotionalPrice) &&

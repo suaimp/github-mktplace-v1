@@ -74,12 +74,56 @@ export default function OrderDetail() {
       </div>
     );
   }
-
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="text-error-500 mb-4">{error}</div>
-        <Button onClick={() => navigate("/orders")}>Voltar para Pedidos</Button>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+              Erro ao Carregar Pedido
+            </h2>
+
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+              <div className="text-red-800 dark:text-red-200 font-medium mb-2">
+                Mensagem de Erro:
+              </div>
+              <div className="text-red-700 dark:text-red-300 text-sm font-mono break-all">
+                {error}
+              </div>
+            </div>
+
+            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <div>
+                <strong>Como investigar este problema:</strong>
+              </div>
+              <ol className="list-decimal list-inside space-y-2 ml-4">
+                <li>
+                  Abra o Console do navegador (F12) para ver os logs de debug
+                </li>
+                <li>Verifique se o ID do pedido na URL está correto</li>
+                <li>
+                  Confirme se você tem permissão para visualizar este pedido
+                </li>
+                <li>
+                  Se você é admin, verifique se está cadastrado na tabela
+                  'admins'
+                </li>
+              </ol>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <Button onClick={() => navigate("/orders")}>
+                Voltar para Pedidos
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+              >
+                Tentar Novamente
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

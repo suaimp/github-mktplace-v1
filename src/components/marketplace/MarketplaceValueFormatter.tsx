@@ -282,7 +282,7 @@ export function renderNicheWithIcon(value: any) {
       console.log("[renderNicheWithIcon] Site niche texts:", siteNicheTexts);
 
       return (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-2">
           {allNiches.map((niche, index) => {
             const isActive = siteNicheTexts.includes(niche.text);
             const IconComponent = niche.icon
@@ -297,14 +297,14 @@ export function renderNicheWithIcon(value: any) {
             return (
               <div
                 key={`${niche.text}-${index}`}
-                className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all ${
+                className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-all ${
                   isActive
                     ? "bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
                 }`}
                 title={niche.text}
               >
-                <IconComponent className="w-4 h-4" />
+                <IconComponent className="w-3 h-3" />
               </div>
             );
           })}
