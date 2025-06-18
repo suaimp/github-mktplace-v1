@@ -48,27 +48,98 @@ export default function NicheField({
     fetchOptions();
   }, [field?.id]);
 
+  // Limpa nichos selecionados que não existem mais nas opções disponíveis
+  useEffect(() => {
+    if (options.length === 0) return;
+
+    console.log("[NicheField] Checking for orphaned selected niches");
+    console.log(
+      "[NicheField] Available options:",
+      options.map((opt) => opt.text)
+    );
+    console.log(
+      "[NicheField] Current selected niches:",
+      selectedNiches.map((item) => item.niche)
+    );
+
+    const availableNiches = options.map((opt) => opt.text);
+    const filteredSelected = selectedNiches.filter((item) =>
+      availableNiches.includes(item.niche)
+    );
+
+    // Se há diferença, atualiza os nichos selecionados
+    if (filteredSelected.length !== selectedNiches.length) {
+      console.log("[NicheField] Found orphaned niches, cleaning up");
+      console.log(
+        "[NicheField] Removed niches:",
+        selectedNiches
+          .filter((item) => !availableNiches.includes(item.niche))
+          .map((item) => item.niche)
+      );
+      console.log("[NicheField] New selected niches:", filteredSelected);
+
+      setSelectedNiches(filteredSelected);
+      onChange(filteredSelected);
+    }
+  }, [options, selectedNiches, onChange]);
+
   // Atualiza seleção de nicho (checkbox)
   const handleNicheSelect = (niche: string, checked: boolean) => {
+    console.log(
+      `[NicheField] handleNicheSelect - niche: ${niche}, checked: ${checked}`
+    );
+    console.log(
+      "[NicheField] handleNicheSelect - current selectedNiches:",
+      selectedNiches
+    );
+
     let updated = [...selectedNiches];
     if (checked) {
       if (!updated.find((item) => item.niche === niche)) {
         updated.push({ niche, price: "" });
+        console.log(`[NicheField] handleNicheSelect - Added niche: ${niche}`);
       }
     } else {
       updated = updated.filter((item) => item.niche !== niche);
+      console.log(`[NicheField] handleNicheSelect - Removed niche: ${niche}`);
     }
+
+    console.log(
+      "[NicheField] handleNicheSelect - new selectedNiches:",
+      updated
+    );
     setSelectedNiches(updated);
     onChange(updated);
+    console.log(
+      "[NicheField] handleNicheSelect - Called onChange with:",
+      updated
+    );
   };
 
   // Atualiza preço de um nicho
   const handlePriceChange = (niche: string, price: string) => {
+    console.log(
+      `[NicheField] handlePriceChange - niche: ${niche}, price: ${price}`
+    );
+    console.log(
+      "[NicheField] handlePriceChange - current selectedNiches:",
+      selectedNiches
+    );
+
     const updated = selectedNiches.map((item) =>
       item.niche === niche ? { ...item, price } : item
     );
+
+    console.log(
+      "[NicheField] handlePriceChange - new selectedNiches:",
+      updated
+    );
     setSelectedNiches(updated);
     onChange(updated);
+    console.log(
+      "[NicheField] handlePriceChange - Called onChange with:",
+      updated
+    );
   };
 
   // Parse defensivo do valor recebido usando parseNicheData
@@ -164,10 +235,23 @@ export default function NicheField({
 
   // Atualiza seleção inicial se vier do value recebido
   useEffect(() => {
+    console.log("[NicheField] useEffect - safeInitialValue:", safeInitialValue);
+    console.log(
+      "[NicheField] useEffect - current selectedNiches:",
+      selectedNiches
+    );
+
     if (Array.isArray(safeInitialValue) && safeInitialValue.length > 0) {
       setSelectedNiches(safeInitialValue);
+      console.log(
+        "[NicheField] useEffect - Set selectedNiches to:",
+        safeInitialValue
+      );
     } else {
       setSelectedNiches([]);
+      console.log(
+        "[NicheField] useEffect - Reset selectedNiches to empty array"
+      );
     }
   }, [value]);
 
@@ -216,18 +300,13 @@ export default function NicheField({
                         <div className="relative">
                           <input
                             type="text"
-                            className="w-full min-w-[120px] max-w-[180px] border rounded px-3 py-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            className={`w-full min-w-[120px] max-w-[180px] border rounded px-3 py-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                              !checked ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                             inputMode="decimal"
                             placeholder="R$ 0,00"
                             value={price}
-                            // Sempre habilitado para permitir o clique
-                            onClick={() => {
-                              if (!checked) {
-                                alert(
-                                  "Selecione o nicho antes de digitar o preço."
-                                );
-                              }
-                            }}
+                            disabled={!checked}
                             onChange={(e) => {
                               if (!checked) return; // Não permite digitar se não estiver selecionado
                               // Máscara de moeda BRL
@@ -243,24 +322,6 @@ export default function NicheField({
                               handlePriceChange(opt.text, masked);
                             }}
                           />
-                          {!checked && (
-                            <div
-                              className="absolute left-0 top-0 h-full flex items-center justify-center cursor-not-allowed z-10 rounded"
-                              style={{
-                                pointerEvents: "none",
-                                width: "100%",
-                                minWidth: "120px",
-                                maxWidth: "180px",
-                                background: "rgba(255,255,255,0.35)", // cor mais clara
-                                ...(window.matchMedia &&
-                                window.matchMedia(
-                                  "(prefers-color-scheme: dark)"
-                                ).matches
-                                  ? { background: "rgba(17,24,39,0.35)" } // dark mais claro
-                                  : {})
-                              }}
-                            />
-                          )}
                         </div>
                       </td>
                     </tr>

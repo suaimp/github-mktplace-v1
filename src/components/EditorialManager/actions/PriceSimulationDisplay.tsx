@@ -123,7 +123,8 @@ export default function PriceSimulationDisplay({
             100
         );
       }
-    }    priceInfo = {
+    }
+    priceInfo = {
       originalPrice: displayOriginalPrice,
       promotionalPrice: shouldShowOriginalPrice ? finalPrice : undefined,
       finalPrice,
@@ -257,18 +258,19 @@ export function extractMarketplaceProductPrice(
       return null;
     }
   }
-
   // Se é objeto, extrai todos os preços
   if (typeof productData === "object") {
-    const price = productData.price ? parseFloat(productData.price) : 0;
+    const price = productData.price
+      ? parseBrazilianPrice(productData.price)
+      : 0;
     const promotional_price = productData.promotional_price
-      ? parseFloat(productData.promotional_price)
+      ? parseBrazilianPrice(productData.promotional_price)
       : undefined;
     const old_price = productData.old_price
-      ? parseFloat(productData.old_price)
+      ? parseBrazilianPrice(productData.old_price)
       : undefined;
     const old_promotional_price = productData.old_promotional_price
-      ? parseFloat(productData.old_promotional_price)
+      ? parseBrazilianPrice(productData.old_promotional_price)
       : undefined;
     return {
       price,
@@ -288,6 +290,36 @@ export function extractMarketplaceProductPrice(
 }
 
 /**
+ * Função para converter valor brasileiro para número
+ */
+function parseBrazilianPrice(value: any): number {
+  if (!value) return 0;
+
+  let str = String(value);
+
+  // Tratamento específico para diferentes formatos
+  if (str.includes(",") && str.includes(".")) {
+    // Formato brasileiro completo: 1.000,50 ou 10.000,25
+    str = str.replace(/\./g, "").replace(",", ".");
+  } else if (str.includes(",")) {
+    // Apenas vírgula: 1000,50
+    str = str.replace(",", ".");
+  } else if (str.includes(".")) {
+    // Verificar se é decimal ou separador de milhares
+    const parts = str.split(".");
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // Provavelmente decimal: 1000.50 - mantém como está
+    } else {
+      // Separador de milhares: 1.000 ou 10.000
+      str = str.replace(/\./g, "");
+    }
+  }
+
+  const result = parseFloat(str);
+  return isNaN(result) ? 0 : result;
+}
+
+/**
  * Função utilitária para extrair dados de preço de diferentes formatos
  * Baseada na função original do priceCommissionSimulator
  */
@@ -303,7 +335,6 @@ export function extractProductPrice(productData: any): ProductPrice | null {
       return null;
     }
   }
-
   // Se é objeto, extrai os preços
   if (typeof productData === "object") {
     // Prioriza old_price (valor sem comissão) sobre price
@@ -311,10 +342,22 @@ export function extractProductPrice(productData: any): ProductPrice | null {
     const promotionalPriceValue =
       productData.old_promotional_price || productData.promotional_price;
 
-    const price = parseFloat(priceValue);
+    console.log("🔍 [DEBUG] extractProductPrice - valores brutos:", {
+      priceValue,
+      promotionalPriceValue,
+      typeOfPriceValue: typeof priceValue,
+      typeOfPromotionalPriceValue: typeof promotionalPriceValue
+    });
+
+    const price = parseBrazilianPrice(priceValue);
     const promotional_price = promotionalPriceValue
-      ? parseFloat(promotionalPriceValue)
+      ? parseBrazilianPrice(promotionalPriceValue)
       : undefined;
+
+    console.log("🔍 [DEBUG] extractProductPrice - valores parseados:", {
+      price,
+      promotional_price
+    });
 
     if (isNaN(price)) return null;
 

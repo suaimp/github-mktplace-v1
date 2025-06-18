@@ -92,6 +92,11 @@ interface FormFieldSettingsProps {
 interface Option {
   label: string;
   value: string;
+  // Para campos de nicho, aceita também o formato específico
+  text?: string;
+  icon?: string;
+  niche?: string;
+  price?: number;
 }
 
 export default function FormFieldSettings({
@@ -152,6 +157,10 @@ export default function FormFieldSettings({
   // Sincroniza options com settings.options para campo niche
   useEffect(() => {
     if (field.field_type === "niche" && Array.isArray(settings.options)) {
+      console.log(
+        "[FormFieldSettings] Syncing niche options from settings:",
+        settings.options
+      );
       setOptions(settings.options);
     }
   }, [settings.options, field.field_type]);
@@ -180,6 +189,7 @@ export default function FormFieldSettings({
       }
 
       setOptions(field.options || []);
+      console.log("[FormFieldSettings] Loaded field options:", field.options);
     } catch (err) {
       console.error("Error loading field settings:", err);
       setError("Error loading field settings");
@@ -205,12 +215,27 @@ export default function FormFieldSettings({
       if (field.field_type === "niche" && options && options.length > 0) {
         try {
           console.log("[FormFieldSettings] Raw options received:", options);
+          console.log(
+            "[FormFieldSettings] Options with icons check:",
+            options.map((opt) => ({
+              niche: opt.niche || opt.text,
+              icon: opt.icon,
+              hasIcon: !!opt.icon
+            }))
+          );
 
           // Usa a função sanitizeNicheOptions para limpar os dados
           const optionsArr = sanitizeNicheOptions(options);
           console.log(
             "[FormFieldSettings] Sanitized options for DB:",
             optionsArr
+          );
+          console.log(
+            "[FormFieldSettings] Raw data being sent to updateFormFieldNiche:",
+            {
+              field_id: field.id,
+              options: optionsArr
+            }
           );
 
           // Salva options na tabela form_field_niche

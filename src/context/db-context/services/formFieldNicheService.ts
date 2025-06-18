@@ -196,15 +196,32 @@ export async function getFormFieldNicheByFormFieldId(
 export async function createFormFieldNiche(
   input: FormFieldNicheInput
 ): Promise<FormFieldNiche | null> {
+  console.log("[createFormFieldNiche] Creating with input:", input);
+  console.log("[createFormFieldNiche] Options detail:", input.options);
+  if (Array.isArray(input.options)) {
+    input.options.forEach((opt, idx) => {
+      console.log(`[createFormFieldNiche] Option ${idx}:`, opt);
+      if (typeof opt === "object" && opt.icon) {
+        console.log(
+          `[createFormFieldNiche] Icon found in option ${idx}:`,
+          opt.icon
+        );
+      }
+    });
+  }
+
   const { data, error } = await supabase
     .from("form_field_niche")
     .insert([input])
     .select()
     .single();
+
   if (error) {
     console.error("Erro ao criar form_field_niche:", error);
     return null;
   }
+
+  console.log("[createFormFieldNiche] Created successfully:", data);
   return data as FormFieldNiche;
 }
 
@@ -233,6 +250,21 @@ export async function updateFormFieldNiche(
         "com",
         updates
       );
+      console.log(
+        "[updateFormFieldNiche] Updates options detail:",
+        updates.options
+      );
+      if (Array.isArray(updates.options)) {
+        updates.options.forEach((opt, idx) => {
+          console.log(`[updateFormFieldNiche] Update option ${idx}:`, opt);
+          if (typeof opt === "object" && opt.icon) {
+            console.log(
+              `[updateFormFieldNiche] Icon found in update option ${idx}:`,
+              opt.icon
+            );
+          }
+        });
+      }
       try {
         const { data, error } = await supabase
           .from("form_field_niche")

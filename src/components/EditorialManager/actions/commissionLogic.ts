@@ -1,4 +1,38 @@
 /**
+ * Função melhorada para converter valor brasileiro para número
+ */
+function parsePrice(value: any): number {
+  let str = String(value);
+
+  // Tratamento específico para diferentes formatos
+  if (str.includes(",") && str.includes(".")) {
+    // Formato brasileiro completo: 1.000,50 ou 10.000,25
+    str = str.replace(/\./g, "").replace(",", ".");
+  } else if (str.includes(",")) {
+    // Apenas vírgula: 1000,50
+    str = str.replace(",", ".");
+  } else if (str.includes(".")) {
+    // Verificar se é decimal ou separador de milhares
+    const parts = str.split(".");
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // Provavelmente decimal: 1000.50
+      // Mantém como está
+    } else {
+      // Separador de milhares: 1.000 ou 10.000
+      str = str.replace(/\./g, "");
+    }
+  }
+
+  const result = parseFloat(str);
+
+  if (isNaN(result)) {
+    return 0;
+  }
+
+  return result;
+}
+
+/**
  * Aplica comissão aos preços nos valores do formulário
  * @param formValues - Os valores do formulário
  * @param commissionFieldId - ID do campo de comissão
@@ -82,20 +116,34 @@ export function applyCommissionToFormValues(
           basePrice
         );
 
-        const priceStr = String(basePrice).replace(/\./g, "").replace(",", ".");
-        const price = parseFloat(priceStr);
+        const price = parsePrice(basePrice);
 
-        console.log(
-          `💵 [DEBUG] ${fieldId} - Price string formatada:`,
-          priceStr
-        );
+        console.log(`💵 [DEBUG] ${fieldId} - basePrice original:`, basePrice);
         console.log(`💵 [DEBUG] ${fieldId} - Price parseado:`, price);
-
         if (!isNaN(price)) {
           const result = price + (price * commissionPercent) / 100;
-          const formattedResult = String(
-            Math.trunc(result * 100) / 100
-          ).replace(".", ",");
+
+          console.log(`💰 [DEBUG] ${fieldId} - CÁLCULO DETALHADO:`);
+          console.log(`💰 [DEBUG] ${fieldId} - price:`, price);
+          console.log(
+            `💰 [DEBUG] ${fieldId} - commissionPercent:`,
+            commissionPercent
+          );
+          console.log(
+            `💰 [DEBUG] ${fieldId} - (price * commissionPercent) / 100:`,
+            (price * commissionPercent) / 100
+          );
+          console.log(
+            `💰 [DEBUG] ${fieldId} - result (price + margem):`,
+            result
+          );
+
+          const formattedResult = result.toFixed(2).replace(".", ",");
+
+          console.log(
+            `💰 [DEBUG] ${fieldId} - formattedResult:`,
+            formattedResult
+          );
 
           console.log(
             `💵 [DEBUG] ${fieldId} - Price original (old_price):`,
@@ -127,26 +175,15 @@ export function applyCommissionToFormValues(
           basePromotionalPrice
         );
 
-        const promoStr = String(basePromotionalPrice)
-          .replace(/\./g, "")
-          .replace(",", ".");
-        const promo = parseFloat(promoStr);
+        const promo = parsePrice(basePromotionalPrice);
 
-        console.log(
-          `🏷️ [DEBUG] ${fieldId} - Promotional_price string formatada:`,
-          promoStr
-        );
         console.log(
           `🏷️ [DEBUG] ${fieldId} - Promotional_price parseado:`,
           promo
-        );
-
-        // Só aplica comissão se for um número válido E diferente de 0
+        ); // Só aplica comissão se for um número válido E diferente de 0
         if (!isNaN(promo) && promo !== 0) {
           const result = promo + (promo * commissionPercent) / 100;
-          const formattedResult = String(
-            Math.trunc(result * 100) / 100
-          ).replace(".", ",");
+          const formattedResult = result.toFixed(2).replace(".", ",");
 
           console.log(
             `🏷️ [DEBUG] ${fieldId} - Promotional_price original (old_promotional_price):`,
@@ -199,7 +236,7 @@ export function applyCommissionToFormValues(
  * @returns String formatada
  */
 export function formatPriceValue(value: number): string {
-  return String(Math.trunc(value * 100) / 100).replace(".", ",");
+  return value.toFixed(2).replace(".", ",");
 }
 
 /**
@@ -208,5 +245,5 @@ export function formatPriceValue(value: number): string {
  * @returns Número parseado
  */
 export function parsePriceValue(priceStr: string): number {
-  return parseFloat(priceStr.replace(/\./g, "").replace(",", "."));
+  return parsePrice(priceStr);
 }

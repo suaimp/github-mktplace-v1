@@ -9,6 +9,7 @@ import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon, EyeIcon } from "../../icons";
 import { formatDate } from "../form/utils/formatters";
 import { renderFormattedValue } from "./EntryValueFormatter";
+import PriceSimulationDisplay from "./actions/PriceSimulationDisplay";
 
 interface EntriesTableProps {
   entries: any[];
@@ -143,11 +144,33 @@ export default function EntriesTable({
                         key={field.id}
                         className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
                       >
-                        {renderFormattedValue(
-                          entry.values[field.id],
-                          field.field_type,
-                          field
-                        )}
+                        {(() => {
+                          const fieldValue = entry.values[field.id];
+
+                          // Use PriceSimulationDisplay for product fields
+                          if (field.field_type === "product") {
+                            const commissionValue = commissionField
+                              ? parseFloat(entry.values[commissionField.id]) ||
+                                0
+                              : 0;
+
+                            return (
+                              <PriceSimulationDisplay
+                                commission={commissionValue}
+                                productData={fieldValue}
+                                layout="inline"
+                                showMarginBelow={false}
+                                showOriginalPrice={true}
+                              />
+                            );
+                          }
+
+                          return renderFormattedValue(
+                            fieldValue,
+                            field.field_type,
+                            field
+                          );
+                        })()}
                       </TableCell>
                     );
                   })}

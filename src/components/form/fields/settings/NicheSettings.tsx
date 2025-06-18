@@ -27,11 +27,19 @@ export default function NicheSettings({
   useEffect(() => {
     async function fetchOptions() {
       if (!settings.field_id) return;
+      console.log(
+        "[NicheSettings] Fetching options for field_id:",
+        settings.field_id
+      );
       const data = await getFormFieldNicheByFormFieldId(settings.field_id);
       if (data && Array.isArray(data.options) && data.options.length > 0) {
         console.log("[NicheSettings] Raw data from DB:", data.options);
         const formattedOptions = parseNicheData(data.options);
         console.log("[NicheSettings] Parsed options:", formattedOptions);
+        console.log("[NicheSettings] Icons in parsed options:");
+        formattedOptions.forEach((opt, idx) => {
+          console.log(`[NicheSettings] Option ${idx} icon:`, opt.icon);
+        });
         setNiches(formattedOptions);
         onChange({ ...settings, options: formattedOptions });
       }
@@ -50,20 +58,30 @@ export default function NicheSettings({
   };
 
   const handleNicheIconChange = (idx: number, iconName: string) => {
+    console.log(`[NicheSettings] Icon changing for index ${idx}: ${iconName}`);
     const newNiches = niches.map((n, i) =>
       i === idx ? { ...n, icon: iconName } : n
     );
     setNiches(newNiches);
     console.log("[NicheSettings] Icon changed - sending to parent:", newNiches);
+    console.log(
+      `[NicheSettings] New icon for index ${idx}:`,
+      newNiches[idx]?.icon
+    );
     onChange({ ...settings, options: newNiches });
   };
 
   const handleNicheIconClear = (idx: number) => {
+    console.log(`[NicheSettings] Icon clearing for index ${idx}`);
     const newNiches = niches.map((n, i) =>
       i === idx ? { ...n, icon: undefined } : n
     );
     setNiches(newNiches);
     console.log("[NicheSettings] Icon cleared - sending to parent:", newNiches);
+    console.log(
+      `[NicheSettings] Cleared icon for index ${idx}:`,
+      newNiches[idx]?.icon
+    );
     onChange({ ...settings, options: newNiches });
   };
 

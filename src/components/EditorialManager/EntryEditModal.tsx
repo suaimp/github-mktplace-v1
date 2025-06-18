@@ -117,15 +117,10 @@ export default function EntryEditModal({
               updatedValues[field.id] = [];
             } else {
               // Usar parseNicheData para processar corretamente os dados de nicho
-              console.log(
-                "[EntryEditModal] Raw niche data:",
-                updatedValues[field.id]
-              );
-
-              // Transformar o array de objetos {niche, price} para o formato esperado pelo parseNicheData
+              // Transformar o array de objetos {niche, price} para manter o formato correto
               const nicheItems = updatedValues[field.id].map((item: any) => {
                 if (typeof item === "string") {
-                  return { text: item, icon: undefined };
+                  return { niche: item, price: "" };
                 }
 
                 if (typeof item === "object" && item.niche) {
@@ -137,30 +132,36 @@ export default function EntryEditModal({
                     try {
                       const parsedNiche = JSON.parse(item.niche);
                       return {
-                        text: parsedNiche.text || item.niche,
-                        icon: parsedNiche.icon,
-                        price: item.price || ""
+                        niche:
+                          parsedNiche.text || parsedNiche.niche || item.niche,
+                        price: item.price || "",
+                        icon: parsedNiche.icon // Preservar o ícone
                       };
                     } catch {
                       return {
-                        text: item.niche,
-                        icon: undefined,
+                        niche: item.niche,
                         price: item.price || ""
                       };
                     }
                   } else {
                     return {
-                      text: item.niche,
-                      icon: undefined,
-                      price: item.price || ""
+                      niche: item.niche,
+                      price: item.price || "",
+                      icon: item.icon // Preservar o ícone
                     };
                   }
                 }
 
+                // Se o item já tem a propriedade text (dados antigos), converter para niche
+                if (typeof item === "object" && item.text && !item.niche) {
+                  return {
+                    niche: item.text,
+                    price: item.price || ""
+                  };
+                }
                 return item;
               });
 
-              console.log("[EntryEditModal] Processed niche data:", nicheItems);
               updatedValues[field.id] = nicheItems;
             }
           }
@@ -283,7 +284,18 @@ export default function EntryEditModal({
       );
       for (const [fieldId, value] of Object.entries(formValuesWithCommission)) {
         const field = fields.find((f) => f.id === fieldId);
-        if (!field) continue; // Determine if value should be stored in value or value_json - same logic as UserFormEntriesRenderer
+        if (!field) continue; // Log específico para campos de nicho
+        if (field.field_type === "niche") {
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              if (item && typeof item === "object" && item.icon) {
+                // Icon preserved in niche item
+              }
+            });
+          }
+        }
+
+        // Determine if value should be stored in value or value_json - same logic as UserFormEntriesRenderer
         const isJsonValue = typeof value !== "string";
 
         updatedValues.push({
@@ -335,11 +347,9 @@ export default function EntryEditModal({
           // Não bloqueia o salvamento se a sincronização falhar
         }
       }
-
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error updating entry:", err);
       setError("Erro ao atualizar entrada");
     } finally {
       setLoading(false);
