@@ -71,11 +71,10 @@ export function applyCommissionToFormValues(
       "❌ [DEBUG] Não foi encontrado commissionFieldId ou valor está vazio"
     );
   }
-
-  // Se não há comissão, retorna os valores originais
+  // Se não há comissão, define como 0 e prossegue com o fluxo normal
   if (commissionPercent === 0) {
-    console.log("⚠️ [DEBUG] Comissão é 0, retornando valores originais");
-    return updatedFormValues;
+    console.log("⚠️ [DEBUG] Comissão é 0, prosseguindo com fluxo normal");
+    commissionPercent = 0;
   }
 
   console.log(
