@@ -72,20 +72,25 @@ export default function PriceSimulationDisplay({
       // Modo formulário: aplica comissão
       finalPrice = promotionalPrice || originalPrice;
       marginValue = (finalPrice * commissionValue) / 100;
-      priceWithCommission = finalPrice + marginValue;
-    } // Busca preços antigos do productData para marketplace
+      priceWithCommission = finalPrice + marginValue;    } // Busca preços antigos do productData para marketplace
     let oldPrice: number | null = null;
 
     if (showOriginalPrice && productData) {
       if (typeof productData === "object") {
-        oldPrice = productData.old_price
+        const rawOldPrice = productData.old_price
           ? parseFloat(productData.old_price)
           : null;
+        // Só usa old_price se for maior que price atual
+        oldPrice = rawOldPrice && rawOldPrice > originalPrice ? rawOldPrice : null;
       } else if (typeof productData === "string") {
         try {
           const parsed = JSON.parse(productData);
-          oldPrice = parsed.old_price ? parseFloat(parsed.old_price) : null;
-        } catch {}
+          const rawOldPrice = parsed.old_price ? parseFloat(parsed.old_price) : null;
+          // Só usa old_price se for maior que price atual
+          oldPrice = rawOldPrice && rawOldPrice > originalPrice ? rawOldPrice : null;
+        } catch {
+          // Ignore JSON parse errors, oldPrice will remain null
+        }
       }
     }
 
@@ -256,8 +261,7 @@ export function extractMarketplaceProductPrice(
     } catch {
       return null;
     }
-  }
-  // Se é objeto, extrai todos os preços
+  }  // Se é objeto, extrai todos os preços
   if (typeof productData === "object") {
     const price = productData.price
       ? parseBrazilianPrice(productData.price)
@@ -265,12 +269,21 @@ export function extractMarketplaceProductPrice(
     const promotional_price = productData.promotional_price
       ? parseBrazilianPrice(productData.promotional_price)
       : undefined;
-    const old_price = productData.old_price
+    const rawOldPrice = productData.old_price
       ? parseBrazilianPrice(productData.old_price)
       : undefined;
-    const old_promotional_price = productData.old_promotional_price
+    const rawOldPromotionalPrice = productData.old_promotional_price
       ? parseBrazilianPrice(productData.old_promotional_price)
       : undefined;
+    
+    // Só usa old_price se for maior que price atual
+    const old_price = rawOldPrice && rawOldPrice > price ? rawOldPrice : undefined;
+    
+    // Só usa old_promotional_price se for maior que promotional_price atual
+    const old_promotional_price = rawOldPromotionalPrice && promotional_price && rawOldPromotionalPrice > promotional_price 
+      ? rawOldPromotionalPrice 
+      : undefined;
+    
     return {
       price,
       promotional_price:
