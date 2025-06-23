@@ -13,6 +13,7 @@ interface PaymentInformationFormProps {
     state: string;
     zipCode: string;
     documentNumber: string;
+    phone: string;
   };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -124,13 +125,19 @@ export default function PaymentInformationForm({
           // Update zipCode
           onChange({
             target: { name: "zipCode", value: data.zip_code || "" }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update documentNumber
+          } as React.ChangeEvent<HTMLInputElement>); // Update documentNumber
           onChange({
             target: {
               name: "documentNumber",
               value: data.document_number || ""
+            }
+          } as React.ChangeEvent<HTMLInputElement>);
+
+          // Update phone
+          onChange({
+            target: {
+              name: "phone",
+              value: data.phone || ""
             }
           } as React.ChangeEvent<HTMLInputElement>);
         }
@@ -195,6 +202,14 @@ export default function PaymentInformationForm({
               target: {
                 name: "documentNumber",
                 value: data.document_number || ""
+              }
+            } as React.ChangeEvent<HTMLInputElement>);
+
+            // Update phone
+            onChange({
+              target: {
+                name: "phone",
+                value: data.phone || ""
               }
             } as React.ChangeEvent<HTMLInputElement>);
           } else {
@@ -262,7 +277,6 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-
         <div>
           <Label>
             Email <span className="text-error-500">*</span>
@@ -275,7 +289,6 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-
         <div>
           <Label>
             Endereço <span className="text-error-500">*</span>
@@ -288,7 +301,6 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-
         <div>
           <Label>
             Cidade <span className="text-error-500">*</span>
@@ -301,7 +313,6 @@ export default function PaymentInformationForm({
             required
           />
         </div>
-
         <div>
           <Label>
             Estado <span className="text-error-500">*</span>
@@ -317,7 +328,6 @@ export default function PaymentInformationForm({
             placeholder="Selecione um estado"
           />
         </div>
-
         <div>
           <Label>
             CEP <span className="text-error-500">*</span>
@@ -329,8 +339,7 @@ export default function PaymentInformationForm({
             onChange={onChange}
             required
           />
-        </div>
-
+        </div>{" "}
         <div>
           <Label>
             {accountType === "business" ? "CNPJ" : "CPF"}{" "}
@@ -341,6 +350,19 @@ export default function PaymentInformationForm({
             name="documentNumber"
             value={formData.documentNumber}
             onChange={onChange}
+            required
+          />
+        </div>
+        <div>
+          <Label>
+            Telefone/Celular <span className="text-error-500">*</span>
+          </Label>
+          <Input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={onChange}
+            placeholder="(11) 99999-9999"
             required
           />
         </div>

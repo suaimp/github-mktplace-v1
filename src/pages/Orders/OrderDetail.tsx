@@ -238,16 +238,18 @@ export default function OrderDetail() {
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Artigo DOC
-                      </th>
+                      </th>{" "}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         URL do Artigo
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Status de Publicação
-                      </th>{" "}
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Ação
                       </th>
+                      {isAdmin && (
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Ação
+                        </th>
+                      )}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Total
                       </th>
@@ -417,7 +419,7 @@ export default function OrderDetail() {
                                 Enviar
                               </button>
                             </div>
-                          </div>
+                          </div>{" "}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
                           {item.publication_status === "approved" ? (
@@ -434,32 +436,30 @@ export default function OrderDetail() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          <Select
-                            options={[
-                              { value: "pending", label: "Pendente" },
-                              { value: "approved", label: "Aprovar" },
-                              { value: "rejected", label: "Reprovar" }
-                            ]}
-                            value={item.publication_status || "pending"}
-                            onChange={(value) =>
-                              handleChangePublicationStatus(item.id, value)
-                            }
-                          />
-                        </td>{" "}
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
-                            {formatCurrency(item.total_price)}
+                        {isAdmin && (
+                          <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                            <Select
+                              options={[
+                                { value: "pending", label: "Pendente" },
+                                { value: "approved", label: "Aprovar" },
+                                { value: "rejected", label: "Reprovar" }
+                              ]}
+                              value={item.publication_status || "pending"}
+                              onChange={(value) =>
+                                handleChangePublicationStatus(item.id, value)
+                              }
+                            />
                           </td>
+                        )}
+                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
+                          {formatCurrency(item.total_price)}
                         </td>
                       </tr>
                     ))}
-                  </tbody>
-                  <tfoot>
+                  </tbody>                  <tfoot>
                     <tr>
-                      {" "}
                       <td
-                        colSpan={7}
+                        colSpan={isAdmin ? 6 : 5}
                         className="px-4 py-4 text-right font-medium text-gray-700 dark:text-gray-300"
                       >
                         Total:

@@ -11,6 +11,7 @@ import FinishOrder from "../../components/Checkout/FinishOrder";
 import { createOrder } from "../../context/db-context/services/OrderService";
 import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
+import { validatePhone } from "../../utils/phoneValidation";
 
 // Mock function to simulate payment processing
 // @ts-ignore
@@ -32,7 +33,6 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [stripePromise, setStripePromise] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,7 +40,8 @@ export default function Payment() {
     city: "",
     state: "",
     zipCode: "",
-    documentNumber: ""
+    documentNumber: "",
+    phone: ""
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderSummary, setOrderSummary] = useState({
@@ -457,9 +458,7 @@ export default function Payment() {
 
       // Calculate total amount
       const totalAmount =
-        orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-
-      // Create order
+        orderSummary.totalProductPrice + orderSummary.totalContentPrice; // Create order
       const order = await createOrder({
         payment_method: paymentMethod,
         total_amount: totalAmount,
@@ -470,6 +469,7 @@ export default function Payment() {
         billing_state: formData.state,
         billing_zip_code: formData.zipCode,
         billing_document_number: formData.documentNumber,
+        phone: formData.phone,
         payment_id: paymentId,
         items: orderItems
       });
@@ -544,7 +544,8 @@ export default function Payment() {
       !formData.city ||
       !formData.state ||
       !formData.zipCode ||
-      !formData.documentNumber
+      !formData.documentNumber ||
+      !formData.phone
     ) {
       console.log("FORM VALIDATION ERROR:", {
         errorType: "missing_required_fields",
@@ -558,10 +559,17 @@ export default function Payment() {
           city: !formData.city,
           state: !formData.state,
           zipCode: !formData.zipCode,
-          documentNumber: !formData.documentNumber
+          documentNumber: !formData.documentNumber,
+          phone: !formData.phone
         }
       });
       setError("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Validate phone number
+    if (!validatePhone(formData.phone)) {
+      setError("Por favor, insira um número de telefone válido");
       return;
     }
 

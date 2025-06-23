@@ -14,6 +14,7 @@ export interface Order {
   billing_state: string;
   billing_zip_code: string;
   billing_document_number: string;
+  phone: string;
   payment_id?: string;
   metadata?: any;
   created_at: string;
@@ -48,6 +49,7 @@ export interface CreateOrderInput {
   billing_state: string;
   billing_zip_code: string;
   billing_document_number: string;
+  phone: string;
   payment_id?: string;
   metadata?: any;
   items: {
@@ -72,9 +74,7 @@ export async function createOrder(
     } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("User not authenticated");
-    }
-
-    // Create order
+    } // Create order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert([
@@ -91,6 +91,7 @@ export async function createOrder(
           billing_state: input.billing_state,
           billing_zip_code: input.billing_zip_code,
           billing_document_number: input.billing_document_number,
+          phone: input.phone,
           payment_id: input.payment_id,
           metadata: input.metadata
         }

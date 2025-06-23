@@ -1,8 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { supabase } from "../../lib/supabase";
 import {
   Table,
   TableBody,
@@ -14,122 +11,27 @@ import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
 import { EyeIcon } from "../../icons";
 import { formatCurrency } from "../../components/marketplace/utils";
-
-interface Order {
-  id: string;
-  user_id: string;
-  status: string;
-  payment_method: string;
-  payment_status: string;
-  total_amount: number;
-  billing_name: string;
-  billing_email: string;
-  created_at: string;
-  updated_at: string;
-}
+import { formatPhone } from "../../utils/phoneValidation";
+import { useOrderList } from "./actions/useOrderList";
 
 export default function OrderList() {
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [ordersPerPage, setOrdersPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
-
-  // Ensure current page is valid
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(totalPages);
-  }
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  // Filter orders when dependencies change
-  useEffect(() => {
-    let result = [...orders];
-
-    // Apply search filter if search term exists
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      result = result.filter((order) => {
-        return (
-          order.id.toLowerCase().includes(lowerSearchTerm) ||
-          order.billing_name?.toLowerCase().includes(lowerSearchTerm) ||
-          order.billing_email?.toLowerCase().includes(lowerSearchTerm) ||
-          order.status.toLowerCase().includes(lowerSearchTerm) ||
-          order.payment_method.toLowerCase().includes(lowerSearchTerm) ||
-          order.payment_status.toLowerCase().includes(lowerSearchTerm)
-        );
-      });
-    }
-
-    setFilteredOrders(result);
-    setCurrentPage(1); // Reset to first page when filtering
-  }, [orders, searchTerm]);
-
-  async function loadOrders() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      } // Verificar se o usuário é administrador
-      const { data: adminData } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const userIsAdmin = !!adminData;
-      setIsAdmin(userIsAdmin);
-
-      let query = supabase.from("orders").select("*");
-
-      if (userIsAdmin) {
-        // Se for admin, busca todos os pedidos
-        query = query.order("created_at", { ascending: false });
-      } else {
-        // Se não for admin, busca apenas os pedidos do usuário logado
-        query = query
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (err: any) {
-      console.error("Error loading orders:", err);
-      setError(err.message || "Error loading orders");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleViewOrder = (orderId: string) => {
-    navigate(`/orders/${orderId}`);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  };
+  const {
+    paginatedOrders,
+    loading,
+    error,
+    isAdmin,
+    searchTerm,
+    ordersPerPage,
+    currentPage,
+    totalPages,
+    filteredOrders,
+    handleViewOrder,
+    copyToClipboard,
+    formatDate,
+    handleSearch,
+    handleOrdersPerPageChange,
+    setCurrentPage
+  } = useOrderList();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -172,23 +74,6 @@ export default function OrderList() {
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleOrdersPerPageChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setOrdersPerPage(parseInt(e.target.value));
-    setCurrentPage(1); // Reset to first page when changing orders per page
-  };
-
-  // Pagination
-  const paginatedOrders = filteredOrders.slice(
-    (currentPage - 1) * ordersPerPage,
-    currentPage * ordersPerPage
-  );
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -202,8 +87,8 @@ export default function OrderList() {
       <PageMeta
         title="Meus Pedidos | Marketplace"
         description="Lista de pedidos realizados"
-      />
-      <PageBreadcrumb pageTitle="Meus Pedidos" />{" "}
+      />{" "}
+      <PageBreadcrumb pageTitle="Meus Pedidos" />
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
           {error}
@@ -364,16 +249,69 @@ export default function OrderList() {
                         <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           #{order.id.substring(0, 8)}
                         </span>
-                      </TableCell>
+                      </TableCell>{" "}
                       {isAdmin && (
                         <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                           <div>
                             <div className="font-medium text-gray-800 dark:text-white/90">
                               {order.billing_name}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {order.billing_email}
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              <span>{order.billing_email}</span>
+                              <button
+                                onClick={() =>
+                                  copyToClipboard(order.billing_email, "Email")
+                                }
+                                className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                title="Copiar email"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                  <path
+                                    d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V7C20 5.89543 19.1046 5 18 5H16M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5M8 5C8 6.10457 8.89543 7 10 7H14C15.1046 7 16 6.10457 16 5M12 12H16M12 16H16"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
                             </div>
+                            {order.phone && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                <span>{formatPhone(order.phone)}</span>
+                                <button
+                                  onClick={() =>
+                                    copyToClipboard(order.phone, "Telefone")
+                                  }
+                                  className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                  title="Copiar telefone"
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                  >
+                                    <path
+                                      d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V7C20 5.89543 19.1046 5 18 5H16M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5M8 5C8 6.10457 8.89543 7 10 7H14C15.1046 7 16 6.10457 16 5M12 12H16M12 16H16"
+                                      stroke="currentColor"
+                                      strokeWidth="1.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                       )}
