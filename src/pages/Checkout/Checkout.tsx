@@ -9,59 +9,12 @@ import Button from "../../components/ui/button/Button";
 
 import CheckoutCards from "../../components/ServicePackages/cards/CheckoutCards";
 import ResumeTable from "../../components/Checkout/ResumeTable";
-import CheckoutForm from "../../components/Checkout/CheckoutForm";
 import FinishOrder from "../../components/Checkout/FinishOrder";
 
 export default function Checkout() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items } = useCart();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    paymentMethod: "credit_card"
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      setLoading(true);
-
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Clear cart after successful checkout
-      await clearCart();
-
-      // Show success message
-      setSuccess(true);
-
-      // Redirect after a delay
-      setTimeout(() => {
-        navigate("/");
-      }, 3000);
-    } catch (error) {
-      console.error("Error processing checkout:", error);
-      console.log(CheckoutForm);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [success] = useState(false); // Remover se não for usado
 
   if (success) {
     return (
@@ -169,14 +122,7 @@ export default function Checkout() {
               handleSubmit={handleSubmit}
             /> */}
 
-            <FinishOrder
-              formData={formData}
-              loading={loading}
-              totalPrice={totalPrice}
-              handleChange={handleChange}
-              handleSelectChange={handleSelectChange}
-              handleSubmit={handleSubmit}
-            />
+            <FinishOrder />
           </div>
         </div>
       </div>

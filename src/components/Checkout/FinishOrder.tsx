@@ -3,24 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
 
-interface CheckoutFormProps {
-  formData: {
-    name: string;
-    email: string;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    paymentMethod: string;
-  };
-  loading: boolean;
-  totalPrice: number;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectChange: (name: string, value: string) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-}
-
-export default function CheckoutForm({}: CheckoutFormProps) {
+export default function FinishOrder() {
   const [totalProductPrice, setTotalProductPrice] = useState<number | null>(
     null
   );
@@ -164,13 +147,16 @@ export default function CheckoutForm({}: CheckoutFormProps) {
           )}
         </div>
       </div>
-      <button
-        className="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors"
-        type="button"
-        onClick={handleGoToPayment}
-      >
-        Ir para pagamento
-      </button>
+      {/* Botão só aparece se não estiver na rota de pagamento */}
+      {window.location.pathname !== "/checkout/payment" && (
+        <button
+          className="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors"
+          type="button"
+          onClick={handleGoToPayment}
+        >
+          Ir para pagamento
+        </button>
+      )}
     </div>
   );
 }

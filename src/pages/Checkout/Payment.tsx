@@ -7,7 +7,7 @@ import Button from "../../components/ui/button/Button";
 import { supabase } from "../../lib/supabase";
 import PaymentInformationForm from "../../components/Checkout/PaymentInformationForm";
 import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";
-import OrderSummary from "../../components/Checkout/OrderSummary";
+import FinishOrder from "../../components/Checkout/FinishOrder";
 import { createOrder } from "../../context/db-context/services/OrderService";
 import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
@@ -944,13 +944,8 @@ export default function Payment() {
         </div>
 
         <div className="w-full md:w-2/5">
-          {" "}
-          <OrderSummary
-            items={orderSummary.items}
-            totalProductPrice={orderSummary.totalProductPrice}
-            totalContentPrice={orderSummary.totalContentPrice}
-            totalFinalPrice={orderSummary.totalFinalPrice}
-          />
+          {/* Substituído OrderSummary por FinishOrder */}
+          <FinishOrder />
         </div>
       </div>
     </>
