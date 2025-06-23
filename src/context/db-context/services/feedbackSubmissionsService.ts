@@ -209,10 +209,9 @@ export class FeedbackSubmissionsService {
 
     // Converter para formato do frontend
     return this.convertToDisplay(feedback);
-  }
-  // Buscar feedback por ID
+  } // Buscar feedback por ID
   // Admins podem ver qualquer feedback, usuários normais só os próprios
-  static async getById(id: string): Promise<FeedbackSubmission | null> {
+  static async getById(id: string): Promise<FeedbackSubmissionDisplay | null> {
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -240,7 +239,7 @@ export class FeedbackSubmissionsService {
       throw new Error(`Erro ao buscar feedback: ${error.message}`);
     }
 
-    return feedback;
+    return this.convertToDisplay(feedback);
   } // Listar feedbacks com filtros e paginação
   // Admins podem ver todos os feedbacks, usuários normais só veem os próprios
   static async list(
@@ -359,13 +358,12 @@ export class FeedbackSubmissionsService {
       ),
       count: count || 0
     };
-  }
-  // Atualizar feedback
+  } // Atualizar feedback
   // Admins podem atualizar qualquer feedback, usuários normais só os próprios
   static async update(
     id: string,
     data: UpdateFeedbackSubmissionInput
-  ): Promise<FeedbackSubmission> {
+  ): Promise<FeedbackSubmissionDisplay> {
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -392,20 +390,18 @@ export class FeedbackSubmissionsService {
     }
 
     const { data: feedback, error } = await query.select().single();
-
     if (error) {
       console.error("Erro ao atualizar feedback:", error);
       throw new Error(`Erro ao atualizar feedback: ${error.message}`);
     }
 
-    return feedback;
+    return this.convertToDisplay(feedback);
   }
-
   // Marcar como revisado (para admins)
   static async markAsReviewed(
     id: string,
     adminNotes?: string
-  ): Promise<FeedbackSubmission> {
+  ): Promise<FeedbackSubmissionDisplay> {
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -436,14 +432,13 @@ export class FeedbackSubmissionsService {
       );
     }
 
-    return feedback;
+    return this.convertToDisplay(feedback);
   }
-
   // Atualizar status
   static async updateStatus(
     id: string,
     status: string
-  ): Promise<FeedbackSubmission> {
+  ): Promise<FeedbackSubmissionDisplay> {
     return this.update(id, { status });
   }
   // Deletar feedback
@@ -639,12 +634,11 @@ export class FeedbackSubmissionsService {
   }
 
   // Métodos específicos para administradores
-
   // Listar todos os feedbacks (apenas para admins)
   static async getAllFeedbacks(
     page: number = 1,
     limit: number = 10
-  ): Promise<{ data: FeedbackSubmission[]; count: number }> {
+  ): Promise<{ data: FeedbackSubmissionDisplay[]; count: number }> {
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -672,24 +666,24 @@ export class FeedbackSubmissionsService {
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-
     if (error) {
       console.error("Erro ao listar todos os feedbacks:", error);
       throw new Error(`Erro ao listar feedbacks: ${error.message}`);
     }
 
     return {
-      data: feedbacks || [],
+      data: (feedbacks || []).map((feedback) =>
+        this.convertToDisplay(feedback)
+      ),
       count: count || 0
     };
   }
-
   // Buscar feedbacks por status específico (para admins)
   static async getFeedbacksByStatus(
     status: string,
     page: number = 1,
     limit: number = 10
-  ): Promise<{ data: FeedbackSubmission[]; count: number }> {
+  ): Promise<{ data: FeedbackSubmissionDisplay[]; count: number }> {
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -718,20 +712,21 @@ export class FeedbackSubmissionsService {
       .eq("status", status)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-
     if (error) {
       console.error("Erro ao buscar feedbacks por status:", error);
       throw new Error(`Erro ao buscar feedbacks: ${error.message}`);
     }
 
     return {
-      data: feedbacks || [],
+      data: (feedbacks || []).map((feedback) =>
+        this.convertToDisplay(feedback)
+      ),
       count: count || 0
     };
   }
 
   // Buscar feedbacks pendentes (para admins)
-  static async getPendingFeedbacks(): Promise<FeedbackSubmission[]> {
+  static async getPendingFeedbacks(): Promise<FeedbackSubmissionDisplay[]> {
     const result = await this.getFeedbacksByStatus("pending");
     return result.data;
   }

@@ -1,20 +1,54 @@
 import { FeedbackSubmissionsService } from "../../../../context/db-context/services/feedbackSubmissionsService";
-import type { FeedbackSubmission as DBFeedbackSubmission } from "../../../../context/db-context/services/feedbackSubmissionsService";
+import type {
+  FeedbackSubmissionDisplay,
+  FeedbackSubmission as DBFeedbackSubmission
+} from "../../../../context/db-context/services/feedbackSubmissionsService";
 import type { FeedbackSubmission } from "../types/feedback";
 import { getCategoryId, getPriorityId } from "./feedbackActions";
 
 // Funções específicas para administração de feedback
 
-// Converter do formato do banco para o formato do componente
-function convertToComponentFormat(
+// Converter do formato de display (strings) para o formato do componente
+function convertDisplayToComponentFormat(
+  displayFeedback: FeedbackSubmissionDisplay
+): FeedbackSubmission {
+  return {
+    id: displayFeedback.id,
+    name: displayFeedback.name,
+    email: displayFeedback.email,
+    category: getCategoryId(displayFeedback.category),
+    priority: getPriorityId(displayFeedback.priority),
+    subject: displayFeedback.subject,
+    message: displayFeedback.message,
+    submittedAt: new Date(displayFeedback.created_at),
+    status: displayFeedback.status as
+      | "pending"
+      | "reviewed"
+      | "implemented"
+      | "rejected"
+  };
+}
+
+// Converter do formato do banco (arrays de objetos) para o formato do componente
+function convertDBToComponentFormat(
   dbFeedback: DBFeedbackSubmission
 ): FeedbackSubmission {
+  // Extrair a string do primeiro objeto no array para category e priority
+  const categoryString =
+    Array.isArray(dbFeedback.category) && dbFeedback.category.length > 0
+      ? dbFeedback.category[0].category
+      : "";
+  const priorityString =
+    Array.isArray(dbFeedback.priority) && dbFeedback.priority.length > 0
+      ? dbFeedback.priority[0].priority
+      : "";
+
   return {
     id: dbFeedback.id,
     name: dbFeedback.name,
     email: dbFeedback.email,
-    category: getCategoryId(dbFeedback.category),
-    priority: getPriorityId(dbFeedback.priority),
+    category: getCategoryId(categoryString),
+    priority: getPriorityId(priorityString),
     subject: dbFeedback.subject,
     message: dbFeedback.message,
     submittedAt: new Date(dbFeedback.created_at),
@@ -35,7 +69,7 @@ export async function getAllFeedbacks(
     const result = await FeedbackSubmissionsService.list({}, page, limit);
 
     return {
-      data: result.data.map(convertToComponentFormat),
+      data: result.data.map(convertDisplayToComponentFormat),
       count: result.count
     };
   } catch (error) {
@@ -54,7 +88,7 @@ export async function markFeedbackAsReviewed(
       id,
       adminNotes
     );
-    return convertToComponentFormat(result);
+    return convertDisplayToComponentFormat(result);
   } catch (error) {
     console.error("Erro ao marcar feedback como revisado:", error);
     throw error;
@@ -68,7 +102,7 @@ export async function updateFeedbackStatus(
 ): Promise<FeedbackSubmission> {
   try {
     const result = await FeedbackSubmissionsService.updateStatus(id, status);
-    return convertToComponentFormat(result);
+    return convertDisplayToComponentFormat(result);
   } catch (error) {
     console.error("Erro ao atualizar status do feedback:", error);
     throw error;
@@ -91,7 +125,7 @@ export async function getFeedbackById(
 ): Promise<FeedbackSubmission | null> {
   try {
     const result = await FeedbackSubmissionsService.getById(id);
-    return result ? convertToComponentFormat(result) : null;
+    return result ? convertDisplayToComponentFormat(result) : null;
   } catch (error) {
     console.error("Erro ao buscar feedback por ID:", error);
     return null;
@@ -104,7 +138,7 @@ export async function getRecentFeedbacks(
 ): Promise<FeedbackSubmission[]> {
   try {
     const result = await FeedbackSubmissionsService.getRecentFeedbacks(limit);
-    return result.map(convertToComponentFormat);
+    return result.map(convertDBToComponentFormat);
   } catch (error) {
     console.error("Erro ao buscar feedbacks recentes:", error);
     return [];
@@ -117,7 +151,7 @@ export async function getFeedbacksByUser(
 ): Promise<FeedbackSubmission[]> {
   try {
     const result = await FeedbackSubmissionsService.getFeedbacksByUser(userId);
-    return result.map(convertToComponentFormat);
+    return result.map(convertDBToComponentFormat);
   } catch (error) {
     console.error("Erro ao buscar feedbacks do usuário:", error);
     return [];
@@ -161,7 +195,7 @@ export async function searchFeedbacks(
     const result = await FeedbackSubmissionsService.list(filters, page, limit);
 
     return {
-      data: result.data.map(convertToComponentFormat),
+      data: result.data.map(convertDisplayToComponentFormat),
       count: result.count
     };
   } catch (error) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FeedbackSubmissionsService } from "../../../context/db-context/services/feedbackSubmissionsService";
-import type { FeedbackSubmission } from "../../../context/db-context/services/feedbackSubmissionsService";
+import type { FeedbackSubmissionDisplay } from "../../../context/db-context/services/feedbackSubmissionsService";
 
 interface AdminFeedbackDashboardProps {
   className?: string;
@@ -9,7 +9,7 @@ interface AdminFeedbackDashboardProps {
 export default function AdminFeedbackDashboard({
   className = ""
 }: AdminFeedbackDashboardProps) {
-  const [feedbacks, setFeedbacks] = useState<FeedbackSubmission[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackSubmissionDisplay[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
