@@ -456,7 +456,8 @@ export default function OrderDetail() {
                         </td>
                       </tr>
                     ))}
-                  </tbody>                  <tfoot>
+                  </tbody>{" "}
+                  <tfoot>
                     <tr>
                       <td
                         colSpan={isAdmin ? 6 : 5}
