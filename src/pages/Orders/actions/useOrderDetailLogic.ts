@@ -4,6 +4,7 @@ import { supabase } from "../../../lib/supabase";
 import { useOrderDetails } from "./useOrderDetails";
 import { useFileDownload } from "./useFileDownload";
 import { simulateBoletoPaymentConfirmation } from "../../../context/db-context/services/OrderService";
+import { OrderItemService } from "../../../context/db-context/services/OrderItemService";
 
 export function useOrderDetailLogic() {
   const {
@@ -92,38 +93,15 @@ export function useOrderDetailLogic() {
 
       if (uploadError) throw uploadError;
 
-      const { data: itemData, error: itemError } = await supabase
-        .from("order_items")
-        .select(
-          `
-          id,
-          order_id,
-          orders!inner(
-            id,
-            user_id
-          )
-        `
-        )
-        .eq("id", selectedItemId)
-        .single();
+      // Busca o item do pedido junto com o pedido relacionado
+      await OrderItemService.getOrderItemWithOrder(selectedItemId);
 
-      if (itemError) {
-        throw itemError;
-      } else {
-        itemData;
-      }
-
-      const { error: updateError } = await supabase
-        .from("order_items")
-        .update({
-          article_document_path: filePath,
-          article_doc: selectedFile.name
-        })
-        .eq("id", selectedItemId);
-
-      if (updateError) {
-        throw updateError;
-      }
+      // Atualiza o registro do item do pedido com o caminho do documento e nome do arquivo
+      await OrderItemService.uploadArticleDocument(
+        selectedItemId,
+        filePath,
+        selectedFile.name
+      );
 
       setUploadSuccess(true);
       await handleFileUpload(selectedFile);
@@ -163,6 +141,17 @@ export function useOrderDetailLogic() {
       setConfirmingBoleto(false);
     }
   };
+
+  // Função para envio da URL do artigo
+  const sendArticleUrl = async (itemId: string, url: string) => {
+    try {
+      await OrderItemService.updateOrderItem(itemId, { article_url: url });
+      console.log("URL do artigo salva com sucesso:", { itemId, url });
+    } catch (error) {
+      console.error("Erro ao salvar URL do artigo:", error);
+    }
+  };
+
   return {
     order,
     orderItems,
@@ -195,6 +184,7 @@ export function useOrderDetailLogic() {
     handleDownloadFile,
     clearDownloadError,
     confirmingBoleto,
-    handleConfirmBoletoPayment
+    handleConfirmBoletoPayment,
+    sendArticleUrl
   };
 }

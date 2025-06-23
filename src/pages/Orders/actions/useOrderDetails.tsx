@@ -31,6 +31,7 @@ interface OrderItem {
   service_content?: any;
   article_doc?: string;
   article_document_path?: string;
+  article_url?: string;
   article_url_status?: "pending" | "sent";
   publication_status?: "approved" | "rejected" | "pending";
 }
@@ -149,12 +150,10 @@ export function useOrderDetails() {
 
       setOrderItems(itemsWithExtendedData);
 
-      // Initialize article URLs
+      // Inicializa article URLs
       const urls: { [key: string]: string } = {};
       itemsWithExtendedData.forEach((item: OrderItem) => {
-        if (item.product_url) {
-          urls[item.id] = item.product_url;
-        }
+        urls[item.id] = item.article_url || "";
       });
       setArticleUrl(urls);
     } catch (err: any) {
@@ -223,7 +222,7 @@ export function useOrderDetails() {
       const { error } = await supabase
         .from("order_items")
         .update({
-          product_url: articleUrl[itemId],
+          article_url: articleUrl[itemId],
           article_url_status: "sent"
         })
         .eq("id", itemId);
@@ -236,7 +235,7 @@ export function useOrderDetails() {
           item.id === itemId
             ? {
                 ...item,
-                product_url: articleUrl[itemId],
+                article_url: articleUrl[itemId],
                 article_url_status: "sent"
               }
             : item

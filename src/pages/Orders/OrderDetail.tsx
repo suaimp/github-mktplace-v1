@@ -6,19 +6,18 @@ import Button from "../../components/ui/button/Button";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { getFaviconUrl } from "../../components/form/utils/formatters";
 import Select from "../../components/form/Select";
-import Tooltip from "../../components/ui/Tooltip";
 import { Modal } from "../../components/ui/modal";
 import { useState, useEffect } from "react";
-import { ChatIcon } from "../../icons";
-import OrderChatModal from "./local-components/OrderChatModal";
 import OrderInfoModal from "./local-components/OrderInfoModal";
 import { supabase } from "../../lib/supabase";
 
 export default function OrderDetail() {
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState("");
-  const [selectedItemData, setSelectedItemData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Estado local apenas para o input da URL do artigo
+  const [tempArticleUrl, setTempArticleUrl] = useState<{
+    [key: string]: string;
+  }>({});
+
   const {
     isOrderInfoModalOpen,
     openOrderInfoModal,
@@ -37,10 +36,8 @@ export default function OrderDetail() {
     loading,
     error,
     isDocModalOpen,
-    articleUrl,
     navigate,
     handleChangePublicationStatus,
-    handleArticleUrlChange,
     openDocModal,
     closeDocModal,
     formatDate,
@@ -60,19 +57,9 @@ export default function OrderDetail() {
     handleDownloadFile,
     clearDownloadError,
     confirmingBoleto,
-    handleConfirmBoletoPayment
+    handleConfirmBoletoPayment,
+    sendArticleUrl // <-- nova função
   } = useOrderDetailLogic();
-
-  const openChatModal = (item: any) => {
-    setSelectedItemId(item.id);
-    setSelectedItemData(item);
-    setIsChatModalOpen(true);
-  };
-  const closeChatModal = () => {
-    setIsChatModalOpen(false);
-    setSelectedItemId("");
-    setSelectedItemData(null);
-  };
 
   // Check if user is admin
   useEffect(() => {
@@ -97,6 +84,25 @@ export default function OrderDetail() {
 
     checkAdminStatus();
   }, []);
+
+  // Preenche o estado inicial do input de URL do artigo com o valor do banco (article_url)
+  useEffect(() => {
+    if (orderItems && orderItems.length > 0) {
+      setTempArticleUrl((prev) => {
+        const updated: { [key: string]: string } = { ...prev };
+        orderItems.forEach((item) => {
+          if (
+            item.id &&
+            typeof item.article_url === "string" &&
+            item.article_url.trim() !== ""
+          ) {
+            updated[item.id] = item.article_url;
+          }
+        });
+        return updated;
+      });
+    }
+  }, [orderItems]);
 
   if (loading) {
     return (
@@ -243,9 +249,6 @@ export default function OrderDetail() {
                         Ação
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Chat
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Total
                       </th>
                     </tr>
@@ -383,21 +386,37 @@ export default function OrderDetail() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
                           <div className="flex items-center">
-                            <Tooltip content="Insira a URL do artigo">
-                              {" "}
+                            <div className="flex items-center gap-2">
                               <input
                                 type="text"
-                                value={articleUrl[item.id] || ""}
+                                value={
+                                  typeof tempArticleUrl[item.id] !== "undefined"
+                                    ? tempArticleUrl[item.id]
+                                    : item.article_url ?? ""
+                                }
                                 onChange={(e) =>
-                                  handleArticleUrlChange(
-                                    item.id,
-                                    e.target.value
-                                  )
+                                  setTempArticleUrl((prev) => ({
+                                    ...prev,
+                                    [item.id]: e.target.value
+                                  }))
                                 }
                                 className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
-                                placeholder="URL do artigo"
+                                placeholder="Informe a URL do artigo"
+                                id={`article-url-input-${item.id}`}
                               />
-                            </Tooltip>
+                              <button
+                                className="ml-2 px-3 py-1 bg-brand-500 text-white rounded hover:bg-brand-600 transition-colors text-xs"
+                                onClick={() => {
+                                  sendArticleUrl(
+                                    item.id,
+                                    tempArticleUrl[item.id] ?? ""
+                                  );
+                                }}
+                                title="Enviar URL"
+                              >
+                                Enviar
+                              </button>
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
@@ -416,7 +435,6 @@ export default function OrderDetail() {
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          {" "}
                           <Select
                             options={[
                               { value: "pending", label: "Pendente" },
@@ -430,16 +448,9 @@ export default function OrderDetail() {
                           />
                         </td>{" "}
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          <button
-                            onClick={() => openChatModal(item)}
-                            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Abrir chat do item"
-                          >
-                            <ChatIcon className="w-6 h-6" />
-                          </button>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
-                          {formatCurrency(item.total_price)}
+                          <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
+                            {formatCurrency(item.total_price)}
+                          </td>
                         </td>
                       </tr>
                     ))}
@@ -647,13 +658,6 @@ export default function OrderDetail() {
           isAdmin={isAdmin}
         />
       )}
-      {/* Order Chat Modal */}
-      <OrderChatModal
-        isOpen={isChatModalOpen}
-        onClose={closeChatModal}
-        itemId={selectedItemId}
-        itemData={selectedItemData}
-      />
     </div>
   );
 }
