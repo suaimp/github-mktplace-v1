@@ -6,7 +6,7 @@ import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import RecentOrders from "../../components/ecommerce/RecentOrders";
-import DemographicCard from "../../components/ecommerce/DemographicCard";
+import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 
 export default function AdvertiserDashboard() {
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function AdvertiserDashboard() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       // Now you can handle the error if needed
     } catch (err) {
       console.error("Erro ao carregar perfil:", err);
@@ -46,19 +46,15 @@ export default function AdvertiserDashboard() {
           <EcommerceMetrics />
           <MonthlySalesChart />
         </div>
-
         <div className="col-span-12 xl:col-span-5">
           <MonthlyTarget />
         </div>
-
         <div className="col-span-12">
           <StatisticsChart />
-        </div>
-
+        </div>{" "}
         <div className="col-span-12 xl:col-span-5">
-          <DemographicCard />
+          <FeedbackForm />
         </div>
-
         <div className="col-span-12 xl:col-span-7">
           <RecentOrders />
         </div>
