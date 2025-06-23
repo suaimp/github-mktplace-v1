@@ -6,6 +6,7 @@ import {
   getCartCheckoutResumeByUser
 } from "../../../context/db-context/services/CartCheckoutResumeService";
 import { getFormEntryValuesByEntryId } from "../../../context/db-context/services/formEntryValueService";
+import { getPriceFromEntryWithCache } from "../../Checkout/utils/priceFromEntryUtils";
 import { supabase } from "../../../lib/supabase";
 
 // Adiciona entry_id na tipagem do CartCheckoutResume para facilitar buscas
@@ -25,79 +26,19 @@ export function useShoppingCartToCheckoutResume() {
         "🟢 [ShoppingCartToCheckoutResume] FUNÇÃO ADD executada com item:",
         item
       );
-      // Busca os valores do entry_id
-      const allEntryValues = await getFormEntryValuesByEntryId(item.entry_id);
-      console.log("allEntryValues:", allEntryValues);
-      // Filtra apenas os que possuem o entry_id correspondente
-      const filteredByEntryId = Array.isArray(allEntryValues)
-        ? allEntryValues.filter((v) => v.entry_id === item.entry_id)
-        : [];
-      // Busca o primeiro que tenha value como string JSON e que, ao fazer parse, seja objeto com campo price
-      const valueWithPrice = filteredByEntryId.find((v) => {
-        if (typeof v.value === "string") {
-          try {
-            const parsed = JSON.parse(v.value);
-            return parsed && typeof parsed === "object" && "price" in parsed;
-          } catch {
-            return false;
-          }
-        }
-        return false;
-      });
-      let price = 0;
-      if (valueWithPrice && typeof valueWithPrice.value === "string") {
-        try {
-          const parsed = JSON.parse(valueWithPrice.value);
 
-          // NOVA LÓGICA: Usa old_promotional_price e old_price (valores sem comissão)
-          let priceToUse = parsed.old_price || parsed.price; // valor padrão
+      // NOVA LÓGICA: Usa a função utilitária para buscar o preço correto
+      const correctPrice = await getPriceFromEntryWithCache(item.entry_id);
+      const price = correctPrice || 0; // fallback para 0 se não encontrar
 
-          if (
-            (parsed.old_promotional_price || parsed.promotional_price) &&
-            (parsed.old_promotional_price !== "" ||
-              parsed.promotional_price !== "") &&
-            (parsed.old_promotional_price !== null ||
-              parsed.promotional_price !== null) &&
-            (parsed.old_promotional_price !== undefined ||
-              parsed.promotional_price !== undefined) &&
-            !isNaN(
-              Number(parsed.old_promotional_price || parsed.promotional_price)
-            ) &&
-            Number(parsed.old_promotional_price || parsed.promotional_price) > 0
-          ) {
-            // Se promotional_price tem valor válido, usa old_promotional_price ou promotional_price
-            priceToUse =
-              parsed.old_promotional_price || parsed.promotional_price;
-            console.log(
-              "ShoppingCartToCheckoutResume.ts - usando old_promotional_price:",
-              parsed.old_promotional_price || parsed.promotional_price
-            );
-          } else {
-            // Se promotional_price está vazio/null/undefined, usa old_price ou price normal
-            console.log(
-              "ShoppingCartToCheckoutResume.ts - usando old_price:",
-              parsed.old_price || parsed.price
-            );
-
-            priceToUse = parsed.old_price || parsed.price;
-          }
-
-          // Converte para número, removendo vírgula e pontos se necessário
-          if (typeof priceToUse === "string") {
-            const normalized = priceToUse
-              .replace(/\./g, "")
-              .replace(",", ".")
-              .replace(/[^0-9.]/g, "");
-            price = parseFloat(normalized);
-          } else if (typeof priceToUse === "number") {
-            price = priceToUse;
-          }
-        } catch {}
-      }
       console.log(
-        "ShoppingCartToCheckoutResume.ts - valor final enviado para cart_checkout_resume.price:",
+        `[ShoppingCartToCheckoutResume] Preço obtido para entry_id ${item.entry_id}:`,
         price
       );
+
+      // Busca os valores do entry_id para outras informações (URL, nichos, etc.)
+      const allEntryValues = await getFormEntryValuesByEntryId(item.entry_id);
+      console.log("allEntryValues:", allEntryValues);
       // NOVA LÓGICA: busca url https e remove https://
       const urlEntry = Array.isArray(allEntryValues)
         ? allEntryValues.find(
@@ -213,13 +154,29 @@ export function useShoppingCartToCheckoutResume() {
         "🟡 [ShoppingCartToCheckoutResume] FUNÇÃO EDIT executada com item:",
         item
       );
+
+      // NOVA LÓGICA: Busca o preço correto antes de atualizar
+      const correctPrice = await getPriceFromEntryWithCache(item.entry_id);
+
       // Busca o registro do resumo pelo user_id e entry_id
       const resumes = (await getCartCheckoutResumeByUser(
         item.user_id
       )) as CartCheckoutResumeWithEntry[];
       const found = resumes?.find((r) => r.entry_id === item.entry_id);
+      console.log("ShoppingCartToCheckoutResume.ts - found:", found);
+
       if (found) {
-        await updateCartCheckoutResume(found.id, { quantity: item.quantity });
+        // Atualiza quantidade e preço (se encontrado)
+        const updateData: any = { quantity: item.quantity };
+
+        if (correctPrice !== null) {
+          updateData.price = correctPrice;
+          console.log(
+            `[ShoppingCartToCheckoutResume] EDIT - Atualizando preço para entry_id ${item.entry_id}: ${correctPrice}`
+          );
+        }
+
+        await updateCartCheckoutResume(found.id, updateData);
         console.log("ShoppingCartToCheckoutResume.ts - edit (update):", item);
       } else {
         console.warn("Resumo não encontrado para update", item);
@@ -240,6 +197,7 @@ export function useShoppingCartToCheckoutResume() {
         item.user_id
       )) as CartCheckoutResumeWithEntry[];
       const found = resumes?.find((r) => r.entry_id === item.entry_id);
+
       if (found) {
         await deleteCartCheckoutResume(found.id);
         console.log("ShoppingCartToCheckoutResume.ts - remove (delete):", item);
@@ -257,60 +215,10 @@ export function useShoppingCartToCheckoutResume() {
       entry_id
     );
     try {
-      // Busca os valores atualizados do entry_id
-      const allEntryValues = await getFormEntryValuesByEntryId(entry_id);
-      const filteredByEntryId = Array.isArray(allEntryValues)
-        ? allEntryValues.filter((v) => v.entry_id === entry_id)
-        : [];
-      console.log("filteredByEntryId:", filteredByEntryId);
+      // NOVA LÓGICA: Usa a função utilitária para buscar o preço correto
+      const correctPrice = await getPriceFromEntryWithCache(entry_id);
 
-      // NOVA LÓGICA: Busca dados de preço considerando value_json e value
-      // Prioriza promotional_price quando existir e for > 0
-      let productData: any = null;
-      let sourceInfo = "";
-
-      // Primeiro, procura por dados de produto em value_json
-      for (const item of filteredByEntryId) {
-        if (item.value_json && typeof item.value_json === "object") {
-          if (item.value_json.price || item.value_json.promotional_price) {
-            productData = item.value_json;
-            sourceInfo = "value_json";
-            console.log(
-              "🔍 [syncPriceFromValue] Dados encontrados em value_json:",
-              productData
-            );
-            break;
-          }
-        }
-      }
-
-      // Se não encontrou em value_json, procura em value (JSON string)
-      if (!productData) {
-        for (const item of filteredByEntryId) {
-          if (typeof item.value === "string") {
-            try {
-              const parsed = JSON.parse(item.value);
-              if (
-                parsed &&
-                typeof parsed === "object" &&
-                (parsed.price || parsed.promotional_price)
-              ) {
-                productData = parsed;
-                sourceInfo = "value (JSON string)";
-                console.log(
-                  "🔍 [syncPriceFromValue] Dados encontrados em value:",
-                  productData
-                );
-                break;
-              }
-            } catch {
-              // Ignora erros de parse
-            }
-          }
-        }
-      }
-
-      if (!productData) {
+      if (correctPrice === null) {
         console.warn(
           "syncPriceFromValue: Nenhum valor de preço encontrado para entry_id:",
           entry_id
@@ -319,127 +227,39 @@ export function useShoppingCartToCheckoutResume() {
       }
 
       console.log(
-        "📊 [syncPriceFromValue] Dados do produto origem:",
-        sourceInfo
+        `[syncPriceFromValue] Preço correto obtido para entry_id ${entry_id}:`,
+        correctPrice
       );
-      console.log("📊 [syncPriceFromValue] Dados do produto:", productData);
 
-      let price = 0;
-      try {
-        console.log(
-          "🔍 [syncPriceFromValue] productData.old_price:",
-          productData.old_price || productData.price
-        );
-        console.log(
-          "🔍 [syncPriceFromValue] productData.old_promotional_price:",
-          productData.old_promotional_price || productData.promotional_price
-        );
-
-        // NOVA LÓGICA REFATORADA: prioriza old_promotional_price quando existir e for > 0
-        let priceToUse = productData.old_price || productData.price; // valor padrão
-
-        // Verifica se old_promotional_price existe e é válido
-        if (
-          (productData.old_promotional_price ||
-            productData.promotional_price) &&
-          (productData.old_promotional_price !== "" ||
-            productData.promotional_price !== "") &&
-          (productData.old_promotional_price !== null ||
-            productData.promotional_price !== null) &&
-          (productData.old_promotional_price !== undefined ||
-            productData.promotional_price !== undefined) &&
-          !isNaN(
-            Number(
-              productData.old_promotional_price || productData.promotional_price
-            )
-          ) &&
-          Number(
-            productData.old_promotional_price || productData.promotional_price
-          ) > 0
-        ) {
-          // Se promotional_price tem valor válido e maior que 0, usa old_promotional_price
-          priceToUse =
-            productData.old_promotional_price || productData.promotional_price;
-          console.log(
-            "✅ [syncPriceFromValue] USANDO old_promotional_price:",
-            productData.old_promotional_price || productData.promotional_price
-          );
-        } else {
-          // Se promotional_price está vazio/null/undefined/zero, usa old_price normal
-          console.log(
-            "⚠️ [syncPriceFromValue] USANDO old_price normal:",
-            productData.old_price || productData.price
-          );
-        }
-
-        console.log("💰 [syncPriceFromValue] priceToUse final:", priceToUse);
-
-        // Converte para número, removendo vírgula e pontos se necessário
-        if (typeof priceToUse === "string") {
-          console.log(
-            "🔄 [syncPriceFromValue] Convertendo string para número:",
-            priceToUse
-          );
-          const normalized = priceToUse
-            .replace(/\./g, "")
-            .replace(",", ".")
-            .replace(/[^0-9.]/g, "");
-          console.log("🔄 [syncPriceFromValue] Valor normalizado:", normalized);
-          price = parseFloat(normalized);
-          console.log("🔄 [syncPriceFromValue] Valor final parseado:", price);
-        } else if (typeof priceToUse === "number") {
-          console.log(
-            "🔢 [syncPriceFromValue] Usando valor numérico direto:",
-            priceToUse
-          );
-          price = priceToUse;
-        }
-        console.log("💯 [syncPriceFromValue] PRICE FINAL CALCULADO:", price);
-      } catch (error) {
-        console.error(
-          "syncPriceFromValue: Erro ao fazer parse do value:",
-          error
-        );
+      // Busca o item no resumo para atualizar
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn("syncPriceFromValue: Usuário não autenticado");
         return;
       }
 
-      console.log("syncPriceFromValue - novo preço calculado:", price);
+      const resumes = (await getCartCheckoutResumeByUser(
+        user.id
+      )) as CartCheckoutResumeWithEntry[];
+      const resumeItem = resumes?.find((r) => r.entry_id === entry_id);
 
-      // Busca todos os registros de cart_checkout_resume que tenham esse entry_id
-      const { data: resumesToUpdate, error: queryError } = await supabase
-        .from("cart_checkout_resume")
-        .select("*")
-        .filter("entry_id", "eq", entry_id);
-
-      if (queryError) {
-        console.error(
-          "syncPriceFromValue - erro ao buscar registros:",
-          queryError
-        );
-        return;
-      }
-
-      console.log(
-        "syncPriceFromValue - registros encontrados para atualizar:",
-        resumesToUpdate
-      );
-
-      // Atualiza o preço em todos os registros encontrados
-      for (const resume of resumesToUpdate || []) {
-        await updateCartCheckoutResume(resume.id, { price });
+      if (resumeItem) {
+        await updateCartCheckoutResume(resumeItem.id, {
+          price: correctPrice
+        });
         console.log(
-          `syncPriceFromValue - preço atualizado para registro ${resume.id}:`,
-          price
+          `[syncPriceFromValue] Preço atualizado no resumo para entry_id ${entry_id}: ${correctPrice}`
         );
-      }
-
-      // Dispara evento para recarregar as tabelas/componentes que dependem dos dados
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("resume-table-reload"));
-        window.dispatchEvent(new Event("cart-updated"));
+      } else {
+        console.warn(
+          "syncPriceFromValue: Item não encontrado no resumo para entry_id:",
+          entry_id
+        );
       }
     } catch (error) {
-      console.error("syncPriceFromValue: Erro ao sincronizar preço:", error);
+      console.error("syncPriceFromValue: Erro:", error);
     }
   }, []);
 

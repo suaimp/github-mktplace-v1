@@ -10,7 +10,6 @@ export function getTotalProductPrice({
   getNichePrice
 }: {
   item: any;
-  price: any;
   quantities: any;
   selectedNiches: any;
   selectedService: any;
@@ -20,6 +19,8 @@ export function getTotalProductPrice({
   getNichePrice: Function;
 }) {
   const itemPrice = item.price * (quantities[item.id] ?? item.quantity ?? 1);
+
+  console.log(" item.", item);
   const nichePrice = getNichePrice(item, selectedNiches);
 
   const selected = getServicePackageArray(

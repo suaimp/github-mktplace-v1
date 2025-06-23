@@ -94,14 +94,12 @@ export default function ResumeTable(props: ResumeTableProps) {
   // Calcular e atualizar totais apenas após debounce
   useEffect(() => {
     if (debouncedCalculationTrigger > 0 && resumeData.length > 0) {
+      console.log("[ResumeTable] Calculando totais com debounce:", resumeData);
       // Calcular valores de produto (APENAS item.price × quantidade, sem nichos ou conteúdo)
       const totalProductPricesArray = resumeData.map((item: any) => {
         const quantity = quantities[item.id] ?? item.quantity ?? 1;
         const nichePrice = getNichePrice(item, selectedNiches);
-        console.log(
-          `[ResumeTable] Calculando preço do nicho para item ${item.id}:`,
-          nichePrice
-        );
+
         if (nichePrice > 0) {
           return nichePrice * quantity;
         }
@@ -129,7 +127,6 @@ export default function ResumeTable(props: ResumeTableProps) {
       const totalFinalPricesArray = resumeData.map((item: any) => {
         return getTotalProductPrice({
           item,
-          price: item.price,
           quantities,
           selectedNiches,
           selectedService,
@@ -549,7 +546,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                         return formatCurrency(
                           getTotalProductPrice({
                             item,
-                            price: item.price,
+
                             quantities,
                             selectedNiches,
                             selectedService,
