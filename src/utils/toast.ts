@@ -11,7 +11,7 @@ export function showToast(
     toast.id = "global-toast";
     toast.textContent = message;
     toast.style.position = "fixed";
-    toast.style.top = "32px";
+    toast.style.top = "132px";
     toast.style.right = "32px";
     toast.style.zIndex = "99999";
     toast.style.padding = "14px 28px";

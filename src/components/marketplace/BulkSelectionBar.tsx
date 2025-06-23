@@ -3,6 +3,7 @@ import { useCart } from "./ShoppingCartContext";
 import { supabase } from "../../lib/supabase";
 import Button from "../ui/button/Button";
 import { extractProductPrice } from "./actions/priceCalculator";
+import { showToast } from "../../utils/toast";
 
 interface BulkSelectionBarProps {
   selectedCount: number;
@@ -68,10 +69,18 @@ export default function BulkSelectionBar({
         );
       }
 
+      // Mostrar toast de sucesso
+      const itemText = selectedEntriesData.length === 1 ? "item" : "itens";
+      showToast(
+        `${selectedEntriesData.length} ${itemText} adicionados ao carrinho!`,
+        "success"
+      );
+
       // Clear selection after adding to cart
       onClear();
     } catch (error) {
       console.error("Error adding items to cart:", error);
+      showToast("Erro ao adicionar itens ao carrinho", "error");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCart } from "./ShoppingCartContext";
 import { ShoppingCartIcon } from "../../icons";
+import { showToast } from "../../utils/toast";
 
 interface AddToCartButtonProps {
   entryId: string;
@@ -50,10 +51,14 @@ export default function AddToCartButton({
       });
       await addItem(entryId, productName, price, 1, image, url);
 
+      // Mostrar toast de sucesso
+      showToast("Item adicionado ao carrinho!", "success");
+
       // Reset success state after 2 seconds
       setTimeout(() => {}, 2000);
     } catch (error) {
       console.error("Error adding item to cart:", error);
+      showToast("Erro ao adicionar item ao carrinho", "error");
     } finally {
       setLoading(false);
     }
