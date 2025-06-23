@@ -97,8 +97,15 @@ export default function ResumeTable(props: ResumeTableProps) {
       // Calcular valores de produto (APENAS item.price × quantidade, sem nichos ou conteúdo)
       const totalProductPricesArray = resumeData.map((item: any) => {
         const quantity = quantities[item.id] ?? item.quantity ?? 1;
-
-        return Number(item.price) * quantity; // APENAS preço base × quantidade
+        const nichePrice = getNichePrice(item, selectedNiches);
+        console.log(
+          `[ResumeTable] Calculando preço do nicho para item ${item.id}:`,
+          nichePrice
+        );
+        if (nichePrice > 0) {
+          return nichePrice * quantity;
+        }
+        return Number(item.price) * quantity;
       });
 
       // Calcular valores de conteúdo separadamente

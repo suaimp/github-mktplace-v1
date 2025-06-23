@@ -63,8 +63,8 @@ export function getNichePrice(
         .replace(/[^0-9,.-]+/g, "")
         .replace(",", ".")
     );
-    // Sempre subtrai item.price do valor do nicho selecionado
-    return nichePrice - Number(item.price || 0);
+    // Agora retorna apenas o valor do nicho selecionado
+    return nichePrice;
   }
   return 0;
 }
