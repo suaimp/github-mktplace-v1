@@ -5,7 +5,10 @@ import AddToCartButton from "./AddToCartButton";
 import { useCart } from "./ShoppingCartContext";
 import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
-import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
+import {
+  formatMarketplaceValue,
+  renderNicheHeader
+} from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
@@ -492,7 +495,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       }
                     >
                       <div className="flex items-center justify-between">
-                        <div>{displayName}</div>
+                        <div>
+                          {field.field_type === "niche"
+                            ? renderNicheHeader(displayName)
+                            : displayName}
+                        </div>
                         {isSortable && (
                           <span className="flex flex-col gap-0.5">
                             <svg

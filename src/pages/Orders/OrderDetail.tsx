@@ -10,6 +10,7 @@ import { Modal } from "../../components/ui/modal";
 import { useState, useEffect } from "react";
 import OrderInfoModal from "./local-components/OrderInfoModal";
 import { supabase } from "../../lib/supabase";
+import InfoTooltip from "../../components/ui/InfoTooltip/InfoTooltip";
 
 export default function OrderDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -240,7 +241,10 @@ export default function OrderDetail() {
                         Artigo DOC
                       </th>{" "}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        URL do Artigo
+                        <div className="flex items-center gap-1">
+                          <span>URL do Artigo</span>
+                          <InfoTooltip text="A URL fica disponível após a publicação do artigo em um prazo de 3 a 5 dias" />
+                        </div>
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Status de Publicação
@@ -385,41 +389,39 @@ export default function OrderDetail() {
                               Enviar Artigo
                             </button>
                           )}
-                        </td>
+                        </td>{" "}
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          <div className="flex items-center">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={
-                                  typeof tempArticleUrl[item.id] !== "undefined"
-                                    ? tempArticleUrl[item.id]
-                                    : item.article_url ?? ""
-                                }
-                                onChange={(e) =>
-                                  setTempArticleUrl((prev) => ({
-                                    ...prev,
-                                    [item.id]: e.target.value
-                                  }))
-                                }
-                                className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
-                                placeholder="Informe a URL do artigo"
-                                id={`article-url-input-${item.id}`}
-                              />
-                              <button
-                                className="ml-2 px-3 py-1 bg-brand-500 text-white rounded hover:bg-brand-600 transition-colors text-xs"
-                                onClick={() => {
-                                  sendArticleUrl(
-                                    item.id,
-                                    tempArticleUrl[item.id] ?? ""
-                                  );
-                                }}
-                                title="Enviar URL"
-                              >
-                                Enviar
-                              </button>
-                            </div>
-                          </div>{" "}
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={
+                                typeof tempArticleUrl[item.id] !== "undefined"
+                                  ? tempArticleUrl[item.id]
+                                  : item.article_url ?? ""
+                              }
+                              onChange={(e) =>
+                                setTempArticleUrl((prev) => ({
+                                  ...prev,
+                                  [item.id]: e.target.value
+                                }))
+                              }
+                              className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
+                              placeholder="Informe a URL do artigo"
+                              id={`article-url-input-${item.id}`}
+                            />
+                            <button
+                              className="ml-2 px-3 py-1 bg-brand-500 text-white rounded hover:bg-brand-600 transition-colors text-xs"
+                              onClick={() => {
+                                sendArticleUrl(
+                                  item.id,
+                                  tempArticleUrl[item.id] ?? ""
+                                );
+                              }}
+                              title="Enviar URL"
+                            >
+                              Enviar
+                            </button>
+                          </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
                           {item.publication_status === "approved" ? (
@@ -515,7 +517,7 @@ export default function OrderDetail() {
           </button>
         </div>
       )}
-      {/* Document Upload Modal */}
+      {/* Document Upload Modal */}{" "}
       <Modal
         isOpen={isDocModalOpen}
         onClose={closeDocModal}
@@ -524,8 +526,22 @@ export default function OrderDetail() {
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-6">
             Enviar Artigo em DOCX
-          </h3>
-
+          </h3>{" "}
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+              Especificações do artigo:
+            </h4>
+            <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <li className="flex items-start">
+                <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                Texto com no máximo 1000 palavras
+              </li>
+              <li className="flex items-start">
+                <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                Incluir 2 links para 2 palavras chaves
+              </li>
+            </ul>
+          </div>
           <div className="mb-6 flex flex-col items-center justify-center">
             <div
               onClick={handleUploadClick}
@@ -596,7 +612,6 @@ export default function OrderDetail() {
               </div>
             )}
           </div>
-
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"

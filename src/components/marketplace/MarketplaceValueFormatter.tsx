@@ -6,6 +6,7 @@ import {
   parseNicheData,
   type NicheOption
 } from "../../context/db-context/services/formFieldNicheService";
+import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
 
 // Cache para armazenar todos os nichos disponíveis
 let allAvailableNiches: NicheOption[] = [];
@@ -187,6 +188,16 @@ export function renderCountryFlags(
   );
 }
 
+// Render niche header with tooltip
+export function renderNicheHeader(displayName: string) {
+  return (
+    <div className="flex items-center gap-1">
+      <span>{displayName}</span>
+      <InfoTooltip text="O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna." />
+    </div>
+  );
+}
+
 // Render niche with icon (agora busca dados do banco)
 export function renderNicheWithIcon(value: any) {
   console.log("[renderNicheWithIcon] Raw value received:", value);
@@ -295,17 +306,24 @@ export function renderNicheWithIcon(value: any) {
             }
 
             return (
-              <div
+              <InfoTooltip
                 key={`${niche.text}-${index}`}
-                className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-all ${
+                text={
                   isActive
-                    ? "bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
-                }`}
-                title={niche.text}
+                    ? `Aceita conteúdos relacionados a ${niche.text}`
+                    : `Não aceita conteúdos relacionados a ${niche.text}`
+                }
               >
-                <IconComponent className="w-3 h-3" />
-              </div>
+                <div
+                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-all cursor-help ${
+                    isActive
+                      ? "bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
+                  }`}
+                >
+                  <IconComponent className="w-3 h-3" />
+                </div>
+              </InfoTooltip>
             );
           })}
         </div>
