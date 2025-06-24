@@ -20,7 +20,22 @@ export interface ServiceCard {
 export async function getServiceCards(): Promise<ServiceCard[] | null> {
   const { data, error } = await supabase
     .from("service_cards")
-    .select("*")
+    .select(
+      `
+      id,
+      service_id,
+      title,
+      subtitle,
+      price,
+      price_per_word,
+      word_count,
+      benefits,
+      not_benefits,
+      period,
+      is_free,
+      updated_at
+    `
+    )
     .order("order_layout", { ascending: true });
   if (error) {
     console.error("Erro ao buscar service_cards:", error);

@@ -11,8 +11,10 @@ export async function setService(service: any) {
     price: service.price, // Inclui o campo price
     price_per_word: service.price_per_word,
     word_count: service.word_count,
-    is_free: service.is_free
+    is_free: service.is_free,
+    benefits: service.benefits
   };
+  console.log("Payload sendo enviado com benefits:", payload);
   const valueToSet = [payload];
 
   // Recupera o usuário logado via Supabase Auth

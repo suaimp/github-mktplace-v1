@@ -11,6 +11,7 @@ import { getServicePackageArray } from "./utils/servicePackageSelectedUtils";
 import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
+import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
 
 interface ResumeTableProps {
   onReload?: () => void;
@@ -363,10 +364,10 @@ export default function ResumeTable(props: ResumeTableProps) {
                           }}
                         >
                           <option
-                            value="Artigo Padrão"
+                            value={NICHE_OPTIONS.DEFAULT}
                             className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
                           >
-                            Artigo Padrão
+                            {NICHE_OPTIONS.DEFAULT}
                           </option>
                           {niches.map((n: any, idx: number) => (
                             <option
@@ -437,17 +438,17 @@ export default function ResumeTable(props: ResumeTableProps) {
                               let serviceArray;
                               if (
                                 !value ||
-                                value ===
-                                  "Nenhum - eu vou fornecer o conteúdo" ||
+                                value === SERVICE_OPTIONS.NONE ||
                                 value === ""
                               ) {
                                 serviceArray = [
                                   {
-                                    title: "Nenhum",
+                                    title: value || SERVICE_OPTIONS.NONE,
                                     price_per_word: 0,
                                     word_count: 0,
                                     is_free: true,
-                                    price: 0
+                                    price: 0,
+                                    benefits: []
                                   }
                                 ];
                               } else {
@@ -472,10 +473,10 @@ export default function ResumeTable(props: ResumeTableProps) {
                           }}
                         >
                           <option
-                            value="Nenhum - eu vou fornecer o conteúdo"
+                            value={SERVICE_OPTIONS.NONE}
                             className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
                           >
-                            Nenhum - eu vou fornecer o conteúdo
+                            {SERVICE_OPTIONS.NONE}
                           </option>
                           {serviceCardsByActiveService &&
                             serviceCardsByActiveService.length > 0 &&

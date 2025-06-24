@@ -9,15 +9,22 @@ import Select from "../../components/form/Select";
 import { Modal } from "../../components/ui/modal";
 import { useState, useEffect } from "react";
 import OrderInfoModal from "./local-components/OrderInfoModal";
+import OrderProgress from "./local-components/OrderProgress";
 import { supabase } from "../../lib/supabase";
 import InfoTooltip from "../../components/ui/InfoTooltip/InfoTooltip";
+import { SERVICE_OPTIONS } from "../../components/Checkout/constants/options";
 
 export default function OrderDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
-  // Estado local apenas para o input da URL do artigo
-  const [tempArticleUrl, setTempArticleUrl] = useState<{
-    [key: string]: string;
-  }>({});
+  // Estado para o modal de edição de URL do artigo
+  const [isUrlEditModalOpen, setIsUrlEditModalOpen] = useState(false);
+  const [selectedItemForUrlEdit, setSelectedItemForUrlEdit] =
+    useState<string>("");
+  const [editingArticleUrl, setEditingArticleUrl] = useState("");
+
+  // Estado para o modal de informações do pacote
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [selectedPackageData, setSelectedPackageData] = useState<any>(null);
 
   const {
     isOrderInfoModalOpen,
@@ -82,28 +89,71 @@ export default function OrderDetail() {
         console.error("Error checking admin status:", error);
       }
     };
-
     checkAdminStatus();
   }, []);
 
-  // Preenche o estado inicial do input de URL do artigo com o valor do banco (article_url)
-  useEffect(() => {
-    if (orderItems && orderItems.length > 0) {
-      setTempArticleUrl((prev) => {
-        const updated: { [key: string]: string } = { ...prev };
-        orderItems.forEach((item) => {
-          if (
-            item.id &&
-            typeof item.article_url === "string" &&
-            item.article_url.trim() !== ""
-          ) {
-            updated[item.id] = item.article_url;
-          }
-        });
-        return updated;
-      });
+  // Funções para o modal de edição de URL do artigo
+  const openUrlEditModal = (itemId: string, currentUrl: string = "") => {
+    setSelectedItemForUrlEdit(itemId);
+    setEditingArticleUrl(currentUrl);
+    setIsUrlEditModalOpen(true);
+  };
+  const closeUrlEditModal = () => {
+    setIsUrlEditModalOpen(false);
+    setSelectedItemForUrlEdit("");
+    setEditingArticleUrl("");
+  };
+
+  // Funções para o modal de informações do pacote
+  const openPackageModal = (packageData: any) => {
+    setSelectedPackageData(packageData);
+    setIsPackageModalOpen(true);
+  };
+
+  const closePackageModal = () => {
+    setIsPackageModalOpen(false);
+    setSelectedPackageData(null);
+  };
+  const handleSaveArticleUrl = async () => {
+    if (!selectedItemForUrlEdit) return;
+
+    try {
+      await sendArticleUrl(selectedItemForUrlEdit, editingArticleUrl);
+      closeUrlEditModal();
+    } catch (error) {
+      console.error("Erro ao salvar URL do artigo:", error);
     }
-  }, [orderItems]);
+  };
+
+  // Função para determinar a etapa atual do progresso
+  const getCurrentProgressStep = () => {
+    // Etapa 1: Compra - sempre completa se há um pedido
+    if (!order) return 1;
+
+    // Etapa 2: Pagamento
+    if (order.payment_status !== "paid") return 2;
+
+    // Etapa 3: Artigo - verificar se todos os itens têm documentos
+    const hasAllDocuments = orderItems.every(
+      (item) => item.article_document_path
+    );
+    if (!hasAllDocuments) return 3;
+
+    // Etapa 4: Publicação - verificar se todos os itens têm URLs
+    const hasAllUrls = orderItems.every((item) => item.article_url);
+    if (!hasAllUrls) return 4;
+
+    // Todas as etapas concluídas
+    return 4;
+  };
+
+  // Verificar se há pelo menos um documento de artigo
+  const hasAnyArticleDocument = orderItems.some(
+    (item) => item.article_document_path
+  );
+
+  // Verificar se há pelo menos uma URL de artigo
+  const hasAnyArticleUrl = orderItems.some((item) => item.article_url);
 
   if (loading) {
     return (
@@ -177,16 +227,17 @@ export default function OrderDetail() {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <PageMeta
+    <div className="min-h-screen dark:bg-gray-900">
+      {/* HEADER COM BOTAO VOLTAR */}
+      {/*  <PageMeta
         title={`Pedido #${order.id.substring(0, 8)} | Marketplace`}
         description="Detalhes do pedido"
-      />
-      <PageBreadcrumb pageTitle={`Pedido #${order.id.substring(0, 8)}`} />
-      <div className="container mx-auto px-4 py-8">
+      />{" "}
+      <PageBreadcrumb pageTitle={`Pedido #${order.id.substring(0, 8)}`} /> */}
+      <div className="container mx-auto px-4 py-6 bg-white rounded-xl border border-gray-200 dark:bg-gray-900 dark:border-gray-800">
         {/* Order Summary */}
         <div className="w-full">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
@@ -222,17 +273,49 @@ export default function OrderDetail() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+        {/* Order Progress */}
+        <div className="w-full mb-6">
+          <OrderProgress
+            currentStep={getCurrentProgressStep()}
+            paymentStatus={
+              order.payment_status as
+                | "pending"
+                | "processing"
+                | "paid"
+                | "failed"
+            }
+            orderStatus={
+              order.status as
+                | "pending"
+                | "processing"
+                | "completed"
+                | "cancelled"
+            }
+            hasArticleDocument={hasAnyArticleDocument}
+            articleUrl={hasAnyArticleUrl ? "exists" : undefined}
+          />
+        </div>
+
+        {/* Order Items */}
+        <div className="w-full">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-3">
                 Itens do Pedido
-              </h3>
+              </h3>{" "}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                  <thead>
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
+                      {" "}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Produto
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Pacote
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Quantidade
@@ -259,10 +342,11 @@ export default function OrderDetail() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
+                    {" "}
                     {orderItems.map((item) => (
                       <tr key={item.id}>
-                        <td className="px-4 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                           {item.product_url ? (
                             <div className="flex items-center">
                               <img
@@ -292,29 +376,142 @@ export default function OrderDetail() {
                           ) : (
                             <span>{item.product_name}</span>
                           )}
-
-                          {/* Display niche if available */}
-                          {item.niche &&
-                            Array.isArray(item.niche) &&
-                            item.niche.length > 0 && (
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Nicho: {item.niche[0]?.niche || ""}
-                              </div>
-                            )}
-
-                          {/* Display service content if available */}
-                          {item.service_content &&
-                            Array.isArray(item.service_content) &&
-                            item.service_content.length > 0 && (
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Pacote: {item.service_content[0]?.title || ""}
-                              </div>
-                            )}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {(() => {
+                            console.log("🔍 Debug - Item completo:", item);
+                            console.log(
+                              "🔍 Debug - service_content raw:",
+                              item.service_content
+                            );
+                            console.log(
+                              "🔍 Debug - service_content type:",
+                              typeof item.service_content
+                            );
+
+                            // Se não há service_content, exibir fallback simples
+                            if (!item.service_content) {
+                              console.log(
+                                "🔍 Debug - Sem service_content, usando fallback"
+                              );
+                              return (
+                                <span className="text-gray-500">
+                                  Pacote não especificado
+                                </span>
+                              );
+                            }
+
+                            let serviceData: any = null;
+
+                            try {
+                              // Formato esperado: ["{\"title\":\"Business\",\"price\":60,...}"]
+                              if (
+                                Array.isArray(item.service_content) &&
+                                item.service_content.length > 0
+                              ) {
+                                // Pega o primeiro item do array e faz parse da string JSON
+                                const jsonString = item.service_content[0];
+                                console.log(
+                                  "🔍 Debug - JSON string do array:",
+                                  jsonString
+                                );
+
+                                if (typeof jsonString === "string") {
+                                  serviceData = JSON.parse(jsonString);
+                                  console.log(
+                                    "🔍 Debug - Dados parseados do array:",
+                                    serviceData
+                                  );
+                                } else if (typeof jsonString === "object") {
+                                  serviceData = jsonString;
+                                  console.log(
+                                    "🔍 Debug - Objeto direto do array:",
+                                    serviceData
+                                  );
+                                }
+                              }
+                              // Fallback para outros formatos
+                              else if (
+                                typeof item.service_content === "string"
+                              ) {
+                                serviceData = JSON.parse(item.service_content);
+                                console.log(
+                                  "🔍 Debug - service_content parseado de string:",
+                                  serviceData
+                                );
+                              } else if (
+                                typeof item.service_content === "object"
+                              ) {
+                                serviceData = item.service_content;
+                                console.log(
+                                  "🔍 Debug - service_content é objeto direto:",
+                                  serviceData
+                                );
+                              }
+                            } catch (e) {
+                              console.error(
+                                "Erro ao fazer parse do service_content:",
+                                e
+                              );
+                              return (
+                                <span className="text-gray-500">
+                                  Erro no formato do pacote
+                                </span>
+                              );
+                            }
+                            if (!serviceData) {
+                              return (
+                                <span className="text-gray-500">
+                                  Dados do pacote indisponíveis
+                                </span>
+                              );
+                            } // Se for apenas as opções de "nenhum", não tornar clicável
+                            if (
+                              serviceData?.title ===
+                                SERVICE_OPTIONS.LEGACY_NONE ||
+                              serviceData?.title === SERVICE_OPTIONS.NONE
+                            ) {
+                              return (
+                                <span className="text-gray-700 dark:text-gray-300 font-bold">
+                                  {serviceData.title}
+                                </span>
+                              );
+                            }
+                            return (
+                              <button
+                                onClick={() => openPackageModal(serviceData)}
+                                className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 hover:underline font-medium text-left flex items-center gap-2"
+                                title="Clique para ver detalhes do pacote"
+                              >
+                                <svg
+                                  className="w-4 h-4 flex-shrink-0"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                                {serviceData?.title || "Pacote sem título"}
+                              </button>
+                            );
+                          })()}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                           {item.quantity}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                           {item.article_document_path ? (
                             <button
                               onClick={() =>
@@ -388,42 +585,91 @@ export default function OrderDetail() {
                               </svg>
                               Enviar Artigo
                             </button>
-                          )}
+                          )}{" "}
                         </td>{" "}
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={
-                                typeof tempArticleUrl[item.id] !== "undefined"
-                                  ? tempArticleUrl[item.id]
-                                  : item.article_url ?? ""
-                              }
-                              onChange={(e) =>
-                                setTempArticleUrl((prev) => ({
-                                  ...prev,
-                                  [item.id]: e.target.value
-                                }))
-                              }
-                              className="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
-                              placeholder="Informe a URL do artigo"
-                              id={`article-url-input-${item.id}`}
-                            />
-                            <button
-                              className="ml-2 px-3 py-1 bg-brand-500 text-white rounded hover:bg-brand-600 transition-colors text-xs"
-                              onClick={() => {
-                                sendArticleUrl(
-                                  item.id,
-                                  tempArticleUrl[item.id] ?? ""
-                                );
-                              }}
-                              title="Enviar URL"
-                            >
-                              Enviar
-                            </button>
-                          </div>
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {isAdmin ? (
+                            <div className="flex items-center gap-2">
+                              {item.article_url ? (
+                                <div className="flex items-center gap-2">
+                                  {" "}
+                                  <a
+                                    href={item.article_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-800 dark:text-gray-200 hover:text-brand-500 dark:hover:text-brand-400 underline"
+                                  >
+                                    Link do artigo publicado
+                                  </a>
+                                  <button
+                                    onClick={() =>
+                                      openUrlEditModal(
+                                        item.id,
+                                        item.article_url || ""
+                                      )
+                                    }
+                                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                    title="Editar URL"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => openUrlEditModal(item.id, "")}
+                                  className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
+                                >
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M12 4v16m8-8H4"
+                                    />
+                                  </svg>
+                                  Adicionar URL
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                              {item.article_url ? (
+                                <a
+                                  href={item.article_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 underline"
+                                >
+                                  Abrir Artigo
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
+                                  Pendente
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                           {item.publication_status === "approved" ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400">
                               Aprovado
@@ -436,10 +682,10 @@ export default function OrderDetail() {
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
                               Pendente
                             </span>
-                          )}
+                          )}{" "}
                         </td>
                         {isAdmin && (
-                          <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                             <Select
                               options={[
                                 { value: "pending", label: "Pendente" },
@@ -453,16 +699,17 @@ export default function OrderDetail() {
                             />
                           </td>
                         )}
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 font-medium">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
                           {formatCurrency(item.total_price)}
                         </td>
                       </tr>
-                    ))}
+                    ))}{" "}
                   </tbody>{" "}
-                  <tfoot>
+                  <tfoot className="bg-gray-50 dark:bg-gray-800">
                     <tr>
+                      {" "}
                       <td
-                        colSpan={isAdmin ? 6 : 5}
+                        colSpan={isAdmin ? 7 : 6}
                         className="px-4 py-4 text-right font-medium text-gray-700 dark:text-gray-300"
                       >
                         Total:
@@ -477,7 +724,6 @@ export default function OrderDetail() {
             </div>
           </div>{" "}
         </div>
-
         {/* Anteriormente era exibido o Order Details Sidebar aqui - agora será apenas no modal */}
       </div>
       {/* Download Error Notification */}
@@ -654,6 +900,116 @@ export default function OrderDetail() {
             </Button>{" "}
           </div>
         </div>{" "}
+      </Modal>
+      {/* URL Edit Modal */}
+      <Modal
+        isOpen={isUrlEditModalOpen}
+        onClose={closeUrlEditModal}
+        className="max-w-md m-4"
+      >
+        <div className="p-6">
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-6">
+            Editar URL do Artigo
+          </h3>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              URL do Artigo Publicado
+            </label>
+            <input
+              type="url"
+              value={editingArticleUrl}
+              onChange={(e) => setEditingArticleUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
+              placeholder="https://exemplo.com/artigo"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={closeUrlEditModal}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveArticleUrl}
+              disabled={!editingArticleUrl.trim()}
+            >
+              Salvar
+            </Button>
+          </div>{" "}
+        </div>
+      </Modal>
+      {/* Package Details Modal */}
+      <Modal
+        isOpen={isPackageModalOpen}
+        onClose={closePackageModal}
+        className="max-w-md m-4"
+      >
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          {selectedPackageData && (
+            <>
+              {/* Título do Pacote */}
+              <span className="mb-3 block text-xl font-semibold text-gray-800 dark:text-white/90">
+                {selectedPackageData.title}
+              </span>{" "}
+              {/* Preço */}
+              <div className="mb-1">
+                <div className="flex items-end">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+                    {selectedPackageData.is_free
+                      ? "R$ 0,00"
+                      : `R$ ${
+                          selectedPackageData.price
+                            ?.toFixed(2)
+                            .replace(".", ",") || "0,00"
+                        }`}
+                  </h2>
+                  {selectedPackageData.price_per_word &&
+                    !selectedPackageData.is_free && (
+                      <span className="mb-1 inline-block text-sm text-gray-500 dark:text-gray-400 ml-1">
+                        /por palavra
+                      </span>
+                    )}
+                </div>
+              </div>
+              {/* Informações extras */}
+              {selectedPackageData.word_count && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  {selectedPackageData.word_count} palavras
+                </p>
+              )}
+              <div className="my-6 h-px w-full bg-gray-200 dark:bg-gray-800"></div>
+              {/* Benefícios */}
+              {selectedPackageData.benefits &&
+                selectedPackageData.benefits.length > 0 && (
+                  <div className="mb-8 space-y-3">
+                    {selectedPackageData.benefits.map(
+                      (benefit: string, index: number) => (
+                        <p
+                          key={index}
+                          className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M13.4017 4.35986L6.12166 11.6399L2.59833 8.11657"
+                              stroke="#12B76A"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          {benefit}
+                        </p>
+                      )
+                    )}
+                  </div>
+                )}
+            </>
+          )}
+        </div>
       </Modal>
       {/* Order Information Modal */}{" "}
       {order && (

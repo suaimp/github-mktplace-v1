@@ -47,11 +47,14 @@ export function getSelectedServicePackage(
     (option: any) => option.title === selectedServiceTitle
   );
   if (found) {
+    console.log("Service card encontrado com benefits:", found);
     return {
       title: found.title,
+      price: found.price,
       price_per_word: found.price_per_word,
       word_count: found.word_count,
-      is_free: found.is_free
+      is_free: found.is_free,
+      benefits: found.benefits
     };
   }
   return null;
@@ -65,7 +68,14 @@ export function getServicePackageArray(
   const pkg = getSelectedServicePackage(item, selectedService, serviceCards);
   if (!pkg)
     return [
-      { title: "Nenhum", price_per_word: 0, word_count: 0, is_free: false }
+      {
+        title: "Nenhum",
+        price: 0,
+        price_per_word: 0,
+        word_count: 0,
+        is_free: false,
+        benefits: []
+      }
     ];
   return [pkg];
 }

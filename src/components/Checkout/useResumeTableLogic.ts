@@ -9,6 +9,7 @@ import {
   getSelectedNicheName,
   getNichePrice
 } from "./utils/nicheSelectedUtils";
+import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
 
 export function useResumeTableLogic() {
   const [resumeData, setResumeData] = useState<any[]>([]);
@@ -106,7 +107,7 @@ export function useResumeTableLogic() {
           preset.niche
         ) {
           updated[item.id] = preset.niche;
-        } else if (typeof preset === "string") {
+        } else if (typeof preset === "string" && preset.trim() !== "") {
           try {
             const parsed = JSON.parse(preset);
             if (parsed && parsed.niche) {
@@ -118,7 +119,8 @@ export function useResumeTableLogic() {
             updated[item.id] = preset;
           }
         } else {
-          updated[item.id] = "";
+          // Valor padrão para nicho quando não há seleção prévia ou está vazio
+          updated[item.id] = NICHE_OPTIONS.DEFAULT;
         }
       });
       return updated;
@@ -133,7 +135,15 @@ export function useResumeTableLogic() {
             if (typeof first === "string") {
               const parsed = JSON.parse(first);
               if (parsed && parsed.title) {
-                updated[item.id] = parsed.title;
+                // Mapear os diferentes formatos para a opção do select
+                if (
+                  parsed.title === SERVICE_OPTIONS.LEGACY_NONE ||
+                  parsed.title === SERVICE_OPTIONS.NONE
+                ) {
+                  updated[item.id] = SERVICE_OPTIONS.NONE;
+                } else {
+                  updated[item.id] = parsed.title;
+                }
               } else {
                 updated[item.id] = first;
               }
@@ -142,24 +152,50 @@ export function useResumeTableLogic() {
               first !== null &&
               first.title
             ) {
-              updated[item.id] = first.title;
+              // Mapear os diferentes formatos para a opção do select
+              if (
+                first.title === SERVICE_OPTIONS.LEGACY_NONE ||
+                first.title === SERVICE_OPTIONS.NONE
+              ) {
+                updated[item.id] = SERVICE_OPTIONS.NONE;
+              } else {
+                updated[item.id] = first.title;
+              }
             } else {
-              updated[item.id] = "";
+              // Valor padrão quando o array existe mas não tem dados válidos
+              updated[item.id] = SERVICE_OPTIONS.NONE;
             }
           } catch {
-            updated[item.id] = "";
+            // Valor padrão em caso de erro no parse
+            updated[item.id] = SERVICE_OPTIONS.NONE;
           }
         } else if (
           typeof preset === "object" &&
           preset !== null &&
           preset.title
         ) {
-          updated[item.id] = preset.title;
-        } else if (typeof preset === "string") {
+          // Mapear os diferentes formatos para a opção do select
+          if (
+            preset.title === SERVICE_OPTIONS.LEGACY_NONE ||
+            preset.title === SERVICE_OPTIONS.NONE
+          ) {
+            updated[item.id] = SERVICE_OPTIONS.NONE;
+          } else {
+            updated[item.id] = preset.title;
+          }
+        } else if (typeof preset === "string" && preset.trim() !== "") {
           try {
             const parsed = JSON.parse(preset);
             if (parsed && parsed.title) {
-              updated[item.id] = parsed.title;
+              // Mapear os diferentes formatos para a opção do select
+              if (
+                parsed.title === SERVICE_OPTIONS.LEGACY_NONE ||
+                parsed.title === SERVICE_OPTIONS.NONE
+              ) {
+                updated[item.id] = SERVICE_OPTIONS.NONE;
+              } else {
+                updated[item.id] = parsed.title;
+              }
             } else {
               updated[item.id] = preset;
             }
@@ -167,7 +203,8 @@ export function useResumeTableLogic() {
             updated[item.id] = preset;
           }
         } else {
-          updated[item.id] = "";
+          // Valor padrão quando não há service_selected ou está vazio
+          updated[item.id] = SERVICE_OPTIONS.NONE;
         }
       });
       return updated;
@@ -237,6 +274,63 @@ export function useResumeTableLogic() {
         .finally(() => setLoading(false));
     });
   }
+
+  // Effect adicional para salvar valores padrão no banco quando necessário
+  useEffect(() => {
+    if (resumeData.length > 0) {
+      resumeData.forEach(async (item: any) => {
+        let needsUpdate = false;
+        const updates: any = {};
+
+        // Verificar se precisa salvar nicho padrão
+        if (
+          !item.niche_selected ||
+          (typeof item.niche_selected === "string" &&
+            item.niche_selected.trim() === "") ||
+          (Array.isArray(item.niche_selected) &&
+            item.niche_selected.length === 0)
+        ) {
+          updates.niche_selected = [
+            { niche: NICHE_OPTIONS.DEFAULT, price: "0" }
+          ];
+          needsUpdate = true;
+        }
+
+        // Verificar se precisa salvar serviço padrão
+        if (
+          !item.service_selected ||
+          (typeof item.service_selected === "string" &&
+            item.service_selected.trim() === "") ||
+          (Array.isArray(item.service_selected) &&
+            item.service_selected.length === 0)
+        ) {
+          updates.service_selected = [
+            {
+              title: SERVICE_OPTIONS.NONE,
+              price_per_word: 0,
+              word_count: 0,
+              is_free: true,
+              price: 0,
+              benefits: []
+            }
+          ];
+          needsUpdate = true;
+        }
+
+        // Salvar no banco se necessário
+        if (needsUpdate) {
+          try {
+            const { updateCartCheckoutResume } = await import(
+              "../../context/db-context/services/CartCheckoutResumeService"
+            );
+            await updateCartCheckoutResume(item.id, updates);
+          } catch (error) {
+            console.warn("Erro ao salvar valores padrão:", error);
+          }
+        }
+      });
+    }
+  }, [resumeData]);
 
   return {
     resumeData,
