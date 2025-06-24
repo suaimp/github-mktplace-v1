@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import Button from "../../components/ui/button/Button";
 import { supabase } from "../../lib/supabase";
 import PaymentInformationForm from "../../components/Checkout/PaymentInformationForm";
 import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";

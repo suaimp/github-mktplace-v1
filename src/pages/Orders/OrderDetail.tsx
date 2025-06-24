@@ -1,7 +1,5 @@
 import { useOrderDetailLogic } from "./actions/useOrderDetailLogic";
 import { useOrderInfoModal } from "./actions/useOrderInfoModal";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { getFaviconUrl } from "../../components/form/utils/formatters";

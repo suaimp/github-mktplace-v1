@@ -22,7 +22,6 @@ interface ProgressStep {
 const OrderProgress: React.FC<OrderProgressProps> = ({
   currentStep,
   paymentStatus,
-  orderStatus, // eslint-disable-line @typescript-eslint/no-unused-vars
   hasArticleDocument = false,
   articleUrl,
   orderDate,
