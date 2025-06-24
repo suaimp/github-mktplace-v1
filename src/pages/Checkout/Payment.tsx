@@ -55,6 +55,7 @@ export default function Payment() {
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
     string[]
   >(["card"]);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPaymentSettings();
@@ -361,6 +362,9 @@ export default function Payment() {
       const order = await createOrderInDatabase(paymentId);
 
       if (order) {
+        // Store the order ID
+        setCurrentOrderId(order.id);
+
         // Update payment status to "paid" for successful payments
         console.log("💳 Atualizando status do pagamento para 'paid':", {
           orderId: order.id,
@@ -612,11 +616,14 @@ export default function Payment() {
               orderSummary: orderSummary,
               totalAmount:
                 orderSummary.totalProductPrice + orderSummary.totalContentPrice
-            });
-
-            // Create order in database first - boleto stays as "pending" until paid
+            }); // Create order in database first - boleto stays as "pending" until paid
             const boletoPaymentId = `boleto_${Date.now()}`;
             const order = await createOrderInDatabase(boletoPaymentId);
+
+            // Store the order ID
+            if (order?.id) {
+              setCurrentOrderId(order.id);
+            }
 
             console.log("📋 Pedido criado para boleto:", {
               orderId: order?.id,
@@ -659,10 +666,12 @@ export default function Payment() {
             timestamp: new Date().toISOString(),
             message: "PIX é processado instantaneamente"
           });
-
           const pixPaymentId = `pix_${Date.now()}`;
           const order = await createOrderInDatabase(pixPaymentId);
           if (order) {
+            // Store the order ID
+            setCurrentOrderId(order.id);
+
             // PIX is instant, so mark as paid immediately
             const { updateOrderStatus } = await import(
               "../../context/db-context/services/OrderService"
@@ -817,8 +826,14 @@ export default function Payment() {
                         orderDate={new Date().toLocaleDateString("pt-BR")}
                         showProgressOnly={true}
                       />
-                    </div>
-                    <button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2">
+                    </div>{" "}
+                    <button
+                      onClick={() =>
+                        currentOrderId && navigate(`/orders/${currentOrderId}`)
+                      }
+                      disabled={!currentOrderId}
+                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       Acessar Detalhes do Pedido
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

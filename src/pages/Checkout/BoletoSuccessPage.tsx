@@ -108,8 +108,15 @@ export default function BoletoSuccessPage() {
                       orderDate={new Date().toLocaleDateString("pt-BR")}
                       showProgressOnly={true}
                     />
-                  </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2">
+                  </div>{" "}
+                  <button
+                    onClick={() =>
+                      boletoData?.orderId &&
+                      navigate(`/orders/${boletoData.orderId}`)
+                    }
+                    disabled={!boletoData?.orderId}
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Acessar Detalhes do Pedido
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -214,8 +221,13 @@ export default function BoletoSuccessPage() {
                 </div>
               </div>
               <div className="flex justify-center">
+                {" "}
                 <button
-                  onClick={() => navigate("/orders")}
+                  onClick={() =>
+                    boletoData?.orderId
+                      ? navigate(`/orders/${boletoData.orderId}`)
+                      : navigate("/orders")
+                  }
                   className="min-w-[200px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <svg

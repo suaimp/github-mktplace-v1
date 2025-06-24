@@ -91,9 +91,7 @@ export function useOrderDetailLogic() {
         .from("article_documents")
         .upload(filePath, selectedFile);
 
-      if (uploadError) throw uploadError;
-
-      // Busca o item do pedido junto com o pedido relacionado
+      if (uploadError) throw uploadError; // Busca o item do pedido junto com o pedido relacionado
       await OrderItemService.getOrderItemWithOrder(selectedItemId);
 
       // Atualiza o registro do item do pedido com o caminho do documento e nome do arquivo
@@ -103,8 +101,16 @@ export function useOrderDetailLogic() {
         selectedFile.name
       );
 
+      console.log("📄 Documento do artigo enviado com sucesso:", {
+        itemId: selectedItemId,
+        filePath,
+        fileName: selectedFile.name
+      });
+
       setUploadSuccess(true);
       await handleFileUpload(selectedFile);
+
+      // Close modal and reset states after a delay to show success message
       setTimeout(() => {
         closeDocModal();
         setSelectedFile(null);
@@ -125,13 +131,11 @@ export function useOrderDetailLogic() {
     try {
       setConfirmingBoleto(true);
       console.log("🏦 Confirmando pagamento de boleto para pedido:", order.id);
-
       const success = await simulateBoletoPaymentConfirmation(order.id);
 
       if (success) {
         console.log("✅ Pagamento confirmado com sucesso");
-        // Atualizar o estado local do pedido
-        window.location.reload(); // Simples reload para atualizar os dados
+        // A tabela será atualizada automaticamente via listener PostgreSQL
       } else {
         console.error("❌ Falha ao confirmar pagamento");
       }
@@ -145,13 +149,21 @@ export function useOrderDetailLogic() {
   // Função para envio da URL do artigo
   const sendArticleUrl = async (itemId: string, url: string) => {
     try {
+      console.log("🔗 Iniciando atualização da URL do artigo:", {
+        itemId,
+        url
+      });
+
       await OrderItemService.updateOrderItem(itemId, { article_url: url });
-      console.log("URL do artigo salva com sucesso:", { itemId, url });
+
+      console.log("🔗 URL do artigo salva com sucesso:", { itemId, url });
+
+      // O listener PostgreSQL no OrderItemsTable detectará a mudança automaticamente
     } catch (error) {
-      console.error("Erro ao salvar URL do artigo:", error);
+      console.error("❌ Erro ao salvar URL do artigo:", error);
+      throw error;
     }
   };
-
   return {
     order,
     orderItems,

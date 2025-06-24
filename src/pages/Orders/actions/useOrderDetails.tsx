@@ -49,12 +49,18 @@ export function useOrderDetails() {
   const [urlInputTimeout, setUrlInputTimeout] = useState<{
     [key: string]: NodeJS.Timeout;
   }>({});
-
   useEffect(() => {
     if (id) {
       loadOrderDetails(id);
     }
   }, [id]);
+
+  // Função para recarregar os dados do pedido
+  const refreshOrderData = () => {
+    if (id) {
+      loadOrderDetails(id);
+    }
+  };
   async function loadOrderDetails(orderId: string) {
     try {
       setLoading(true);
@@ -214,6 +220,9 @@ export function useOrderDetails() {
             : item
         )
       );
+
+      // Note: refreshOrderData is called by sendArticleUrl in useOrderDetailLogic
+      // No need to call it here to avoid duplicate refreshes
     } catch (error) {
       console.error("Error updating article URL:", error);
     }
@@ -228,7 +237,6 @@ export function useOrderDetails() {
     setIsDocModalOpen(false);
     setSelectedItemId(null);
   };
-
   const handleFileUpload = async (file: File | null) => {
     if (!file || !selectedItemId) return;
 
@@ -241,6 +249,8 @@ export function useOrderDetails() {
             : item
         )
       );
+
+      // O listener PostgreSQL no OrderItemsTable detectará as mudanças automaticamente
     } catch (error) {
       console.error("Error updating file info:", error);
     }
@@ -328,7 +338,6 @@ export function useOrderDetails() {
         return method;
     }
   };
-
   return {
     order,
     orderItems,
@@ -347,6 +356,7 @@ export function useOrderDetails() {
     formatDate,
     getStatusBadge,
     getPaymentStatusBadge,
-    getPaymentMethodLabel
+    getPaymentMethodLabel,
+    refreshOrderData
   };
 }
