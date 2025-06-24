@@ -5,7 +5,7 @@ import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
+import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 
 export default function PublisherDashboard() {
@@ -49,7 +49,7 @@ export default function PublisherDashboard() {
           <FeedbackForm />
         </div>
         <div className="col-span-12 xl:col-span-7">
-          <RecentOrders />
+          <FAQ />
         </div>
       </div>
     </>
