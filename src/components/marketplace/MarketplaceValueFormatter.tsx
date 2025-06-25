@@ -207,11 +207,6 @@ export function renderNicheWithIcon(value: any) {
     JSON.stringify(value)
   );
 
-  if (!value) {
-    console.log("[renderNicheWithIcon] No value, returning '-'");
-    return "-";
-  }
-
   // Componente que renderiza os nichos com dados do banco
   const NicheRenderer = () => {
     const [allNiches, setAllNiches] = React.useState<NicheOption[]>([]);
@@ -238,37 +233,45 @@ export function renderNicheWithIcon(value: any) {
     }
 
     try {
-      // Parse os dados do nicho atual
-      let nicheData: NicheOption[];
+      // Parse os dados do nicho atual (se existir)
+      let nicheData: NicheOption[] = [];
 
-      if (typeof value === "string") {
-        console.log("[renderNicheWithIcon] Processing string value:", value);
+      if (value) {
+        if (typeof value === "string") {
+          console.log("[renderNicheWithIcon] Processing string value:", value);
 
-        // Verifica se parece ser JSON
-        if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
-          try {
-            const parsed = JSON.parse(value);
-            console.log("[renderNicheWithIcon] Parsed JSON:", parsed);
-            nicheData = parseNicheData(
-              Array.isArray(parsed) ? parsed : [parsed]
-            );
-          } catch {
+          // Verifica se parece ser JSON
+          if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
+            try {
+              const parsed = JSON.parse(value);
+              console.log("[renderNicheWithIcon] Parsed JSON:", parsed);
+              nicheData = parseNicheData(
+                Array.isArray(parsed) ? parsed : [parsed]
+              );
+            } catch {
+              console.log(
+                "[renderNicheWithIcon] Failed to parse JSON, skipping malformed data"
+              );
+              // Continua sem dados de nicho, vai exibir todos sem destaque
+            }
+          } else {
+            // String simples, trata como texto
             console.log(
-              "[renderNicheWithIcon] Failed to parse JSON, skipping malformed data"
+              "[renderNicheWithIcon] Simple string, treating as text"
             );
-            return <span>-</span>;
+            nicheData = [{ text: value, icon: undefined }];
           }
+        } else if (Array.isArray(value)) {
+          console.log("[renderNicheWithIcon] Processing array value:", value);
+          nicheData = parseNicheData(value);
         } else {
-          // String simples, trata como texto
-          console.log("[renderNicheWithIcon] Simple string, treating as text");
-          nicheData = [{ text: value, icon: undefined }];
+          console.log("[renderNicheWithIcon] Processing object value:", value);
+          nicheData = parseNicheData([value]);
         }
-      } else if (Array.isArray(value)) {
-        console.log("[renderNicheWithIcon] Processing array value:", value);
-        nicheData = parseNicheData(value);
       } else {
-        console.log("[renderNicheWithIcon] Processing object value:", value);
-        nicheData = parseNicheData([value]);
+        console.log(
+          "[renderNicheWithIcon] No value provided, showing all niches without highlight"
+        );
       }
 
       // Filtra dados válidos
@@ -281,17 +284,14 @@ export function renderNicheWithIcon(value: any) {
       console.log("[renderNicheWithIcon] Valid nicheData:", validNicheData);
       console.log("[renderNicheWithIcon] All available niches:", allNiches);
 
-      if (!validNicheData || validNicheData.length === 0) {
-        return <span>-</span>;
-      }
-
-      // Pega os textos dos nichos que o site possui
+      // Pega os textos dos nichos que o site possui (se houver)
       const siteNicheTexts = validNicheData
         .map((niche) => niche.text)
         .filter((text) => text && text.trim() !== "");
 
       console.log("[renderNicheWithIcon] Site niche texts:", siteNicheTexts);
 
+      // Sempre renderiza todos os ícones de nicho disponíveis
       return (
         <div className="flex flex-wrap gap-2">
           {allNiches.map((niche, index) => {
