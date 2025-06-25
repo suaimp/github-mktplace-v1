@@ -1,8 +1,8 @@
 // Exemplo de como os nichos aparecerão em um formulário real
 
-import React from 'react';
-import { CompactNiche } from '../form/NicheDisplay';
-import type { NicheOption } from '../../context/db-context/services/formFieldNicheService';
+import React from "react";
+import { CompactNiche } from "../form/NicheDisplay";
+import type { NicheOption } from "../../services/db-services/form-services/formFieldNicheService";
 
 // Exemplo de nichos configurados
 const exampleNiches: NicheOption[] = [
@@ -19,7 +19,7 @@ export function ExampleNicheUsage() {
       <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
         Exemplo: Nichos com Ícones
       </h2>
-      
+
       {/* Exibição em lista compacta */}
       <div>
         <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -31,7 +31,7 @@ export function ExampleNicheUsage() {
           ))}
         </div>
       </div>
-      
+
       {/* Exibição em cards */}
       <div>
         <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -56,7 +56,7 @@ export function ExampleNicheUsage() {
           })}
         </div>
       </div>
-      
+
       {/* Exibição em lista vertical */}
       <div>
         <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -90,16 +90,16 @@ export function ExampleNicheUsage() {
 // Função helper para obter componente do ícone
 function getIconComponent(iconName?: string) {
   if (!iconName) return null;
-  
+
   // Importação dinâmica dos ícones
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    ShoppingCartIcon: require('../../icons').ShoppingCartIcon,
-    BoltIcon: require('../../icons').BoltIcon,
-    UserIcon: require('../../icons').UserIcon,
-    DocsIcon: require('../../icons').DocsIcon,
-    DollarLineIcon: require('../../icons').DollarLineIcon,
+    ShoppingCartIcon: require("../../icons").ShoppingCartIcon,
+    BoltIcon: require("../../icons").BoltIcon,
+    UserIcon: require("../../icons").UserIcon,
+    DocsIcon: require("../../icons").DocsIcon,
+    DollarLineIcon: require("../../icons").DollarLineIcon
     // Adicione outros ícones conforme necessário
   };
-  
+
   return iconMap[iconName] || null;
 }

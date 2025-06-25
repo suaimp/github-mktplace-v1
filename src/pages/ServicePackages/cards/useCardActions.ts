@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import {
   deleteServiceCard,
   updateCardsOrder
-} from "../../../context/db-context/services/serviceCardService";
+} from "../../../services/db-services/marketplace-services/card/serviceCardService";
 import {
   defaultCardColors,
   mainCardColors

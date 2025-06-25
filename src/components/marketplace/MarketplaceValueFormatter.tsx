@@ -5,7 +5,7 @@ import * as NicheIcons from "../../icons/niche-icons";
 import {
   parseNicheData,
   type NicheOption
-} from "../../context/db-context/services/formFieldNicheService";
+} from "../../services/db-services/form-services/formFieldNicheService";
 import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
 
 // Cache para armazenar todos os nichos disponíveis

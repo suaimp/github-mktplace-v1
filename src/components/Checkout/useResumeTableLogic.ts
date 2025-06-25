@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { getCartCheckoutResumeByUser } from "../../context/db-context/services/CartCheckoutResumeService";
-import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
+import { getCartCheckoutResumeByUser } from "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
+import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
 import { useCheckoutCardsActions } from "../ServicePackages/cards/checkoutCardsActions";
 import { useResumeTableEdit } from "./actions/ResumeTableEdit";
 import { getSelectedServiceTitle } from "./utils/servicePackageSelectedUtils";
@@ -321,7 +321,7 @@ export function useResumeTableLogic() {
         if (needsUpdate) {
           try {
             const { updateCartCheckoutResume } = await import(
-              "../../context/db-context/services/CartCheckoutResumeService"
+              "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService"
             );
             await updateCartCheckoutResume(item.id, updates);
           } catch (error) {

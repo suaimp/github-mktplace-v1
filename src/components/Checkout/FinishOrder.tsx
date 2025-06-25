@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { getOrderTotalsByUser } from "../../context/db-context/services/OrderTotalsService";
+import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
 
 export default function FinishOrder() {
   const [totalProductPrice, setTotalProductPrice] = useState<number | null>(

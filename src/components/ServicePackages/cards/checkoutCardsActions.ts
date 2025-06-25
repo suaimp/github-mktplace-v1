@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { getShoppingCartItemsByUser } from "../../../context/db-context/services/shoppingCartService";
-import { getFormEntries } from "../../../context/db-context/services/formEntriesService";
-import { getPublisherServices } from "../../../context/db-context/services/publisherService";
-import { getServiceCards } from "../../../context/db-context/services/serviceCardService";
+import { getShoppingCartItemsByUser } from "../../../services/db-services/marketplace-services/cart/shoppingCartService";
+import { getFormEntries } from "../../../services/db-services/form-services/formEntriesService";
+import { getPublisherServices } from "../../../services/db-services/user/publisher/publisherService";
+import { getServiceCards } from "../../../services/db-services/marketplace-services/card/serviceCardService";
 
 export function useCheckoutCardsActions() {
   const [cartProductTypeId, setCartProductTypeId] = useState<string | null>(

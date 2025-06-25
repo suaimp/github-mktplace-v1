@@ -3,7 +3,7 @@ import {
   createServiceCard,
   getServiceCardById,
   updateServiceCard
-} from "../../../context/db-context/services/serviceCardService";
+} from "../../../services/db-services/marketplace-services/card/serviceCardService";
 import ToastMessage from "../../ui/ToastMessage/ToastMessage";
 import { v4 as uuidv4 } from "uuid";
 import Tooltip from "../../ui/Tooltip";

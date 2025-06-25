@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSidebar } from "../context/SidebarContext";
+import { useSidebar } from "../services/context/SidebarContext";
 import { useLogos } from "../hooks/useLogos";
 import HeaderLogo from "../components/header/HeaderLogo";
 import HeaderSearch from "../components/header/HeaderSearch";
@@ -93,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({ onToggle }) => {
           {/* Search Bar */}
           <HeaderSearch />
         </div>
-        
+
         {/* Header Actions */}
         <HeaderActions isOpen={isApplicationMenuOpen} />
       </div>

@@ -6,7 +6,7 @@ import "simplebar-react/dist/simplebar.min.css";
 import "flatpickr/dist/flatpickr.css";
 import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
-import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { ThemeProvider } from "./services/context/ThemeContext.tsx";
 import { CartProvider } from "./components/marketplace/ShoppingCartContext.tsx";
 
 createRoot(document.getElementById("root")!).render(

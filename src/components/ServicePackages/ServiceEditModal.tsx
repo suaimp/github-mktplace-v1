@@ -7,9 +7,9 @@ import ToastMessage from "../ui/ToastMessage/ToastMessage";
 import {
   updatePublisherService,
   getPublisherServiceById
-} from "../../context/db-context/services/publisherService";
-import { useServicePackages } from "../../context/ServicePackages/ServicePackagesContext";
-import { getForms } from "../../context/db-context/services/formsService";
+} from "../../services/db-services/user/publisher/publisherService";
+import { useServicePackages } from "../../services/ServicePackages/ServicePackagesContext";
+import { getForms } from "../../services/db-services/form-services/formsService";
 import Select from "../form/Select";
 
 interface ServiceEditModalProps {

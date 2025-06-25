@@ -7,7 +7,7 @@ import Button from "../ui/button/Button";
 import FormEntriesSkeleton from "./FormEntriesSkeleton";
 import * as FieldsImport from "./fields";
 import TextArea from "./input/TextArea";
-import { getCommissionField } from "../../context/db-context/services/formFieldsService";
+import { getCommissionField } from "../../services/db-services/form-services/formFieldsService";
 import { applyCommissionToFormValues } from "../EditorialManager/actions/commissionLogic";
 import {
   filterFieldsForTable,

@@ -14,7 +14,7 @@ import {
 
 import type { DragEndEvent } from "@dnd-kit/core";
 
-import { getServiceCards } from "../../context/db-context/services/serviceCardService";
+import { getServiceCards } from "../../services/db-services/marketplace-services/card/serviceCardService";
 /* components */
 import NewCardSettings from "../../components/ServicePackages/cards/NewCardSettings";
 import { useServicePackage, useServiceCards } from "./cards/useServicePackage";

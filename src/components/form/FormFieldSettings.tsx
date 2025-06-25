@@ -22,7 +22,7 @@ import {
   createFormFieldNiche,
   updateFormFieldNiche,
   sanitizeNicheOptions
-} from "../../context/db-context/services/formFieldNicheService";
+} from "../../services/db-services/form-services/formFieldNicheService";
 
 interface FormField {
   id: string;

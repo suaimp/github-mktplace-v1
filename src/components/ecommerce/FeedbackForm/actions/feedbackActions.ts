@@ -4,7 +4,7 @@ import {
   FEEDBACK_CATEGORIES,
   FEEDBACK_PRIORITIES
 } from "../types/feedback";
-import { FeedbackSubmissionsService } from "../../../../context/db-context/services/feedbackSubmissionsService";
+import { FeedbackSubmissionsService } from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 
 // Funções auxiliares para conversão
 export function getCategoryName(categoryId: number): string {

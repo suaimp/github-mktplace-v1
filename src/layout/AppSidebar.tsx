@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLogos } from "../hooks/useLogos";
 import * as Icons from "../icons";
-import { useSidebar } from "../context/SidebarContext";
+import { useSidebar } from "../services/context/SidebarContext";
 import SidebarLogo from "../components/sidebar/SidebarLogo";
 import SidebarNav from "../components/sidebar/SidebarNav";
 import { supabase } from "../lib/supabase";

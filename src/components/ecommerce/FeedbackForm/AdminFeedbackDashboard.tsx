@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { FeedbackSubmissionsService } from "../../../context/db-context/services/feedbackSubmissionsService";
-import type { FeedbackSubmissionDisplay } from "../../../context/db-context/services/feedbackSubmissionsService";
+import { FeedbackSubmissionsService } from "../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
+import type { FeedbackSubmissionDisplay } from "../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 
 interface AdminFeedbackDashboardProps {
   className?: string;

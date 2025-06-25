@@ -1,5 +1,5 @@
 import * as Icons from "../../icons";
-import type { NicheOption } from "../../context/db-context/services/formFieldNicheService";
+import type { NicheOption } from "../../services/db-services/form-services/formFieldNicheService";
 
 interface NicheDisplayProps {
   niches: NicheOption[];

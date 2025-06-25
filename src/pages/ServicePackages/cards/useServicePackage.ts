@@ -3,7 +3,7 @@ import { supabase } from "../../../lib/supabase";
 import {
   getServiceCards,
   ServiceCard as ServiceCardType
-} from "../../../context/db-context/services/serviceCardService";
+} from "../../../services/db-services/marketplace-services/card/serviceCardService";
 
 export function useServicePackage(id: string | undefined) {
   const [packageData, setPackageData] = useState<any>(null);

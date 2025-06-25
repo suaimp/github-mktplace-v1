@@ -247,7 +247,7 @@ export default function OrderList() {
                       {" "}
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
                         <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          #{order.id.substring(0, 8)}
+                          {order.id.substring(0, 8)}
                         </span>
                       </TableCell>{" "}
                       {isAdmin && (

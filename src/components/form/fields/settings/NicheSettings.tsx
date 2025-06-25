@@ -6,7 +6,7 @@ import {
   getFormFieldNicheByFormFieldId,
   parseNicheData,
   type NicheOption
-} from "../../../../context/db-context/services/formFieldNicheService";
+} from "../../../../services/db-services/form-services/formFieldNicheService";
 
 interface NicheSettingsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

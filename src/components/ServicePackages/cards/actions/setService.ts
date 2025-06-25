@@ -1,7 +1,7 @@
 import {
   getCartCheckoutResumeByUser,
   updateCartCheckoutResume
-} from "../../../../context/db-context/services/CartCheckoutResumeService";
+} from "../../../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
 
 // Função de ação para setar serviço selecionado em todas as linhas do usuário
 export async function setService(service: any) {

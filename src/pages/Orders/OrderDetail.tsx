@@ -233,7 +233,7 @@ export default function OrderDetail() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
-                  Pedido #{order.id.substring(0, 8)}
+                  ID do Pedido: {order.id.substring(0, 8)}
                 </h2>
                 <div className="flex items-center gap-3">
                   <p className="text-gray-500 dark:text-gray-400">

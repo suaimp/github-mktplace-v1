@@ -158,7 +158,7 @@ export default function ResumeTable(props: ResumeTableProps) {
         document.body.style.cursor = "wait";
       }
       const { deleteCartCheckoutResume } = await import(
-        "../../context/db-context/services/CartCheckoutResumeService"
+        "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService"
       );
       const success = await deleteCartCheckoutResume(id);
       if (success) {
@@ -432,7 +432,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                             // Atualiza no backend em background
                             if (item.id) {
                               const { updateCartCheckoutResume } = await import(
-                                "../../context/db-context/services/CartCheckoutResumeService"
+                                "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService"
                               );
                               // Se "Nenhum" ou vazio, envia array padrão
                               let serviceArray;

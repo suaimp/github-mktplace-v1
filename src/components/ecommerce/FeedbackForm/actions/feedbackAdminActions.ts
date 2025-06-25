@@ -1,8 +1,8 @@
-import { FeedbackSubmissionsService } from "../../../../context/db-context/services/feedbackSubmissionsService";
+import { FeedbackSubmissionsService } from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 import type {
   FeedbackSubmissionDisplay,
   FeedbackSubmission as DBFeedbackSubmission
-} from "../../../../context/db-context/services/feedbackSubmissionsService";
+} from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 import type { FeedbackSubmission } from "../types/feedback";
 import { getCategoryId, getPriorityId } from "./feedbackActions";
 

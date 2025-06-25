@@ -15,7 +15,7 @@ import { PencilIcon, TrashBinIcon, SettingsMinimalIcon } from "../../icons";
 import {
   deletePublisherService,
   setActivePublisherService
-} from "../../context/db-context/services/publisherService";
+} from "../../services/db-services/user/publisher/publisherService";
 
 interface ServicePackage {
   id: string;

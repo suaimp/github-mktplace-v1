@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArticleDocumentsService } from "../../../context/buckets-services/articleDocumentsService";
+import { ArticleDocumentsService } from "../../../services/buckets-services/articleDocumentsService";
 
 interface UseFileDownloadReturn {
   downloadLoading: { [itemId: string]: boolean };

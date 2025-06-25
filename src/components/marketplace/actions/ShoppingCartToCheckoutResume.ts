@@ -4,14 +4,14 @@ import {
   updateCartCheckoutResume,
   deleteCartCheckoutResume,
   getCartCheckoutResumeByUser
-} from "../../../context/db-context/services/CartCheckoutResumeService";
-import { getFormEntryValuesByEntryId } from "../../../context/db-context/services/formEntryValueService";
+} from "../../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
+import { getFormEntryValuesByEntryId } from "../../../services/db-services/form-services/formEntryValueService";
 import { getPriceFromEntryWithCache } from "../../Checkout/utils/priceFromEntryUtils";
 import { supabase } from "../../../lib/supabase";
 
 // Adiciona entry_id na tipagem do CartCheckoutResume para facilitar buscas
 export type CartCheckoutResumeWithEntry =
-  import("../../../context/db-context/services/CartCheckoutResumeService").CartCheckoutResume & {
+  import("../../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService").CartCheckoutResume & {
     entry_id: string;
   };
 

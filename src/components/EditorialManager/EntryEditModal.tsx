@@ -6,7 +6,7 @@ import Select from "../../components/form/Select";
 import TextArea from "../../components/form/input/TextArea";
 import * as Fields from "../../components/form/fields";
 import { useShoppingCartToCheckoutResume } from "../marketplace/actions/ShoppingCartToCheckoutResume";
-import { getCommissionField } from "../../context/db-context/services/formFieldsService";
+import { getCommissionField } from "../../services/db-services/form-services/formFieldsService";
 import { applyCommissionToFormValues } from "./actions/commissionLogic";
 
 interface EntryEditModalProps {

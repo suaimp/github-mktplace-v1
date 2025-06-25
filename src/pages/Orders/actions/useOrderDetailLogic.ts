@@ -3,8 +3,8 @@ import { useState, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useOrderDetails } from "./useOrderDetails";
 import { useFileDownload } from "./useFileDownload";
-import { simulateBoletoPaymentConfirmation } from "../../../context/db-context/services/OrderService";
-import { OrderItemService } from "../../../context/db-context/services/OrderItemService";
+import { simulateBoletoPaymentConfirmation } from "../../../services/db-services/marketplace-services/order/OrderService";
+import { OrderItemService } from "../../../services/db-services/marketplace-services/order/OrderItemService";
 
 export function useOrderDetailLogic() {
   const {

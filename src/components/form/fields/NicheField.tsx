@@ -3,7 +3,7 @@ import {
   getFormFieldNicheByFormFieldId,
   parseNicheData,
   type NicheOption
-} from "../../../context/db-context/services/formFieldNicheService";
+} from "../../../services/db-services/form-services/formFieldNicheService";
 import { FormField } from "./types";
 
 interface NicheFieldProps {

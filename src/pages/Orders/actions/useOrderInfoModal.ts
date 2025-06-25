@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteCompleteOrder } from "../../../context/db-context/services/OrderService";
+import { deleteCompleteOrder } from "../../../services/db-services/marketplace-services/order/OrderService";
 
 export function useOrderInfoModal() {
   const navigate = useNavigate();

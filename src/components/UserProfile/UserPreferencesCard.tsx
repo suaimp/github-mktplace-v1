@@ -15,7 +15,10 @@ interface UserPreferencesCardProps {
   onUpdate: () => void;
 }
 
-export default function UserPreferencesCard({ profile, onUpdate }: UserPreferencesCardProps) {
+export default function UserPreferencesCard({
+  profile,
+  onUpdate
+}: UserPreferencesCardProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -42,24 +45,23 @@ export default function UserPreferencesCard({ profile, onUpdate }: UserPreferenc
       setSuccess(false);
 
       const { error: updateError } = await supabase
-        .from('admins')
+        .from("admins")
         .update({
           marketing_automation: marketingAutomation,
           newsletter: newsletter,
           offer_suggestions: offerSuggestions
         })
-        .eq('id', profile.id);
+        .eq("id", profile.id);
 
       if (updateError) throw updateError;
 
       setSuccess(true);
       onUpdate();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
-      
     } catch (err) {
       console.error("Erro ao atualizar preferências:", err);
       setError("Erro ao atualizar preferências");
@@ -69,29 +71,86 @@ export default function UserPreferencesCard({ profile, onUpdate }: UserPreferenc
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm("Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.")) {
+    // Confirmação mais robusta
+    const confirmMessage =
+      "⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\n" +
+      "Ao excluir sua conta:\n" +
+      "• Todos os seus dados serão permanentemente removidos\n" +
+      "• Você perderá acesso a todos os serviços\n" +
+      "• Não será possível recuperar informações\n\n" +
+      "Digite 'EXCLUIR' para confirmar:";
+
+    const userInput = prompt(confirmMessage);
+
+    if (userInput !== "EXCLUIR") {
+      if (userInput !== null) {
+        setError("Confirmação incorreta. Operação cancelada.");
+      }
       return;
     }
 
     try {
       setLoading(true);
       setError("");
+      setSuccess(false);
 
+      // Verificar se o usuário ainda está autenticado
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Verificar se o perfil ainda existe
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("id", profile.id)
+        .single();
+
+      if (checkError || !existingProfile) {
+        throw new Error("Perfil não encontrado");
+      }
+
+      // Deletar dados do perfil
       const { error: deleteError } = await supabase
-        .from('admins')
+        .from("admins")
         .delete()
-        .eq('id', profile.id);
+        .eq("id", profile.id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        throw new Error(`Erro ao deletar perfil: ${deleteError.message}`);
+      }
 
+      // Fazer logout
       const { error: authError } = await supabase.auth.signOut();
-      if (authError) throw authError;
+      if (authError) {
+        console.warn("Erro ao fazer logout:", authError);
+        // Não bloquear o processo se o logout falhar
+      }
 
-      window.location.href = "/signin";
-      
+      // Limpar dados locais
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+
+      // Redirecionar para página de login
+      window.location.replace("/signin");
     } catch (err) {
       console.error("Erro ao excluir conta:", err);
-      setError("Erro ao excluir conta");
+
+      let errorMessage = "Erro inesperado ao excluir conta";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+
+      setError(`Falha ao excluir conta: ${errorMessage}`);
+    } finally {
       setLoading(false);
     }
   };
@@ -122,9 +181,16 @@ export default function UserPreferencesCard({ profile, onUpdate }: UserPreferenc
                 </p>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   <div className={showFullText ? "" : "line-clamp-2"}>
-                    Como parte da Plataforma, enviamos <b>emails educacionais</b> aos nossos Usuários e apresentamos <b>recursos adicionais da Plataforma</b>, <b>produtos</b> e <b>promoções periódicas</b> (<i>automação de marketing</i>) - marque esta caixa se você concorda em receber mensagens nossas usando sistemas de chamadas automatizados para fins de marketing direto de serviços e produtos oferecidos.
+                    Como parte da Plataforma, enviamos{" "}
+                    <b>emails educacionais</b> aos nossos Usuários e
+                    apresentamos <b>recursos adicionais da Plataforma</b>,{" "}
+                    <b>produtos</b> e <b>promoções periódicas</b> (
+                    <i>automação de marketing</i>) - marque esta caixa se você
+                    concorda em receber mensagens nossas usando sistemas de
+                    chamadas automatizados para fins de marketing direto de
+                    serviços e produtos oferecidos.
                   </div>
-                  <button 
+                  <button
                     onClick={() => setShowFullText(!showFullText)}
                     className="text-brand-500 hover:text-brand-600 dark:text-brand-400 mt-1"
                   >
@@ -150,7 +216,14 @@ export default function UserPreferencesCard({ profile, onUpdate }: UserPreferenc
                   Newsletter
                 </p>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  <strong>Eu assino a newsletter e concordo com o envio de informações comerciais</strong> por meio de comunicação eletrônica, incluindo, em particular, e-mail, sobre marketing direto de serviços e produtos oferecidos. A base legal para o processamento de dados é o Artigo 6(1)(a) do GDPR.
+                  <strong>
+                    Eu assino a newsletter e concordo com o envio de informações
+                    comerciais
+                  </strong>{" "}
+                  por meio de comunicação eletrônica, incluindo, em particular,
+                  e-mail, sobre marketing direto de serviços e produtos
+                  oferecidos. A base legal para o processamento de dados é o
+                  Artigo 6(1)(a) do GDPR.
                 </div>
               </div>
             </div>
@@ -175,10 +248,7 @@ export default function UserPreferencesCard({ profile, onUpdate }: UserPreferenc
           </div>
 
           <div className="flex justify-end mt-6">
-            <Button 
-              onClick={handleSubmit}
-              disabled={loading}
-            >
+            <Button onClick={handleSubmit} disabled={loading}>
               {loading ? "Salvando..." : "Salvar Preferências"}
             </Button>
           </div>

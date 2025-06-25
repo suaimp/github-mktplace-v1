@@ -1,7 +1,7 @@
 // Arquivo para testar o serviço de feedback
 // Execute este arquivo no console do navegador para testar
 
-import { FeedbackSubmissionsService } from "../../../../context/db-context/services/feedbackSubmissionsService";
+import { FeedbackSubmissionsService } from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 
 // Exemplo de teste do serviço
 export const testFeedbackService = async () => {

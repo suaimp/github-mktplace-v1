@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import ServiceCard from "../../../components/ServicePackages/cards/ServiceCard";
 import { PencilIcon, TrashBinIcon } from "../../../icons";
 import Switch from "react-switch";
-import { updateServiceCardToggle } from "../../../context/db-context/services/serviceCardService";
+import { updateServiceCardToggle } from "../../../services/db-services/marketplace-services/card/serviceCardService";
 
 import {
   defaultCardColors,

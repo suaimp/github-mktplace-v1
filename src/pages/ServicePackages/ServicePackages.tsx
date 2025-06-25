@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import NewServiceBaseModal from "../../components/ServicePackages/NewServiceModal";
 import ServicePackagesTable from "../../components/ServicePackages/ServicePackagesTable";
 /* db */
-import { getPublisherServices } from "../../context/db-context/services/publisherService";
-import { getServiceCards } from "../../context/db-context/services/serviceCardService";
-import { ServicePackagesContext } from "../../context/ServicePackages/ServicePackagesContext";
+import { getPublisherServices } from "../../services/db-services/user/publisher/publisherService";
+import { getServiceCards } from "../../services/db-services/marketplace-services/card/serviceCardService";
+import { ServicePackagesContext } from "../../services/ServicePackages/ServicePackagesContext";
 
 const ServicePackages: React.FC = () => {
   const [packages, setPackages] = useState<any[]>([]);

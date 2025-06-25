@@ -8,7 +8,7 @@ import PaymentInformationForm from "../../components/Checkout/PaymentInformation
 import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";
 import FinishOrder from "../../components/Checkout/FinishOrder";
 import OrderProgress from "../Orders/local-components/OrderProgress";
-import { createOrder } from "../../context/db-context/services/OrderService";
+import { createOrder } from "../../services/db-services/marketplace-services/order/OrderService";
 import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { validatePhone } from "../../utils/phoneValidation";
@@ -372,7 +372,7 @@ export default function Payment() {
         });
 
         const { updateOrderStatus } = await import(
-          "../../context/db-context/services/OrderService"
+          "../../services/db-services/marketplace-services/order/OrderService"
         );
         const updateSuccess = await updateOrderStatus(
           order.id,
@@ -674,7 +674,7 @@ export default function Payment() {
 
             // PIX is instant, so mark as paid immediately
             const { updateOrderStatus } = await import(
-              "../../context/db-context/services/OrderService"
+              "../../services/db-services/marketplace-services/order/OrderService"
             );
             const updateSuccess = await updateOrderStatus(
               order.id,
