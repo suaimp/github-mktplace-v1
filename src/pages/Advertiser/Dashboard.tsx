@@ -1,38 +1,65 @@
+import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/PageMeta";
-import { useEffect } from "react";
-import { supabase } from "../../lib/supabase";
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "../../components/ecommerce/StatisticsChart";
-import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
+import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable";
+
 import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
+import WelcomeMessage from "../../components/common/WelcomeMessage";
+import { supabase } from "../../lib/supabase";
 
 export default function AdvertiserDashboard() {
-  useEffect(() => {
-    loadUserProfile();
-  }, []);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  async function loadUserProfile() {
+  useEffect(() => {
+    checkAdminRole();
+  }, []);
+  async function checkAdminRole() {
     try {
       const {
         data: { user }
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        console.log("Dashboard: Nenhum usuário autenticado");
+        setLoading(false);
+        return;
+      }
 
-      const { error } = await supabase
-        .from("platform_users")
-        .select("first_name, last_name")
+      console.log("Dashboard: Verificando admin para usuário:", user.id);
+
+      // Verificar se o usuário é admin na tabela admins
+      const { data: adminData, error: adminError } = await supabase
+        .from("admins")
+        .select("role")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      console.log("Dashboard: Resultado da consulta admin:", {
+        adminData,
+        adminError
+      });
 
-      // Now you can handle the error if needed
-    } catch (err) {
-      console.error("Erro ao carregar perfil:", err);
+      if (adminData?.role === "admin") {
+        console.log("Dashboard: Usuário é admin!");
+        setIsAdmin(true);
+      } else {
+        console.log("Dashboard: Usuário não é admin");
+      }
+    } catch (error) {
+      console.error("Erro ao verificar role de admin:", error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
+      </div>
+    );
   }
 
   return (
@@ -41,24 +68,36 @@ export default function AdvertiserDashboard() {
         title="Dashboard do Anunciante | Platform"
         description="Painel de controle para anunciantes"
       />
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 space-y-6 xl:col-span-7">
-          <EcommerceMetrics />
-          <MonthlySalesChart />
+
+      {/* Welcome Section */}
+      <WelcomeMessage className="mb-8" />
+
+      {isAdmin ? (
+        // Layout completo para admins
+        <div className="grid grid-cols-12 gap-4 md:gap-6">
+          <div className="col-span-12 space-y-6 w-full">
+            <EcommerceMetrics />
+            <RecentOrdersTable />
+          </div>
+
+          <div className="col-span-12 xl:col-span-5">
+            <FeedbackForm />
+          </div>
+          <div className="col-span-12 xl:col-span-7">
+            <FAQ />
+          </div>
         </div>
-        <div className="col-span-12 xl:col-span-5">
-          <MonthlyTarget />
+      ) : (
+        // Layout simplificado para usuários comuns
+        <div className="grid grid-cols-12 gap-4 md:gap-6">
+          <div className="col-span-12 xl:col-span-5">
+            <FeedbackForm />
+          </div>
+          <div className="col-span-12 xl:col-span-7">
+            <FAQ />
+          </div>
         </div>
-        <div className="col-span-12">
-          <StatisticsChart />
-        </div>{" "}
-        <div className="col-span-12 xl:col-span-5">
-          <FeedbackForm />
-        </div>
-        <div className="col-span-12 xl:col-span-7">
-          <FAQ />
-        </div>
-      </div>
+      )}
     </>
   );
 }

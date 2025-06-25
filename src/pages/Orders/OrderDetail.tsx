@@ -334,7 +334,7 @@ export default function OrderDetail() {
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
               Especificações do artigo:
-            </h4>
+            </h4>{" "}
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
               <li className="flex items-start">
                 <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
@@ -344,7 +344,22 @@ export default function OrderDetail() {
                 <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
                 Incluir 2 links para 2 palavras chaves
               </li>
+              <li className="flex items-start">
+                <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                Incluir 1 imagem de destaque com fonte
+              </li>
             </ul>
+            <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+              <p>Veja o exemplo: </p>
+              <a
+                href="https://docs.google.com/document/d/1t9I9VkMCWEiNNsDsoJVvmwi8kf1Nk5iR8rfFMlNVp8A/edit?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm"
+              >
+                Abrir Link de exemplo
+              </a>
+            </div>
           </div>
           <div className="mb-6 flex flex-col items-center justify-center">
             <div
