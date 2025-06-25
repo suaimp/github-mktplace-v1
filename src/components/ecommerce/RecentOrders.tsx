@@ -1,8 +1,14 @@
-import FAQ from "./FAQ";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell
+} from "../ui/table";
+import Badge from "../ui/badge/Badge";
 
-export default function RecentOrders() {
-  return <FAQ />;
-}
+// Dados dos produtos
+const tableData = [
   {
     id: 1,
     name: "MacBook Pro 13”",
@@ -10,7 +16,7 @@ export default function RecentOrders() {
     category: "Laptop",
     price: "$2399.00",
     status: "Delivered",
-    image: "/images/product/product-01.jpg", // Replace with actual image URL
+    image: "/images/product/product-01.jpg" // Replace with actual image URL
   },
   {
     id: 2,
@@ -19,7 +25,7 @@ export default function RecentOrders() {
     category: "Watch",
     price: "$879.00",
     status: "Pending",
-    image: "/images/product/product-02.jpg", // Replace with actual image URL
+    image: "/images/product/product-02.jpg" // Replace with actual image URL
   },
   {
     id: 3,
@@ -28,7 +34,7 @@ export default function RecentOrders() {
     category: "SmartPhone",
     price: "$1869.00",
     status: "Delivered",
-    image: "/images/product/product-03.jpg", // Replace with actual image URL
+    image: "/images/product/product-03.jpg" // Replace with actual image URL
   },
   {
     id: 4,
@@ -37,7 +43,7 @@ export default function RecentOrders() {
     category: "Electronics",
     price: "$1699.00",
     status: "Canceled",
-    image: "/images/product/product-04.jpg", // Replace with actual image URL
+    image: "/images/product/product-04.jpg" // Replace with actual image URL
   },
   {
     id: 5,
@@ -46,8 +52,8 @@ export default function RecentOrders() {
     category: "Accessories",
     price: "$240.00",
     status: "Delivered",
-    image: "/images/product/product-05.jpg", // Replace with actual image URL
-  },
+    image: "/images/product/product-05.jpg" // Replace with actual image URL
+  }
 ];
 
 export default function RecentOrders() {
