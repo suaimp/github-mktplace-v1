@@ -1,4 +1,3 @@
-
 import { ShoppingCartIcon } from "../../../icons";
 
 interface ButtonBuyFieldProps {

@@ -24,14 +24,14 @@ export function useOrderDetailLogic() {
     formatDate,
     getStatusBadge,
     getPaymentStatusBadge,
-    getPaymentMethodLabel
+    getPaymentMethodLabel,
   } = useOrderDetails();
 
   const {
     downloadLoading,
     downloadError,
     handleDownloadFile,
-    clearDownloadError
+    clearDownloadError,
   } = useFileDownload();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,7 +81,7 @@ export function useOrderDetailLogic() {
       const filePath = `${fileName}`;
 
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("Usuário não autenticado");
@@ -104,7 +104,7 @@ export function useOrderDetailLogic() {
       console.log("📄 Documento do artigo enviado com sucesso:", {
         itemId: selectedItemId,
         filePath,
-        fileName: selectedFile.name
+        fileName: selectedFile.name,
       });
 
       setUploadSuccess(true);
@@ -136,6 +136,7 @@ export function useOrderDetailLogic() {
       if (success) {
         console.log("✅ Pagamento confirmado com sucesso");
         // A tabela será atualizada automaticamente via listener PostgreSQL
+        window.location.reload(); // Recarrega a página
       } else {
         console.error("❌ Falha ao confirmar pagamento");
       }
@@ -151,12 +152,19 @@ export function useOrderDetailLogic() {
     try {
       console.log("🔗 Iniciando atualização da URL do artigo:", {
         itemId,
-        url
+        url,
       });
 
-      await OrderItemService.updateOrderItem(itemId, { article_url: url });
+      // Atualiza a URL e o status de publicação para 'approved'
+      await OrderItemService.updateOrderItem(itemId, {
+        article_url: url,
+        publication_status: "approved",
+      });
 
-      console.log("🔗 URL do artigo salva com sucesso:", { itemId, url });
+      console.log("🔗 URL do artigo salva com sucesso e status aprovado:", {
+        itemId,
+        url,
+      });
 
       // O listener PostgreSQL no OrderItemsTable detectará a mudança automaticamente
     } catch (error) {
@@ -197,6 +205,6 @@ export function useOrderDetailLogic() {
     clearDownloadError,
     confirmingBoleto,
     handleConfirmBoletoPayment,
-    sendArticleUrl
+    sendArticleUrl,
   };
 }

@@ -7,6 +7,7 @@ import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import PageMeta from "../../components/common/PageMeta";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
+import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -19,7 +20,7 @@ export default function Home() {
   async function checkAdminRole() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
@@ -39,7 +40,7 @@ export default function Home() {
 
       console.log("Dashboard: Resultado da consulta admin:", {
         adminData,
-        adminError
+        adminError,
       });
 
       if (adminData?.role === "admin") {
@@ -99,6 +100,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <TawkChat />
     </>
   );
 }

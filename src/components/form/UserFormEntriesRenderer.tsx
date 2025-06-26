@@ -14,7 +14,7 @@ import {
   filterVisibleFields,
   getUrlFields,
   createFieldSettingsMap,
-  shouldShowFieldInEdit
+  shouldShowFieldInEdit,
 } from "./actions/userFormEntriesActions";
 
 const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
@@ -30,7 +30,7 @@ interface Publisher {
 }
 
 export default function UserFormEntriesRenderer({
-  formId
+  formId,
 }: UserFormEntriesRendererProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,7 +77,7 @@ export default function UserFormEntriesRenderer({
   async function getCurrentUser() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
@@ -285,7 +285,7 @@ export default function UserFormEntriesRenderer({
             created_by: entry.created_by,
             publisher,
             values,
-            notes: entry.notes || []
+            notes: entry.notes || [],
           };
         })
       );
@@ -441,7 +441,7 @@ export default function UserFormEntriesRenderer({
       // Combinar valores editados com valores originais (priorizando editados)
       const completeFormValues = {
         ...allOriginalValues,
-        ...editableFormValues
+        ...editableFormValues,
       };
 
       console.log(
@@ -492,7 +492,7 @@ export default function UserFormEntriesRenderer({
           entry_id: selectedEntry.id,
           field_id: fieldId,
           value: isJsonValue ? null : value,
-          value_json: isJsonValue ? value : null
+          value_json: isJsonValue ? value : null,
         });
       }
 
@@ -519,8 +519,8 @@ export default function UserFormEntriesRenderer({
             {
               entry_id: selectedEntry.id,
               note: note.trim(),
-              created_by: currentUser.id
-            }
+              created_by: currentUser.id,
+            },
           ]);
 
         if (noteError) throw noteError;
@@ -544,6 +544,11 @@ export default function UserFormEntriesRenderer({
     const value = editableFormValues[field.id];
     const error = validationErrors[field.id];
 
+    // Não exibir campos marketplace
+    if (settings.visibility === "marketplace") {
+      return null;
+    }
+
     // Skip fields that shouldn't be shown in edit mode
     if (!shouldShowFieldInEdit(field, isAdmin)) {
       return null;
@@ -552,7 +557,7 @@ export default function UserFormEntriesRenderer({
     const handleChange = (newValue: any) => {
       setEditableFormValues((prev) => ({
         ...prev,
-        [field.id]: newValue
+        [field.id]: newValue,
       }));
 
       // Clear validation error
@@ -583,7 +588,7 @@ export default function UserFormEntriesRenderer({
       value,
       onChange: handleChange,
       error,
-      onErrorClear: handleErrorClear
+      onErrorClear: handleErrorClear,
     };
 
     // Get the appropriate field component based on field type
@@ -644,7 +649,7 @@ export default function UserFormEntriesRenderer({
       "ahrefs_dr",
       "ahrefs_traffic",
       "similarweb_traffic",
-      "google_traffic"
+      "google_traffic",
     ];
 
     if (apiFieldTypes.includes(fieldType)) {
@@ -784,7 +789,7 @@ export default function UserFormEntriesRenderer({
                             month: "2-digit",
                             year: "numeric",
                             hour: "2-digit",
-                            minute: "2-digit"
+                            minute: "2-digit",
                           })}
                         </p>
                       </div>

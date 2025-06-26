@@ -39,12 +39,16 @@ export default function OrderItemsTable({
   onDownloadFile,
   onChangePublicationStatus,
   downloadLoading,
-  refreshTrigger
+  refreshTrigger,
 }: OrderItemsTableProps) {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Estado local para o status de publicação de cada item
+  const [localStatus, setLocalStatus] = useState<{ [itemId: string]: string }>(
+    {}
+  );
 
   // Função para carregar os itens do pedido
   const loadOrderItems = async () => {
@@ -88,6 +92,15 @@ export default function OrderItemsTable({
       loadOrderItems();
     }
   }, [refreshTrigger, orderId]);
+
+  // Atualiza o estado local sempre que os itens mudam
+  useEffect(() => {
+    const statusMap: { [itemId: string]: string } = {};
+    orderItems.forEach((item) => {
+      statusMap[item.id] = item.publication_status || "pending";
+    });
+    setLocalStatus(statusMap);
+  }, [orderItems]);
 
   if (loading) {
     return (
@@ -467,11 +480,16 @@ export default function OrderItemsTable({
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                       <select
-                        value={item.publication_status || "pending"}
-                        onChange={(e) =>
-                          onChangePublicationStatus(item.id, e.target.value)
-                        }
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+                        value={localStatus[item.id] || "pending"}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setLocalStatus((prev) => ({
+                            ...prev,
+                            [item.id]: value,
+                          }));
+                          onChangePublicationStatus(item.id, value);
+                        }}
+                        className="block w-[calc(100%+4px)] rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm h-9"
                       >
                         <option value="pending">Pendente</option>
                         <option value="approved">Aprovar</option>

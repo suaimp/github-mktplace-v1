@@ -14,7 +14,7 @@ export default function CountryField({
   onChange,
   error,
   onErrorClear,
-  settings
+  settings,
 }: CountryFieldProps) {
   // Parse value from string if needed
   let parsedValue = {};
@@ -32,15 +32,15 @@ export default function CountryField({
   const maxSelections = settings?.max_selections;
   const isMaxReached = maxSelections && selectedCount >= maxSelections;
 
-  const handleChange = (country: string, percentage?: number | null) => {
+  const handleChange = (country: string) => {
     const newValue = { ...parsedValue };
 
-    if (percentage === null) {
+    if (country in newValue) {
       // Remove country when unchecked
       delete newValue[country];
-    } else if (percentage !== undefined) {
-      // Add or update country with percentage
-      newValue[country] = percentage;
+    } else {
+      // Add country
+      newValue[country] = true;
     }
 
     onChange(newValue);
@@ -63,15 +63,7 @@ export default function CountryField({
                 <input
                   type="checkbox"
                   checked={isChecked}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      if (!isMaxReached) {
-                        handleChange(optionValue, 0); // Add with 0%
-                      }
-                    } else {
-                      handleChange(optionValue, null); // Remove country
-                    }
-                  }}
+                  onChange={() => handleChange(optionValue)}
                   disabled={isMaxReached && !isChecked}
                   className={`w-4 h-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 ${
                     isMaxReached && !isChecked
@@ -94,28 +86,6 @@ export default function CountryField({
                   </span>
                 </div>
               </div>
-
-              {settings?.show_percentage && isChecked && (
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="number"
-                    value={parsedValue[optionValue]}
-                    onChange={(e) => {
-                      const value = Math.min(
-                        100,
-                        Math.max(0, parseInt(e.target.value) || 0)
-                      );
-                      handleChange(optionValue, value);
-                    }}
-                    min="0"
-                    max="100"
-                    className="w-16 px-2 text-center"
-                  />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    %
-                  </span>
-                </div>
-              )}
             </div>
           );
         })}
@@ -162,7 +132,7 @@ function getCountryName(code: string): string {
     CO: "Colômbia",
     PE: "Peru",
     VE: "Venezuela",
-    ROW: "Rest of World"
+    ROW: "Rest of World",
   };
 
   return countries[code] || code;

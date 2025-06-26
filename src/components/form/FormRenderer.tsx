@@ -13,7 +13,7 @@ interface FormRendererProps {
 
 export default function FormRenderer({
   formId,
-  isMarketplace = false
+  isMarketplace = false,
 }: FormRendererProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function FormRenderer({
   async function getCurrentUser() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
@@ -53,7 +53,7 @@ export default function FormRenderer({
   async function checkUserRole() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -236,7 +236,7 @@ export default function FormRenderer({
 
       // Get user information
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
 
       // Create form entry
@@ -248,8 +248,8 @@ export default function FormRenderer({
             ip_address: null,
             user_agent: navigator.userAgent,
             created_by: user?.id || null, // Link the user ID if available
-            status: "em_analise" // Ensure status is set
-          }
+            status: "em_analise", // Ensure status is set
+          },
         ])
         .select()
         .single();
@@ -309,7 +309,7 @@ export default function FormRenderer({
               entry_id: entry.id,
               field_id: fieldId,
               value: null,
-              value_json: processedValue
+              value_json: processedValue,
             });
           } else {
             console.log(
@@ -320,7 +320,7 @@ export default function FormRenderer({
               entry_id: entry.id,
               field_id: fieldId,
               value: String(processedValue),
-              value_json: null
+              value_json: null,
             });
           }
         }
@@ -344,7 +344,7 @@ export default function FormRenderer({
               entry_id: entry.id,
               field_id: fieldId,
               value: null,
-              value_json: value
+              value_json: value,
             });
           } else {
             console.log(
@@ -355,7 +355,7 @@ export default function FormRenderer({
               entry_id: entry.id,
               field_id: fieldId,
               value: String(value),
-              value_json: null
+              value_json: null,
             });
           }
         } else {
@@ -369,7 +369,7 @@ export default function FormRenderer({
             entry_id: entry.id,
             field_id: fieldId,
             value: isJsonValue ? null : value,
-            value_json: isJsonValue ? value : null
+            value_json: isJsonValue ? value : null,
           });
         }
       }
@@ -404,7 +404,7 @@ export default function FormRenderer({
     const settings = fieldSettings[field.id];
 
     // Check if field should be visible only in marketplace
-    if (settings?.visibility === "marketplace" && !isMarketplace && !isAdmin) {
+    if (settings?.visibility === "marketplace") {
       return null;
     }
 
@@ -438,7 +438,7 @@ export default function FormRenderer({
         ? settings || {
             value: { niche: "", price: "" },
             options: [],
-            multiple: false
+            multiple: false,
           }
         : settings,
       value: formData[field.id],
@@ -461,7 +461,7 @@ export default function FormRenderer({
             return next;
           });
         }
-      }
+      },
     };
 
     const renderFieldLabel = () => {
@@ -520,7 +520,7 @@ export default function FormRenderer({
       "ahrefs_dr",
       "ahrefs_traffic",
       "similarweb_traffic",
-      "google_traffic"
+      "google_traffic",
     ];
 
     if (apiFieldTypes.includes(fieldType)) {
@@ -626,7 +626,7 @@ export default function FormRenderer({
               disabled={loading}
               className="px-4 py-2 text-sm font-medium text-white bg-brand-500 rounded-lg hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Submitting..." : form.submit_button_text || "Submit"}
+              {loading ? "Submitting..." : form.submit_button_text || "Enviar"}
             </button>
           </div>
         </form>

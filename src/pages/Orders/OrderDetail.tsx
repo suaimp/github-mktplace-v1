@@ -5,10 +5,13 @@ import { useState, useEffect } from "react";
 import OrderProgress from "./local-components/OrderProgress";
 import OrderItemsTable from "./local-components/OrderItemsTable";
 import { supabase } from "../../lib/supabase";
+import OrderInfoModal from "./local-components/OrderInfoModal";
+import { useOrderInfoModal } from "./actions/useOrderInfoModal";
 
 export default function OrderDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [refreshTableTrigger, setRefreshTableTrigger] = useState(0);
+  const [refreshProgressTrigger, setRefreshProgressTrigger] = useState(0);
 
   // Estado para o modal de edição de URL do artigo
   const [isUrlEditModalOpen, setIsUrlEditModalOpen] = useState(false);
@@ -42,15 +45,30 @@ export default function OrderDetail() {
     downloadError,
     handleDownloadFile,
     clearDownloadError,
-    sendArticleUrl
+    sendArticleUrl,
+    getPaymentMethodLabel,
+    getPaymentStatusBadge,
+    confirmingBoleto,
+    handleConfirmBoletoPayment,
   } = useOrderDetailLogic();
+
+  const [isOrderInfoOpen, setIsOrderInfoOpen] = useState(false);
+
+  const {
+    isConfirmDeleteModalOpen,
+    openConfirmDeleteModal,
+    closeConfirmDeleteModal,
+    deleteOrder,
+    isDeletingOrder,
+    deleteError,
+  } = useOrderInfoModal();
 
   // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
         const {
-          data: { user }
+          data: { user },
         } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -95,6 +113,11 @@ export default function OrderDetail() {
     setRefreshTableTrigger((prev) => prev + 1);
   };
 
+  // Função para disparar refresh da barra de status
+  const triggerProgressRefresh = () => {
+    setRefreshProgressTrigger((prev) => prev + 1);
+  };
+
   const handleSaveArticleUrl = async () => {
     if (!selectedItemForUrlEdit) return;
 
@@ -103,6 +126,7 @@ export default function OrderDetail() {
       closeUrlEditModal();
       // Disparar refresh da tabela
       triggerTableRefresh();
+      triggerProgressRefresh();
     } catch (error) {
       console.error("Erro ao salvar URL do artigo:", error);
     }
@@ -112,6 +136,7 @@ export default function OrderDetail() {
       await handleUploadSubmit();
       // Disparar refresh da tabela
       triggerTableRefresh();
+      triggerProgressRefresh();
     } catch (error) {
       console.error("Erro no upload:", error);
     }
@@ -230,7 +255,7 @@ export default function OrderDetail() {
         {/* Order Summary */}
         <div className="w-full">
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 relative">
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
                   ID do Pedido: {order.id.substring(0, 8)}
@@ -242,6 +267,26 @@ export default function OrderDetail() {
                   <div>{getStatusBadge(order.status)}</div>
                 </div>{" "}
               </div>
+              {/* Ícone de três pontinhos no canto direito */}
+              <button
+                className="absolute top-0 right-0 mt-2 mr-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+                onClick={() => setIsOrderInfoOpen(true)}
+                title="Mais informações"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="text-gray-500 dark:text-gray-300"
+                >
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -265,8 +310,12 @@ export default function OrderDetail() {
             }
             hasArticleDocument={hasAnyArticleDocument}
             articleUrl={hasAnyArticleUrl ? "exists" : undefined}
+            orderDate={order.created_at}
+            orderItems={orderItems}
+            refreshTrigger={refreshProgressTrigger}
+            orderId={order.id}
           />
-        </div>{" "}
+        </div>
         {/* Order Items */}
         <div className="w-full">
           {" "}
@@ -277,7 +326,10 @@ export default function OrderDetail() {
             onDocModalOpen={openDocModal}
             onUrlEditModalOpen={openUrlEditModal}
             onDownloadFile={handleDownloadFile}
-            onChangePublicationStatus={handleChangePublicationStatus}
+            onChangePublicationStatus={async (itemId, status) => {
+              await handleChangePublicationStatus(itemId, status);
+              triggerTableRefresh();
+            }}
             downloadLoading={downloadLoading}
             refreshTrigger={refreshTableTrigger}
           />
@@ -440,7 +492,10 @@ export default function OrderDetail() {
               Cancelar
             </Button>
             <Button
-              onClick={handleUploadSubmitWrapper}
+              onClick={() => {
+                triggerProgressRefresh();
+                handleUploadSubmitWrapper();
+              }}
               disabled={!selectedFile || uploadLoading}
             >
               {uploadLoading ? (
@@ -501,7 +556,10 @@ export default function OrderDetail() {
               Cancelar
             </Button>
             <Button
-              onClick={handleSaveArticleUrl}
+              onClick={() => {
+                triggerProgressRefresh();
+                handleSaveArticleUrl();
+              }}
               disabled={!editingArticleUrl.trim()}
             >
               Salvar
@@ -584,6 +642,23 @@ export default function OrderDetail() {
           )}
         </div>
       </Modal>{" "}
+      {/* OrderInfoModal */}
+      <OrderInfoModal
+        isOpen={isOrderInfoOpen}
+        onClose={() => setIsOrderInfoOpen(false)}
+        order={order}
+        getPaymentMethodLabel={getPaymentMethodLabel}
+        getPaymentStatusBadge={getPaymentStatusBadge}
+        confirmingBoleto={confirmingBoleto}
+        handleConfirmBoletoPayment={handleConfirmBoletoPayment}
+        openConfirmDeleteModal={openConfirmDeleteModal}
+        isDeletingOrder={isDeletingOrder}
+        deleteError={deleteError}
+        isConfirmDeleteModalOpen={isConfirmDeleteModalOpen}
+        closeConfirmDeleteModal={closeConfirmDeleteModal}
+        deleteOrder={deleteOrder}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

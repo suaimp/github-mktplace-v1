@@ -7,12 +7,13 @@ import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
 import {
   formatMarketplaceValue,
-  renderNicheHeader
+  renderNicheHeader,
 } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
 import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
+import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -179,7 +180,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           id: entry.id,
           created_at: entry.created_at,
           status: entry.status,
-          values
+          values,
         };
       });
 
@@ -478,8 +479,81 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       "ahrefs_dr",
                       "ahrefs_traffic",
                       "similarweb_traffic",
-                      "google_traffic"
+                      "google_traffic",
                     ].includes(field.field_type);
+
+                  // Definições de tooltip por campo
+                  let tooltipText =
+                    "Descrição do sentido deste campo para o site.";
+                  let showTooltip = true;
+                  switch (field.field_type) {
+                    case "brand":
+                      tooltipText =
+                        "Marca patrocinado: Aceita patrocínio de marcas.";
+                      break;
+                    case "niche":
+                      // Mantém a descrição atual via renderNicheHeader
+                      break;
+                    case "country":
+                      tooltipText = "País: País de origem ou audiência.";
+                      break;
+                    case "moz_da":
+                      tooltipText =
+                        "DA: Pontuação de autoridade do domínio (Moz).";
+                      break;
+                    case "ahrefs_traffic":
+                    case "similarweb_traffic":
+                    case "google_traffic":
+                    case "semrush_as":
+                      tooltipText = "Tráfego: Número estimado de visitantes.";
+                      break;
+                    case "categories":
+                    case "category":
+                      tooltipText = "Categorias: Tópicos principais do site.";
+                      break;
+                    case "links":
+                      tooltipText =
+                        "Quantidade de Links: Número de links (internos ou externos).";
+                      break;
+                    case "product":
+                      tooltipText =
+                        "Preço do Artigo: Custo para publicar um artigo.";
+                      break;
+                    case "site_url":
+                    case "url":
+                      showTooltip = false;
+                      break;
+                    default:
+                      if (
+                        displayName &&
+                        displayName.toLowerCase().includes("site")
+                      ) {
+                        showTooltip = false;
+                      } else if (
+                        displayName &&
+                        displayName.toLowerCase().includes("comprar")
+                      ) {
+                        showTooltip = false;
+                      } else if (
+                        displayName &&
+                        displayName.toLowerCase().includes("categoria")
+                      ) {
+                        tooltipText = "Categorias: Tópicos principais do site.";
+                      } else if (
+                        displayName &&
+                        displayName.toLowerCase().includes("marca")
+                      ) {
+                        tooltipText =
+                          "Marca patrocinado: Aceita patrocínio de marcas.";
+                      } else if (
+                        displayName &&
+                        displayName.toLowerCase().includes("link")
+                      ) {
+                        tooltipText =
+                          "Quantidade de Links: Número de links (internos ou externos).";
+                      }
+                      break;
+                  }
 
                   return (
                     <th
@@ -495,10 +569,17 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       }
                     >
                       <div className="flex items-center justify-between">
-                        <div>
-                          {field.field_type === "niche"
-                            ? renderNicheHeader(displayName)
-                            : displayName}
+                        <div className="flex items-center gap-1">
+                          {field.field_type === "niche" ? (
+                            renderNicheHeader(displayName)
+                          ) : (
+                            <>
+                              <span>{displayName}</span>
+                              {showTooltip && (
+                                <InfoTooltip text={tooltipText} />
+                              )}
+                            </>
+                          )}
                         </div>
                         {isSortable && (
                           <span className="flex flex-col gap-0.5">
@@ -541,8 +622,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     scope="col"
                     className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                   >
-                    {buttonBuyField.form_field_settings?.marketplace_label ||
-                      buttonBuyField.label}
+                    <span>
+                      {buttonBuyField.form_field_settings?.marketplace_label ||
+                        buttonBuyField.label}
+                    </span>
                   </th>
                 )}
               </tr>

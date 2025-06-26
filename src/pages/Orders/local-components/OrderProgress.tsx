@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
+import { supabase } from "../../../lib/supabase";
 
 interface OrderProgressProps {
   currentStep: number;
@@ -9,6 +10,14 @@ interface OrderProgressProps {
   articleUrl?: string;
   orderDate?: string;
   showProgressOnly?: boolean;
+  orderItems: Array<{
+    id: string;
+    product_name: string;
+    article_document_path?: string;
+    article_url?: string;
+  }>;
+  refreshTrigger?: number;
+  orderId: string;
 }
 
 interface ProgressStep {
@@ -20,14 +29,28 @@ interface ProgressStep {
 }
 
 const OrderProgress: React.FC<OrderProgressProps> = ({
-  currentStep,
-  paymentStatus,
-  hasArticleDocument = false,
-  articleUrl,
-  orderDate,
-  showProgressOnly = false
+  currentStep: _currentStep,
+  paymentStatus: _paymentStatus,
+  orderStatus: _orderStatus,
+  hasArticleDocument: _hasArticleDocument = false,
+  articleUrl: _articleUrl,
+  orderDate: _orderDate,
+  showProgressOnly = false,
+  orderItems: _orderItems,
+  refreshTrigger,
+  orderId,
 }) => {
   const location = useLocation();
+  const [order, setOrder] = React.useState<any>(null);
+  const [orderItems, setOrderItems] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Forçar re-render ao mudar o refreshTrigger
+  const [, setRefreshState] = React.useState(0);
+  React.useEffect(() => {
+    setRefreshState((prev) => prev + 1);
+  }, [refreshTrigger]);
 
   // Verificar se estamos em uma rota de sucesso
   const isSuccessRoute =
@@ -35,6 +58,62 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
     location.pathname.includes("/boleto-success") ||
     (location.pathname.includes("/payment") &&
       location.search.includes("success=true"));
+
+  // Fetch dados do pedido e itens
+  const fetchOrderData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (orderError) throw orderError;
+      setOrder(orderData);
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("order_items")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: true });
+      if (itemsError) throw itemsError;
+      setOrderItems(itemsData || []);
+    } catch (err: any) {
+      setError(err.message || "Erro ao carregar progresso do pedido");
+    } finally {
+      setLoading(false);
+    }
+  };
+  React.useEffect(() => {
+    if (orderId) fetchOrderData();
+  }, [orderId]);
+  React.useEffect(() => {
+    if (orderId && refreshTrigger) fetchOrderData();
+  }, [refreshTrigger, orderId]);
+
+  // Dados para cálculo
+  const currentStep = order
+    ? (() => {
+        if (!order) return 1;
+        if (order.payment_status !== "paid") return 2;
+        const hasAllDocuments = orderItems.every(
+          (item) => item.article_document_path
+        );
+        if (!hasAllDocuments) return 3;
+        const hasAllUrls = orderItems.every((item) => item.article_url);
+        if (!hasAllUrls) return 4;
+        return 4;
+      })()
+    : _currentStep;
+  const paymentStatus = order ? order.payment_status : _paymentStatus;
+  const orderStatus = order ? order.status : _orderStatus;
+  const hasArticleDocument = orderItems.some(
+    (item) => item.article_document_path
+  );
+  const articleUrl = orderItems.some((item) => item.article_url)
+    ? "exists"
+    : undefined;
+  const orderDate = order ? order.created_at : _orderDate;
 
   // Determinar o status de cada etapa
   const getStepStatus = (
@@ -86,7 +165,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           <path d="M20 6 9 17l-5-5"></path>
         </svg>
       ),
-      status: getStepStatus(1)
+      status: getStepStatus(1),
     },
     {
       id: 2,
@@ -108,7 +187,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           <path d="M20 6 9 17l-5-5"></path>
         </svg>
       ),
-      status: getStepStatus(2)
+      status: getStepStatus(2),
     },
     {
       id: 3,
@@ -134,7 +213,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           <path d="M16 17H8"></path>
         </svg>
       ),
-      status: getStepStatus(3)
+      status: getStepStatus(3),
     },
     {
       id: 4,
@@ -158,12 +237,43 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           <path d="M2 12h20"></path>
         </svg>
       ),
-      status: getStepStatus(4)
-    }
+      status: getStepStatus(4),
+    },
   ];
 
-  // Calcular a largura da barra de progresso
-  const progressWidth = ((currentStep - 1) / (steps.length - 1)) * 100;
+  // Progresso proporcional na etapa de artigo
+  let proportionalProgress = 0;
+  const totalSteps = steps.length - 1; // 3
+  if (currentStep === 1) {
+    proportionalProgress = 0;
+  } else if (currentStep === 2) {
+    proportionalProgress = (1 / totalSteps) * 100;
+  } else if (orderItems && orderItems.length > 0 && currentStep === 3) {
+    const total = orderItems.length;
+    const enviados = orderItems.filter((i) => i.article_document_path).length;
+    proportionalProgress = ((1 + enviados / total) / totalSteps) * 100;
+  } else if (orderItems && orderItems.length > 0 && currentStep === 4) {
+    const total = orderItems.length;
+    const publicados = orderItems.filter((i) => i.article_url).length;
+    proportionalProgress = ((2 + publicados / total) / totalSteps) * 100;
+  } else {
+    proportionalProgress = ((currentStep - 1) / totalSteps) * 100;
+  }
+  const progressWidth = proportionalProgress;
+
+  // Ajuste visual: se a barra parar exatamente em um ponto de etapa, subtrair metade do círculo (12px)
+  let barWidthStyle = `${progressWidth}%`;
+  const isOnStepPoint = Number.isInteger(
+    proportionalProgress / (100 / totalSteps)
+  );
+  if (
+    isOnStepPoint &&
+    proportionalProgress !== 0 &&
+    proportionalProgress !== 100
+  ) {
+    barWidthStyle = `calc(${progressWidth}% - 12px)`;
+  }
+
   // Obter a cor e estilo baseado no status
   const getStepStyles = (status: "completed" | "current" | "pending") => {
     switch (status) {
@@ -172,21 +282,21 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           circle:
             "bg-green-500 border-green-500 text-white dark:bg-green-400 dark:border-green-400",
           title: "text-green-700 dark:text-green-400",
-          description: "text-green-600 dark:text-green-500"
+          description: "text-green-600 dark:text-green-500",
         };
       case "current":
         return {
           circle:
             "bg-blue-500 border-blue-500 text-white dark:bg-blue-400 dark:border-blue-400",
           title: "text-blue-700 dark:text-blue-400",
-          description: "text-blue-600 dark:text-blue-500"
+          description: "text-blue-600 dark:text-blue-500",
         };
       case "pending":
         return {
           circle:
             "bg-gray-200 border-gray-300 text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400",
           title: "text-gray-600 dark:text-gray-400",
-          description: "text-gray-500 dark:text-gray-500"
+          description: "text-gray-500 dark:text-gray-500",
         };
     }
   };
@@ -198,7 +308,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
         timeEstimate: "Aguardando pagamento",
         details: orderDate
           ? `Pedido realizado em ${orderDate}`
-          : "Pedido realizado com sucesso"
+          : "Pedido realizado com sucesso",
       };
     }
     if (currentStep === 2) {
@@ -206,20 +316,20 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
         return {
           title: "Processando Pagamento",
           timeEstimate: "1-2 dias úteis",
-          details: "Aguardando confirmação de pagamento"
+          details: "Aguardando confirmação de pagamento",
         };
       }
       if (paymentStatus === "paid") {
         return {
           title: "Pagamento Confirmado",
           timeEstimate: "Processado com sucesso",
-          details: "Pagamento aprovado e confirmado"
+          details: "Pagamento aprovado e confirmado",
         };
       }
       return {
         title: "Aguardando Pagamento",
         timeEstimate: "Pendente",
-        details: "Aguardando confirmação de pagamento"
+        details: "Aguardando confirmação de pagamento",
       };
     }
     if (currentStep === 3) {
@@ -227,13 +337,13 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
         return {
           title: "Artigo Recebido",
           timeEstimate: "Em análise",
-          details: "Artigo recebido e em processo de revisão"
+          details: "Artigo recebido e em processo de revisão",
         };
       }
       return {
         title: "Preparação do Artigo",
         timeEstimate: "2-3 dias úteis",
-        details: "Aguardando recebimento do artigo para publicação"
+        details: "Aguardando recebimento do artigo para publicação",
       };
     }
     if (currentStep === 4) {
@@ -241,18 +351,36 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
         return {
           title: "Artigo Publicado",
           timeEstimate: "Concluído",
-          details: "Artigo publicado com sucesso"
+          details: "Artigo publicado com sucesso",
         };
       }
       return {
         title: "Publicação do Artigo",
         timeEstimate: "3-5 dias úteis",
-        details: "Aguardando publicação do artigo"
+        details: "Aguardando publicação do artigo",
       };
     }
     return null;
   };
   const currentStepInfo = getCurrentStepInfo();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60px]">
+        <div className="text-gray-500 dark:text-gray-400 text-sm">
+          Carregando progresso...
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60px]">
+        <div className="text-red-500 text-sm">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`mb-6 p-3 rounded-lg border ${
@@ -261,6 +389,31 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
           : "bg-gray-50 border-gray-100 dark:bg-gray-800/50 dark:border-gray-700"
       }`}
     >
+      {/* Lista de produtos na etapa de artigo/publicação */}
+      {orderItems && orderItems.length > 0 && (
+        <div className="mb-2 flex flex-col gap-1">
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+            Artigos do pedido:
+          </span>
+          <ul className="ml-2 space-y-1">
+            {orderItems.map((item) => (
+              <li key={item.id} className="flex items-center gap-2 text-xs">
+                <span className="font-medium text-gray-800 dark:text-white">
+                  {item.product_name}
+                </span>
+                {item.article_document_path ? (
+                  <span className="text-green-600 dark:text-green-400">
+                    Recebido
+                  </span>
+                ) : (
+                  <span className="text-gray-400">Pendente</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {/* Progresso do Pedido */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Progresso do Pedido
@@ -273,12 +426,12 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
       <div className="mb-3">
         <div className="flex items-center justify-between relative">
           {/* Barra de fundo */}
-          <div className="absolute top-3 left-3 right-3 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+          <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
 
           {/* Barra de progresso */}
           <div
-            className="absolute top-3 left-3 h-0.5 bg-green-500 dark:bg-green-400 transition-all duration-1000 ease-out"
-            style={{ width: `calc(${progressWidth}% - 1.5rem)` }}
+            className="absolute top-3 left-0 h-0.5 bg-green-500 dark:bg-green-400 transition-all duration-1000 ease-out"
+            style={{ width: barWidthStyle }}
           ></div>
 
           {/* Etapas */}

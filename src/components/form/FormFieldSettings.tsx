@@ -21,7 +21,7 @@ import NicheSettings from "./fields/settings/NicheSettings";
 import {
   createFormFieldNiche,
   updateFormFieldNiche,
-  sanitizeNicheOptions
+  sanitizeNicheOptions,
 } from "../../services/db-services/form-services/formFieldNicheService";
 
 interface FormField {
@@ -103,7 +103,7 @@ export default function FormFieldSettings({
   field,
   isOpen,
   onClose,
-  onSave
+  onSave,
 }: FormFieldSettingsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -145,7 +145,7 @@ export default function FormFieldSettings({
     button_style: "primary",
     sort_by_field: false,
     is_product_name: false,
-    is_site_url: false
+    is_site_url: false,
   });
 
   useEffect(() => {
@@ -184,7 +184,7 @@ export default function FormFieldSettings({
         // Set default field identifier for button_buy field type
         setSettings((prev) => ({
           ...prev,
-          field_identifier: "botao_comprar"
+          field_identifier: "botao_comprar",
         }));
       }
 
@@ -220,7 +220,7 @@ export default function FormFieldSettings({
             options.map((opt) => ({
               niche: opt.niche || opt.text,
               icon: opt.icon,
-              hasIcon: !!opt.icon
+              hasIcon: !!opt.icon,
             }))
           );
 
@@ -234,19 +234,19 @@ export default function FormFieldSettings({
             "[FormFieldSettings] Raw data being sent to updateFormFieldNiche:",
             {
               field_id: field.id,
-              options: optionsArr
+              options: optionsArr,
             }
           );
 
           // Salva options na tabela form_field_niche
           // Primeiro tenta atualizar, se não existir faz insert
           const updateResult = await updateFormFieldNiche(field.id, {
-            options: optionsArr
+            options: optionsArr,
           });
           if (!updateResult) {
             await createFormFieldNiche({
               form_field_id: field.id,
-              options: optionsArr
+              options: optionsArr,
             });
           }
         } catch (err) {
@@ -260,7 +260,7 @@ export default function FormFieldSettings({
       }
 
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
@@ -276,7 +276,7 @@ export default function FormFieldSettings({
         .upsert(
           {
             ...settingsWithoutOptions,
-            field_id: field.id
+            field_id: field.id,
           },
           { onConflict: "field_id" }
         );
@@ -331,8 +331,8 @@ export default function FormFieldSettings({
           marketplace_label: settings.marketplace_label,
           sort_by_field: settings.sort_by_field,
           is_product_name: settings.is_product_name,
-          is_site_url: settings.is_site_url
-        }
+          is_site_url: settings.is_site_url,
+        },
       };
 
       onSave(updatedField);
@@ -387,7 +387,7 @@ export default function FormFieldSettings({
                 onChange={(e) =>
                   setSettings({
                     ...settings,
-                    marketplace_label: e.target.value
+                    marketplace_label: e.target.value,
                   })
                 }
                 placeholder="Custom label for marketplace table"
@@ -422,13 +422,13 @@ export default function FormFieldSettings({
               <Select
                 options={[
                   { value: "visible", label: "Visible" },
-                  { value: "hidden", label: "Hidden" }
+                  { value: "hidden", label: "Hidden" },
                 ]}
                 value={settings.label_visibility}
                 onChange={(value) =>
                   setSettings({
                     ...settings,
-                    label_visibility: value as "visible" | "hidden"
+                    label_visibility: value as "visible" | "hidden",
                   })
                 }
               />
@@ -440,13 +440,13 @@ export default function FormFieldSettings({
                 options={[
                   { value: "1", label: "1 Column (100% width)" },
                   { value: "2", label: "2 Columns (50% width)" },
-                  { value: "3", label: "3 Columns (33% width)" }
+                  { value: "3", label: "3 Columns (33% width)" },
                 ]}
                 value={settings.columns?.toString() || "1"}
                 onChange={(value) =>
                   setSettings({
                     ...settings,
-                    columns: parseInt(value) as 1 | 2 | 3
+                    columns: parseInt(value) as 1 | 2 | 3,
                   })
                 }
               />
@@ -467,7 +467,7 @@ export default function FormFieldSettings({
                       onChange={(e) =>
                         setSettings({
                           ...settings,
-                          placeholder_text: e.target.value
+                          placeholder_text: e.target.value,
                         })
                       }
                       placeholder={
@@ -498,7 +498,7 @@ export default function FormFieldSettings({
                   { value: "visible", label: "Visible" },
                   { value: "hidden", label: "Hidden" },
                   { value: "admin", label: "Admin Only" },
-                  { value: "marketplace", label: "Marketplace Only" }
+                  { value: "marketplace", label: "Marketplace Only" },
                 ]}
                 value={settings.visibility}
                 onChange={(value) =>
@@ -508,7 +508,7 @@ export default function FormFieldSettings({
                       | "visible"
                       | "hidden"
                       | "admin"
-                      | "marketplace"
+                      | "marketplace",
                   })
                 }
               />
@@ -520,7 +520,7 @@ export default function FormFieldSettings({
                 <Select
                   options={[
                     { value: "url", label: "Require HTTPS" },
-                    { value: "any_url", label: "Allow any URL" }
+                    { value: "any_url", label: "Allow any URL" },
                   ]}
                   value={settings.validation_type}
                   onChange={(value) =>
@@ -528,7 +528,7 @@ export default function FormFieldSettings({
                       ...settings,
                       validation_type: value,
                       validation_regex:
-                        value === "url" ? "^https?://" : undefined
+                        value === "url" ? "^https?://" : undefined,
                     })
                   }
                 />
@@ -622,7 +622,7 @@ export default function FormFieldSettings({
               "ahrefs_dr",
               "ahrefs_traffic",
               "similarweb_traffic",
-              "google_traffic"
+              "google_traffic",
             ].includes(field.field_type) && (
               <ApiFieldSettings settings={settings} onChange={setSettings} />
             )}
@@ -641,10 +641,10 @@ export default function FormFieldSettings({
 
           <div className="flex justify-end gap-3 pt-6">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              Cancelar
             </Button>
             <Button disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? "Saving..." : "Salvar Alteações"}
             </Button>
           </div>
         </form>

@@ -54,7 +54,7 @@ export default function OrderInfoModal({
   isConfirmDeleteModalOpen,
   closeConfirmDeleteModal,
   deleteOrder,
-  isAdmin
+  isAdmin,
 }: OrderInfoModalProps) {
   const navigate = useNavigate();
 
