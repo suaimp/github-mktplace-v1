@@ -1,4 +1,3 @@
-import Input from "../input/InputField";
 import { getFlagUrl } from "../utils/formatters";
 
 interface CountryFieldProps {

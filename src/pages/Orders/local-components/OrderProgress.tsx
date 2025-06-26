@@ -106,7 +106,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
       })()
     : _currentStep;
   const paymentStatus = order ? order.payment_status : _paymentStatus;
-  const orderStatus = order ? order.status : _orderStatus;
+
   const hasArticleDocument = orderItems.some(
     (item) => item.article_document_path
   );

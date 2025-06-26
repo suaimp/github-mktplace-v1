@@ -11,10 +11,7 @@ interface FormRendererProps {
   isMarketplace?: boolean;
 }
 
-export default function FormRenderer({
-  formId,
-  isMarketplace = false,
-}: FormRendererProps) {
+export default function FormRenderer({ formId }: FormRendererProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
