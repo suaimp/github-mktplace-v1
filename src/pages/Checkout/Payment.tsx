@@ -12,6 +12,7 @@ import { createOrder } from "../../services/db-services/marketplace-services/ord
 import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { validatePhone } from "../../utils/phoneValidation";
+import { OrderItemService } from "../../services/db-services/marketplace-services/order/OrderItemService";
 
 // Mock function to simulate payment processing
 // @ts-ignore
@@ -23,6 +24,29 @@ const processPayment = async (paymentMethod: string) => {
     }, 1500);
   });
 };
+
+// Função utilitária para extrair benefits corretamente
+function extrairBenefits(service_content: any) {
+  let obj = service_content;
+  if (Array.isArray(obj) && obj.length > 0) {
+    if (typeof obj[0] === "string") {
+      try {
+        obj = JSON.parse(obj[0]);
+      } catch {
+        obj = {};
+      }
+    } else if (typeof obj[0] === "object") {
+      obj = obj[0];
+    }
+  } else if (typeof obj === "string") {
+    try {
+      obj = JSON.parse(obj);
+    } catch {
+      obj = {};
+    }
+  }
+  return obj?.benefits;
+}
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -41,14 +65,14 @@ export default function Payment() {
     state: "",
     zipCode: "",
     documentNumber: "",
-    phone: ""
+    phone: "",
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderSummary, setOrderSummary] = useState({
     items: [] as any[],
     totalProductPrice: 0,
     totalContentPrice: 0,
-    totalFinalPrice: 0
+    totalFinalPrice: 0,
   });
   const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
@@ -56,6 +80,10 @@ export default function Payment() {
     string[]
   >(["card"]);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
+  const [outrosProdutos, setOutrosProdutos] = useState<any[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
   useEffect(() => {
     loadPaymentSettings();
@@ -63,6 +91,34 @@ export default function Payment() {
     loadCompanyData();
     loadCartItems();
   }, []);
+
+  useEffect(() => {
+    if (success && currentOrderId) {
+      setLoadingItems(true);
+      OrderItemService.listOrderItemsByOrder(currentOrderId)
+        .then((items) => {
+          setOrderItems(items || []);
+          // Corrigido: extrai benefits corretamente
+          const fornecidoPeloCliente = (items || []).filter((item: any) => {
+            const benefits = extrairBenefits(item.service_content);
+            return (
+              benefits === undefined ||
+              benefits === null ||
+              (Array.isArray(benefits) && benefits.length === 0) ||
+              (typeof benefits === "string" && benefits.trim() === "")
+            );
+          });
+          setConteudoCliente(fornecidoPeloCliente);
+          setOutrosProdutos(
+            (items || []).filter(
+              (item: any) => !fornecidoPeloCliente.includes(item)
+            )
+          );
+        })
+        .finally(() => setLoadingItems(false));
+    }
+  }, [success, currentOrderId]);
+
   async function loadPaymentSettings() {
     try {
       setLoading(true);
@@ -70,7 +126,7 @@ export default function Payment() {
 
       console.log("LOADING PAYMENT SETTINGS:", {
         timestamp: new Date().toISOString(),
-        message: "Starting to load payment settings from database"
+        message: "Starting to load payment settings from database",
       });
 
       // Check if form exists and is published
@@ -88,7 +144,7 @@ export default function Payment() {
         hasStripeKey: !!data?.stripe_public_key,
         stripeKeyPrefix: data?.stripe_public_key?.substring(0, 20),
         paymentMethods: data?.payment_methods,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       if (error) throw error;
@@ -97,7 +153,7 @@ export default function Payment() {
         console.log("INITIALIZING STRIPE:", {
           stripeEnabled: data.stripe_enabled,
           stripeKeyPrefix: data.stripe_public_key.substring(0, 20),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         // Initialize Stripe with the public key
@@ -106,7 +162,7 @@ export default function Payment() {
 
         console.log("STRIPE INSTANCE CREATED:", {
           stripeInstanceCreated: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       } else {
         console.log("STRIPE NOT INITIALIZED:", {
@@ -115,7 +171,7 @@ export default function Payment() {
           reason: !data?.stripe_enabled
             ? "Stripe not enabled"
             : "No Stripe public key",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -126,7 +182,7 @@ export default function Payment() {
         console.log("PAYMENT METHODS SET:", {
           paymentMethods: data.payment_methods,
           defaultMethod: data.payment_methods[0],
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         // Set default payment method to the first available one
@@ -138,7 +194,7 @@ export default function Payment() {
           hasPaymentMethods: !!data?.payment_methods,
           isArray: Array.isArray(data?.payment_methods),
           paymentMethodsData: data?.payment_methods,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     } catch (err) {
@@ -146,7 +202,7 @@ export default function Payment() {
       console.log("PAYMENT SETTINGS LOADING ERROR:", {
         errorMessage: err instanceof Error ? err.message : String(err),
         errorStack: err instanceof Error ? err.stack : undefined,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       setError("Erro ao carregar configurações de pagamento");
     } finally {
@@ -157,7 +213,7 @@ export default function Payment() {
   async function loadOrderTotal() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -176,7 +232,7 @@ export default function Payment() {
           ...prev,
           totalProductPrice: Number(data.total_product_price),
           totalContentPrice: Number(data.total_content_price),
-          totalFinalPrice: Number(data.total_final_price)
+          totalFinalPrice: Number(data.total_final_price),
         }));
       }
     } catch (err) {
@@ -184,7 +240,7 @@ export default function Payment() {
       console.log("ORDER TOTAL LOADING ERROR:", {
         errorMessage: err instanceof Error ? err.message : String(err),
         errorStack: err instanceof Error ? err.stack : undefined,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -192,7 +248,7 @@ export default function Payment() {
   async function loadCartItems() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -207,7 +263,7 @@ export default function Payment() {
       if (cartItems && cartItems.length > 0) {
         setOrderSummary((prev) => ({
           ...prev,
-          items: cartItems
+          items: cartItems,
         }));
       }
     } catch (err) {
@@ -215,7 +271,7 @@ export default function Payment() {
       console.log("CART ITEMS LOADING ERROR:", {
         errorMessage: err instanceof Error ? err.message : String(err),
         errorStack: err instanceof Error ? err.stack : undefined,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -223,7 +279,7 @@ export default function Payment() {
   async function loadCompanyData() {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -262,7 +318,7 @@ export default function Payment() {
       console.log("COMPANY DATA LOADING ERROR:", {
         errorMessage: err instanceof Error ? err.message : String(err),
         errorStack: err instanceof Error ? err.stack : undefined,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -273,7 +329,7 @@ export default function Payment() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -295,7 +351,7 @@ export default function Payment() {
 
       // Get the current session
       const {
-        data: { session }
+        data: { session },
       } = await supabase.auth.getSession();
 
       if (!session) {
@@ -313,12 +369,12 @@ export default function Payment() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             amount: Math.round(total * 100), // Convert to cents
-            description: `Pedido Marketplace - ${new Date().toISOString()}`
-          })
+            description: `Pedido Marketplace - ${new Date().toISOString()}`,
+          }),
         }
       );
 
@@ -340,7 +396,7 @@ export default function Payment() {
         timestamp: new Date().toISOString(),
         totalAmount:
           orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-        sessionInfo: "PIX QR Code generation failed"
+        sessionInfo: "PIX QR Code generation failed",
       });
       const sanitizedMessage = sanitizeErrorMessage(
         err.message || "Erro ao gerar QR code PIX"
@@ -357,7 +413,7 @@ export default function Payment() {
       console.log("🎉 PAYMENT SUCCESS - Processando pagamento bem-sucedido:", {
         paymentId: paymentId,
         paymentMethod: paymentMethod,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }); // Create order in database
       const order = await createOrderInDatabase(paymentId);
 
@@ -368,7 +424,7 @@ export default function Payment() {
         // Update payment status to "paid" for successful payments
         console.log("💳 Atualizando status do pagamento para 'paid':", {
           orderId: order.id,
-          paymentMethod: paymentMethod
+          paymentMethod: paymentMethod,
         });
 
         const { updateOrderStatus } = await import(
@@ -399,7 +455,7 @@ export default function Payment() {
         paymentId: paymentId,
         timestamp: new Date().toISOString(),
         orderSummary: orderSummary,
-        formData: formData
+        formData: formData,
       });
       setError("Erro ao finalizar o pagamento");
     } finally {
@@ -412,7 +468,7 @@ export default function Payment() {
       paymentMethod: paymentMethod,
       timestamp: new Date().toISOString(),
       formData: formData,
-      orderSummary: orderSummary
+      orderSummary: orderSummary,
     });
     // Sanitize the error message before displaying to user
     const sanitizedMessage = sanitizeErrorMessage(errorMessage);
@@ -422,7 +478,7 @@ export default function Payment() {
   const createOrderInDatabase = async (paymentId?: string) => {
     try {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
@@ -456,7 +512,7 @@ export default function Payment() {
           unit_price: Number(item.price) || 0,
           total_price: (Number(item.price) || 0) * (item.quantity || 1),
           niche: nicheData,
-          service_content: serviceData
+          service_content: serviceData,
         };
       });
 
@@ -475,7 +531,7 @@ export default function Payment() {
         billing_document_number: formData.documentNumber,
         phone: formData.phone,
         payment_id: paymentId,
-        items: orderItems
+        items: orderItems,
       });
 
       if (!order) {
@@ -501,8 +557,8 @@ export default function Payment() {
           city: formData.city,
           state: formData.state,
           zipCode: formData.zipCode,
-          documentNumber: formData.documentNumber
-        }
+          documentNumber: formData.documentNumber,
+        },
       });
       throw error;
     }
@@ -533,7 +589,7 @@ export default function Payment() {
         errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
         userId: userId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return false;
     }
@@ -564,8 +620,8 @@ export default function Payment() {
           state: !formData.state,
           zipCode: !formData.zipCode,
           documentNumber: !formData.documentNumber,
-          phone: !formData.phone
-        }
+          phone: !formData.phone,
+        },
       });
       setError("Por favor, preencha todos os campos obrigatórios");
       return;
@@ -582,7 +638,7 @@ export default function Payment() {
         errorType: "terms_not_accepted",
         timestamp: new Date().toISOString(),
         paymentMethod: paymentMethod,
-        termsAccepted: termsAccepted
+        termsAccepted: termsAccepted,
       });
       setError("Por favor, aceite os termos e condições para continuar");
       return;
@@ -593,7 +649,7 @@ export default function Payment() {
         paymentMethod: "card",
         timestamp: new Date().toISOString(),
         formData: formData,
-        message: "Card payment will be processed by Stripe component"
+        message: "Card payment will be processed by Stripe component",
       });
       // Card payments are handled directly by the StripePaymentForm component
       // This function should not be called for card payments
@@ -615,7 +671,7 @@ export default function Payment() {
               formData: formData,
               orderSummary: orderSummary,
               totalAmount:
-                orderSummary.totalProductPrice + orderSummary.totalContentPrice
+                orderSummary.totalProductPrice + orderSummary.totalContentPrice,
             }); // Create order in database first - boleto stays as "pending" until paid
             const boletoPaymentId = `boleto_${Date.now()}`;
             const order = await createOrderInDatabase(boletoPaymentId);
@@ -628,7 +684,7 @@ export default function Payment() {
             console.log("📋 Pedido criado para boleto:", {
               orderId: order?.id,
               paymentId: boletoPaymentId,
-              status: "pending" // Boleto permanece pendente até confirmação
+              status: "pending", // Boleto permanece pendente até confirmação
             });
 
             // Create mock boleto data
@@ -640,7 +696,7 @@ export default function Payment() {
               expirationDate: new Date(
                 Date.now() + 3 * 24 * 60 * 60 * 1000
               ).toLocaleDateString("pt-BR"),
-              boletoUrl: "#"
+              boletoUrl: "#",
             };
 
             navigate("/checkout/boleto-success", { state: { boletoData } });
@@ -653,7 +709,7 @@ export default function Payment() {
               paymentMethod: "boleto",
               timestamp: new Date().toISOString(),
               formData: formData,
-              orderSummary: orderSummary
+              orderSummary: orderSummary,
             });
             throw boletoError;
           }
@@ -664,7 +720,7 @@ export default function Payment() {
           console.log("💰 PIX PAYMENT PROCESSING:", {
             paymentMethod: "pix",
             timestamp: new Date().toISOString(),
-            message: "PIX é processado instantaneamente"
+            message: "PIX é processado instantaneamente",
           });
           const pixPaymentId = `pix_${Date.now()}`;
           const order = await createOrderInDatabase(pixPaymentId);
@@ -684,7 +740,7 @@ export default function Payment() {
 
             console.log("🎉 PIX - Status atualizado para 'paid':", {
               orderId: order.id,
-              updateSuccess: updateSuccess
+              updateSuccess: updateSuccess,
             });
           }
 
@@ -706,7 +762,7 @@ export default function Payment() {
           userFormData: formData,
           orderSummary: orderSummary,
           totalAmount:
-            orderSummary.totalProductPrice + orderSummary.totalContentPrice
+            orderSummary.totalProductPrice + orderSummary.totalContentPrice,
         });
         const sanitizedMessage = sanitizeErrorMessage(
           err.message || "Erro ao processar pagamento"
@@ -743,7 +799,6 @@ export default function Payment() {
           description="Pagamento concluído com sucesso"
         />
         <PageBreadcrumb pageTitle="Pagamento Concluído" />
-
         <main className="flex-1 p-6">
           <div className="max-w-4xl mx-auto mt-8">
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
@@ -782,7 +837,6 @@ export default function Payment() {
                   </p>
                 </div>
               </div>
-
               <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-start gap-4">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800/50 rounded-full flex items-center justify-center flex-shrink-0">
@@ -804,14 +858,75 @@ export default function Payment() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                      Próximo Passo: Envie seu Conteúdo
-                    </h2>
-                    <p className="text-blue-800 dark:text-blue-200 mb-4">
-                      Para dar continuidade ao seu pedido, você precisa enviar o
-                      conteúdo do artigo. Acesse os detalhes do pedido para
-                      fazer o upload.
-                    </p>{" "}
+                    {loadingItems ? (
+                      <p className="text-blue-800 dark:text-blue-200 mb-4">
+                        Carregando informações do pedido...
+                      </p>
+                    ) : (
+                      <>
+                        {conteudoCliente.length > 0 && (
+                          <>
+                            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                              Próximo Passo: Envie seu Conteúdo
+                            </h2>
+                            <p className="text-blue-800 dark:text-blue-200 mb-4">
+                              {conteudoCliente.map((item) => (
+                                <span key={item.id}>
+                                  Para o produto{" "}
+                                  <a
+                                    href={item.product_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline text-blue-700 dark:text-blue-300"
+                                  >
+                                    {item.product_name}
+                                  </a>
+                                  , você deve enviar o conteúdo.
+                                  <br />
+                                </span>
+                              ))}
+                            </p>
+                          </>
+                        )}
+                        {outrosProdutos.length > 0 && (
+                          <>
+                            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                              Aguarde o envio do conteúdo
+                            </h2>
+                            <p className="text-blue-800 dark:text-blue-200 mb-4">
+                              {outrosProdutos.map((item) => (
+                                <span key={item.id}>
+                                  Para o produto{" "}
+                                  <a
+                                    href={item.product_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline text-blue-700 dark:text-blue-300"
+                                  >
+                                    {item.product_name}
+                                  </a>
+                                  , aguarde o envio do conteúdo.
+                                  <br />
+                                </span>
+                              ))}
+                            </p>
+                          </>
+                        )}
+                        {conteudoCliente.length === 0 &&
+                          outrosProdutos.length === 0 && (
+                            <>
+                              <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                                Próximo Passo: Envie seu Conteúdo
+                              </h2>
+                              <p className="text-blue-800 dark:text-blue-200 mb-4">
+                                Para dar continuidade ao seu pedido, você
+                                precisa enviar o conteúdo do artigo. Acesse os
+                                detalhes do pedido para fazer o upload.
+                              </p>
+                            </>
+                          )}
+                      </>
+                    )}
                     <div className="mb-4">
                       <OrderProgress
                         currentStep={paymentMethod === "boleto" ? 2 : 3}
@@ -825,8 +940,10 @@ export default function Payment() {
                         articleUrl=""
                         orderDate={new Date().toLocaleDateString("pt-BR")}
                         showProgressOnly={true}
+                        orderId={currentOrderId || ""}
+                        orderItems={orderItems}
                       />
-                    </div>{" "}
+                    </div>
                     <button
                       onClick={() =>
                         currentOrderId && navigate(`/orders/${currentOrderId}`)
@@ -854,7 +971,6 @@ export default function Payment() {
                   </div>
                 </div>
               </div>
-
               <div className="p-6">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                   O que acontece agora?
@@ -937,32 +1053,34 @@ export default function Payment() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => navigate("/orders")}
-                    className="min-w-[200px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                <button
+                  onClick={() =>
+                    currentOrderId
+                      ? navigate(`/orders/${currentOrderId}`)
+                      : navigate("/orders")
+                  }
+                  className="min-w-[200px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-4 h-4"
-                    >
-                      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                      <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                      <path d="M10 9H8"></path>
-                      <path d="M16 13H8"></path>
-                      <path d="M16 17H8"></path>
-                    </svg>
-                    Enviar Conteúdo
-                  </button>
-                </div>
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                    <path d="M10 9H8"></path>
+                    <path d="M16 13H8"></path>
+                    <path d="M16 17H8"></path>
+                  </svg>
+                  Enviar Conteúdo
+                </button>
               </div>
             </div>
           </div>

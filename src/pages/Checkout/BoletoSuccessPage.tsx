@@ -4,11 +4,16 @@ import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { formatCurrency } from "../../components/marketplace/utils";
 import OrderProgress from "../Orders/local-components/OrderProgress";
+import { OrderItemService } from "../../services/db-services/marketplace-services/order/OrderItemService";
 
 export default function BoletoSuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [boletoData, setBoletoData] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
+  const [outrosProdutos, setOutrosProdutos] = useState<any[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
   // Get boleto data from location state or use mock data
   useEffect(() => {
@@ -22,10 +27,60 @@ export default function BoletoSuccessPage() {
         expirationDate: new Date(
           Date.now() + 3 * 24 * 60 * 60 * 1000
         ).toLocaleDateString("pt-BR"),
-        boletoUrl: "#"
+        boletoUrl: "#",
       });
     }
   }, [location]);
+
+  // Função utilitária para extrair benefits corretamente
+  function extrairBenefits(service_content: any) {
+    let obj = service_content;
+    if (Array.isArray(obj) && obj.length > 0) {
+      if (typeof obj[0] === "string") {
+        try {
+          obj = JSON.parse(obj[0]);
+        } catch {
+          obj = {};
+        }
+      } else if (typeof obj[0] === "object") {
+        obj = obj[0];
+      }
+    } else if (typeof obj === "string") {
+      try {
+        obj = JSON.parse(obj);
+      } catch {
+        obj = {};
+      }
+    }
+    return obj?.benefits;
+  }
+
+  useEffect(() => {
+    if (boletoData?.orderId) {
+      setLoadingItems(true);
+      OrderItemService.listOrderItemsByOrder(boletoData.orderId)
+        .then((items) => {
+          setOrderItems(items || []);
+          // Corrigido: extrai benefits corretamente
+          const fornecidoPeloCliente = (items || []).filter((item: any) => {
+            const benefits = extrairBenefits(item.service_content);
+            return (
+              benefits === undefined ||
+              benefits === null ||
+              (Array.isArray(benefits) && benefits.length === 0) ||
+              (typeof benefits === "string" && benefits.trim() === "")
+            );
+          });
+          setConteudoCliente(fornecidoPeloCliente);
+          setOutrosProdutos(
+            (items || []).filter(
+              (item: any) => !fornecidoPeloCliente.includes(item)
+            )
+          );
+        })
+        .finally(() => setLoadingItems(false));
+    }
+  }, [boletoData?.orderId]);
 
   const orderAmount = boletoData?.amount || 829.0;
 
@@ -90,14 +145,75 @@ export default function BoletoSuccessPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                    Próximo Passo: Envie seu Conteúdo
-                  </h2>
-                  <p className="text-blue-800 dark:text-blue-200 mb-4">
-                    Para dar continuidade ao seu pedido, você precisa enviar o
-                    conteúdo do artigo. Acesse os detalhes do pedido para fazer
-                    o upload.
-                  </p>{" "}
+                  {loadingItems ? (
+                    <p className="text-blue-800 dark:text-blue-200 mb-4">
+                      Carregando informações do pedido...
+                    </p>
+                  ) : (
+                    <>
+                      {conteudoCliente.length > 0 && (
+                        <>
+                          <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                            Próximo Passo: Envie seu Conteúdo
+                          </h2>
+                          <p className="text-blue-800 dark:text-blue-200 mb-4">
+                            {conteudoCliente.map((item) => (
+                              <span key={item.id}>
+                                Para o produto{" "}
+                                <a
+                                  href={item.product_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline text-blue-700 dark:text-blue-300"
+                                >
+                                  {item.product_name}
+                                </a>
+                                , você deve enviar o conteúdo.
+                                <br />
+                              </span>
+                            ))}
+                          </p>
+                        </>
+                      )}
+                      {outrosProdutos.length > 0 && (
+                        <>
+                          <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                            Aguarde o envio do conteúdo
+                          </h2>
+                          <p className="text-blue-800 dark:text-blue-200 mb-4">
+                            {outrosProdutos.map((item) => (
+                              <span key={item.id}>
+                                Para o produto{" "}
+                                <a
+                                  href={item.product_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline text-blue-700 dark:text-blue-300"
+                                >
+                                  {item.product_name}
+                                </a>
+                                , aguarde o envio do conteúdo.
+                                <br />
+                              </span>
+                            ))}
+                          </p>
+                        </>
+                      )}
+                      {conteudoCliente.length === 0 &&
+                        outrosProdutos.length === 0 && (
+                          <>
+                            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                              Próximo Passo: Envie seu Conteúdo
+                            </h2>
+                            <p className="text-blue-800 dark:text-blue-200 mb-4">
+                              Para dar continuidade ao seu pedido, você precisa
+                              enviar o conteúdo do artigo. Acesse os detalhes do
+                              pedido para fazer o upload.
+                            </p>
+                          </>
+                        )}
+                    </>
+                  )}
                   <div className="mb-4">
                     <OrderProgress
                       currentStep={2}
@@ -107,8 +223,10 @@ export default function BoletoSuccessPage() {
                       articleUrl=""
                       orderDate={new Date().toLocaleDateString("pt-BR")}
                       showProgressOnly={true}
+                      orderId={boletoData?.orderId || ""}
+                      orderItems={orderItems}
                     />
-                  </div>{" "}
+                  </div>
                   <button
                     onClick={() =>
                       boletoData?.orderId &&

@@ -55,8 +55,8 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
   // Verificar se estamos em uma rota de sucesso
   const isSuccessRoute =
     location.pathname.includes("/success") ||
-    location.pathname.includes("/boleto-success") ||
-    (location.pathname.includes("/payment") &&
+    location.pathname.includes("/checkout/boleto-success") ||
+    (location.pathname.includes("/checkout/payment") &&
       location.search.includes("success=true"));
 
   // Fetch dados do pedido e itens
@@ -390,29 +390,31 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
       }`}
     >
       {/* Lista de produtos na etapa de artigo/publicação */}
-      {orderItems && orderItems.length > 0 && (
-        <div className="mb-2 flex flex-col gap-1">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-            Artigos do pedido:
-          </span>
-          <ul className="ml-2 space-y-1">
-            {orderItems.map((item) => (
-              <li key={item.id} className="flex items-center gap-2 text-xs">
-                <span className="font-medium text-gray-800 dark:text-white">
-                  {item.product_name}
-                </span>
-                {item.article_document_path ? (
-                  <span className="text-green-600 dark:text-green-400">
-                    Recebido
+      {orderItems &&
+        orderItems.length > 0 &&
+        !location.pathname.startsWith("/checkout") && (
+          <div className="mb-2 flex flex-col gap-1">
+            <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+              Artigos do pedido:
+            </span>
+            <ul className="ml-2 space-y-1">
+              {orderItems.map((item) => (
+                <li key={item.id} className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-gray-800 dark:text-white">
+                    {item.product_name}
                   </span>
-                ) : (
-                  <span className="text-gray-400">Pendente</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                  {item.article_document_path ? (
+                    <span className="text-green-600 dark:text-green-400">
+                      Recebido
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Pendente</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       {/* Progresso do Pedido */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
