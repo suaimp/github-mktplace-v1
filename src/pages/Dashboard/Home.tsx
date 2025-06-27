@@ -7,7 +7,6 @@ import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import PageMeta from "../../components/common/PageMeta";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
-import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -72,7 +71,7 @@ export default function Home() {
       />
 
       {/* Welcome Section */}
-      <WelcomeMessage className="mb-8" />
+      {!isAdmin && <WelcomeMessage className="mb-8" />}
 
       {isAdmin ? (
         // Layout completo para admins
@@ -100,8 +99,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      <TawkChat />
     </>
   );
 }

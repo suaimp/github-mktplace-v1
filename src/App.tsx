@@ -3,7 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
-  Outlet
+  Outlet,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
 /* Restrict */
@@ -63,7 +63,7 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
     checkAuth();
 
     const {
-      data: { subscription }
+      data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
         setIsAuthenticated(true);
@@ -81,7 +81,7 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const {
-        data: { session }
+        data: { session },
       } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
     } catch (error) {
@@ -159,7 +159,10 @@ export default function App() {
           <Route path="/forms/settings/:id" element={<FormSettings />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/payment" element={<Payment />} />
-          <Route path="/checkout/boleto-success" element={<BoletoSuccessPage />} />
+          <Route
+            path="/checkout/boleto-success"
+            element={<BoletoSuccessPage />}
+          />
           <Route path="/orders" element={<OrderList />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
 

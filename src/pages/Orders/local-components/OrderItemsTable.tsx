@@ -4,6 +4,8 @@ import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
+import CopyIcon from "../../icons/copy.svg";
+import DownloadIcon from "../../icons/download.svg";
 
 interface OrderItem {
   id: string;
@@ -306,39 +308,109 @@ export default function OrderItemsTable({
                     {item.quantity}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {item.article_document_path ? (
-                      <button
-                        onClick={() =>
-                          onDownloadFile(
-                            item.article_document_path!,
-                            item.article_doc || "documento.docx",
-                            item.id
-                          )
-                        }
-                        disabled={downloadLoading[item.id]}
-                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {downloadLoading[item.id] ? (
-                          <svg
-                            className="animate-spin w-5 h-5 mr-1"
-                            fill="none"
-                            viewBox="0 0 24 24"
+                    {(() => {
+                      // Caso tenha arquivo enviado
+                      if (item.article_document_path) {
+                        return (
+                          <button
+                            onClick={() =>
+                              onDownloadFile(
+                                item.article_document_path!,
+                                item.article_doc || "documento.docx",
+                                item.id
+                              )
+                            }
+                            disabled={downloadLoading[item.id]}
+                            className="flex items-center p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium focus:outline-none"
+                            style={{ textDecoration: "none", gap: "2px" }}
+                            type="button"
+                            title="Baixar artigo"
                           >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                        ) : (
+                            <span className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                              Artigo
+                            </span>
+                            <span className="ml-1 flex items-center">
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="#344054"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  fill="none"
+                                  stroke="#344054"
+                                />
+                              </svg>
+                            </span>
+                          </button>
+                        );
+                      }
+                      // Caso article_doc seja um link (objeto ou array de objeto com url)
+                      let url = null;
+                      try {
+                        if (item.article_doc) {
+                          const parsed = JSON.parse(item.article_doc);
+                          if (Array.isArray(parsed) && parsed[0]?.url) {
+                            url = parsed[0].url;
+                          } else if (parsed?.url) {
+                            url = parsed.url;
+                          }
+                        }
+                      } catch (e) {
+                        // Não é JSON válido, segue para o botão padrão
+                      }
+                      if (url) {
+                        return (
+                          <div className="flex items-center gap-1">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center font-medium focus:outline-none"
+                              style={{ textDecoration: "none" }}
+                              title="Abrir artigo em nova aba"
+                            >
+                              Artigo
+                            </a>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(url);
+                              }}
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
+                              title="Copiar link"
+                              type="button"
+                              style={{ marginLeft: "-2px" }}
+                            >
+                              <span className="sr-only">Copiar link</span>
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                  d="M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      }
+                      // Caso não tenha nada, botão de enviar artigo
+                      return (
+                        <button
+                          onClick={() => onDocModalOpen(item.id)}
+                          className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
+                        >
                           <svg
                             className="w-5 h-5 mr-1"
                             fill="none"
@@ -350,36 +422,13 @@ export default function OrderItemsTable({
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              d="M12 4v16m8-8H4"
                             />
                           </svg>
-                        )}
-                        {downloadLoading[item.id]
-                          ? "Baixando..."
-                          : "Baixar Artigo"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onDocModalOpen(item.id)}
-                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
-                      >
-                        <svg
-                          className="w-5 h-5 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        Enviar Artigo
-                      </button>
-                    )}
+                          Enviar Artigo
+                        </button>
+                      );
+                    })()}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {isAdmin ? (

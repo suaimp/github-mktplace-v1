@@ -7,7 +7,6 @@ import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
-import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function PublisherDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -99,8 +98,6 @@ export default function PublisherDashboard() {
           </div>
         </div>
       )}
-
-      <TawkChat />
     </>
   );
 }

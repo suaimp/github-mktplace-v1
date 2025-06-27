@@ -1,10 +1,11 @@
 import {
   SidebarProvider,
-  useSidebar
+  useSidebar,
 } from "../services/context/SidebarContext";
 import { Outlet } from "react-router-dom";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
+import TawkChat from "../components/TawkChat/TawkChat";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen, toggleMobileSidebar } =
@@ -35,10 +36,13 @@ const LayoutContent: React.FC = () => {
   );
 };
 
-const AppLayout: React.FC = () => {
+const AppLayout: React.FC<{ hideTawkChat?: boolean }> = ({
+  hideTawkChat = false,
+}) => {
   return (
     <SidebarProvider>
       <LayoutContent />
+      {!hideTawkChat && <TawkChat />}
     </SidebarProvider>
   );
 };

@@ -7,6 +7,8 @@ import OrderItemsTable from "./local-components/OrderItemsTable";
 import { supabase } from "../../lib/supabase";
 import OrderInfoModal from "./local-components/OrderInfoModal";
 import { useOrderInfoModal } from "./actions/useOrderInfoModal";
+import Select from "../../components/form/Select";
+import Input from "../../components/form/input/InputField";
 
 export default function OrderDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -14,10 +16,11 @@ export default function OrderDetail() {
   const [refreshProgressTrigger, setRefreshProgressTrigger] = useState(0);
 
   // Estado para o modal de edição de URL do artigo
-  const [isUrlEditModalOpen, setIsUrlEditModalOpen] = useState(false);
-  const [selectedItemForUrlEdit, setSelectedItemForUrlEdit] =
+  const [isPublishedUrlModalOpen, setIsPublishedUrlModalOpen] = useState(false);
+  const [selectedItemForPublishedUrl, setSelectedItemForPublishedUrl] =
     useState<string>("");
-  const [editingArticleUrl, setEditingArticleUrl] = useState("");
+  const [editingPublishedArticleUrl, setEditingPublishedArticleUrl] =
+    useState("");
   // Estado para o modal de informações do pacote
   const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [selectedPackageData, setSelectedPackageData] = useState<any>(null);
@@ -50,6 +53,7 @@ export default function OrderDetail() {
     getPaymentStatusBadge,
     confirmingBoleto,
     handleConfirmBoletoPayment,
+    selectedItemId,
   } = useOrderDetailLogic();
 
   const [isOrderInfoOpen, setIsOrderInfoOpen] = useState(false);
@@ -62,6 +66,11 @@ export default function OrderDetail() {
     isDeletingOrder,
     deleteError,
   } = useOrderInfoModal();
+
+  // Estado para tipo de envio do artigo
+  const [articleSendType, setArticleSendType] = useState<string>("upload");
+  const [articleUrlInput, setArticleUrlInput] = useState("");
+  const [articleUrlError, setArticleUrlError] = useState<string | null>(null);
 
   // Check if user is admin
   useEffect(() => {
@@ -87,15 +96,15 @@ export default function OrderDetail() {
   }, []);
 
   // Funções para o modal de edição de URL do artigo
-  const openUrlEditModal = (itemId: string, currentUrl: string = "") => {
-    setSelectedItemForUrlEdit(itemId);
-    setEditingArticleUrl(currentUrl);
-    setIsUrlEditModalOpen(true);
+  const openPublishedUrlModal = (itemId: string, currentUrl: string = "") => {
+    setSelectedItemForPublishedUrl(itemId);
+    setEditingPublishedArticleUrl(currentUrl);
+    setIsPublishedUrlModalOpen(true);
   };
-  const closeUrlEditModal = () => {
-    setIsUrlEditModalOpen(false);
-    setSelectedItemForUrlEdit("");
-    setEditingArticleUrl("");
+  const closePublishedUrlModal = () => {
+    setIsPublishedUrlModalOpen(false);
+    setSelectedItemForPublishedUrl("");
+    setEditingPublishedArticleUrl("");
   };
 
   // Funções para o modal de informações do pacote
@@ -118,27 +127,18 @@ export default function OrderDetail() {
     setRefreshProgressTrigger((prev) => prev + 1);
   };
 
-  const handleSaveArticleUrl = async () => {
-    if (!selectedItemForUrlEdit) return;
-
+  const handleSavePublishedArticleUrl = async () => {
+    if (!selectedItemForPublishedUrl) return;
     try {
-      await sendArticleUrl(selectedItemForUrlEdit, editingArticleUrl);
-      closeUrlEditModal();
-      // Disparar refresh da tabela
+      await sendArticleUrl(
+        selectedItemForPublishedUrl,
+        editingPublishedArticleUrl
+      );
+      closePublishedUrlModal();
       triggerTableRefresh();
       triggerProgressRefresh();
     } catch (error) {
-      console.error("Erro ao salvar URL do artigo:", error);
-    }
-  }; // Wrapper para handleUploadSubmit que dispara refresh da tabela
-  const handleUploadSubmitWrapper = async () => {
-    try {
-      await handleUploadSubmit();
-      // Disparar refresh da tabela
-      triggerTableRefresh();
-      triggerProgressRefresh();
-    } catch (error) {
-      console.error("Erro no upload:", error);
+      console.error("Erro ao salvar URL do artigo publicado:", error);
     }
   };
 
@@ -171,6 +171,29 @@ export default function OrderDetail() {
 
   // Verificar se há pelo menos uma URL de artigo
   const hasAnyArticleUrl = orderItems.some((item) => item.article_url);
+
+  // Função para envio do link para o banco (como string array)
+  const handleSendArticleUrl = async () => {
+    if (!articleUrlInput.trim()) {
+      setArticleUrlError("Informe a URL do Google Docs.");
+      return;
+    }
+    setArticleUrlError(null);
+    try {
+      // Envia para a coluna article_doc como string array: [{url: ...}]
+      await sendArticleUrl(
+        selectedItemId!,
+        JSON.stringify([{ url: articleUrlInput.trim() }])
+      );
+      closeDocModal();
+      setArticleUrlInput("");
+      setArticleSendType("upload");
+      triggerTableRefresh();
+      triggerProgressRefresh();
+    } catch (error) {
+      setArticleUrlError("Erro ao enviar URL. Tente novamente.");
+    }
+  };
 
   if (loading) {
     return (
@@ -324,7 +347,7 @@ export default function OrderDetail() {
             isAdmin={isAdmin}
             onPackageModalOpen={openPackageModal}
             onDocModalOpen={openDocModal}
-            onUrlEditModalOpen={openUrlEditModal}
+            onUrlEditModalOpen={openPublishedUrlModal}
             onDownloadFile={handleDownloadFile}
             onChangePublicationStatus={async (itemId, status) => {
               await handleChangePublicationStatus(itemId, status);
@@ -376,17 +399,22 @@ export default function OrderDetail() {
       {/* Document Upload Modal */}{" "}
       <Modal
         isOpen={isDocModalOpen}
-        onClose={closeDocModal}
+        onClose={() => {
+          closeDocModal();
+          setArticleSendType("upload");
+          setArticleUrlInput("");
+          setArticleUrlError(null);
+        }}
         className="max-w-md m-4"
       >
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-6">
             Enviar Artigo em DOCX
-          </h3>{" "}
+          </h3>
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
               Especificações do artigo:
-            </h4>{" "}
+            </h4>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
               <li className="flex items-start">
                 <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
@@ -413,131 +441,179 @@ export default function OrderDetail() {
               </a>
             </div>
           </div>
-          <div className="mb-6 flex flex-col items-center justify-center">
-            <div
-              onClick={handleUploadClick}
-              className="w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 transition-colors"
-            >
-              <svg
-                className="w-12 h-12 text-gray-400 dark:text-gray-600 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Clique para selecionar ou arraste um arquivo
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                Formatos aceitos: .doc, .docx
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".doc,.docx"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </div>
-
-            {selectedFile && (
-              <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg w-full">
-                <div className="flex items-center">
-                  <svg
-                    className="w-6 h-6 text-brand-500 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-                    {selectedFile.name}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {uploadError && (
-              <div className="mt-4 p-3 bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400 rounded-lg w-full text-sm">
-                {uploadError}
-              </div>
-            )}
-
-            {uploadSuccess && (
-              <div className="mt-4 p-3 bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 rounded-lg w-full text-sm">
-                Arquivo enviado com sucesso!
-              </div>
-            )}
+          {/* Select de tipo de envio */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Como deseja enviar o Artigo?
+            </label>
+            <Select
+              options={[
+                { value: "upload", label: "Upload de arquivo" },
+                { value: "link", label: "Link Google Docs" },
+              ]}
+              value={articleSendType}
+              onChange={setArticleSendType}
+              placeholder="Selecione uma opção"
+            />
           </div>
+          {/* Renderização condicional */}
+          {articleSendType === "upload" ? (
+            <div className="mb-6 flex flex-col items-center justify-center">
+              <div
+                onClick={handleUploadClick}
+                className="w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 transition-colors"
+              >
+                <svg
+                  className="w-12 h-12 text-gray-400 dark:text-gray-600 mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Clique para selecionar ou arraste um arquivo
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Formatos aceitos: .doc, .docx
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".doc,.docx"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+              {selectedFile && (
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg w-full">
+                  <div className="flex items-center">
+                    <svg
+                      className="w-6 h-6 text-brand-500 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                      {selectedFile.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {uploadError && (
+                <div className="mt-4 p-3 bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400 rounded-lg w-full text-sm">
+                  {uploadError}
+                </div>
+              )}
+              {uploadSuccess && (
+                <div className="mt-4 p-3 bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 rounded-lg w-full text-sm">
+                  Arquivo enviado com sucesso!
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Link do Google Docs
+              </label>
+              <Input
+                type="url"
+                value={articleUrlInput}
+                onChange={(e) => setArticleUrlInput(e.target.value)}
+                placeholder="Cole aqui o link do Google Docs"
+                required
+                className={articleUrlError ? "border-error-500" : ""}
+              />
+              {articleUrlError && (
+                <div className="mt-2 text-error-500 text-xs">
+                  {articleUrlError}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              onClick={closeDocModal}
+              onClick={() => {
+                closeDocModal();
+                setArticleSendType("upload");
+                setArticleUrlInput("");
+                setArticleUrlError(null);
+              }}
               disabled={uploadLoading}
             >
               Cancelar
             </Button>
-            <Button
-              onClick={() => {
-                triggerProgressRefresh();
-                handleUploadSubmitWrapper();
-              }}
-              disabled={!selectedFile || uploadLoading}
-            >
-              {uploadLoading ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white\"
-                    xmlns="http://www.w3.org/2000/svg\"
-                    fill="none\"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25\"
-                      cx="12\"
-                      cy="12\"
-                      r="10\"
-                      stroke="currentColor\"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Enviando...
-                </span>
-              ) : (
-                "Enviar"
-              )}
-            </Button>{" "}
+            {articleSendType === "upload" ? (
+              <Button
+                onClick={() => {
+                  triggerProgressRefresh();
+                  handleUploadSubmit();
+                }}
+                disabled={!selectedFile || uploadLoading}
+              >
+                {uploadLoading ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Enviando...
+                  </span>
+                ) : (
+                  "Enviar"
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSendArticleUrl}
+                disabled={!articleUrlInput.trim()}
+              >
+                Enviar
+              </Button>
+            )}
           </div>
-        </div>{" "}
+        </div>
       </Modal>
       {/* URL Edit Modal */}
       <Modal
-        isOpen={isUrlEditModalOpen}
-        onClose={closeUrlEditModal}
+        isOpen={isPublishedUrlModalOpen}
+        onClose={closePublishedUrlModal}
         className="max-w-md m-4"
       >
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-6">
-            Editar URL do Artigo
+            Editar URL do Artigo Publicado
           </h3>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -545,26 +621,26 @@ export default function OrderDetail() {
             </label>
             <input
               type="url"
-              value={editingArticleUrl}
-              onChange={(e) => setEditingArticleUrl(e.target.value)}
+              value={editingPublishedArticleUrl}
+              onChange={(e) => setEditingPublishedArticleUrl(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400 dark:focus:border-brand-400 outline-none"
               placeholder="https://exemplo.com/artigo"
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={closeUrlEditModal}>
+            <Button variant="outline" onClick={closePublishedUrlModal}>
               Cancelar
             </Button>
             <Button
               onClick={() => {
                 triggerProgressRefresh();
-                handleSaveArticleUrl();
+                handleSavePublishedArticleUrl();
               }}
-              disabled={!editingArticleUrl.trim()}
+              disabled={!editingPublishedArticleUrl.trim()}
             >
               Salvar
             </Button>
-          </div>{" "}
+          </div>
         </div>
       </Modal>
       {/* Package Details Modal */}

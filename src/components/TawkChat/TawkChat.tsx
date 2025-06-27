@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -8,7 +9,10 @@ declare global {
 }
 
 const TawkChat = () => {
+  const location = useLocation();
+  const shouldHide = location.pathname.includes("/service-packages");
   useEffect(() => {
+    if (shouldHide) return;
     if (document.getElementById("tawkto-script")) return;
 
     // Define estilo personalizado antes do script
