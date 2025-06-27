@@ -4,8 +4,6 @@ import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
-import CopyIcon from "../../icons/copy.svg";
-import DownloadIcon from "../../icons/download.svg";
 
 interface OrderItem {
   id: string;
