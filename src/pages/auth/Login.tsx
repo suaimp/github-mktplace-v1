@@ -9,6 +9,7 @@ import Button from "../../components/ui/button/Button";
 import { Link } from "react-router";
 import { signInAdmin, signInUser } from "../../lib/supabase";
 import { EyeIcon, EyeCloseIcon } from "../../icons";
+import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +64,7 @@ export default function Login() {
 
   return (
     <>
+      <TawkChat />
       <PageMeta
         title={isAdminLogin ? "Login Administrativo | Admin Panel" : "Login | Platform"}
         description={isAdminLogin ? "Acesse o painel administrativo" : "Acesse sua conta na plataforma"}

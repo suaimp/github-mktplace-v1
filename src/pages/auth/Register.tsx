@@ -10,6 +10,7 @@ import Button from "../../components/ui/button/Button";
 import { supabase } from "../../lib/supabase";
 import { EyeIcon, EyeCloseIcon } from "../../icons";
 import { Link } from "react-router-dom";
+import TawkChat from "../../components/TawkChat/TawkChat";
 
 const accountTypes = [
   {
@@ -17,11 +18,11 @@ const accountTypes = [
     label: "Anunciante",
     description: "Crie e gerencie campanhas publicitárias"
   },
-  {
-    value: "publisher",
-    label: "Publisher",
-    description: "Monetize seu conteúdo com anúncios"
-  }
+  // {
+  //   value: "publisher",
+  //   label: "Publisher",
+  //   description: "Monetize seu conteúdo com anúncios"
+  // }
 ];
 
 const brazilianPhoneCodes = [
@@ -209,6 +210,7 @@ export default function Register() {
 
   return (
     <>
+      <TawkChat />
       <PageMeta
         title="Criar Conta | Platform"
         description="Crie sua conta na plataforma"

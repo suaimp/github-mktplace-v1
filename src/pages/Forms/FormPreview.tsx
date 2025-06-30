@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import FormRenderer from '../../components/form/FormRenderer';
+import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function FormPreview() {
   const { id } = useParams();
@@ -59,20 +60,23 @@ export default function FormPreview() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-6">
-          {form.title}
-        </h1>
-        
-        {form.description && (
-          <p className="text-gray-500 dark:text-gray-400 mb-8">
-            {form.description}
-          </p>
-        )}
+    <>
+      <TawkChat />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-6">
+            {form.title}
+          </h1>
+          
+          {form.description && (
+            <p className="text-gray-500 dark:text-gray-400 mb-8">
+              {form.description}
+            </p>
+          )}
 
-        <FormRenderer formId={form.id} />
+          <FormRenderer formId={form.id} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

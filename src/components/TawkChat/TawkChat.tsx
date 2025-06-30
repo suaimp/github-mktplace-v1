@@ -12,13 +12,22 @@ const TawkChat = () => {
   const location = useLocation();
   const shouldHide = location.pathname.includes("/service-packages");
   useEffect(() => {
-    if (shouldHide) return;
-    if (document.getElementById("tawkto-script")) return;
+    console.log('[TawkChat] pathname:', location.pathname);
+    if (shouldHide) {
+      console.log('[TawkChat] Ocultando chat nesta rota.');
+      return;
+    }
+    if (document.getElementById("tawkto-script")) {
+      console.log('[TawkChat] Script já inserido.');
+      return;
+    }
+    console.log('[TawkChat] Inserindo script do TawkChat...');
 
     // Define estilo personalizado antes do script
     window.Tawk_API = window.Tawk_API || {};
+    window.Tawk_API.zIndex = "9 !important";
     window.Tawk_API.customStyle = {
-      zIndex: "0 !important",
+      zIndex: "5 !important",
       visibility: {
         desktop: {
           position: "br",

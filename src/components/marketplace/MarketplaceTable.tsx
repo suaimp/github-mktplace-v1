@@ -483,76 +483,117 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     ].includes(field.field_type);
 
                   // Definições de tooltip por campo
-                  let tooltipText =
-                    "Descrição do sentido deste campo para o site.";
+                  let tooltipText = "";
                   let showTooltip = true;
-                  switch (field.field_type) {
-                    case "brand":
-                      tooltipText =
-                        "Marca patrocinado: Aceita patrocínio de marcas.";
-                      break;
-                    case "niche":
-                      // Mantém a descrição atual via renderNicheHeader
-                      break;
-                    case "country":
-                      tooltipText = "País: País de origem ou audiência.";
-                      break;
-                    case "moz_da":
-                      tooltipText =
-                        "DA: Pontuação de autoridade do domínio (Moz).";
-                      break;
-                    case "ahrefs_traffic":
-                    case "similarweb_traffic":
-                    case "google_traffic":
-                    case "semrush_as":
-                      tooltipText = "Tráfego: Número estimado de visitantes.";
-                      break;
-                    case "categories":
-                    case "category":
-                      tooltipText = "Categorias: Tópicos principais do site.";
-                      break;
-                    case "links":
-                      tooltipText =
-                        "Quantidade de Links: Número de links (internos ou externos).";
-                      break;
-                    case "product":
-                      tooltipText =
-                        "Preço do Artigo: Custo para publicar um artigo.";
-                      break;
-                    case "site_url":
-                    case "url":
-                      showTooltip = false;
-                      break;
-                    default:
-                      if (
-                        displayName &&
-                        displayName.toLowerCase().includes("site")
-                      ) {
-                        showTooltip = false;
-                      } else if (
-                        displayName &&
-                        displayName.toLowerCase().includes("comprar")
-                      ) {
-                        showTooltip = false;
-                      } else if (
-                        displayName &&
-                        displayName.toLowerCase().includes("categoria")
-                      ) {
-                        tooltipText = "Categorias: Tópicos principais do site.";
-                      } else if (
-                        displayName &&
-                        displayName.toLowerCase().includes("marca")
-                      ) {
+                  // Só usa o helptext se for string não vazia
+                  const helptext = settings.helptext || settings.help_text || field.helptext || field.help_text;
+                  if (typeof helptext === 'string' && helptext.trim() !== '') {
+                    tooltipText = helptext;
+                  } else {
+                    switch (field.field_type) {
+                      case "brand":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                      case "niche":
+                        // Mantém a descrição atual via renderNicheHeader
+                        break;
+                      case "country":
+                        tooltipText = "País: País de origem ou audiência.";
+                        break;
+                      case "moz_da":
                         tooltipText =
-                          "Marca patrocinado: Aceita patrocínio de marcas.";
-                      } else if (
-                        displayName &&
-                        displayName.toLowerCase().includes("link")
-                      ) {
+                          "DA: Pontuação de autoridade do domínio (Moz).";
+                        break;
+                      case "ahrefs_traffic":
+                      case "similarweb_traffic":
+                      case "google_traffic":
+                      case "semrush_as":
+                        tooltipText = "Tráfego: Número estimado de visitantes.";
+                        break;
+                      case "categories":
+                      case "category":
+                        tooltipText = "Categorias: Tópicos principais do site.";
+                        break;
+                      case "links":
                         tooltipText =
                           "Quantidade de Links: Número de links (internos ou externos).";
-                      }
-                      break;
+                        break;
+                      case "product":
+                        tooltipText =
+                          "Preço do Artigo: Custo para publicar um artigo.";
+                        break;
+                      case "site_url":
+                      case "url":
+                        showTooltip = false;
+                        break;
+                      case "toggle":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                      default:
+                        if (
+                          displayName &&
+                          displayName.toLowerCase().includes("site")
+                        ) {
+                          showTooltip = false;
+                        } else if (
+                          displayName &&
+                          displayName.toLowerCase().includes("comprar")
+                        ) {
+                          showTooltip = false;
+                        } else if (
+                          displayName &&
+                          displayName.toLowerCase().includes("categoria")
+                        ) {
+                          tooltipText = "Categorias: Tópicos principais do site.";
+                        } else if (
+                          displayName &&
+                          displayName.toLowerCase().includes("marca")
+                        ) {
+                          tooltipText =
+                            "Artigo Patrocinado: será em forma de publicidade.";
+                        } else if (
+                          displayName &&
+                          displayName.toLowerCase().includes("link")
+                        ) {
+                          tooltipText =
+                            "Quantidade de Links: Número de links (internos ou externos).";
+                        }
+                        break;
+                    }
+                  }
+
+                  // Garante que o tooltip nunca fique vazio
+                  if (showTooltip && (!tooltipText || tooltipText.trim() === "")) {
+                    switch (field.field_type) {
+                      case "brand":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                      case "country":
+                        tooltipText = "País: País de origem ou audiência.";
+                        break;
+                      case "moz_da":
+                        tooltipText = "DA: Pontuação de autoridade do domínio (Moz).";
+                        break;
+                      case "ahrefs_traffic":
+                      case "similarweb_traffic":
+                      case "google_traffic":
+                      case "semrush_as":
+                        tooltipText = "Tráfego: Número estimado de visitantes.";
+                        break;
+                      case "categories":
+                      case "category":
+                        tooltipText = "Categorias: Tópicos principais do site.";
+                        break;
+                      case "links":
+                        tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
+                        break;
+                      case "product":
+                        tooltipText = "Preço do Artigo: Custo para publicar um artigo.";
+                        break;
+                      case "toggle":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                    }
                   }
 
                   return (

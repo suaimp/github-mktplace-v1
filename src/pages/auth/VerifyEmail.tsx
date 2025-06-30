@@ -1,10 +1,12 @@
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
 import { Link } from "react-router";
+import TawkChat from "../../components/TawkChat/TawkChat";
 
 export default function VerifyEmail() {
   return (
     <>
+      <TawkChat />
       <PageMeta
         title="Verifique seu Email | Platform"
         description="Verifique seu email para continuar"
