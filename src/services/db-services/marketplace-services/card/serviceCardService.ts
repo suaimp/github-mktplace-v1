@@ -33,7 +33,8 @@ export async function getServiceCards(): Promise<ServiceCard[] | null> {
       not_benefits,
       period,
       is_free,
-      updated_at
+      updated_at,
+      layout_toggle
     `
     )
     .order("order_layout", { ascending: true });
