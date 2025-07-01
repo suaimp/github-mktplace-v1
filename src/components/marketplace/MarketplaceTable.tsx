@@ -30,11 +30,12 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  // @ts-ignore
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Calculate total pages
-  const totalPages = Math.ceil(filteredEntries.length / entriesPerPage);
+  const totalPages = Math.ceil(filteredEntries.length / ordersPerPage);
 
   // Ensure current page is valid
   if (currentPage > totalPages && totalPages > 0) {
@@ -240,10 +241,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     setSearchTerm(e.target.value);
   };
 
-  const handleEntriesPerPageChange = (
+  const handleOrdersPerPageChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    setEntriesPerPage(parseInt(e.target.value));
+    setOrdersPerPage(parseInt(e.target.value));
     setCurrentPage(1); // Reset to first page when changing entries per page
   };
 
@@ -287,8 +288,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
 
   // Pagination
   const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage
+    (currentPage - 1) * ordersPerPage,
+    currentPage * ordersPerPage
   );
 
   // Render API metric with score badge
@@ -331,8 +332,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
             <div className="relative z-20 bg-transparent">
               <select
                 className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                value={entriesPerPage}
-                onChange={handleEntriesPerPageChange}
+                value={ordersPerPage}
+                onChange={handleOrdersPerPageChange}
               >
                 <option
                   value="10"
@@ -854,12 +855,12 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Showing{" "}
                 <span className="font-medium">
-                  {(currentPage - 1) * entriesPerPage + 1}
+                  {(currentPage - 1) * ordersPerPage + 1}
                 </span>{" "}
                 to{" "}
                 <span className="font-medium">
                   {Math.min(
-                    currentPage * entriesPerPage,
+                    currentPage * ordersPerPage,
                     filteredEntries.length
                   )}
                 </span>{" "}

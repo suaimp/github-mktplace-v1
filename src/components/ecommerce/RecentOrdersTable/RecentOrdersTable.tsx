@@ -6,20 +6,13 @@ import type { Order } from "./actions/filterOrders";
 import Button from "../../ui/button/Button";
 import { EyeIcon } from "../../../icons";
 
-interface OrderData {
-  id: string;
-  billing_name: string;
-  billing_email: string;
-  billing_city: string;
-  billing_state: string;
-  total_amount: number;
-  created_at: string;
-}
+ 
 
 export default function RecentOrdersTable() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  // @ts-ignore
   const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [showFilter, setShowFilter] = useState(false);
   const [filterValue, setFilterValue] = useState("");
