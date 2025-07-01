@@ -17,6 +17,7 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import { PencilIcon, TrashBinIcon } from "../../icons";
+import { useNavigate } from "react-router-dom";
 
 interface PlatformUser {
   id: string;
@@ -43,6 +44,7 @@ export default function PlatformUsers() {
     last_name: "",
     status: ""
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadUsers();
@@ -185,6 +187,17 @@ export default function PlatformUsers() {
         description="Gerenciamento de usuários da plataforma"
       />
       <PageBreadcrumb pageTitle="Usuários" />
+
+      {/* Botão de cadastro de novo admin */}
+      <div className="flex justify-end mb-6">
+        <Button
+          variant="primary"
+          size="md"
+          onClick={() => navigate("/users/register/admin-register")}
+        >
+          Cadastrar novo administrador
+        </Button>
+      </div>
 
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">

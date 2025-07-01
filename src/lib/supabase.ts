@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { ensureAdminInAdminsTable } from '../pages/Users/actions/adminRegisterSubmit';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -116,6 +117,19 @@ export async function signInAdmin(email: string, password: string) {
 
     if (error) throw error;
     if (!user || !session) throw new Error("User data not found");
+
+    // Garantir que o admin está na tabela admins
+    try {
+      await ensureAdminInAdminsTable({
+        userId: user.id,
+        email: user.email || '',
+        firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || '',
+        phone: user.user_metadata?.phone || ''
+      });
+    } catch (e) {
+      console.error('Erro ao garantir admin na tabela admins:', e);
+    }
 
     // Check if admin
     const { data: adminData, error: adminError } = await supabase

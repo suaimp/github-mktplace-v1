@@ -54,6 +54,7 @@ import Payment from "./pages/Checkout/Payment";
 import BoletoSuccessPage from "./pages/Checkout/BoletoSuccessPage";
 import OrderList from "./pages/Orders/OrderList";
 import OrderDetail from "./pages/Orders/OrderDetail";
+import AdminRegister from "./pages/Users/AdminRegister";
 
 function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -147,6 +148,7 @@ export default function App() {
           <Route path="/line-chart" element={<LineChart />} />
           <Route path="/bar-chart" element={<BarChart />} />
           <Route path="/users" element={<PlatformUsers />} />
+          <Route path="/users/register/admin-register" element={<AdminRegister />} />
           <Route path="/pages" element={<Pages />} />
           <Route path="/pages/new" element={<EditPage />} />
           <Route path="/pages/edit/:id" element={<EditPage />} />
