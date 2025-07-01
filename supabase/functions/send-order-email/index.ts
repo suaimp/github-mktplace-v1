@@ -15,15 +15,20 @@ serve(async (req) => {
   }
 
   try {
-    const { order, to } = await req.json();
+    const { order } = await req.json();
 
     // Validação básica
-    if (!order || !to) {
+    if (!order) {
       return new Response(
-        JSON.stringify({ error: "Dados da compra ou destinatário ausentes." }),
+        JSON.stringify({ error: "Dados da compra ausentes." }),
         { status: 400, headers: corsHeaders() }
       );
     }
+
+    // Email do cliente e email configurado para receber notificações
+    const clientEmail = order.email;
+    const adminEmail = "moisesdev2022@gmail.com"; // Email configurado para receber notificações
+    const recipients = [clientEmail, adminEmail];
 
     // Monte o corpo do e-mail com os dados da compra
     const orderDetails = `
@@ -66,7 +71,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Seu Marketplace <noreply@cp.suaimprensa.com.br>",
-        to: [to],
+        to: recipients,
         subject: "Nova compra realizada",
         html: orderDetails,
       }),

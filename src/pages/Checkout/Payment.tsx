@@ -486,7 +486,6 @@ export default function Payment() {
           };
           const payload = {
             order: orderEmailData,
-            to: "MoisesDev2022@gmail.com",
           };
           console.log("Dados enviados para função Edge:", JSON.stringify(payload));
           await fetch(
@@ -497,7 +496,7 @@ export default function Payment() {
               body: JSON.stringify(payload),
             }
           );
-          console.log("E-mail de notificação de compra enviado para MoisesDev2022@gmail.com (boleto/pix)");
+          console.log("E-mail de notificação de compra enviado para cliente e administrador (boleto/pix)");
         } catch (emailErr) {
           console.error("Erro ao enviar e-mail de compra (boleto/pix):", emailErr);
         }
@@ -781,7 +780,6 @@ export default function Payment() {
               };
               const payload = {
                 order: orderEmailData,
-                to: "MoisesDev2022@gmail.com",
               };
               console.log("Dados enviados para função Edge:", JSON.stringify(payload));
               await fetch(
@@ -792,7 +790,7 @@ export default function Payment() {
                   body: JSON.stringify(payload),
                 }
               );
-              console.log("E-mail de notificação de compra enviado para MoisesDev2022@gmail.com (boleto)");
+              console.log("E-mail de notificação de compra enviado para cliente e administrador (boleto)");
             } catch (emailErr) {
               console.error("Erro ao enviar e-mail de compra (boleto):", emailErr);
             }

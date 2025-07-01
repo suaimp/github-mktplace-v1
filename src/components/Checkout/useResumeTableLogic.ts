@@ -261,6 +261,8 @@ export function useResumeTableLogic() {
         });
         
         let preset = item.service_selected || "";
+        let wordCountFound = false;
+        
         if (
           Array.isArray(preset) &&
           preset.length > 0 &&
@@ -272,7 +274,7 @@ export function useResumeTableLogic() {
               if (parsed && parsed.word_count !== undefined) {
                 updated[item.id] = Number(parsed.word_count);
                 console.log("✅ WordCount carregado de string JSON:", Number(parsed.word_count));
-                return;
+                wordCountFound = true;
               }
             } catch {}
           } else if (
@@ -281,7 +283,7 @@ export function useResumeTableLogic() {
           ) {
             updated[item.id] = Number(preset[0].word_count);
             console.log("✅ WordCount carregado de objeto:", Number(preset[0].word_count));
-            return;
+            wordCountFound = true;
           }
         } else if (
           typeof preset === "object" &&
@@ -290,19 +292,22 @@ export function useResumeTableLogic() {
         ) {
           updated[item.id] = Number(preset.word_count);
           console.log("✅ WordCount carregado de objeto direto:", Number(preset.word_count));
-          return;
+          wordCountFound = true;
         } else if (typeof preset === "string") {
           try {
             const parsed = JSON.parse(preset);
             if (parsed && parsed.word_count !== undefined) {
               updated[item.id] = Number(parsed.word_count);
               console.log("✅ WordCount carregado de string direto:", Number(parsed.word_count));
-              return;
+              wordCountFound = true;
             }
           } catch {}
         }
-        updated[item.id] = "";
-        console.log("❌ WordCount não encontrado, usando valor vazio");
+        
+        if (!wordCountFound) {
+          updated[item.id] = "";
+          console.log("❌ WordCount não encontrado, usando valor vazio");
+        }
       });
       console.log("📊 WordCounts carregados:", updated);
       return updated;
