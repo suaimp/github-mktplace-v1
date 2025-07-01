@@ -335,3 +335,54 @@ export async function deleteCompleteOrder(orderId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Retorna a contagem total de pedidos na tabela orders
+ */
+export async function getOrdersCount(): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true });
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error("Erro ao contar pedidos:", error);
+    return 0;
+  }
+}
+
+/**
+ * Retorna os pedidos mais recentes (limitado a 7)
+ */
+export async function getRecentOrders(): Promise<Order[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(7);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar pedidos recentes:", error);
+    return null;
+  }
+}
+
+/**
+ * Retorna todos os pedidos (sem limite)
+ */
+export async function getAllOrders(): Promise<Order[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar todos os pedidos:", error);
+    return null;
+  }
+}

@@ -1,5 +1,5 @@
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/RecentOrdersTable";
+import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics/EcommerceMetrics";
+import MonthlySalesChart from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 
 import FAQ from "../../components/ecommerce/FAQ";

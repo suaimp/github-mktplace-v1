@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Button from "../ui/button/Button";
 import CompanyInfoForm from "./company/CompanyInfoForm";
-import PaymentMethodForm from "./company/PaymentMethodForm";
+ 
 import { supabase } from "../../lib/supabase";
 
 interface AdminProfile {
@@ -194,7 +194,7 @@ export default function CompanyDataCard({
         </form>
       </div>
 
-      <div className="space-y-6 pt-8 border-t border-gray-200 dark:border-gray-800">
+      {/* <div className="space-y-6 pt-8 border-t border-gray-200 dark:border-gray-800">
         <PaymentMethodForm
           data={companyData}
           onChange={(data) => setCompanyData({ ...companyData, ...data })}
@@ -213,7 +213,7 @@ export default function CompanyDataCard({
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

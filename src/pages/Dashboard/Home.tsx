@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable";
+import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics/EcommerceMetrics";
+import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
 
 import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";

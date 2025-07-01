@@ -7,7 +7,7 @@ import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
 import {
   formatMarketplaceValue,
-  renderNicheHeader,
+ 
 } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
@@ -411,7 +411,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           </div>
         </div>
 
-        <div className="max-w-full overflow-x-auto">
+        <div className="max-w-full overflow-x-auto" style={{ overflowY: 'hidden' }}>
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
@@ -609,50 +609,52 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         isSortable ? () => handleSort(field.id) : undefined
                       }
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          {field.field_type === "niche" ? (
-                            renderNicheHeader(displayName)
-                          ) : (
-                            <>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            {field.field_type === "niche" ? (
                               <span>{displayName}</span>
-                              {showTooltip && (
-                                <InfoTooltip text={tooltipText} />
-                              )}
-                            </>
+                            ) : (
+                              <>
+                                <span>{displayName}</span>
+                                {showTooltip && (
+                                  <InfoTooltip text={tooltipText} />
+                                )}
+                              </>
+                            )}
+                          </div>
+                          {isSortable && (
+                            <span className="flex flex-col gap-0.5">
+                              <svg
+                                className="fill-gray-300 dark:fill-gray-700"
+                                width="8"
+                                height="5"
+                                viewBox="0 0 8 5"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z"
+                                  fill=""
+                                ></path>
+                              </svg>
+
+                              <svg
+                                className="fill-gray-300 dark:fill-gray-700"
+                                width="8"
+                                height="5"
+                                viewBox="0 0 8 5"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z"
+                                  fill=""
+                                ></path>
+                              </svg>
+                            </span>
                           )}
                         </div>
-                        {isSortable && (
-                          <span className="flex flex-col gap-0.5">
-                            <svg
-                              className="fill-gray-300 dark:fill-gray-700"
-                              width="8"
-                              height="5"
-                              viewBox="0 0 8 5"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z"
-                                fill=""
-                              ></path>
-                            </svg>
-
-                            <svg
-                              className="fill-gray-300 dark:fill-gray-700"
-                              width="8"
-                              height="5"
-                              viewBox="0 0 8 5"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z"
-                                fill=""
-                              ></path>
-                            </svg>
-                          </span>
-                        )}
                       </div>
                     </th>
                   );
@@ -759,49 +761,60 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                             key={field.id}
                             className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
                           >
-                            {renderApiMetricWithBadge(
-                              entry.values[field.id],
-                              field.field_type
-                            )}
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                              {renderApiMetricWithBadge(
+                                entry.values[field.id],
+                                field.field_type
+                              )}
+                            </div>
                           </td>
                         );
                       }
 
                       // Regular field rendering
+                      if (field.field_type === "niche") {
+                        return (
+                          <td
+                            key={field.id}
+                            className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
+                            style={{ minWidth: 120, maxWidth: 220, width: '1%', padding: '16px 12px' }}
+                          >
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                              {formatMarketplaceValue(entry.values[field.id], field.field_type, true)}
+                            </div>
+                          </td>
+                        );
+                      }
+
                       return (
                         <td
                           key={field.id}
                           className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
                         >
-                          {(() => {
-                            const fieldValue = entry.values[field.id];
-
-                            // Uso do componente reutilizável para campos do tipo "product"
-                            if (field.field_type === "product") {
-                              const commissionValue = commissionField
-                                ? parseFloat(
-                                    entry.values[commissionField.id]
-                                  ) || 0
-                                : 0;
-
-                              // Sempre usa o componente de simulação para produtos (mesmo sem comissão)
-                              return (
-                                <PriceSimulationDisplay
-                                  commission={commissionValue}
-                                  productData={fieldValue}
-                                  layout="inline"
-                                  showMarginBelow={false}
-                                  showOriginalPrice={true}
-                                />
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                            {(() => {
+                              const fieldValue = entry.values[field.id];
+                              if (field.field_type === "product") {
+                                const commissionValue = commissionField
+                                  ? parseFloat(entry.values[commissionField.id]) || 0
+                                  : 0;
+                                return (
+                                  <PriceSimulationDisplay
+                                    commission={commissionValue}
+                                    productData={fieldValue}
+                                    layout="inline"
+                                    showMarginBelow={false}
+                                    showOriginalPrice={true}
+                                  />
+                                );
+                              }
+                              return formatMarketplaceValue(
+                                fieldValue,
+                                field.field_type,
+                                true
                               );
-                            }
-
-                            return formatMarketplaceValue(
-                              fieldValue,
-                              field.field_type,
-                              true
-                            );
-                          })()}
+                            })()}
+                          </div>
                         </td>
                       );
                     })}
