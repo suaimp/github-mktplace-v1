@@ -420,98 +420,27 @@ export default function ResumeTable(props: ResumeTableProps) {
                           value={getSelectedServiceTitle(item, selectedService)}
                           onChange={async (e) => {
                             const value = e.target.value;
-                            setSelectedService(
-                              (prev: { [id: string]: string }) => ({
-                                ...prev,
-                                [item.id]: value
-                              })
-                            );
+                            setSelectedService((prev: { [id: string]: string }) => ({
+                              ...prev,
+                              [item.id]: value
+                            }));
 
-                            // Atualiza o word_count do pacote selecionado apenas se não houver valor personalizado
-                            const selectedPkg =
-                              serviceCardsByActiveService?.find(
-                                (option: any) => option.title === value
-                              );
-                            
-                            // Preserva o valor personalizado se já existe, senão usa o padrão do serviço
-                            const currentWordCount = wordCounts[item.id];
-                            // Só usa o valor padrão se não há valor definido ou se é 0 (que indica valor padrão)
-                            const shouldUseDefault = currentWordCount === "" || currentWordCount === undefined || currentWordCount === 0;
-                            
-                            console.log("🔍 Verificando preservação de valor personalizado:", {
-                              itemId: item.id,
-                              selectedValue: value,
-                              currentWordCount: currentWordCount,
-                              shouldUseDefault: shouldUseDefault,
-                              selectedPkg: selectedPkg,
-                              selectedPkgWordCount: selectedPkg?.word_count,
-                              serviceCardsByActiveService: serviceCardsByActiveService
-                            });
-                            
-                            // Força atualização se é a primeira vez que um pacote é selecionado
-                            const isFirstSelection = !item.service_selected || 
-                              (Array.isArray(item.service_selected) && 
-                               (item.service_selected.length === 0 || 
-                                item.service_selected[0]?.title === SERVICE_OPTIONS.NONE));
-                            
-                            // Sempre atualiza o word_count quando um pacote válido é selecionado
-                            if (selectedPkg && selectedPkg.word_count !== undefined && value !== SERVICE_OPTIONS.NONE) {
-                              console.log("✅ Atualizando wordCounts state:", {
-                                itemId: item.id,
-                                previousValue: wordCounts[item.id],
-                                newValue: selectedPkg.word_count,
-                                packageTitle: selectedPkg.title,
-                                isFirstSelection,
-                                shouldUseDefault
-                              });
-                              
-                              setWordCounts((prev) => {
-                                const newState = {
-                                  ...prev,
-                                  [item.id]: selectedPkg.word_count
-                                };
-                                console.log("🔄 Novo estado wordCounts:", newState);
-                                console.log("🔄 Comparação - Antes:", prev[item.id], "Depois:", newState[item.id]);
-                                return newState;
-                              });
-                              
-                              // Força re-render para garantir que o valor seja atualizado
-                              setTimeout(() => {
-                                console.log("🔄 Verificando estado após atualização:", {
-                                  itemId: item.id,
-                                  wordCounts: wordCounts,
-                                  selectedPkgWordCount: selectedPkg.word_count,
-                                  shouldUpdate: selectedPkg.word_count !== wordCounts[item.id]
-                                });
-                              }, 100);
-                              
-                              // Atualiza também no banco de dados para manter sincronização
-                              console.log("🔄 Atualizando word_count no banco para pacote selecionado:", {
-                                itemId: item.id,
-                                wordCount: selectedPkg.word_count,
-                                packageTitle: selectedPkg.title
-                              });
-                            } else {
-                              console.log("❌ Não atualizando wordCounts:", {
-                                shouldUseDefault,
-                                selectedPkg: !!selectedPkg,
-                                selectedPkgWordCount: selectedPkg?.word_count,
-                                currentWordCount
-                              });
-                            }
-                            
-                            // Atualiza no backend em background
+                            // Atualiza o word_count do pacote selecionado
+                            const selectedPkg = serviceCardsByActiveService?.find(
+                              (option: any) => option.title === value
+                            );
+                            setWordCounts((prev) => ({
+                              ...prev,
+                              [item.id]: selectedPkg?.word_count ?? ""
+                            }));
+
+                            // Atualiza no banco usando o value selecionado diretamente
                             if (item.id) {
                               const { updateCartCheckoutResume } = await import(
                                 "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService"
                               );
-                              // Se "Nenhum" ou vazio, envia array padrão
                               let serviceArray;
-                              if (
-                                !value ||
-                                value === SERVICE_OPTIONS.NONE ||
-                                value === ""
-                              ) {
+                              if (!value || value === SERVICE_OPTIONS.NONE || value === "") {
                                 serviceArray = [
                                   {
                                     title: value || SERVICE_OPTIONS.NONE,
@@ -523,33 +452,17 @@ export default function ResumeTable(props: ResumeTableProps) {
                                   }
                                 ];
                               } else {
-                                // Cria o serviceArray preservando o valor personalizado
                                 const baseServiceArray = getServicePackageArray(
                                   item,
                                   { ...selectedService, [item.id]: value },
                                   serviceCardsByActiveService ?? []
                                 );
-                                
                                 serviceArray = baseServiceArray.map((pkg: any) => ({
                                   ...pkg,
-                                  price:
-                                    selectedPkg &&
-                                    selectedPkg.price !== undefined
-                                      ? selectedPkg.price
-                                      : 0,
-                                  // Usa o word_count do pacote selecionado
-                                  word_count: selectedPkg?.word_count || 0
+                                  price: selectedPkg?.price ?? 0,
+                                  word_count: selectedPkg?.word_count ?? 0
                                 }));
-                                
-                                console.log("📝 ServiceArray final:", {
-                                  itemId: item.id,
-                                  shouldUseDefault: shouldUseDefault,
-                                  currentWordCount: currentWordCount,
-                                  selectedPkgWordCount: selectedPkg?.word_count,
-                                  finalWordCount: serviceArray[0]?.word_count
-                                });
                               }
-
                               await updateCartCheckoutResume(item.id, {
                                 service_selected: serviceArray
                               });
@@ -642,42 +555,45 @@ export default function ResumeTable(props: ResumeTableProps) {
                           <WordCountInput
                             value={inputValue}
                             onChange={async (value: number) => {
-                              console.log("🎯 WordCountInput onChange chamado:", {
-                                itemId: item.id,
-                                newValue: value,
-                                previousValue: wordCounts[item.id],
-                                selectedService: selectedService[item.id],
-                                currentWordCounts: wordCounts,
-                                itemServiceSelected: item.service_selected
-                              });
-                              
-                              setWordCounts(
-                                (prev: { [id: string]: number | "" }) => ({
-                                  ...prev,
-                                  [item.id]: value
-                                })
-                              );
-                              
+                              setWordCounts((prev: { [id: string]: number | "" }) => ({
+                                ...prev,
+                                [item.id]: value
+                              }));
+
                               // Debounce para evitar muitas chamadas ao banco
                               if (wordCountDebounceTimers[item.id]) {
                                 clearTimeout(wordCountDebounceTimers[item.id]);
                               }
-                              
+
                               const timer = setTimeout(async () => {
-                                console.log("⏰ Debounce executado para item:", item.id);
-                                // Salva o valor personalizado no banco de dados
-                                if (item.service_selected && Array.isArray(item.service_selected)) {
-                                  console.log("💾 Salvando valor personalizado no banco:", {
-                                    itemId: item.id,
-                                    value: value,
-                                    serviceSelected: item.service_selected
-                                  });
-                                  await handleWordCountChange(item, value, item.service_selected);
-                                } else {
-                                  console.warn("⚠️ item.service_selected não encontrado ou não é array:", item.service_selected);
-                                }
-                              }, 500); // 500ms de debounce
-                              
+                                // Pegue o título do pacote selecionado no estado atual
+                                const selectedTitle = selectedService[item.id] ?? getSelectedServiceTitle(item, selectedService);
+                                const selectedPkg = serviceCardsByActiveService?.find(
+                                  (option: any) => option.title === selectedTitle
+                                );
+
+                                // Monte o array correto para enviar ao banco
+                                const serviceArray = selectedPkg
+                                  ? [{
+                                      title: selectedPkg.title,
+                                      price: selectedPkg.price,
+                                      price_per_word: selectedPkg.price_per_word,
+                                      word_count: value,
+                                      is_free: selectedPkg.is_free,
+                                      benefits: selectedPkg.benefits
+                                    }]
+                                  : [{
+                                      title: selectedTitle || "Nenhum",
+                                      price: 0,
+                                      price_per_word: 0,
+                                      word_count: value,
+                                      is_free: true,
+                                      benefits: []
+                                    }];
+
+                                await handleWordCountChange(item, value, serviceArray);
+                              }, 500);
+
                               setWordCountDebounceTimers(prev => ({
                                 ...prev,
                                 [item.id]: timer
