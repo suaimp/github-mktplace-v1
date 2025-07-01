@@ -37,6 +37,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function ResumeTable(props: ResumeTableProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [calculationTrigger, setCalculationTrigger] = useState(0);
+  const [wordCountDebounceTimers, setWordCountDebounceTimers] = useState<{ [id: string]: number }>({});
 
   const logic = useResumeTableLogic();
 
@@ -55,6 +56,15 @@ export default function ResumeTable(props: ResumeTableProps) {
     }
   }, [reloadKey]);
 
+  // Cleanup dos timers de debounce quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      Object.values(wordCountDebounceTimers).forEach(timer => {
+        clearTimeout(timer);
+      });
+    };
+  }, [wordCountDebounceTimers]);
+
   const {
     resumeData,
     loading,
@@ -71,6 +81,7 @@ export default function ResumeTable(props: ResumeTableProps) {
     handleQuantityChange,
     handleQuantityBlur,
     handleNicheChange,
+    handleWordCountChange,
     serviceCardsByActiveService,
     getSelectedNicheName,
     getSelectedServiceTitle,
@@ -416,19 +427,34 @@ export default function ResumeTable(props: ResumeTableProps) {
                               })
                             );
 
-                            // Atualiza o word_count do pacote selecionado
+                            // Atualiza o word_count do pacote selecionado apenas se não houver valor personalizado
                             const selectedPkg =
                               serviceCardsByActiveService?.find(
                                 (option: any) => option.title === value
                               );
-                            setWordCounts((prev) => ({
-                              ...prev,
-                              [item.id]:
-                                selectedPkg &&
-                                selectedPkg.word_count !== undefined
-                                  ? selectedPkg.word_count
-                                  : ""
-                            }));
+                            
+                            // Preserva o valor personalizado se já existe, senão usa o padrão do serviço
+                            const currentWordCount = wordCounts[item.id];
+                            const shouldUseDefault = currentWordCount === "" || currentWordCount === undefined;
+                            
+                            console.log("🔍 Verificando preservação de valor personalizado:", {
+                              itemId: item.id,
+                              currentWordCount: currentWordCount,
+                              shouldUseDefault: shouldUseDefault,
+                              selectedPkgWordCount: selectedPkg?.word_count
+                            });
+                            
+                            if (shouldUseDefault) {
+                              setWordCounts((prev) => ({
+                                ...prev,
+                                [item.id]:
+                                  selectedPkg &&
+                                  selectedPkg.word_count !== undefined
+                                    ? selectedPkg.word_count
+                                    : ""
+                              }));
+                            }
+                            
                             // Atualiza no backend em background
                             if (item.id) {
                               const { updateCartCheckoutResume } = await import(
@@ -452,18 +478,33 @@ export default function ResumeTable(props: ResumeTableProps) {
                                   }
                                 ];
                               } else {
-                                serviceArray = getServicePackageArray(
+                                // Cria o serviceArray preservando o valor personalizado
+                                const baseServiceArray = getServicePackageArray(
                                   item,
                                   { ...selectedService, [item.id]: value },
                                   serviceCardsByActiveService ?? []
-                                ).map((pkg: any) => ({
+                                );
+                                
+                                serviceArray = baseServiceArray.map((pkg: any) => ({
                                   ...pkg,
                                   price:
                                     selectedPkg &&
                                     selectedPkg.price !== undefined
                                       ? selectedPkg.price
-                                      : 0
+                                      : 0,
+                                  // Preserva o valor personalizado se existe, senão usa o padrão
+                                  word_count: shouldUseDefault 
+                                    ? (selectedPkg?.word_count || 0)
+                                    : (currentWordCount || 0)
                                 }));
+                                
+                                console.log("📝 ServiceArray final:", {
+                                  itemId: item.id,
+                                  shouldUseDefault: shouldUseDefault,
+                                  currentWordCount: currentWordCount,
+                                  selectedPkgWordCount: selectedPkg?.word_count,
+                                  finalWordCount: serviceArray[0]?.word_count
+                                });
                               }
 
                               await updateCartCheckoutResume(item.id, {
@@ -526,13 +567,45 @@ export default function ResumeTable(props: ResumeTableProps) {
                         return (
                           <WordCountInput
                             value={wordCounts[item.id] ?? ""}
-                            onChange={(value: number) => {
+                            onChange={async (value: number) => {
+                              console.log("🎯 WordCountInput onChange:", {
+                                itemId: item.id,
+                                value: value,
+                                currentWordCounts: wordCounts,
+                                itemServiceSelected: item.service_selected
+                              });
+                              
                               setWordCounts(
                                 (prev: { [id: string]: number | "" }) => ({
                                   ...prev,
                                   [item.id]: value
                                 })
                               );
+                              
+                              // Debounce para evitar muitas chamadas ao banco
+                              if (wordCountDebounceTimers[item.id]) {
+                                clearTimeout(wordCountDebounceTimers[item.id]);
+                              }
+                              
+                              const timer = setTimeout(async () => {
+                                console.log("⏰ Debounce executado para item:", item.id);
+                                // Salva o valor personalizado no banco de dados
+                                if (item.service_selected && Array.isArray(item.service_selected)) {
+                                  console.log("💾 Salvando valor personalizado no banco:", {
+                                    itemId: item.id,
+                                    value: value,
+                                    serviceSelected: item.service_selected
+                                  });
+                                  await handleWordCountChange(item, value, item.service_selected);
+                                } else {
+                                  console.warn("⚠️ item.service_selected não encontrado ou não é array:", item.service_selected);
+                                }
+                              }, 500); // 500ms de debounce
+                              
+                              setWordCountDebounceTimers(prev => ({
+                                ...prev,
+                                [item.id]: timer
+                              }));
                             }}
                           />
                         );

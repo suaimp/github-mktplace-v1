@@ -1,4 +1,4 @@
-import NotificationDropdown from "./NotificationDropdown";
+ 
 import UserDropdown from "./UserDropdown";
 import ShoppingCart from "../cart/ShoppingCart";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
@@ -17,7 +17,7 @@ export default function HeaderActions({ isOpen }: HeaderActionsProps) {
       <div className="flex items-center gap-2 2xsm:gap-3">
         <ThemeToggleButton />
         <ShoppingCart />
-        <NotificationDropdown />
+        {/* <NotificationDropdown /> */} 
       </div>
       <UserDropdown />
     </div>

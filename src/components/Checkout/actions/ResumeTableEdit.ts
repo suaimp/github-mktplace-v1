@@ -51,10 +51,82 @@ export function useResumeTableEdit() {
     }
   }
 
+  // Atualiza o valor personalizado de palavras no banco de dados
+  async function handleWordCountChange(
+    item: any,
+    wordCount: number,
+    currentServiceSelected: any[]
+  ) {
+    console.log("🔧 handleWordCountChange chamada:", {
+      itemId: item.id,
+      wordCount: wordCount,
+      currentServiceSelected: currentServiceSelected
+    });
+    
+    setLoadingItem((prev) => ({ ...prev, [item.id]: true }));
+    try {
+      // Garante que currentServiceSelected seja um array válido
+      let serviceArray = currentServiceSelected;
+      
+      // Se currentServiceSelected não for um array válido, cria um array padrão
+      if (!Array.isArray(serviceArray) || serviceArray.length === 0) {
+        console.warn("⚠️ currentServiceSelected não é um array válido, criando array padrão");
+        serviceArray = [{
+          title: "Nenhum",
+          price: 0,
+          price_per_word: 0,
+          word_count: wordCount,
+          is_free: true,
+          benefits: []
+        }];
+      } else {
+        // Atualiza o service_selected com o novo word_count personalizado
+        serviceArray = currentServiceSelected.map((service: any) => {
+          // Garante que service seja um objeto válido
+          if (typeof service === "string") {
+            try {
+              service = JSON.parse(service);
+            } catch {
+              service = { title: service };
+            }
+          }
+          
+          return {
+            title: service.title || "Nenhum",
+            price: service.price || 0,
+            price_per_word: service.price_per_word || 0,
+            word_count: wordCount,
+            is_free: service.is_free !== undefined ? service.is_free : true,
+            benefits: service.benefits || []
+          };
+        });
+      }
+
+      console.log("📝 Atualizando service_selected:", {
+        itemId: item.id,
+        updatedServiceSelected: serviceArray
+      });
+
+      const result = await updateCartCheckoutResume(item.id, {
+        service_selected: serviceArray
+      });
+      
+      console.log("✅ Resultado da atualização:", result);
+      
+      return result;
+    } catch (err) {
+      console.error("❌ Erro ao atualizar word_count personalizado", err);
+      throw err;
+    } finally {
+      setLoadingItem((prev) => ({ ...prev, [item.id]: false }));
+    }
+  }
+
   return {
     loadingItem,
     handleQuantityChange,
     handleQuantityBlur,
-    handleNicheChange
+    handleNicheChange,
+    handleWordCountChange
   };
 }

@@ -443,6 +443,64 @@ export default function Payment() {
         } else {
           console.error("❌ Falha ao atualizar status do pagamento");
         }
+
+        // Enviar e-mail de compra para MoisesDev2022@gmail.com (notificação de compra)
+        try {
+          const orderEmailData = {
+            name: formData.name,
+            email: formData.email,
+            total: order.total_amount,
+            items: orderSummary.items.map((item: any) => {
+              // Niche
+              let niche = "";
+              if (Array.isArray(item.niche_selected) && item.niche_selected.length > 0) {
+                try {
+                  const parsed = JSON.parse(item.niche_selected[0]);
+                  niche = parsed.niche || parsed.title || parsed.name || "";
+                } catch {
+                  niche = "";
+                }
+              }
+              // Package
+              let pacote = "";
+              let word_count = "";
+              if (Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+                try {
+                  const parsed = JSON.parse(item.service_selected[0]);
+                  pacote = parsed.title || parsed.name || "";
+                  word_count = parsed.word_count || "";
+                } catch {
+                  pacote = "";
+                  word_count = "";
+                }
+              }
+              return {
+                name: item.product_url || "Produto",
+                quantity: item.quantity,
+                price: item.price,
+                niche,
+                package: pacote,
+                word_count,
+              };
+            }),
+          };
+          const payload = {
+            order: orderEmailData,
+            to: "MoisesDev2022@gmail.com",
+          };
+          console.log("Dados enviados para função Edge:", JSON.stringify(payload));
+          await fetch(
+            "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+          console.log("E-mail de notificação de compra enviado para MoisesDev2022@gmail.com (boleto/pix)");
+        } catch (emailErr) {
+          console.error("Erro ao enviar e-mail de compra (boleto/pix):", emailErr);
+        }
       }
 
       // Show success message
@@ -679,6 +737,64 @@ export default function Payment() {
             // Store the order ID
             if (order?.id) {
               setCurrentOrderId(order.id);
+            }
+
+            // Enviar e-mail de compra para MoisesDev2022@gmail.com (notificação de compra)
+            try {
+              const orderEmailData = {
+                name: formData.name,
+                email: formData.email,
+                total: order.total_amount,
+                items: orderSummary.items.map((item: any) => {
+                  // Niche
+                  let niche = "";
+                  if (Array.isArray(item.niche_selected) && item.niche_selected.length > 0) {
+                    try {
+                      const parsed = JSON.parse(item.niche_selected[0]);
+                      niche = parsed.niche || parsed.title || parsed.name || "";
+                    } catch {
+                      niche = "";
+                    }
+                  }
+                  // Package
+                  let pacote = "";
+                  let word_count = "";
+                  if (Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+                    try {
+                      const parsed = JSON.parse(item.service_selected[0]);
+                      pacote = parsed.title || parsed.name || "";
+                      word_count = parsed.word_count || "";
+                    } catch {
+                      pacote = "";
+                      word_count = "";
+                    }
+                  }
+                  return {
+                    name: item.product_url || "Produto",
+                    quantity: item.quantity,
+                    price: item.price,
+                    niche,
+                    package: pacote,
+                    word_count,
+                  };
+                }),
+              };
+              const payload = {
+                order: orderEmailData,
+                to: "MoisesDev2022@gmail.com",
+              };
+              console.log("Dados enviados para função Edge:", JSON.stringify(payload));
+              await fetch(
+                "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                }
+              );
+              console.log("E-mail de notificação de compra enviado para MoisesDev2022@gmail.com (boleto)");
+            } catch (emailErr) {
+              console.error("Erro ao enviar e-mail de compra (boleto):", emailErr);
             }
 
             console.log("📋 Pedido criado para boleto:", {

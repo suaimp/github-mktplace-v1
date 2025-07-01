@@ -31,7 +31,8 @@ export function useResumeTableLogic() {
     loadingItem,
     handleQuantityChange,
     handleQuantityBlur,
-    handleNicheChange
+    handleNicheChange,
+    handleWordCountChange
   } = useResumeTableEdit();
 
   useEffect(() => {
@@ -49,7 +50,45 @@ export function useResumeTableLogic() {
           return;
         }
         const data = await getCartCheckoutResumeByUser(user.id);
-        setResumeData(data || []);
+        console.log("📥 Dados carregados do banco:", data);
+        
+        // Verifica e corrige dados malformados
+        const sanitizedData = (data || []).map((item: any) => {
+          // Corrige service_selected se estiver malformado
+          if (item.service_selected && typeof item.service_selected === "string") {
+            try {
+              const parsed = JSON.parse(item.service_selected);
+              item.service_selected = Array.isArray(parsed) ? parsed : [parsed];
+            } catch {
+              console.warn("⚠️ service_selected malformado, criando array padrão:", item.service_selected);
+              item.service_selected = [{
+                title: "Nenhum",
+                price: 0,
+                price_per_word: 0,
+                word_count: 0,
+                is_free: true,
+                benefits: []
+              }];
+            }
+          }
+          
+          // Garante que service_selected seja sempre um array
+          if (!Array.isArray(item.service_selected)) {
+            item.service_selected = [{
+              title: "Nenhum",
+              price: 0,
+              price_per_word: 0,
+              word_count: 0,
+              is_free: true,
+              benefits: []
+            }];
+          }
+          
+          return item;
+        });
+        
+        console.log("🧹 Dados sanitizados:", sanitizedData);
+        setResumeData(sanitizedData);
 
         // Buscar dados existentes do order_totals para pressetar valores
         try {
@@ -88,6 +127,8 @@ export function useResumeTableLogic() {
 
   useEffect(() => {
     // Sempre sobrescreve os states ao recarregar resumeData
+    console.log("🔄 Recarregando estados com resumeData:", resumeData);
+    
     setQuantities(() => {
       const updated: { [id: string]: number } = {};
       resumeData.forEach((item: any) => {
@@ -212,6 +253,13 @@ export function useResumeTableLogic() {
     setWordCounts(() => {
       const updated: { [id: string]: number | "" } = {};
       resumeData.forEach((item: any) => {
+        console.log("🔄 Carregando wordCounts para item:", {
+          itemId: item.id,
+          serviceSelected: item.service_selected,
+          serviceSelectedType: typeof item.service_selected,
+          isArray: Array.isArray(item.service_selected)
+        });
+        
         let preset = item.service_selected || "";
         if (
           Array.isArray(preset) &&
@@ -223,6 +271,7 @@ export function useResumeTableLogic() {
               const parsed = JSON.parse(preset[0]);
               if (parsed && parsed.word_count !== undefined) {
                 updated[item.id] = Number(parsed.word_count);
+                console.log("✅ WordCount carregado de string JSON:", Number(parsed.word_count));
                 return;
               }
             } catch {}
@@ -231,6 +280,7 @@ export function useResumeTableLogic() {
             preset[0]?.word_count !== undefined
           ) {
             updated[item.id] = Number(preset[0].word_count);
+            console.log("✅ WordCount carregado de objeto:", Number(preset[0].word_count));
             return;
           }
         } else if (
@@ -239,18 +289,22 @@ export function useResumeTableLogic() {
           preset.word_count !== undefined
         ) {
           updated[item.id] = Number(preset.word_count);
+          console.log("✅ WordCount carregado de objeto direto:", Number(preset.word_count));
           return;
         } else if (typeof preset === "string") {
           try {
             const parsed = JSON.parse(preset);
             if (parsed && parsed.word_count !== undefined) {
               updated[item.id] = Number(parsed.word_count);
+              console.log("✅ WordCount carregado de string direto:", Number(parsed.word_count));
               return;
             }
           } catch {}
         }
         updated[item.id] = "";
+        console.log("❌ WordCount não encontrado, usando valor vazio");
       });
+      console.log("📊 WordCounts carregados:", updated);
       return updated;
     });
   }, [resumeData]);
@@ -348,6 +402,7 @@ export function useResumeTableLogic() {
     handleQuantityChange,
     handleQuantityBlur,
     handleNicheChange,
+    handleWordCountChange,
     serviceCardsByActiveService,
     getSelectedNicheName,
     getSelectedServiceTitle,

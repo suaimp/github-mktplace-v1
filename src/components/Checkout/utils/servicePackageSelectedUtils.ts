@@ -5,6 +5,13 @@ export function getSelectedServicePackage(
   selectedService: { [id: string]: string | null },
   serviceCards: any[]
 ): any {
+  console.log("🔍 getSelectedServicePackage chamada:", {
+    itemId: item.id,
+    selectedService: selectedService[item.id],
+    serviceCardsLength: serviceCards.length,
+    itemServiceSelected: item.service_selected
+  });
+  
   // Sempre prioriza o valor persistido no backend se não houver seleção no estado
   let selectedServiceTitle = selectedService[item.id];
   if (!selectedServiceTitle) {
@@ -48,14 +55,35 @@ export function getSelectedServicePackage(
   );
   if (found) {
     console.log("Service card encontrado com benefits:", found);
-    return {
+    
+    // Verifica se há um valor personalizado de word_count no item
+    let customWordCount = null;
+    if (item.service_selected && Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+      const serviceData = item.service_selected[0];
+      if (typeof serviceData === "object" && serviceData.word_count !== undefined) {
+        customWordCount = serviceData.word_count;
+        console.log("🎯 Valor personalizado encontrado:", customWordCount);
+      }
+    }
+    
+    const result = {
       title: found.title,
       price: found.price,
       price_per_word: found.price_per_word,
-      word_count: found.word_count,
+      // Usa o valor personalizado se existir, senão usa o padrão do serviço
+      word_count: customWordCount !== null ? customWordCount : found.word_count,
       is_free: found.is_free,
       benefits: found.benefits
     };
+    
+    console.log("📤 Retornando service package:", {
+      itemId: item.id,
+      customWordCount: customWordCount,
+      defaultWordCount: found.word_count,
+      finalWordCount: result.word_count
+    });
+    
+    return result;
   }
   return null;
 }

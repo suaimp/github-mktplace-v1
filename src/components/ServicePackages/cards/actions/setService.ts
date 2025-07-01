@@ -41,9 +41,32 @@ export async function setService(service: any) {
 
   // Atualiza todos os registros do usuário
   await Promise.all(
-    items.map((item) =>
-      updateCartCheckoutResume(item.id, { service_selected: valueToSet })
-    )
+    items.map(async (item) => {
+      // Verifica se há um valor personalizado de word_count no item atual
+      let customWordCount: number | null = null;
+      if (item.service_selected && Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+        const serviceData = item.service_selected[0];
+        if (typeof serviceData === "object" && serviceData.word_count !== undefined) {
+          // Verifica se o valor é diferente do padrão do serviço (indicando que foi personalizado)
+          // Também verifica se o valor é maior que 0 para evitar valores inválidos
+          if (serviceData.word_count !== service.word_count && serviceData.word_count > 0) {
+            customWordCount = serviceData.word_count;
+          }
+        }
+      }
+      
+      // Cria o payload preservando o valor personalizado se existir
+      const itemPayload = {
+        title: service.title,
+        price: service.price,
+        price_per_word: service.price_per_word,
+        word_count: customWordCount !== null ? customWordCount : service.word_count,
+        is_free: service.is_free,
+        benefits: service.benefits
+      };
+      
+      return updateCartCheckoutResume(item.id, { service_selected: [itemPayload] });
+    })
   );
   console.log("Todos os registros atualizados com sucesso!", valueToSet);
 
