@@ -100,8 +100,15 @@ export function CartProvider({ children }: CartProviderProps) {
       }
     });
 
+    // Listener para atualização do carrinho em tempo real
+    const handleCartCleared = () => {
+      loadCartItems();
+    };
+    window.addEventListener("cart-cleared", handleCartCleared);
+
     return () => {
       authListener.subscription.unsubscribe();
+      window.removeEventListener("cart-cleared", handleCartCleared);
     };
   }, []);
 

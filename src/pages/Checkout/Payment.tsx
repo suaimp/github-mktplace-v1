@@ -595,6 +595,7 @@ export default function Payment() {
         throw new Error("Failed to create order");
       } // Clear cart after successful order creation
       await clearCart(user.id);
+      window.dispatchEvent(new Event("cart-cleared"));
 
       return order;
     } catch (error) {
