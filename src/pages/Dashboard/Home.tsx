@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics/EcommerceMetrics";
 import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
+import AnalyticsSummary from "../../components/ecommerce/AnalyticsSummary";
+import AnalyticsChart from "../../components/ecommerce/AnalyticsSummary/AnalyticsChart";
+import BestSellingSitesChart from "../../components/ecommerce/LegendStyleExample/BestSellingSitesChart";
+import TopClientsChart from "../../components/ecommerce/TopClientsChart/TopClientsChart";
 
 import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
@@ -77,8 +81,20 @@ export default function Home() {
         // Layout completo para admins
         <div className="grid grid-cols-12 gap-4 md:gap-6">
           <div className="col-span-12 space-y-6 w-full">
-            <EcommerceMetrics />
-            <RecentOrdersTable />
+            <AnalyticsSummary />
+   
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-6 xl:col-span-2">
+                <AnalyticsChart />
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <BestSellingSitesChart />
+                  <TopClientsChart />
+                </div>
+              </div>
+              <div className="xl:col-span-1">
+                <RecentOrdersTable />
+              </div>
+            </div>
           </div>
 
           <div className="col-span-12 xl:col-span-5">

@@ -3,6 +3,7 @@ import { getForms } from "./form-services/formsService";
 
 export type Form = {
   id: string;
+  title: string;
   // adicione outros campos conforme o schema da tabela forms
 };
 

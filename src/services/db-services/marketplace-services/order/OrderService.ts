@@ -19,6 +19,7 @@ export interface Order {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  aprovment_payment?: string;
 }
 
 export interface OrderItem {
@@ -384,5 +385,57 @@ export async function getAllOrders(): Promise<Order[] | null> {
   } catch (error) {
     console.error("Erro ao buscar todos os pedidos:", error);
     return null;
+  }
+}
+
+// Buscar todos os order_items
+export async function getAllOrderItems(): Promise<OrderItem[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar todos os order_items:", error);
+    return null;
+  }
+}
+
+// Buscar os 6 order_items mais recentes
+export async function getRecentOrderItems(): Promise<OrderItem[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(9);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar order_items recentes:", error);
+    return null;
+  }
+}
+
+// Soma do total_amount dos pedidos do mês atual
+export async function getOrdersTotalAmountCurrentMonth(): Promise<number> {
+  try {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("total_amount, created_at, payment_status")
+      .gte("created_at", firstDay.toISOString())
+      .lte("created_at", lastDay.toISOString())
+      .eq("payment_status", "paid");
+    if (error) throw error;
+    if (!data) return 0;
+    return data.reduce((sum: number, order: { total_amount: number }) => sum + (order.total_amount || 0), 0);
+  } catch (error) {
+    console.error("Erro ao calcular faturamento do mês:", error);
+    return 0;
   }
 }
