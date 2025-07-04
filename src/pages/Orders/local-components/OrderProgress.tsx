@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
+import { updateOrderStatus } from '../../../services/db-services/marketplace-services/order/OrderService';
 
 interface OrderProgressProps {
   currentStep: number;
@@ -250,7 +251,9 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
     proportionalProgress = (1 / totalSteps) * 100;
   } else if (orderItems && orderItems.length > 0 && currentStep === 3) {
     const total = orderItems.length;
-    const enviados = orderItems.filter((i) => i.article_document_path).length;
+    const enviados = orderItems.filter(
+      (i) => i.article_document_path || (i.article_doc && typeof i.article_doc === 'string' && i.article_doc.includes('http'))
+    ).length;
     proportionalProgress = ((1 + enviados / total) / totalSteps) * 100;
   } else if (orderItems && orderItems.length > 0 && currentStep === 4) {
     const total = orderItems.length;
@@ -363,6 +366,17 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
     return null;
   };
   const currentStepInfo = getCurrentStepInfo();
+
+  React.useEffect(() => {
+    // Atualiza o status do pedido para 'completed' quando todos os artigos forem publicados
+    if (
+      orderId &&
+      orderItems.length > 0 &&
+      orderItems.every((item) => item.article_url)
+    ) {
+      updateOrderStatus(orderId, 'completed');
+    }
+  }, [orderId, orderItems]);
 
   if (loading) {
     return (

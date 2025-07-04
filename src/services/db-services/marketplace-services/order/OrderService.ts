@@ -389,14 +389,34 @@ export async function getAllOrders(): Promise<Order[] | null> {
 }
 
 // Buscar todos os order_items
-export async function getAllOrderItems(): Promise<OrderItem[] | null> {
+export async function getAllOrderItems(userId?: string, isAdmin?: boolean): Promise<OrderItem[] | null> {
   try {
-    const { data, error } = await supabase
-      .from("order_items")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data;
+    if (isAdmin) {
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    } else if (userId) {
+      // Buscar todos os pedidos do usuário
+      const { data: orders, error: ordersError } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("user_id", userId);
+      if (ordersError) throw ordersError;
+      const orderIds = (orders || []).map((o: any) => o.id);
+      if (orderIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("*")
+        .in("order_id", orderIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    } else {
+      return [];
+    }
   } catch (error) {
     console.error("Erro ao buscar todos os order_items:", error);
     return null;
@@ -404,15 +424,36 @@ export async function getAllOrderItems(): Promise<OrderItem[] | null> {
 }
 
 // Buscar os 6 order_items mais recentes
-export async function getRecentOrderItems(): Promise<OrderItem[] | null> {
+export async function getRecentOrderItems(userId?: string, isAdmin?: boolean): Promise<OrderItem[] | null> {
   try {
-    const { data, error } = await supabase
-      .from("order_items")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(9);
-    if (error) throw error;
-    return data;
+    if (isAdmin) {
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(9);
+      if (error) throw error;
+      return data;
+    } else if (userId) {
+      // Buscar todos os pedidos do usuário
+      const { data: orders, error: ordersError } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("user_id", userId);
+      if (ordersError) throw ordersError;
+      const orderIds = (orders || []).map((o: any) => o.id);
+      if (orderIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("*")
+        .in("order_id", orderIds)
+        .order("created_at", { ascending: false })
+        .limit(9);
+      if (error) throw error;
+      return data;
+    } else {
+      return [];
+    }
   } catch (error) {
     console.error("Erro ao buscar order_items recentes:", error);
     return null;

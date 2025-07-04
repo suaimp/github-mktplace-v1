@@ -99,30 +99,35 @@ export default function WelcomeMessage({
   };
   if (loading) {
     return (
-      <div className={`rounded-lg p-8 text-center ${className}`}>
+      <div className={`rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 mx-auto w-64"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-6 mx-auto w-96"></div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mx-auto w-32"></div>
+          <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-48"></div>
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-64"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-80"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mt-4 w-56"></div>
         </div>
       </div>
     );
   }
   return (
-    <div className={`rounded-lg p-8 text-center ${className}`}>
-      <h1 className="text-4xl font-bold mb-4 text-gray-800 dark:text-white">
-        Olá, {userName}!
-      </h1>{" "}
-      <p className="text-lg mb-6 text-gray-600 dark:text-gray-300">
-        Bem-vindo à plataforma de mídia da Sua Imprensa! Adquira artigos de
-        qualidade e anuncie seus produtos para maximizar o alcance da sua marca.
-      </p>
-      <button
-        onClick={handleBuyClick}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-lg"
-      >
-        Comprar
-      </button>
+    <div className={`rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 ${className}`}>
+      <div>
+        <h1 className="mt-2 text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white/90">
+          Olá, {userName} <span aria-label="emoji">👋</span>
+        </h1>
+        <h2 className="text-lg font-normal text-gray-700 dark:text-white/80 mb-2">
+          Seja bem-vindo à sua plataforma de backlinks!
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Descubra oportunidades em portais de alta relevância e aumente a autoridade do seu site com estratégias de SEO eficazes.
+        </p>
+        <button
+          onClick={handleBuyClick}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600"
+        >
+          Ver oportunidades de backlinks
+        </button>
+      </div>
     </div>
   );
 }

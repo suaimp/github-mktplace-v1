@@ -18,6 +18,7 @@ import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import { PencilIcon, TrashBinIcon } from "../../icons";
 import { useNavigate } from "react-router-dom";
+import { deleteUserFromAuth } from '../../services/deleteUserFromAuth';
 
 interface PlatformUser {
   id: string;
@@ -101,8 +102,8 @@ export default function PlatformUsers() {
       setError("");
       setSuccess("");
 
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      // Exclui do Auth via função serverless
+      await deleteUserFromAuth(userId);
 
       setSuccess("Usuário excluído com sucesso");
       await loadUsers();

@@ -4,7 +4,6 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
-import Checkbox from "../../components/form/input/Checkbox";
 import { AdminRoleGuard } from "../../components/auth/PermissionGuard";
 import { useAdminRegisterForm } from "./actions/adminRegisterFormLogic";
 import { showToast } from "../../utils/toast";
@@ -23,8 +22,6 @@ export default function AdminRegister() {
     setConfirmPassword,
     phone,
     setPhone,
-    termsAccepted,
-    setTermsAccepted,
     error,
     handleSubmit
   } = useAdminRegisterForm();
@@ -128,12 +125,7 @@ export default function AdminRegister() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Checkbox checked={termsAccepted} onChange={setTermsAccepted} />
-              <span className="block text-sm text-gray-500 dark:text-gray-400">
-                Li e aceito os <a href="/terms" className="text-brand-500 hover:text-brand-600 dark:text-brand-400" target="_blank" rel="noopener noreferrer">Termos de Uso</a> e a <a href="/privacy" className="text-brand-500 hover:text-brand-600 dark:text-brand-400" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
-              </span>
-            </div>
+
             <div className="flex justify-end pt-6 gap-2">
               <Button variant="outline" size="md" onClick={() => window.location.href = '/users'}>
                 Cancelar

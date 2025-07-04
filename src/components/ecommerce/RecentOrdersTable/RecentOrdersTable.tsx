@@ -7,6 +7,7 @@ import Button from "../../ui/button/Button";
 import { EyeIcon } from "../../../icons";
 import { getOrderItems, OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService';
 import { getFaviconUrl } from '../../form/utils/formatters';
+import { supabase } from '../../../lib/supabase';
 
 // Função utilitária para mapear status para classes
 function getStatusClass(status: string) {
@@ -72,11 +73,23 @@ export default function RecentOrdersTable() {
   useEffect(() => {
     async function fetchItems() {
       let items: OrderItem[] = [];
+      // Buscar usuário logado e se é admin
+      const { data: { user } } = await supabase.auth.getUser();
+      let isAdmin = false;
+      if (user) {
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        isAdmin = !!adminData;
+      }
+      const userId = user?.id;
       if (isFiltering || showAll) {
-        const all = await fetchAllOrderItems();
+        const all = await fetchAllOrderItems(userId, isAdmin);
         if (all) items = all;
       } else {
-        const recent = await fetchRecentOrderItems();
+        const recent = await fetchRecentOrderItems(userId, isAdmin);
         if (recent) items = recent;
       }
       setOrderItems(items);

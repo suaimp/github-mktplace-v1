@@ -9,7 +9,6 @@ export function useAdminRegisterForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -59,8 +58,6 @@ export function useAdminRegisterForm() {
     setConfirmPassword,
     phone,
     setPhone,
-    termsAccepted,
-    setTermsAccepted,
     loading,
     error,
     handleSubmit

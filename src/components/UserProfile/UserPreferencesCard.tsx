@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Button from "../ui/button/Button";
 import { supabase } from "../../lib/supabase";
 import Switch from "../form/switch/Switch";
+import { deleteUserFromAuth } from '../../services/deleteUserFromAuth';
 
 interface AdminProfile {
   id: string;
@@ -102,26 +103,39 @@ export default function UserPreferencesCard({
         throw new Error("Usuário não autenticado");
       }
 
-      // Verificar se o perfil ainda existe
-      const { data: existingProfile, error: checkError } = await supabase
+      // Verificar se o perfil existe em admins
+      let profileTable = "admins";
+      let { data, error: checkError } = await supabase
         .from("admins")
         .select("id")
         .eq("id", profile.id)
         .single();
 
-      if (checkError || !existingProfile) {
-        throw new Error("Perfil não encontrado");
+      if (checkError || !data) {
+        // Se não encontrou em admins, tenta em platform_users
+        profileTable = "platform_users";
+        const { data: platformData, error: platformError } = await supabase
+          .from("platform_users")
+          .select("id")
+          .eq("id", profile.id)
+          .single();
+        if (platformError || !platformData) {
+          throw new Error("Perfil não encontrado");
+        }
       }
 
-      // Deletar dados do perfil
+      // Deletar dados do perfil na tabela correta
       const { error: deleteError } = await supabase
-        .from("admins")
+        .from(profileTable)
         .delete()
         .eq("id", profile.id);
 
       if (deleteError) {
         throw new Error(`Erro ao deletar perfil: ${deleteError.message}`);
       }
+
+      // Excluir do Auth
+      await deleteUserFromAuth(user.id);
 
       // Fazer logout
       const { error: authError } = await supabase.auth.signOut();

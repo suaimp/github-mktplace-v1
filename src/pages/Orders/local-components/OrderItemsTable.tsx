@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatCurrency } from "../../../components/marketplace/utils";
 import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
@@ -49,6 +49,8 @@ export default function OrderItemsTable({
   const [localStatus, setLocalStatus] = useState<{ [itemId: string]: string }>(
     {}
   );
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Função para carregar os itens do pedido
   const loadOrderItems = async () => {
@@ -101,6 +103,22 @@ export default function OrderItemsTable({
     });
     setLocalStatus(statusMap);
   }, [orderItems]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    if (openMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
 
   if (loading) {
     return (
@@ -331,7 +349,7 @@ export default function OrderItemsTable({
                               <svg
                                 className="w-5 h-5"
                                 fill="none"
-                                stroke="#344054"
+                                stroke="currentColor"
                                 viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg"
                               >
@@ -341,32 +359,19 @@ export default function OrderItemsTable({
                                   strokeWidth="2"
                                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                                   fill="none"
-                                  stroke="#344054"
+                                  stroke="currentColor"
                                 />
                               </svg>
                             </span>
                           </button>
                         );
                       }
-                      // Caso article_doc seja um link (objeto ou array de objeto com url)
-                      let url = null;
-                      try {
-                        if (item.article_doc) {
-                          const parsed = JSON.parse(item.article_doc);
-                          if (Array.isArray(parsed) && parsed[0]?.url) {
-                            url = parsed[0].url;
-                          } else if (parsed?.url) {
-                            url = parsed.url;
-                          }
-                        }
-                      } catch (e) {
-                        // Não é JSON válido, segue para o botão padrão
-                      }
-                      if (url) {
+                      // Caso article_doc contenha 'http' (link)
+                      if (item.article_doc && typeof item.article_doc === "string" && item.article_doc.includes("http")) {
                         return (
                           <div className="flex items-center gap-1">
                             <a
-                              href={url}
+                              href={item.article_doc}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center font-medium focus:outline-none"
@@ -377,7 +382,7 @@ export default function OrderItemsTable({
                             </a>
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(url);
+                                navigator.clipboard.writeText(item.article_doc!);
                               }}
                               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
                               title="Copiar link"
@@ -429,100 +434,152 @@ export default function OrderItemsTable({
                     })()}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {isAdmin ? (
-                      <div className="flex items-center gap-2">
-                        {item.article_url ? (
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={item.article_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-800 dark:text-gray-200 hover:text-brand-500 dark:hover:text-brand-400 underline"
-                            >
-                              Link do artigo publicado
-                            </a>
-                            <button
-                              onClick={() =>
-                                onUrlEditModalOpen(
-                                  item.id,
-                                  item.article_url || ""
-                                )
-                              }
-                              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                              title="Editar URL"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => onUrlEditModalOpen(item.id, "")}
-                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
-                          >
-                            <svg
-                              className="w-4 h-4 mr-1"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                            Adicionar URL
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        {item.article_url ? (
+                    <div className="flex items-center gap-2">
+                      {item.article_url ? (
+                        <>
                           <a
                             href={item.article_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 underline"
+                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
                           >
-                            Abrir Artigo
+                            Abrir url
                           </a>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
-                            Pendente
-                          </span>
-                        )}
-                      </div>
-                    )}
+                          <div className="relative">
+                            <button
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
+                              title="Opções"
+                              type="button"
+                              onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                            >
+                              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2" fill="currentColor" />
+                                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                <circle cx="12" cy="19" r="2" fill="currentColor" />
+                              </svg>
+                            </button>
+                            {openMenuId === item.id && (
+                              <div
+                                ref={menuRef}
+                                className="absolute z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg mt-2 text-xs min-w-[100px] max-w-[140px] max-h-32 overflow-y-auto"
+                                style={{
+                                  right: 'auto',
+                                  left: window.innerWidth - (menuRef.current?.getBoundingClientRect().right || 0) < 160 ? 'auto' : '100%',
+                                  minWidth: 100,
+                                  maxWidth: 140,
+                                  fontSize: '0.85rem',
+                                  padding: 0,
+                                }}
+                              >
+                                <button
+                                  onClick={() => {
+                                    onUrlEditModalOpen(item.id, item.article_url || "");
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  type="button"
+                                  style={{ fontSize: '0.85rem' }}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.article_url!);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  type="button"
+                                  style={{ fontSize: '0.85rem' }}
+                                >
+                                  Copiar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => onUrlEditModalOpen(item.id, "")}
+                          className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          Adicionar URL
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {item.publication_status === "approved" ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400">
-                        Aprovado
-                      </span>
-                    ) : item.publication_status === "rejected" ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-400">
-                        Reprovado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
-                        Pendente
-                      </span>
-                    )}
+                    {(() => {
+                      // Se aprovado
+                      if (item.publication_status === "approved") {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500">
+                            Artigo Publicado
+                          </span>
+                        );
+                      }
+                      // Se reprovado
+                      if (item.publication_status === "rejected") {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-400">
+                            Reprovado
+                          </span>
+                        );
+                      }
+                      // Lógica para status pendente
+                      let serviceData: any = null;
+                      try {
+                        if (Array.isArray(item.service_content) && item.service_content.length > 0) {
+                          const jsonString = item.service_content[0];
+                          if (typeof jsonString === "string") {
+                            serviceData = JSON.parse(jsonString);
+                          } else if (typeof jsonString === "object") {
+                            serviceData = jsonString;
+                          }
+                        } else if (typeof item.service_content === "string") {
+                          serviceData = JSON.parse(item.service_content);
+                        } else if (typeof item.service_content === "object") {
+                          serviceData = item.service_content;
+                        }
+                      } catch (e) {
+                        // erro de parse, ignora
+                      }
+                      // Se não há pacote ou benefits vazio
+                      if (!serviceData || !serviceData.benefits || serviceData.benefits.length === 0) {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400">
+                            Artigo Pendente
+                          </span>
+                        );
+                      }
+                      // Se há benefits preenchido
+                      if (serviceData.benefits && serviceData.benefits.length > 0) {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-gray-500 text-white dark:bg-white/5 dark:text-white">
+                            Pauta Pendente
+                          </span>
+                        );
+                      }
+                      // fallback
+                      return (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
+                          Pendente
+                        </span>
+                      );
+                    })()}
                   </td>
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">

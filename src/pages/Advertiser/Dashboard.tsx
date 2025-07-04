@@ -7,6 +7,8 @@ import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
+import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
+import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
 
 export default function AdvertiserDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -69,8 +71,25 @@ export default function AdvertiserDashboard() {
         description="Painel de controle para anunciantes"
       />
 
-      {/* Welcome Section */}
-      <WelcomeMessage className="mb-8" />
+      {/* Novo layout principal */}
+      <div className="flex flex-col md:flex-row gap-8 mb-8 items-stretch">
+        {/* Coluna da esquerda */}
+        <div className="flex flex-col flex-[1.3] gap-4">
+          <WelcomeMessage className="mb-4" />
+          <div className="flex flex-row gap-4 h-full">
+            <div className="flex-1 h-full">
+              <TopSitesPromoChart />
+            </div>
+            <div className="flex-1 h-full">
+              <FavoriteSitesChart />
+            </div>
+          </div>
+        </div>
+        {/* Coluna da direita */}
+        <div className="flex-1 min-w-[320px]">
+          <RecentOrdersTable />
+        </div>
+      </div>
 
       {isAdmin ? (
         // Layout completo para admins

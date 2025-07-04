@@ -132,7 +132,8 @@ export default function OrderDetail() {
     try {
       await sendArticleUrl(
         selectedItemForPublishedUrl,
-        editingPublishedArticleUrl
+        editingPublishedArticleUrl,
+        'article_url'
       );
       closePublishedUrlModal();
       triggerTableRefresh();
@@ -180,10 +181,10 @@ export default function OrderDetail() {
     }
     setArticleUrlError(null);
     try {
-      // Envia para a coluna article_doc como string array: [{url: ...}]
+      // Envia para a coluna article_url e atualiza o status
       await sendArticleUrl(
         selectedItemId!,
-        JSON.stringify([{ url: articleUrlInput.trim() }])
+        articleUrlInput.trim()
       );
       closeDocModal();
       setArticleUrlInput("");
@@ -287,7 +288,6 @@ export default function OrderDetail() {
                   <p className="text-gray-500 dark:text-gray-400">
                     Realizado em {formatDate(order.created_at)}
                   </p>
-                  <div>{getStatusBadge(order.status)}</div>
                 </div>{" "}
               </div>
               {/* Ícone de três pontinhos no canto direito */}

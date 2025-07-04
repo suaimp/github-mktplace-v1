@@ -148,27 +148,27 @@ export function useOrderDetailLogic() {
   };
 
   // Função para envio da URL do artigo
-  const sendArticleUrl = async (itemId: string, url: string) => {
+  const sendArticleUrl = async (itemId: string, url: string, targetColumn: 'article_url' | 'article_doc' = 'article_doc') => {
     try {
-      console.log("🔗 Iniciando atualização da URL do artigo (article_doc):", {
+      console.log(`🔗 Iniciando atualização da URL do artigo (${targetColumn}):`, {
         itemId,
         url,
       });
 
-      // Atualiza a coluna article_doc e o status de publicação para 'approved'
+      // Atualiza a coluna correta e o status de publicação para 'approved'
       await OrderItemService.updateOrderItem(itemId, {
-        article_doc: url,
+        [targetColumn]: url,
         publication_status: "approved",
       });
 
-      console.log("🔗 Link do artigo salvo em article_doc e status aprovado:", {
+      console.log(`🔗 Link do artigo salvo em ${targetColumn} e status aprovado:`, {
         itemId,
         url,
       });
 
       // O listener PostgreSQL no OrderItemsTable detectará a mudança automaticamente
     } catch (error) {
-      console.error("❌ Erro ao salvar link do artigo em article_doc:", error);
+      console.error(`❌ Erro ao salvar link do artigo em ${targetColumn}:`, error);
       throw error;
     }
   };

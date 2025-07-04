@@ -9,7 +9,7 @@ import {
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
-import { EyeIcon } from "../../icons";
+import { ArrowRightIcon } from "../../icons";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { formatPhone } from "../../utils/phoneValidation";
 import { useOrderList } from "./actions/useOrderList";
@@ -38,12 +38,20 @@ export default function OrderList() {
       case "completed":
         return <Badge color="success">Concluído</Badge>;
       case "processing":
-        return <Badge color="warning">Processando</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400">
+            Aguardando artigo
+          </span>
+        );
       case "cancelled":
         return <Badge color="error">Cancelado</Badge>;
       case "pending":
       default:
-        return <Badge color="info">Pendente</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400">
+            Pagamento Pendente
+          </span>
+        );
     }
   };
 
@@ -218,12 +226,6 @@ export default function OrderList() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Pagamento
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
                     Método
                   </TableCell>
                   <TableCell
@@ -324,9 +326,6 @@ export default function OrderList() {
                         {getStatusBadge(order.status)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {getPaymentStatusBadge(order.payment_status)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {getPaymentMethodLabel(order.payment_method)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -338,8 +337,8 @@ export default function OrderList() {
                           size="sm"
                           onClick={() => handleViewOrder(order.id)}
                         >
-                          <EyeIcon className="w-4 h-4 mr-2" />
-                          Ver Detalhes
+                          Detalhes
+                          <ArrowRightIcon className="w-4 h-4 ml-2" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -347,7 +346,7 @@ export default function OrderList() {
                 ) : (
                   <TableRow>
                     <td
-                      colSpan={isAdmin ? 8 : 7}
+                      colSpan={isAdmin ? 7 : 6}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       {isAdmin
