@@ -54,7 +54,7 @@ export default function OrderList() {
         );
     }
   };
-
+ //@ts-ignore
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
