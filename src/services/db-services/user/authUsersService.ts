@@ -84,7 +84,9 @@ export async function getCurrentAndPreviousMonthTotals() {
   }
 }
 
-// Função auxiliar para converter nome do mês para número
+// Função auxiliar para converter nome do mês para número,
+// não está sendo usado
+ //@ts-ignore
 function getMonthNumber(name: string): number {
   const meses = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

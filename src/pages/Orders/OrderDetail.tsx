@@ -35,7 +35,7 @@ export default function OrderDetail() {
     openDocModal,
     closeDocModal,
     formatDate,
-    getStatusBadge,
+ 
     fileInputRef,
     selectedFile,
     uploadLoading,

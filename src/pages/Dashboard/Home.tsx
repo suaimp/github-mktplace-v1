@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics/EcommerceMetrics";
+ 
 import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
 import AnalyticsSummary from "../../components/ecommerce/AnalyticsSummary";
 import AnalyticsChart from "../../components/ecommerce/AnalyticsSummary/AnalyticsChart";

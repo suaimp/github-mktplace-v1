@@ -2,10 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { fetchRecentOrderItems, fetchAllOrderItems } from "./actions/getRecentOrders";
 import { paginate } from "./actions/pagination";
 import { useNavigate } from "react-router-dom";
-import { filterOrders } from "./actions/filterOrders";
-import Button from "../../ui/button/Button";
-import { EyeIcon } from "../../../icons";
-import { getOrderItems, OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService';
+
+//@ts-ignore
+import { getOrderItems, OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService'; 
+
 import { getFaviconUrl } from '../../form/utils/formatters';
 import { supabase } from '../../../lib/supabase';
 
@@ -59,9 +59,9 @@ export default function RecentOrdersTable() {
   const [showFilter, setShowFilter] = useState(false);
   const [filterValue, setFilterValue] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
-  const [orderItemsMap, setOrderItemsMap] = useState<Record<string, OrderItem[]>>({});
+ 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const navigate = useNavigate();
+ 
   const paginationRef = useRef<HTMLDivElement>(null);
 
   // Atualizar modo de filtro
