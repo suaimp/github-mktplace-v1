@@ -44,10 +44,7 @@ export default function EntriesTable({
 
   // PAGINAÇÃO
   const totalPages = Math.ceil(entries.length / entriesPerPage) || 1;
-  const paginatedEntries = entries.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage
-  );
+ 
 
   if (currentPage > totalPages) setCurrentPage(totalPages);
 
