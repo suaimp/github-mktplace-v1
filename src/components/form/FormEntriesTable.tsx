@@ -4,6 +4,7 @@ import { PencilIcon, TrashBinIcon } from "../../icons";
 import { getFlagUrl, getFaviconUrl } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
 import { processProductValue } from "./actions";
+import { useState } from "react";
 
 interface FormEntry {
   id: string;
@@ -24,6 +25,7 @@ interface FormEntriesTableProps {
   urlFields?: string[];
   onEdit?: (entry: FormEntry) => void;
   onDelete?: (entryId: string) => void;
+  show?: boolean;
 }
 
 export default function FormEntriesTable({
@@ -31,8 +33,72 @@ export default function FormEntriesTable({
   fields,
   urlFields = [],
   onEdit,
-  onDelete
+  onDelete,
+  show = true,
 }: FormEntriesTableProps) {
+  if (!show) return null;
+
+  // ESTADOS DE ORDENAÇÃO
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  // ESTADO DE PAGINAÇÃO
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // FUNÇÃO DE ORDENAÇÃO
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // FUNÇÃO DE COMPARAÇÃO
+  const compare = (a: any, b: any, field: string) => {
+    let aValue, bValue;
+    if (field === "created_at") {
+      aValue = a.created_at;
+      bValue = b.created_at;
+    } else if (field === "publisher") {
+      aValue = a.publisher?.first_name + " " + a.publisher?.last_name;
+      bValue = b.publisher?.first_name + " " + b.publisher?.last_name;
+    } else if (field === "status") {
+      aValue = a.status;
+      bValue = b.status;
+    } else {
+      aValue = a.values[field];
+      bValue = b.values[field];
+    }
+    if (aValue === undefined || aValue === null) aValue = "";
+    if (bValue === undefined || bValue === null) bValue = "";
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return aValue.localeCompare(bValue, "pt", { sensitivity: "base" });
+    }
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return aValue - bValue;
+    }
+    // fallback para string
+    return String(aValue).localeCompare(String(bValue), "pt", { sensitivity: "base" });
+  };
+
+  // ORDENAR ENTRIES
+  const sortedEntries = [...entries].sort((a, b) => {
+    const res = compare(a, b, sortField);
+    return sortDirection === "asc" ? res : -res;
+  });
+
+  // PAGINAÇÃO
+  const totalPages = Math.ceil(sortedEntries.length / entriesPerPage) || 1;
+  const paginatedEntries = sortedEntries.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage
+  );
+
+  // Corrigir currentPage se mudar o filtro
+  if (currentPage > totalPages) setCurrentPage(totalPages);
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleString("pt-BR", {
       day: "2-digit",
@@ -259,38 +325,148 @@ export default function FormEntriesTable({
     return !settings || settings.visibility !== "admin";
   });
 
+  // SVG SETAS (exatamente igual MarketplaceTable, só aparecem na coluna ordenada)
+  const SortArrows = ({ show }: { show: boolean }) => (
+    show ? (
+      <span className="flex flex-col gap-0.5 ml-1">
+        <svg
+          className="w-2 h-1.5 fill-gray-300 dark:fill-gray-700"
+          width="8"
+          height="5"
+          viewBox="0 0 8 5"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z"
+            fill=""
+          ></path>
+        </svg>
+        <svg
+          className="w-2 h-1.5 fill-gray-300 dark:fill-gray-700"
+          width="8"
+          height="5"
+          viewBox="0 0 8 5"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z"
+            fill=""
+          ></path>
+        </svg>
+      </span>
+    ) : null
+  );
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      {/* Seletor Show entries */}
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl">
+        <span className="text-gray-500 dark:text-gray-400">Show</span>
+        <div className="relative z-20 bg-transparent">
+          <select
+            className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+            value={entriesPerPage}
+            onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span className="absolute z-30 text-gray-500 -translate-y-1/2 right-2 top-1/2 dark:text-gray-400">
+            <svg
+              className="stroke-current"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.8335 5.9165L8.00016 10.0832L12.1668 5.9165"
+                stroke=""
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
+            </svg>
+          </span>
+        </div>
+        <span className="text-gray-500 dark:text-gray-400">entries</span>
+      </div>
+      {/* Tabela */}
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Data
+                {/* DATA */}
+                <th className="h-12 relative px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 group">
+                  <div
+                    className="absolute inset-0 w-full h-full flex items-center px-5 py-3 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-white/10 transition"
+                    onClick={() => handleSort("created_at")}
+                  >
+                    <span className="flex items-center">
+                      Data
+                      <SortArrows show={sortField === "created_at"} />
+                    </span>
+                  </div>
                 </th>
+                {/* CAMPOS DINÂMICOS */}
                 {visibleFields.map((field) => (
                   <th
                     key={field.id}
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="h-12 relative px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 group"
                   >
-                    {field.label}
+                    <div
+                      className="absolute inset-0 w-full h-full flex items-center px-5 py-3 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-white/10 transition"
+                      onClick={() => handleSort(field.id)}
+                    >
+                      <span className="flex items-center">
+                        {field.label}
+                        <SortArrows show={sortField === field.id} />
+                      </span>
+                    </div>
                   </th>
                 ))}
-                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Publisher
+                {/* PUBLISHER */}
+                <th className="h-12 relative px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 group">
+                  <div
+                    className="absolute inset-0 w-full h-full flex items-center px-5 py-3 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-white/10 transition"
+                    onClick={() => handleSort("publisher")}
+                  >
+                    <span className="flex items-center">
+                      Publisher
+                      <SortArrows show={sortField === "publisher"} />
+                    </span>
+                  </div>
                 </th>
-                <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Status
+                {/* STATUS */}
+                <th className="h-12 relative px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 group">
+                  <div
+                    className="absolute inset-0 w-full h-full flex items-center px-5 py-3 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-white/10 transition"
+                    onClick={() => handleSort("status")}
+                  >
+                    <span className="flex items-center">
+                      Status
+                      <SortArrows show={sortField === "status"} />
+                    </span>
+                  </div>
                 </th>
+                {/* AÇÕES (não ordenável) */}
                 <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Ações
                 </th>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {entries.map((entry) => (
-                <TableRow key={entry.id}>
+              {paginatedEntries.map((entry) => (
+                <TableRow
+                  key={entry.id}
+                  className="hover:bg-gray-50 dark:hover:bg-white/10 transition"
+                >
                   <td className="px-5 py-4 sm:px-6 text-start whitespace-nowrap">
                     <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {formatDate(entry.created_at)}
@@ -312,7 +488,7 @@ export default function FormEntriesTable({
                     {entry.publisher ? (
                       <div>
                         <div className="font-medium">
-                          {entry.publisher.first_name}{" "}
+                          {entry.publisher.first_name} {" "}
                           {entry.publisher.last_name}
                         </div>
                         <div className="text-xs">{entry.publisher.email}</div>
@@ -370,7 +546,7 @@ export default function FormEntriesTable({
                   </td>
                 </TableRow>
               ))}
-              {entries.length === 0 && (
+              {paginatedEntries.length === 0 && (
                 <TableRow>
                   <td
                     colSpan={visibleFields.length + 4}
@@ -384,6 +560,28 @@ export default function FormEntriesTable({
           </Table>
         </div>
       </div>
+      {/* Paginação simples (opcional) */}
+      {totalPages > 1 && (
+        <div className="flex justify-end items-center gap-2 px-4 py-2">
+          <button
+            className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 }

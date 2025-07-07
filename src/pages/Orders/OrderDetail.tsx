@@ -560,9 +560,10 @@ export default function OrderDetail() {
             </Button>
             {articleSendType === "upload" ? (
               <Button
-                onClick={() => {
+                onClick={async () => {
+                  await handleUploadSubmit();
+                  triggerTableRefresh();
                   triggerProgressRefresh();
-                  handleUploadSubmit();
                 }}
                 disabled={!selectedFile || uploadLoading}
               >

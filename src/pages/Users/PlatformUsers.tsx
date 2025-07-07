@@ -26,10 +26,11 @@ interface PlatformUser {
   first_name: string;
   last_name: string;
   phone: string;
-  role: "publisher" | "advertiser";
+  role: "publisher" | "advertiser" | "admin";
   status: string;
   created_at: string;
   last_sign_in_at?: string | null;
+  isAdmin?: boolean;
 }
 
 export default function PlatformUsers() {
@@ -67,14 +68,35 @@ export default function PlatformUsers() {
       setLoading(true);
       setError("");
 
-      const { data: users, error } = await supabase
+      // Buscar platform_users
+      const { data: platformUsers, error: platformError } = await supabase
         .from("platform_users")
         .select("*")
         .order("created_at", { ascending: false });
+      if (platformError) throw platformError;
 
-      if (error) throw error;
+      // Buscar admins
+      const { data: adminUsers, error: adminError } = await supabase
+        .from("admins")
+        .select("id, email, first_name, last_name, created_at")
+        .order("created_at", { ascending: false });
+      if (adminError) throw adminError;
 
-      setUsers(users || []);
+      // Padronizar admins para o mesmo formato
+      const adminsFormatted: PlatformUser[] = (adminUsers || []).map((admin: any) => ({
+        id: admin.id,
+        email: admin.email,
+        first_name: admin.first_name,
+        last_name: admin.last_name,
+        phone: "-",
+        role: "admin",
+        status: "active",
+        created_at: admin.created_at,
+        isAdmin: true,
+      }));
+
+      // Unir os arrays
+      setUsers([...(platformUsers || []), ...adminsFormatted]);
     } catch (err) {
       console.error("Erro ao carregar usuários:", err);
       setError("Erro ao carregar lista de usuários");
@@ -285,11 +307,19 @@ export default function PlatformUsers() {
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge
                         color={
-                          user.role === "publisher" ? "primary" : "warning"
+                          user.role === "publisher"
+                            ? "primary"
+                            : user.role === "advertiser"
+                            ? "warning"
+                            : "info"
                         }
                         variant="light"
                       >
-                        {user.role === "publisher" ? "Publisher" : "Anunciante"}
+                        {user.role === "publisher"
+                          ? "Publisher"
+                          : user.role === "advertiser"
+                          ? "Anunciante"
+                          : "Admin"}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">

@@ -97,21 +97,23 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="col-span-12 xl:col-span-5">
-            <FeedbackForm />
-          </div>
-          <div className="col-span-12 xl:col-span-7">
+       
+          <div className="col-span-12 xl:col-span-8">
             <FAQ />
+          </div>
+          <div className="col-span-12 xl:col-span-4">
+            <FeedbackForm />
           </div>
         </div>
       ) : (
         // Layout simplificado para usuários comuns
         <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-12 xl:col-span-5">
-            <FeedbackForm />
-          </div>
+         
           <div className="col-span-12 xl:col-span-7">
             <FAQ />
+          </div>
+          <div className="col-span-12 xl:col-span-5">
+            <FeedbackForm />
           </div>
         </div>
       )}

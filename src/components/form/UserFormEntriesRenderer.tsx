@@ -21,6 +21,7 @@ const Fields = FieldsImport as Record<string, React.ComponentType<any>>;
 
 interface UserFormEntriesRendererProps {
   formId: string;
+  show?: boolean;
 }
 
 interface Publisher {
@@ -31,6 +32,7 @@ interface Publisher {
 
 export default function UserFormEntriesRenderer({
   formId,
+  show = true,
 }: UserFormEntriesRendererProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -719,6 +721,7 @@ export default function UserFormEntriesRenderer({
         urlFields={urlFields}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        show={show}
       />
 
       {/* Edit Entry Modal */}

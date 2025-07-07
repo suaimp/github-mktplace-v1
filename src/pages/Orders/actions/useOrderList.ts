@@ -27,6 +27,9 @@ export function useOrderList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  // Estados para ordenação
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
@@ -60,9 +63,31 @@ export function useOrderList() {
       });
     }
 
+    // Ordenação
+    result.sort((a, b) => {
+      let aValue: any = a[sortField as keyof Order];
+      let bValue: any = b[sortField as keyof Order];
+      // Para string, comparar lowercase
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      }
+      // Para número
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      }
+      // Para undefined/null
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+      return 0;
+    });
+
     setFilteredOrders(result);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [orders, searchTerm]);
+  }, [orders, searchTerm, sortField, sortDirection]);
 
   async function loadOrders() {
     try {
@@ -150,6 +175,17 @@ export function useOrderList() {
     (currentPage - 1) * ordersPerPage,
     currentPage * ordersPerPage
   );
+
+  // Função para alternar ordenação
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
   return {
     // State
     orders,
@@ -162,6 +198,8 @@ export function useOrderList() {
     ordersPerPage,
     currentPage,
     totalPages,
+    sortField,
+    sortDirection,
 
     // Functions
     handleViewOrder,
@@ -170,7 +208,10 @@ export function useOrderList() {
     handleSearch,
     handleOrdersPerPageChange,
     setCurrentPage,
-    loadOrders
+    loadOrders,
+    handleSort,
+    setSortField,
+    setSortDirection
   };
 }
 

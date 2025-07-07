@@ -83,8 +83,8 @@ export default function UserProfiles() {
   const tabs = [
     { id: "profile", name: "Perfil" },
     { id: "company", name: "Dados da Empresa" },
-    { id: "account", name: "Tipo de Conta" },
-    { id: "localization", name: "Idioma e Moeda" },
+   /*  { id: "account", name: "Tipo de Conta" },
+    { id: "localization", name: "Idioma e Moeda" }, */
   ] as const;
 
   return (

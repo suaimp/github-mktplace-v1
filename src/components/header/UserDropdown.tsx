@@ -207,6 +207,7 @@ export default function UserDropdown() {
               </DropdownItem>
             </li>
           )}
+          {/*
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
@@ -231,6 +232,7 @@ export default function UserDropdown() {
               Ajuda
             </DropdownItem>
           </li>
+          */}
         </ul>
         <button
           onClick={handleSignOut}
