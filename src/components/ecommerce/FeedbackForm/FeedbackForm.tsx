@@ -138,8 +138,29 @@ export default function FeedbackForm() {
       )?.priority
     });
     try {
-      await submitFeedback(formData);
-      console.log("✅ Feedback enviado com sucesso!");
+      // Buscar token JWT do usuário autenticado
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      // Envio para edge function de e-mail
+      const categoryName = categories.find(cat => cat.category_id === formData.category)?.category || "";
+      const priorityName = priorities.find(pri => pri.priority_id === formData.priority)?.priority || "";
+      const response = await fetch("https://uxbeaslwirkepnowydfu.supabase.co/functions/v1/feedback-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          feedback: {
+            ...formData,
+            category: categoryName,
+            priority: priorityName
+          }
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao enviar feedback por e-mail");
+      }
       setIsSubmitted(true);
       // Resetar apenas os campos do formulário, mantendo nome e email do usuário
       setFormData((prev) => ({

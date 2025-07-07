@@ -630,7 +630,11 @@ export default function OrderItemsTable({
                       {item.article_url ? (
                         <>
                           <a
-                            href={item.article_url}
+                            href={
+                              item.article_url?.startsWith("http")
+                                ? item.article_url
+                                : `https://${item.article_url}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
