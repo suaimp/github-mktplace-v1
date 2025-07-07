@@ -32,7 +32,7 @@ export default function OrderList() {
     handleOrdersPerPageChange,
     setCurrentPage,
     sortField,
-    sortDirection,
+ 
     handleSort
   } = useOrderList();
 

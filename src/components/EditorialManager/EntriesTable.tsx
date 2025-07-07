@@ -93,6 +93,8 @@ export default function EntriesTable({
 
   // Função para alternar ordenação
   const handleSort = (field: string) => {
+    // Não permite ordenar por 'acoes'
+    if (field === "acoes") return;
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -129,7 +131,7 @@ export default function EntriesTable({
   });
 
   // FILTRAR ENTRIES PELO TERMO DE PESQUISA
-  const filteredEntries = entries.filter((entry) => {
+  const filteredEntries = sortedEntries.filter((entry) => {
     if (!searchTerm.trim()) return true;
     const lower = searchTerm.toLowerCase();
     // Busca em todos os campos visíveis e no email do publisher
@@ -334,8 +336,7 @@ export default function EntriesTable({
                   className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
                   <div
-                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
-                    onClick={() => handleSort("acoes")}
+                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left select-none px-5 py-3"
                   >
                     <span>Ações</span>
                     {sortField === "acoes" && (
