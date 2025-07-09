@@ -56,7 +56,7 @@ export default function Pages() {
       setPages(pages || []);
     } catch (err) {
       console.error("Error loading pages:", err);
-      setError("Error loading page list");
+      setError("Erro ao carregar lista de páginas");
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ export default function Pages() {
   if (loading && !pages.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export default function Pages() {
       )}
 
       <div className="mb-6">
-        <Button onClick={handleCreate}>New Page</Button>
+        <Button onClick={handleCreate}>Nova Página</Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -163,10 +163,10 @@ export default function Pages() {
                     Visibility
                   </th>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Last Update
+                    Última Atualização
                   </th>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Actions
+                    Ações
                   </th>
                 </TableRow>
               </TableHeader>

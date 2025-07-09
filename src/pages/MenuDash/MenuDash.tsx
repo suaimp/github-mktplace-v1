@@ -55,7 +55,7 @@ export default function MenuDash() {
       setMenuItems(items || []);
     } catch (err) {
       console.error("Error loading menu items:", err);
-      setError("Error loading menu item list");
+      setError("Erro ao carregar lista de itens do menu");
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function MenuDash() {
   if (loading && !menuItems.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function MenuDash() {
       )}
 
       <div className="mb-6">
-        <Button onClick={handleCreate}>New Item</Button>
+        <Button onClick={handleCreate}>Novo Item</Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -183,13 +183,13 @@ export default function MenuDash() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Last Update
+                    Última Atualização
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Actions
+                    Ações
                   </TableCell>
                 </TableRow>
               </TableHeader>

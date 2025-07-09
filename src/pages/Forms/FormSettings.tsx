@@ -134,7 +134,7 @@ export default function FormSettings() {
   if (loading && !settings.title) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
@@ -156,13 +156,13 @@ export default function FormSettings() {
 
         {success && (
           <div className="mb-6 p-4 text-sm text-success-600 bg-success-50 rounded-lg dark:bg-success-500/15 dark:text-success-500">
-            Settings saved successfully!
+            Configurações salvas com sucesso!
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
           <div>
-            <Label>Form Title</Label>
+            <Label>Título do Formulário</Label>
             <Input
               type="text"
               value={settings.title}

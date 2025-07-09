@@ -28,7 +28,6 @@ serve(async (req) => {
     // Email do cliente e email configurado para receber notificações
     const clientEmail = order.email;
     const adminEmail = "moisesdev2022@gmail.com"; // Email configurado para receber notificações
-    const recipients = [clientEmail, adminEmail];
 
     // Monte o corpo do e-mail com os dados da compra
     const orderDetails = `
@@ -71,7 +70,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Seu Marketplace <noreply@cp.suaimprensa.com.br>",
-        to: recipients,
+        to: [clientEmail], // Cliente recebe no campo "Para"
+        bcc: [adminEmail], // Admin recebe em CCO (oculto)
         subject: "Nova compra realizada",
         html: orderDetails,
       }),

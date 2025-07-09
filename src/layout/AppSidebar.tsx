@@ -258,17 +258,17 @@ export default function AppSidebar() {
     ? [
         {
           icon: <Icons.FileIcon />,
-          name: "Editorial Manager",
+          name: "Gerenciador Editorial",
           path: "/editorial"
         },
         {
           icon: <Icons.UserIcon />,
-          name: "Users",
+          name: "Usuários",
           path: "/users"
         },
         {
           icon: <Icons.PageIcon />,
-          name: "Pages",
+          name: "Páginas",
           path: "/pages"
         },
         {
@@ -278,12 +278,12 @@ export default function AppSidebar() {
         },
         {
           icon: <Icons.FileIcon />,
-          name: "Forms",
+          name: "Formulários",
           path: "/forms"
         },
         {
           icon: <Icons.BoxIcon />,
-          name: "Services",
+          name: "Serviços",
           path: "/service-packages"
         }
       ]

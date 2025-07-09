@@ -361,7 +361,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {/* Table Controls */}
         <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">Show</span>
+            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">Mostrar</span>
             <div className="relative z-20 bg-transparent">
               <select
                 className="w-full py-2 pl-3 pr-8 text-theme-2xs xl:text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
@@ -412,7 +412,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </svg>
               </span>
             </div>
-            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">entries</span>
+            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">entradas</span>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -435,7 +435,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </svg>
               </button>
               <input
-                placeholder="Search..."
+                placeholder="Pesquisar..."
                 className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-theme-2xs xl:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
                 type="text"
                 value={searchTerm}
@@ -1045,7 +1045,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 disabled={currentPage === 1}
                 className="relative inline-flex items-center px-4 py-2 text-theme-2xs xl:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                Previous
+                Anterior
               </button>
               <div className="flex items-center space-x-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(

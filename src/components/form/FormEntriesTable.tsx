@@ -361,9 +361,9 @@ export default function FormEntriesTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      {/* Seletor Show entries */}
+      {/* Seletor Mostrar registros */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl">
-        <span className="text-gray-500 dark:text-gray-400">Show</span>
+        <span className="text-gray-500 dark:text-gray-400">Mostrar</span>
         <div className="relative z-20 bg-transparent">
           <select
             className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
@@ -394,7 +394,7 @@ export default function FormEntriesTable({
             </svg>
           </span>
         </div>
-        <span className="text-gray-500 dark:text-gray-400">entries</span>
+        <span className="text-gray-500 dark:text-gray-400">registros</span>
       </div>
       {/* Tabela */}
       <div className="max-w-full overflow-x-auto">

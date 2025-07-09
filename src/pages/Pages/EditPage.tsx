@@ -216,7 +216,7 @@ export default function EditPage() {
   if (loading && !form.title) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
@@ -338,10 +338,10 @@ export default function EditPage() {
 
             <div className="flex gap-4 pt-6">
               <Button variant="outline" onClick={() => navigate("/pages")}>
-                Cancel
+                Cancelar
               </Button>
               <Button disabled={loading}>
-                {loading ? "Saving..." : "Save"}
+                {loading ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </div>

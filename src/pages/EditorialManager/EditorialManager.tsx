@@ -119,7 +119,7 @@ export default function EditorialManager() {
       }
     } catch (err) {
       console.error("Error loading forms:", err);
-      setError("Error loading forms");
+      setError("Erro ao carregar formulários");
     }
   }
 
@@ -239,7 +239,7 @@ export default function EditorialManager() {
       setEntries(processedEntries);
     } catch (err) {
       console.error("Error loading entries:", err);
-      setError("Error loading entries");
+      setError("Erro ao carregar entradas");
     } finally {
       setLoading(false);
     }
@@ -302,10 +302,10 @@ export default function EditorialManager() {
       }
     >
       <PageMeta
-        title="Editorial Manager | Admin Panel"
+        title="Gerenciador Editorial | Painel Admin"
         description="Gerenciamento de entradas de formulários"
       />
-      <PageBreadcrumb pageTitle="Editorial Manager" />
+      <PageBreadcrumb pageTitle="Gerenciador Editorial" />
 
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">

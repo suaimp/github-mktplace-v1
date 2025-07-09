@@ -111,12 +111,12 @@ export default function EditForm() {
 
       if (updateError) throw updateError;
 
-      setSuccess("Form saved successfully");
+      setSuccess("Formulário salvo com sucesso");
       setTimeout(() => setSuccess(""), 3000);
 
     } catch (err) {
       console.error('Error saving form:', err);
-      setError('Error saving form');
+      setError('Erro ao salvar formulário');
     } finally {
       setLoading(false);
     }
@@ -278,7 +278,7 @@ export default function EditForm() {
   if (loading && !form) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
