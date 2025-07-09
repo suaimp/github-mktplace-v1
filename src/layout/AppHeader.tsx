@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ onToggle }) => {
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={onToggle}
-            className="flex items-center justify-center w-10 h-10 text-gray-500 border border-gray-200 rounded-lg lg:hidden dark:border-gray-800 dark:text-gray-400"
+            className="flex xl:hidden items-center justify-center w-10 h-10 text-gray-500 border border-gray-200 rounded-lg dark:border-gray-800 dark:text-gray-400"
             aria-label="Toggle Mobile Menu"
           >
             <svg
@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({ onToggle }) => {
 
           {/* Desktop Sidebar Toggle Button */}
           <button
-            className="hidden items-center justify-center w-10 h-10 text-gray-500 border border-gray-200 rounded-lg lg:flex dark:border-gray-800 dark:text-gray-400"
+            className="hidden xl:flex items-center justify-center w-10 h-10 text-gray-500 border border-gray-200 rounded-lg dark:border-gray-800 dark:text-gray-400"
             onClick={toggleSidebar}
             aria-label="Toggle Sidebar"
           >

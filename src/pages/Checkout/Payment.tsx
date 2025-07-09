@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
+// import { loadStripe } from "@stripe/stripe-js"; // [PAUSADO] Stripe temporariamente desativado
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { supabase } from "../../lib/supabase";
@@ -11,8 +11,9 @@ import OrderProgress from "../Orders/local-components/OrderProgress";
 import { createOrder } from "../../services/db-services/marketplace-services/order/OrderService";
 import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
-import { validatePhone } from "../../utils/phoneValidation";
+// import { validatePhone } from "../../utils/phoneValidation"; // [PAUSADO] Temporariamente comentado
 import { OrderItemService } from "../../services/db-services/marketplace-services/order/OrderItemService";
+// Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
 // @ts-ignore
@@ -55,7 +56,7 @@ export default function Payment() {
   const [success, setSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("card");
   const [processing, setProcessing] = useState(false);
-  const [stripePromise, setStripePromise] = useState<any>(null);
+  // const [stripePromise, setStripePromise] = useState<any>(null); // [PAUSADO] Stripe temporariamente desativado
   const [totalAmount, setTotalAmount] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
@@ -84,6 +85,13 @@ export default function Payment() {
   const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
   const [outrosProdutos, setOutrosProdutos] = useState<any[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    cardExpiry: "",
+    cardCvc: "",
+    cardholderName: "",
+    country: "BR"
+  });
 
   useEffect(() => {
     loadPaymentSettings();
@@ -157,8 +165,8 @@ export default function Payment() {
         });
 
         // Initialize Stripe with the public key
-        const stripeInstance = loadStripe(data.stripe_public_key);
-        setStripePromise(stripeInstance);
+        // const stripeInstance = loadStripe(data.stripe_public_key);
+        // setStripePromise(stripeInstance);
 
         console.log("STRIPE INSTANCE CREATED:", {
           stripeInstanceCreated: true,
@@ -653,241 +661,154 @@ export default function Payment() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Validate form data
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.address ||
-      !formData.city ||
-      !formData.state ||
-      !formData.zipCode ||
-      !formData.documentNumber ||
-      !formData.phone
-    ) {
-      console.log("FORM VALIDATION ERROR:", {
-        errorType: "missing_required_fields",
-        timestamp: new Date().toISOString(),
-        paymentMethod: paymentMethod,
-        formData: formData,
-        missingFields: {
-          name: !formData.name,
-          email: !formData.email,
-          address: !formData.address,
-          city: !formData.city,
-          state: !formData.state,
-          zipCode: !formData.zipCode,
-          documentNumber: !formData.documentNumber,
-          phone: !formData.phone,
-        },
-      });
-      setError("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
-    // Validate phone number
-    if (!validatePhone(formData.phone)) {
-      setError("Por favor, insira um número de telefone válido");
-      return;
-    }
-
-    if (!termsAccepted) {
-      console.log("TERMS VALIDATION ERROR:", {
-        errorType: "terms_not_accepted",
-        timestamp: new Date().toISOString(),
-        paymentMethod: paymentMethod,
-        termsAccepted: termsAccepted,
-      });
-      setError("Por favor, aceite os termos e condições para continuar");
-      return;
-    }
-
-    if (paymentMethod === "card") {
-      console.log("CARD PAYMENT - WILL BE HANDLED BY STRIPE:", {
-        paymentMethod: "card",
-        timestamp: new Date().toISOString(),
-        formData: formData,
-        message: "Card payment will be processed by Stripe component",
-      });
-      // Card payments are handled directly by the StripePaymentForm component
-      // This function should not be called for card payments
-      setError(
-        "Erro interno: pagamento com cartão deve ser processado pelo Stripe"
-      );
-      return;
-    }
-
-    if (paymentMethod !== "card") {
-      try {
-        setProcessing(true);
-        setError(null); // For boleto, navigate to the boleto success page
-        if (paymentMethod === "boleto") {
-          try {
-            console.log("BOLETO PAYMENT PROCESSING:", {
-              paymentMethod: "boleto",
-              timestamp: new Date().toISOString(),
-              formData: formData,
-              orderSummary: orderSummary,
-              totalAmount:
-                orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-            }); // Create order in database first - boleto stays as "pending" until paid
-            const boletoPaymentId = `boleto_${Date.now()}`;
-            const order = await createOrderInDatabase(boletoPaymentId);
-
-            // Store the order ID
-            if (order?.id) {
-              setCurrentOrderId(order.id);
-            }
-
-            // Enviar e-mail de compra para MoisesDev2022@gmail.com (notificação de compra)
-            try {
-              const orderEmailData = {
-                name: formData.name,
-                email: formData.email,
-                total: order.total_amount,
-                items: orderSummary.items.map((item: any) => {
-                  // Niche
-                  let niche = "";
-                  if (Array.isArray(item.niche_selected) && item.niche_selected.length > 0) {
-                    try {
-                      const parsed = JSON.parse(item.niche_selected[0]);
-                      niche = parsed.niche || parsed.title || parsed.name || "";
-                    } catch {
-                      niche = "";
-                    }
-                  }
-                  // Package
-                  let pacote = "";
-                  let word_count = "";
-                  if (Array.isArray(item.service_selected) && item.service_selected.length > 0) {
-                    try {
-                      const parsed = JSON.parse(item.service_selected[0]);
-                      pacote = parsed.title || parsed.name || "";
-                      word_count = parsed.word_count || "";
-                    } catch {
-                      pacote = "";
-                      word_count = "";
-                    }
-                  }
-                  return {
-                    name: item.product_url || "Produto",
-                    quantity: item.quantity,
-                    price: item.price,
-                    niche,
-                    package: pacote,
-                    word_count,
-                  };
-                }),
-              };
-              const payload = {
-                order: orderEmailData,
-              };
-              console.log("Dados enviados para função Edge:", JSON.stringify(payload));
-              await fetch(
-                "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(payload),
-                }
-              );
-              console.log("E-mail de notificação de compra enviado para cliente e administrador (boleto)");
-            } catch (emailErr) {
-              console.error("Erro ao enviar e-mail de compra (boleto):", emailErr);
-            }
-
-            console.log("📋 Pedido criado para boleto:", {
-              orderId: order?.id,
-              paymentId: boletoPaymentId,
-              status: "pending", // Boleto permanece pendente até confirmação
-            });
-
-            // Create mock boleto data
-            const boletoData = {
-              orderId: order?.id,
-              barCode: "42297.11504 00064.897317 04021.401122 1 11070000082900",
-              amount:
-                orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-              expirationDate: new Date(
-                Date.now() + 3 * 24 * 60 * 60 * 1000
-              ).toLocaleDateString("pt-BR"),
-              boletoUrl: "#",
-            };
-
-            navigate("/checkout/boleto-success", { state: { boletoData } });
-            return;
-          } catch (boletoError: any) {
-            console.error("Boleto processing error:", boletoError);
-            console.log("BOLETO PROCESSING ERROR:", {
-              errorMessage: boletoError.message,
-              errorStack: boletoError.stack,
-              paymentMethod: "boleto",
-              timestamp: new Date().toISOString(),
-              formData: formData,
-              orderSummary: orderSummary,
-            });
-            throw boletoError;
-          }
-        }
-
-        // For PIX, create order immediately and mark as paid (since it's instant)
-        if (paymentMethod === "pix") {
-          console.log("💰 PIX PAYMENT PROCESSING:", {
-            paymentMethod: "pix",
-            timestamp: new Date().toISOString(),
-            message: "PIX é processado instantaneamente",
-          });
-          const pixPaymentId = `pix_${Date.now()}`;
-          const order = await createOrderInDatabase(pixPaymentId);
-          if (order) {
-            // Store the order ID
-            setCurrentOrderId(order.id);
-
-            // PIX is instant, so mark as paid immediately
-            const { updateOrderStatus } = await import(
-              "../../services/db-services/marketplace-services/order/OrderService"
-            );
-            const updateSuccess = await updateOrderStatus(
-              order.id,
-              "approved",
-              "paid"
-            );
-
-            console.log("🎉 PIX - Status atualizado para 'paid':", {
-              orderId: order.id,
-              updateSuccess: updateSuccess,
-            });
-          }
-
-          setSuccess(true);
-          return;
-        }
-
-        // Process payment with selected method
-        const paymentId = await processPayment(paymentMethod);
-
-        handlePaymentSuccess(paymentId);
-      } catch (err: any) {
-        console.error("Payment error:", err);
-        console.log("PAYMENT ERROR DETAILS:", {
-          errorMessage: err.message,
-          errorStack: err.stack,
-          paymentMethod: paymentMethod,
-          timestamp: new Date().toISOString(),
-          userFormData: formData,
-          orderSummary: orderSummary,
-          totalAmount:
-            orderSummary.totalProductPrice + orderSummary.totalContentPrice,
-        });
-        const sanitizedMessage = sanitizeErrorMessage(
-          err.message || "Erro ao processar pagamento"
-        );
-        setError(sanitizedMessage);
-      } finally {
-        setProcessing(false);
-      }
-    }
+  const handleCardDataChange = (data: any) => {
+    setCardData(data);
   };
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setProcessing(true);
+    setError(null);
+    
+    try {
+      // Verificação robusta da sessão
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('[DEBUG] Verificação de sessão:', {
+        hasSession: !!sessionData?.session,
+        hasAccessToken: !!sessionData?.session?.access_token,
+        tokenExpiry: sessionData?.session?.expires_at,
+        currentTime: new Date().toISOString(),
+        sessionError: sessionError,
+        userId: sessionData?.session?.user?.id
+      });
+
+      if (sessionError) {
+        throw new Error(`Erro na sessão: ${sessionError.message}`);
+      }
+
+      if (!sessionData?.session?.access_token) {
+        throw new Error("Sessão não encontrada. Faça login novamente.");
+      }
+
+      // Verificar se o token não está expirado
+      const tokenExpiry = sessionData.session.expires_at;
+      if (tokenExpiry && new Date(tokenExpiry * 1000) <= new Date()) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
+      const access_token = sessionData.session.access_token;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-payment`;
+      
+      console.log('[DEBUG] Iniciando fluxo de pagamento com tokenização...');
+      console.log('- Nome:', formData.name);
+      console.log('- Email:', formData.email); 
+      console.log('- CPF:', formData.documentNumber);
+      console.log('- Valor (totalAmount):', totalAmount);
+      console.log('- Tipo do valor:', typeof totalAmount);
+
+      // PASSO 1: Tokenizar o cartão primeiro
+      console.log('[DEBUG] Passo 1: Tokenizando cartão...');
+      const tokenResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'tokenize',
+          card_number: cardData.cardNumber.replace(/\s/g, ""),
+          card_exp_month: cardData.cardExpiry.substring(0, 2),
+          card_exp_year: "20" + cardData.cardExpiry.substring(3, 5),
+          card_cvv: cardData.cardCvc,
+          card_holder_name: cardData.cardholderName
+        })
+      });
+
+      const tokenResult = await tokenResponse.json();
+      console.log('[DEBUG] Resultado da tokenização:', tokenResult);
+
+      if (!tokenResponse.ok) {
+        throw new Error(tokenResult.error || 'Erro ao tokenizar cartão');
+      }
+
+      if (!tokenResult.card_token) {
+        throw new Error('Token do cartão não foi gerado');
+      }
+
+      // PASSO 2: Usar o token para fazer o pagamento
+      console.log('[DEBUG] Passo 2: Processando pagamento com token...');
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'payment_with_token',
+          amount: totalAmount,
+          card_token: tokenResult.card_token,
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_document: formData.documentNumber
+        })
+      });
+
+      const result = await response.json();
+      
+      // LOGS DETALHADOS PARA DEBUG DO STATUS
+      console.log('=== DEBUG RESPOSTA PAGAR.ME ===');
+      console.log('Status HTTP:', response.status);
+      console.log('Response OK:', response.ok);
+      console.log('Resultado completo:', JSON.stringify(result, null, 2));
+      console.log('Status do pagamento:', result.status);
+      console.log('ID do pedido:', result.id);
+      
+      if (result.charges && result.charges.length > 0) {
+        const charge = result.charges[0];
+        console.log('Status do charge:', charge.status);
+        console.log('ID do charge:', charge.id);
+        
+        if (charge.last_transaction) {
+          console.log('Status da transação:', charge.last_transaction.status);
+          console.log('Código de resposta:', charge.last_transaction.acquirer_return_code);
+          console.log('Mensagem:', charge.last_transaction.acquirer_message);
+          
+          if (charge.last_transaction.gateway_response) {
+            console.log('Resposta do gateway:', charge.last_transaction.gateway_response);
+          }
+        }
+      }
+      console.log('===============================');
+      
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Erro ao processar pagamento');
+      }
+
+      // Verificar se o pagamento foi realmente aprovado
+      if (result.status === 'failed') {
+        const errorMessage = result.charges?.[0]?.last_transaction?.gateway_response?.errors?.[0]?.message || 
+                           'Pagamento rejeitado pelo gateway';
+        throw new Error(errorMessage);
+      }
+
+      // EXPANDINDO OS STATUS ACEITOS - incluindo processing, pending, etc.
+      const statusesAceitos = ['paid', 'approved', 'processing', 'pending_payment', 'authorized'];
+      if (statusesAceitos.includes(result.status)) {
+        console.log('✅ Pagamento aceito com status:', result.status);
+        await handlePaymentSuccess(result.id);
+      } else {
+        console.log('❌ Status não aceito:', result.status);
+        console.log('Status aceitos:', statusesAceitos);
+        throw new Error(`Status do pagamento: ${result.status}. Aguarde a confirmação ou tente novamente.`);
+      }
+    } catch (err: any) {
+      console.error('[ERROR] Erro no handleSubmit:', err);
+      setError(err.message || "Erro ao processar pagamento");
+    } finally {
+      setProcessing(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -1221,7 +1142,7 @@ export default function Payment() {
 
           <PaymentMethodForm
             paymentMethod={paymentMethod}
-            stripePromise={stripePromise}
+            // stripePromise={stripePromise} // [PAUSADO] Stripe temporariamente desativado
             totalAmount={totalAmount}
             pixQrCodeUrl={pixQrCodeUrl}
             pixCopiaECola={pixCopiaECola}
@@ -1237,6 +1158,7 @@ export default function Payment() {
             onSubmit={handleSubmit}
             onPaymentSuccess={handlePaymentSuccess}
             onPaymentError={handlePaymentError}
+            onCardDataChange={handleCardDataChange}
           />
         </div>
 

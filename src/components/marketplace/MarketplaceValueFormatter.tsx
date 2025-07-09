@@ -86,7 +86,7 @@ export function renderUrlWithFavicon(url: string) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-semibold text-gray-800 text-theme-sm dark:text-white/90 hover:underline whitespace-nowrap"
+        className="font-semibold text-gray-800 text-theme-2xs xl:text-theme-sm dark:text-white/90 hover:underline whitespace-nowrap"
       >
         {displayUrl}
       </a>
@@ -119,7 +119,7 @@ export function renderBrandWithLogo(value: any) {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-        <span className="text-gray-800 dark:text-white/90 font-medium">
+        <span className="text-gray-800 dark:text-white/90 font-medium text-theme-2xs xl:text-sm">
           {brandData.name}
         </span>
       </div>
@@ -193,7 +193,25 @@ export function renderNicheHeader(displayName: string) {
   return (
     <div className="flex items-center gap-1">
       <span>{displayName}</span>
-      <InfoTooltip text="O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna." />
+      <div className="group relative">
+        <svg
+          className="w-3 h-3 text-gray-400 dark:text-gray-500 cursor-help flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 w-48 text-wrap">
+          O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna.
+          <div className="absolute bottom-full right-4 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -387,7 +405,7 @@ export function formatMarketplaceValue(
             {value.map((item, index) => (
               <span
                 key={index}
-                className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-theme-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400"
+                className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-theme-2xs xl:text-theme-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400"
               >
                 {item}
               </span>

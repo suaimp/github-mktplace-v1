@@ -84,25 +84,25 @@ export default function ViewPage() {
       const [_, type, id] = match;
       if (type === "form") {
         parts.push(
-          <div key={`form-${id}`} className="my-8">
+          <div key={`form-${id}`} className="w-full my-8">
             <FormRenderer formId={id} />
           </div>
         );
       } else if (type === "form_entries") {
         parts.push(
-          <div key={`entries-${id}`} className="my-8">
+          <div key={`entries-${id}`} className="w-full my-8">
             <FormEntriesRenderer formId={id} />
           </div>
         );
       } else if (type === "user_form_entries") {
         parts.push(
-          <div key={`user-entries-${id}`} className="my-8">
+          <div key={`user-entries-${id}`} className="w-full my-8">
             <UserFormEntriesRenderer formId={id} />
           </div>
         );
       } else if (type === "marketplace") {
         parts.push(
-          <div key={`marketplace-${id}`} className="my-8">
+          <div key={`marketplace-${id}`} className="w-full my-8">
             <MarketplaceRenderer formId={id} />
           </div>
         );
@@ -147,12 +147,12 @@ export default function ViewPage() {
         description={page.meta_description || `View ${page.title} page`}
       />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
         <h1 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white/90">
           {page.title}
         </h1>
 
-        <div className="prose max-w-none dark:prose-invert prose-headings:text-gray-800 dark:prose-headings:text-white/90 prose-p:text-gray-500 dark:prose-p:text-gray-400">
+        <div className="w-full prose max-w-none dark:prose-invert prose-headings:text-gray-800 dark:prose-headings:text-white/90 prose-p:text-gray-500 dark:prose-p:text-gray-400 overflow-hidden">
           {renderContent(page.content)}
         </div>
       </div>

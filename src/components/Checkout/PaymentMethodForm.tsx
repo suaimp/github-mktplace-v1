@@ -9,7 +9,7 @@ import Select from "../form/Select";
 
 interface PaymentMethodFormProps {
   paymentMethod: string;
-  stripePromise: any;
+  stripePromise?: any;
   totalAmount: number;
   pixQrCodeUrl: string | null;
   pixCopiaECola: string | null;
@@ -23,6 +23,11 @@ interface PaymentMethodFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onPaymentSuccess: (paymentId: string) => void;
   onPaymentError: (error: string) => void;
+  /**
+   * Callback chamado sempre que os dados do cartão mudam.
+   * Recebe o objeto cardData atualizado.
+   */
+  onCardDataChange?: (cardData: any) => void;
 }
 
 export default function PaymentMethodForm({
@@ -40,7 +45,8 @@ export default function PaymentMethodForm({
   onTermsAcceptedChange,
   onSubmit,
   onPaymentSuccess,
-  onPaymentError
+  onPaymentError,
+  onCardDataChange
 }: PaymentMethodFormProps) {
   const [cardData, setCardData] = useState({
     cardNumber: "",
@@ -61,10 +67,9 @@ export default function PaymentMethodForm({
 
   const handleCardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCardData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+    const updated = { ...cardData, [name]: value };
+    setCardData(updated);
+    if (onCardDataChange) onCardDataChange(updated);
   };
   const handleCopyPixCode = () => {
     if (pixCopiaECola) {

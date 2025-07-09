@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PaperPlaneIcon, UserCircleIcon } from "../../../icons";
-import { submitFeedback } from "./actions/feedbackActions";
+// import { submitFeedback } from "./actions/feedbackActions"; // [PAUSADO] Temporariamente comentado
 import { supabase } from "../../../lib/supabase";
 import {
   FeedbackFormData,

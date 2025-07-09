@@ -7,13 +7,14 @@ import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
 import {
   formatMarketplaceValue,
- 
+  renderNicheHeader,
 } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
 import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
 import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
+import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -33,6 +34,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   // @ts-ignore
   const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  // Estado para o modal de detalhes
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<any>(null);
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredEntries.length / ordersPerPage);
@@ -41,6 +45,17 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   if (currentPage > totalPages && totalPages > 0) {
     setCurrentPage(totalPages);
   }
+
+  // Funções para o modal de detalhes
+  const openDetailsModal = (entry: any) => {
+    setSelectedEntry(entry);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedEntry(null);
+  };
 
   useEffect(() => {
     loadMarketplaceData();
@@ -274,6 +289,24 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     ? fields.filter((field) => field.id !== buttonBuyField.id)
     : fields;
 
+  // Encontrar campo de site/URL
+  const siteField = tableFields.find(field => 
+    field.field_type === "url" || field.field_type === "site_url"
+  );
+
+  // Encontrar campo de categorias
+  const categoryField = tableFields.find(field => 
+    field.field_type === "categories" || field.field_type === "category"
+  );
+
+  // Encontrar campo de preço
+  const priceField = tableFields.find(field => 
+    field.field_type === "product"
+  );
+
+  // Filtro de campos para mobile: Site, Categorias, Preço
+  const mobileFields = [siteField, categoryField, priceField].filter(Boolean);
+
   if (loading) {
     return <MarketplaceTableSkeleton />;
   }
@@ -311,7 +344,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   };
 
   return (
-    <div className="relative">
+    <div className="w-full relative overflow-hidden">
       {selectedEntries.length > 0 && (
         <BulkSelectionBar
           selectedCount={selectedEntries.length}
@@ -324,14 +357,14 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         />
       )}
 
-      <div className="overflow-hidden bg-white dark:bg-white/[0.03]">
+      <div className="w-full bg-white dark:bg-white/[0.03] overflow-hidden">
         {/* Table Controls */}
-        <div className="flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400">Show</span>
+            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">Show</span>
             <div className="relative z-20 bg-transparent">
               <select
-                className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                className="w-full py-2 pl-3 pr-8 text-theme-2xs xl:text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                 value={ordersPerPage}
                 onChange={handleOrdersPerPageChange}
               >
@@ -379,7 +412,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </svg>
               </span>
             </div>
-            <span className="text-gray-500 dark:text-gray-400">entries</span>
+            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">entries</span>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -403,7 +436,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               </button>
               <input
                 placeholder="Search..."
-                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-theme-2xs xl:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
@@ -412,13 +445,22 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           </div>
         </div>
 
-        <div className="max-w-full overflow-x-auto" style={{ overflowY: 'hidden' }}>
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+        <div 
+          className="w-full overflow-x-auto overflow-y-hidden" 
+          style={{ 
+            maxWidth: '100%',
+            overflowY: 'hidden',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e0 transparent'
+          }}
+        >            <table 
+              className="w-full xl:min-w-[1200px] divide-y divide-gray-200 dark:divide-gray-800"
+            >
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th
                   scope="col"
-                  className="w-10 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                  className="w-10 px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white"
                 >
                   <div className="flex items-center">
                     <div className="relative">
@@ -469,19 +511,41 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     </div>
                   </div>
                 </th>
-                {tableFields.map((field) => {
-                  const settings = field.form_field_settings || {};
-                  const displayName = settings.marketplace_label || field.label;
-                  const isSortable =
-                    field.field_type === "number" ||
-                    [
-                      "moz_da",
-                      "semrush_as",
-                      "ahrefs_dr",
-                      "ahrefs_traffic",
-                      "similarweb_traffic",
-                      "google_traffic",
-                    ].includes(field.field_type);
+                
+                {/* Cabeçalhos para mobile (menor que xl) - apenas colunas essenciais */}
+                <div className="xl:hidden contents">
+                  {mobileFields.map((field) => {
+                    if (!field) return null;
+                    const settings = field.form_field_settings || {};
+                    const displayName = settings.marketplace_label || field.label;
+                    
+                    return (
+                      <th
+                        key={field.id}
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-theme-2xs font-semibold text-gray-900 dark:text-white cursor-pointer"
+                      >
+                        <span>{displayName}</span>
+                      </th>
+                    );
+                  })}
+                </div>
+
+                {/* Cabeçalhos para desktop (xl e acima) - todas as colunas */}
+                <div className="hidden xl:contents">
+                  {tableFields.map((field) => {
+                    const settings = field.form_field_settings || {};
+                    const displayName = settings.marketplace_label || field.label;
+                    const isSortable =
+                      field.field_type === "number" ||
+                      [
+                        "moz_da",
+                        "semrush_as",
+                        "ahrefs_dr",
+                        "ahrefs_traffic",
+                        "similarweb_traffic",
+                        "google_traffic",
+                      ].includes(field.field_type);
 
                   // Definições de tooltip por campo
                   let tooltipText = "";
@@ -601,7 +665,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <th
                       key={field.id}
                       scope="col"
-                      className={`px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white ${
+                      className={`px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white ${
                         isSortable
                           ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                           : ""
@@ -614,7 +678,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             {field.field_type === "niche" ? (
-                              <span>{displayName}</span>
+                              renderNicheHeader(displayName)
                             ) : (
                               <>
                                 <span>{displayName}</span>
@@ -660,18 +724,41 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     </th>
                   );
                 })}
+                </div>
 
-                {buttonBuyField && (
-                  <th
-                    scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
-                  >
-                    <span>
-                      {buttonBuyField.form_field_settings?.marketplace_label ||
-                        buttonBuyField.label}
-                    </span>
-                  </th>
-                )}
+                {/* Botão de compra para mobile */}
+                <div className="xl:hidden contents">
+                  {buttonBuyField && (
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-theme-2xs font-semibold text-gray-900 dark:text-white"
+                    >
+                      <span>
+                        {buttonBuyField.form_field_settings?.marketplace_label ||
+                          buttonBuyField.label}
+                      </span>
+                    </th>
+                  )}
+                </div>
+
+                {/* Botão de compra para desktop */}
+                <div className="hidden xl:contents">
+                  {buttonBuyField && (
+                    <th
+                      scope="col"
+                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white"
+                      style={{ 
+                        boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
+                        minWidth: '120px'
+                      }}
+                    >
+                      <span>
+                        {buttonBuyField.form_field_settings?.marketplace_label ||
+                          buttonBuyField.label}
+                      </span>
+                    </th>
+                  )}
+                </div>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
@@ -699,13 +786,22 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 return (
                   <tr
                     key={entry.id}
-                    className={
+                    className={`cursor-pointer xl:cursor-auto ${
                       selectedEntries.includes(entry.id)
                         ? "bg-brand-50 dark:bg-brand-900/10"
                         : ""
-                    }
+                    }`}
+                    onClick={(e) => {
+                      // Só ativa o modal em telas menores que xl
+                      if (window.innerWidth < 1280) {
+                        // Previne que o clique no checkbox ative o modal
+                        if (!(e.target as HTMLElement).closest('input, label')) {
+                          openDetailsModal(entry);
+                        }
+                      }
+                    }}
                   >
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
+                    <td className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm">
                       <div className="flex items-center">
                         <div className="relative">
                           <input
@@ -750,49 +846,17 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         </div>
                       </div>
                     </td>
-                    {tableFields.map((field) => {
-                      // Special handling for API metric fields with score badges
-                      if (
-                        ["moz_da", "semrush_as", "ahrefs_dr"].includes(
-                          field.field_type
-                        )
-                      ) {
+                    
+                    {/* Células para mobile (menor que xl) - apenas campos essenciais */}
+                    <div className="xl:hidden contents">
+                      {mobileFields.map((field) => {
+                        if (!field) return null;
+                        
                         return (
                           <td
                             key={field.id}
-                            className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
+                            className="px-3 py-4 text-theme-2xs text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
                           >
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
-                              {renderApiMetricWithBadge(
-                                entry.values[field.id],
-                                field.field_type
-                              )}
-                            </div>
-                          </td>
-                        );
-                      }
-
-                      // Regular field rendering
-                      if (field.field_type === "niche") {
-                        return (
-                          <td
-                            key={field.id}
-                            className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
-                            style={{ minWidth: 120, maxWidth: 220, width: '1%', padding: '16px 12px' }}
-                          >
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
-                              {formatMarketplaceValue(entry.values[field.id], field.field_type, true)}
-                            </div>
-                          </td>
-                        );
-                      }
-
-                      return (
-                        <td
-                          key={field.id}
-                          className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300"
-                        >
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
                             {(() => {
                               const fieldValue = entry.values[field.id];
                               if (field.field_type === "product") {
@@ -815,32 +879,139 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                                 true
                               );
                             })()}
-                          </div>
-                        </td>
-                      );
-                    })}
+                          </td>
+                        );
+                      })}
+                    </div>
 
-                    {buttonBuyField && (
-                      <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <AddToCartButton
-                          entryId={entry.id}
-                          productName={productName}
-                          price={productPrice}
-                          url={productUrl}
-                          buttonStyle={
-                            buttonBuyField.form_field_settings?.button_style ||
-                            "primary"
-                          }
-                          buttonText={
-                            buttonBuyField.form_field_settings
-                              ?.custom_button_text
-                              ? buttonBuyField.form_field_settings?.button_text
-                              : buttonBuyField.label
-                          }
-                          isInCart={isInCart}
-                        />
-                      </td>
-                    )}
+                    {/* Células para desktop (xl e acima) - todos os campos */}
+                    <div className="hidden xl:contents">
+                      {tableFields.map((field) => {
+                        // Special handling for API metric fields with score badges
+                        if (
+                          ["moz_da", "semrush_as", "ahrefs_dr"].includes(
+                            field.field_type
+                          )
+                        ) {
+                          return (
+                            <td
+                              key={field.id}
+                              className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
+                            >
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                                {renderApiMetricWithBadge(
+                                  entry.values[field.id],
+                                  field.field_type
+                                )}
+                              </div>
+                            </td>
+                          );
+                        }
+
+                        // Regular field rendering
+                        if (field.field_type === "niche") {
+                          return (
+                            <td
+                              key={field.id}
+                              className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
+                              style={{ minWidth: 120, maxWidth: 220, width: '1%', padding: '16px 12px' }}
+                            >
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                                {formatMarketplaceValue(entry.values[field.id], field.field_type, true)}
+                              </div>
+                            </td>
+                          );
+                        }
+
+                        return (
+                          <td
+                            key={field.id}
+                            className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
+                          >
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                              {(() => {
+                                const fieldValue = entry.values[field.id];
+                                if (field.field_type === "product") {
+                                  const commissionValue = commissionField
+                                    ? parseFloat(entry.values[commissionField.id]) || 0
+                                    : 0;
+                                  return (
+                                    <PriceSimulationDisplay
+                                      commission={commissionValue}
+                                      productData={fieldValue}
+                                      layout="inline"
+                                      showMarginBelow={false}
+                                      showOriginalPrice={true}
+                                    />
+                                  );
+                                }
+                                return formatMarketplaceValue(
+                                  fieldValue,
+                                  field.field_type,
+                                  true
+                                );
+                              })()}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </div>
+
+                    {/* Botão de compra para mobile */}
+                    <div className="xl:hidden contents">
+                      {buttonBuyField && (
+                        <td className="px-3 py-4 text-theme-2xs xl:whitespace-nowrap">
+                          <AddToCartButton
+                            entryId={entry.id}
+                            productName={productName}
+                            price={productPrice}
+                            url={productUrl}
+                            buttonStyle={
+                              buttonBuyField.form_field_settings?.button_style ||
+                              "primary"
+                            }
+                            buttonText={
+                              buttonBuyField.form_field_settings
+                                ?.custom_button_text
+                                ? buttonBuyField.form_field_settings?.button_text
+                                : buttonBuyField.label
+                            }
+                            isInCart={isInCart}
+                          />
+                        </td>
+                      )}
+                    </div>
+
+                    {/* Botão de compra para desktop */}
+                    <div className="hidden xl:contents">
+                      {buttonBuyField && (
+                        <td 
+                          className="sticky right-0 z-10 bg-white dark:bg-white/[0.03] whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm"
+                          style={{ 
+                            boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
+                            minWidth: '120px'
+                          }}
+                        >
+                          <AddToCartButton
+                            entryId={entry.id}
+                            productName={productName}
+                            price={productPrice}
+                            url={productUrl}
+                            buttonStyle={
+                              buttonBuyField.form_field_settings?.button_style ||
+                              "primary"
+                            }
+                            buttonText={
+                              buttonBuyField.form_field_settings
+                                ?.custom_button_text
+                                ? buttonBuyField.form_field_settings?.button_text
+                                : buttonBuyField.label
+                            }
+                            isInCart={isInCart}
+                          />
+                        </td>
+                      )}
+                    </div>
                   </tr>
                 );
               })}
@@ -852,7 +1023,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
             <div className="flex items-center">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300">
                 Showing{" "}
                 <span className="font-medium">
                   {(currentPage - 1) * ordersPerPage + 1}
@@ -872,7 +1043,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="relative inline-flex items-center px-4 py-2 text-theme-2xs xl:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Previous
               </button>
@@ -882,7 +1053,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                      className={`relative inline-flex items-center px-4 py-2 text-theme-2xs xl:text-sm font-medium rounded-md ${
                         currentPage === page
                           ? "bg-brand-500 text-white"
                           : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -898,7 +1069,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="relative inline-flex items-center px-4 py-2 text-theme-2xs xl:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Next
               </button>
@@ -906,6 +1077,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           </div>
         )}
       </div>
+
+      {/* Modal de detalhes para mobile */}
+      <MarketplaceRowDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={closeDetailsModal}
+        entry={selectedEntry}
+        fields={tableFields}
+        productNameField={productNameField}
+      />
     </div>
   );
 }

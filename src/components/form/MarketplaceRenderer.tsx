@@ -60,5 +60,11 @@ export default function MarketplaceRenderer({ formId }: MarketplaceRendererProps
     );
   }
 
-  return <MarketplaceTable formId={formId} />;
+  return (
+    <div className="w-full xl:-mx-6">
+      <div className="w-full xl:overflow-x-auto xl:px-6">
+        <MarketplaceTable formId={formId} />
+      </div>
+    </div>
+  );
 }

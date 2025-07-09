@@ -59,10 +59,11 @@ export default function ApiMetricBadge({
 
   return (
     <div
-      className="inline-flex items-center justify-center w-5 h-5 rounded-sm text-xs font-bold ml-2"
+      className="inline-flex items-center justify-center w-5 h-5 rounded-sm font-bold ml-2"
       style={{
         backgroundColor: bgColor,
-        color: textColor
+        color: textColor,
+        fontSize: '10px'
       }}
       title={`Score ${letter}`}
     >
