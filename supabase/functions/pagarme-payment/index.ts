@@ -120,10 +120,20 @@ serve(async (req) => {
   try {
     const body = await req.json();
     console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));
+    console.log("[DEBUG] ===== INÍCIO DO PROCESSAMENTO =====");
+    console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
 
     // TOKENIZAÇÃO - Primeiro passo do fluxo seguro
     if (body.action === 'tokenize') {
-      const { card_number, card_exp_month, card_exp_year, card_cvv, card_holder_name } = body;
+      console.log("[DEBUG] ===== INICIANDO TOKENIZAÇÃO =====");
+      const { 
+        card_number, 
+        card_exp_month, 
+        card_exp_year, 
+        card_cvv, 
+        card_holder_name,
+        billing_address 
+      } = body;
       
       if (!card_number || !card_exp_month || !card_exp_year || !card_cvv || !card_holder_name) {
         return new Response(JSON.stringify({ error: 'Dados do cartão incompletos para tokenização' }), {
@@ -134,17 +144,61 @@ serve(async (req) => {
 
       console.log("[DEBUG] Iniciando tokenização com chave pública (conforme documentação)...");
       
+      // Preparar o billing_address seguindo EXATAMENTE o padrão da documentação oficial da Pagar.me
+      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser INTEGER
+      const defaultBillingAddress = {
+        line_1: "Rua das Flores, 123",
+        zip_code: 1234567, // INTEGER conforme documentação
+        city: "São Paulo",
+        state: "SP", // Sigla do estado  
+        country: "BR" // Sempre BR para Brasil
+      };
+
+      // Validar e garantir que o billing_address tenha todos os campos obrigatórios conforme documentação
+      let finalBillingAddress = defaultBillingAddress;
+      
+      if (billing_address && typeof billing_address === 'object') {
+        // Tratar zip_code que pode vir como string ou number
+        let zipCodeClean = '01234567';
+        if (billing_address.zip_code) {
+          if (typeof billing_address.zip_code === 'number') {
+            zipCodeClean = billing_address.zip_code.toString();
+          } else if (typeof billing_address.zip_code === 'string') {
+            zipCodeClean = billing_address.zip_code.replace(/\D/g, '');
+          }
+        }
+        
+        finalBillingAddress = {
+          line_1: (billing_address.line_1 && billing_address.line_1.trim() !== '') ? billing_address.line_1 : defaultBillingAddress.line_1,
+          zip_code: zipCodeClean ? parseInt(zipCodeClean) : defaultBillingAddress.zip_code, // Converter para INTEGER
+          city: (billing_address.city && billing_address.city.trim() !== '') ? billing_address.city : defaultBillingAddress.city,
+          state: (billing_address.state && billing_address.state.trim() !== '') ? billing_address.state : defaultBillingAddress.state,
+          country: "BR" // Sempre BR conforme documentação
+        };
+      }
+      
       try {
-        // IMPORTANTE: Usar chave pública via query parameter, SEM Authorization header
+        // IMPORTANTE: Para tokenização, usar chave pública como query parameter appId
+        // Conforme documentação: https://docs.pagar.me/reference/pagarme-js
         const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;
         
         console.log("[DEBUG] URL de tokenização:", tokenUrl);
+        console.log("[DEBUG] Chave pública enviada via appId:", public_key.substring(0, 10) + "...");
+        console.log("[DEBUG] Billing address recebido:", billing_address);
+        console.log("[DEBUG] Billing address final usado:", finalBillingAddress);
+        console.log("[DEBUG] Dados do cartão para tokenização:", {
+          number: card_number ? card_number.substring(0, 4) + '****' : 'VAZIO',
+          exp_month: card_exp_month,
+          exp_year: card_exp_year,
+          cvv: card_cvv ? '***' : 'VAZIO',
+          holder_name: card_holder_name
+        });
         
         const tokenRes = await fetch(tokenUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-            // ATENÇÃO: NÃO incluir Authorization header para tokenização!
+            // ATENÇÃO: Para tokenização, NÃO usar Authorization header!
           },
           body: JSON.stringify({
             type: 'card',
@@ -153,14 +207,18 @@ serve(async (req) => {
               exp_month: parseInt(card_exp_month),
               exp_year: parseInt(card_exp_year),
               cvv: card_cvv,
-              holder_name: card_holder_name
+              holder_name: card_holder_name,
+              billing_address: finalBillingAddress
             }
           })
         });
 
+        console.log("[DEBUG] ===== RESPOSTA DA TOKENIZAÇÃO =====");
         const tokenBodyRaw = await tokenRes.text();
         console.log("[DEBUG] Status tokenização:", tokenRes.status);
+        console.log("[DEBUG] Headers resposta:", Object.fromEntries(tokenRes.headers.entries()));
         console.log("[DEBUG] Resposta tokenização:", tokenBodyRaw);
+        console.log("[DEBUG] ========================================");
 
         let tokenData;
         try {
@@ -212,7 +270,8 @@ serve(async (req) => {
         card_token,
         customer_name,
         customer_email,
-        customer_document
+        customer_document,
+        billing_address
       } = body;
 
       // Validação dos dados obrigatórios
@@ -258,6 +317,38 @@ serve(async (req) => {
         }
       }
 
+      // Preparar billing_address para o pagamento (também necessário aqui)
+      const defaultBillingAddress = {
+        line_1: "Rua das Flores, 123",
+        zip_code: "01234567", // String no pagamento conforme exemplos da documentação
+        city: "São Paulo",
+        state: "SP",
+        country: "BR"
+      };
+
+      let finalBillingAddress = defaultBillingAddress;
+      
+      if (billing_address && typeof billing_address === 'object') {
+        let zipCodeClean = '01234567';
+        if (billing_address.zip_code) {
+          if (typeof billing_address.zip_code === 'number') {
+            zipCodeClean = billing_address.zip_code.toString();
+          } else if (typeof billing_address.zip_code === 'string') {
+            zipCodeClean = billing_address.zip_code.replace(/\D/g, '');
+          }
+        }
+        
+        finalBillingAddress = {
+          line_1: (billing_address.line_1 && billing_address.line_1.trim() !== '') ? billing_address.line_1 : defaultBillingAddress.line_1,
+          zip_code: zipCodeClean || defaultBillingAddress.zip_code, // String no pagamento
+          city: (billing_address.city && billing_address.city.trim() !== '') ? billing_address.city : defaultBillingAddress.city,
+          state: (billing_address.state && billing_address.state.trim() !== '') ? billing_address.state : defaultBillingAddress.state,
+          country: "BR"
+        };
+      }
+
+      console.log("[DEBUG] billing_address final usado no pagamento:", JSON.stringify(finalBillingAddress));
+      
       const pagarmePayload = {
         items: [
           {
@@ -271,7 +362,12 @@ serve(async (req) => {
           {
             payment_method: 'credit_card',
             credit_card: {
-              card_token
+              installments: 1,
+              statement_descriptor: "MARKETPLACE",
+              card_token: card_token,
+              card: {
+                billing_address: finalBillingAddress
+              }
             }
           }
         ],

@@ -79,7 +79,7 @@ export default function Payment() {
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
     string[]
-  >(["card"]);
+  >(["card", "pix"]);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
@@ -92,6 +92,8 @@ export default function Payment() {
     cardholderName: "",
     country: "BR"
   });
+  const [pixPollingInterval, setPixPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [pixExpiredAt, setPixExpiredAt] = useState<Date | null>(null);
 
   useEffect(() => {
     loadPaymentSettings();
@@ -185,23 +187,33 @@ export default function Payment() {
 
       // Set available payment methods from settings
       if (data?.payment_methods && Array.isArray(data.payment_methods)) {
-        setAvailablePaymentMethods(data.payment_methods);
+        // Garantir que PIX sempre esteja disponível
+        const paymentMethods = [...data.payment_methods];
+        if (!paymentMethods.includes("pix")) {
+          paymentMethods.push("pix");
+        }
+        setAvailablePaymentMethods(paymentMethods);
 
         console.log("PAYMENT METHODS SET:", {
-          paymentMethods: data.payment_methods,
-          defaultMethod: data.payment_methods[0],
+          paymentMethods: paymentMethods,
+          defaultMethod: paymentMethods[0],
           timestamp: new Date().toISOString(),
         });
 
         // Set default payment method to the first available one
-        if (data.payment_methods.length > 0) {
-          setPaymentMethod(data.payment_methods[0]);
+        if (paymentMethods.length > 0) {
+          setPaymentMethod(paymentMethods[0]);
         }
       } else {
-        console.log("NO PAYMENT METHODS FOUND:", {
+        // Se não houver configuração no banco, usar métodos padrão
+        setAvailablePaymentMethods(["card", "pix"]);
+        setPaymentMethod("card");
+        
+        console.log("NO PAYMENT METHODS FOUND - USING DEFAULTS:", {
           hasPaymentMethods: !!data?.payment_methods,
           isArray: Array.isArray(data?.payment_methods),
           paymentMethodsData: data?.payment_methods,
+          defaultMethods: ["card", "pix"],
           timestamp: new Date().toISOString(),
         });
       }
@@ -341,15 +353,23 @@ export default function Payment() {
     }));
   };
 
-  const handlePaymentMethodChange = (method: string) => {
-    setPaymentMethod(method);
-
-    // Generate PIX QR code if PIX is selected
-    if (method === "pix") {
-      generatePixQrCode();
-    } else {
+  const setPaymentMethodHandler = (method: string) => {
+    console.log("[DEBUG] Mudando método de pagamento para:", method);
+    
+    // Limpar polling do PIX se estava ativo
+    if (method !== "pix") {
+      stopPixPolling();
       setPixQrCodeUrl(null);
       setPixCopiaECola(null);
+      setCurrentOrderId(null);
+    }
+    
+    setPaymentMethod(method);
+    setError(null); // Limpar erros anteriores
+    
+    // Gerar PIX automaticamente quando selecionado
+    if (method === "pix") {
+      generatePixQrCode();
     }
   };
 
@@ -370,9 +390,25 @@ export default function Payment() {
       const total =
         orderSummary.totalProductPrice + orderSummary.totalContentPrice;
 
-      // Call the create-pix-qrcode function
+      // Preparar itens do pedido para o PIX
+      const orderItems = orderSummary.items.map((item, index) => ({
+        amount: Math.round((item.total_price || 0) * 100), // converter para centavos
+        description: item.product_name || `Item ${index + 1}`,
+        quantity: item.quantity || 1,
+        code: item.product_id || `ITEM_${index + 1}`
+      }));
+
+      console.log("[DEBUG PIX] Dados enviados para PIX:", {
+        amount: Math.round(total * 100),
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_document: formData.documentNumber,
+        order_items: orderItems
+      });
+
+      // Call the pagarme-pix-payment function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-qrcode`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-payment`,
         {
           method: "POST",
           headers: {
@@ -381,7 +417,10 @@ export default function Payment() {
           },
           body: JSON.stringify({
             amount: Math.round(total * 100), // Convert to cents
-            description: `Pedido Marketplace - ${new Date().toISOString()}`,
+            customer_name: formData.name,
+            customer_email: formData.email,
+            customer_document: formData.documentNumber,
+            order_items: orderItems
           }),
         }
       );
@@ -391,10 +430,21 @@ export default function Payment() {
         throw new Error(errorData.error || "Failed to generate PIX QR code");
       }
 
-      const { pixQrCode, pixCopiaECola: pixCode } = await response.json();
+      const pixData = await response.json();
+      console.log("[DEBUG PIX] Resposta do PIX:", pixData);
 
-      setPixQrCodeUrl(pixQrCode);
-      setPixCopiaECola(pixCode);
+      if (pixData.success && pixData.qr_code_url) {
+        setPixQrCodeUrl(pixData.qr_code_url);
+        setPixCopiaECola(pixData.qr_code);
+        
+        // Iniciar polling para verificar status do pagamento
+        if (pixData.order_id) {
+          setCurrentOrderId(pixData.order_id);
+          startPixPolling(pixData.order_id);
+        }
+      } else {
+        throw new Error("Dados do PIX inválidos na resposta");
+      }
     } catch (err: any) {
       console.error("Error generating PIX QR code:", err);
       console.log("PIX QR CODE GENERATION ERROR:", {
@@ -671,6 +721,15 @@ export default function Payment() {
     setError(null);
     
     try {
+      // Validação prévia dos campos obrigatórios
+      if (!cardData.cardNumber || !cardData.cardExpiry || !cardData.cardCvc || !cardData.cardholderName) {
+        throw new Error("Por favor, preencha todos os dados do cartão");
+      }
+      
+      if (!formData.name || !formData.email) {
+        throw new Error("Por favor, preencha nome e email");
+      }
+      
       // Verificação robusta da sessão
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
@@ -706,9 +765,57 @@ export default function Payment() {
       console.log('- CPF:', formData.documentNumber);
       console.log('- Valor (totalAmount):', totalAmount);
       console.log('- Tipo do valor:', typeof totalAmount);
+      console.log('- Dados do cartão:', {
+        cardNumber: cardData.cardNumber ? cardData.cardNumber.substring(0, 4) + '****' : 'VAZIO',
+        cardExpiry: cardData.cardExpiry,
+        cardCvc: cardData.cardCvc ? '***' : 'VAZIO',
+        cardholderName: cardData.cardholderName
+      });
+      console.log('- Endereço de cobrança:', {
+        address: formData.address,
+        zipCode: formData.zipCode,
+        city: formData.city,
+        state: formData.state
+      });
 
       // PASSO 1: Tokenizar o cartão primeiro
       console.log('[DEBUG] Passo 1: Tokenizando cartão...');
+      
+      // Garantir que o billing_address siga EXATAMENTE o padrão da documentação oficial da Pagar.me
+      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser INTEGER
+      const billingAddress = {
+        line_1: formData.address?.trim() || "Rua das Flores, 123",
+        zip_code: parseInt((formData.zipCode?.replace(/\D/g, "") || "01234567")), // INTEGER conforme documentação
+        city: formData.city?.trim() || "São Paulo", 
+        state: formData.state?.trim() || "SP", // Sigla do estado
+        country: "BR" // Sempre BR para Brasil
+      };
+      
+      // Validação extra para garantir que nenhum campo seja vazio (conforme documentação)
+      if (!billingAddress.line_1 || billingAddress.line_1.trim() === '') {
+        billingAddress.line_1 = "Rua das Flores, 123";
+      }
+      if (!billingAddress.zip_code || isNaN(billingAddress.zip_code)) {
+        billingAddress.zip_code = 1234567;
+      }
+      if (!billingAddress.city || billingAddress.city.trim() === '') {
+        billingAddress.city = "São Paulo";
+      }
+      if (!billingAddress.state || billingAddress.state.trim() === '') {
+        billingAddress.state = "SP";
+      }
+      
+      console.log('[DEBUG] Billing address final (padrão Pagar.me):', billingAddress);
+      console.log('[DEBUG] Validação billing address:', {
+        line_1_length: billingAddress.line_1.length,
+        zip_code: billingAddress.zip_code,
+        zip_code_type: typeof billingAddress.zip_code,
+        city_length: billingAddress.city.length,
+        state_length: billingAddress.state.length,
+        country: billingAddress.country,
+        all_fields_valid: !!(billingAddress.line_1 && billingAddress.zip_code && billingAddress.city && billingAddress.state && billingAddress.country)
+      });
+      
       const tokenResponse = await fetch(url, {
         method: 'POST',
         headers: {
@@ -721,7 +828,8 @@ export default function Payment() {
           card_exp_month: cardData.cardExpiry.substring(0, 2),
           card_exp_year: "20" + cardData.cardExpiry.substring(3, 5),
           card_cvv: cardData.cardCvc,
-          card_holder_name: cardData.cardholderName
+          card_holder_name: cardData.cardholderName,
+          billing_address: billingAddress
         })
       });
 
@@ -750,7 +858,8 @@ export default function Payment() {
           card_token: tokenResult.card_token,
           customer_name: formData.name,
           customer_email: formData.email,
-          customer_document: formData.documentNumber
+          customer_document: formData.documentNumber,
+          billing_address: billingAddress // Incluir billing_address no pagamento também
         })
       });
 
@@ -809,6 +918,102 @@ export default function Payment() {
       setProcessing(false);
     }
   }
+
+  // Função para fazer polling do status do PIX
+  const startPixPolling = (orderId: string) => {
+    console.log("[DEBUG PIX] Iniciando polling para order_id:", orderId);
+    
+    // Limpar polling anterior se existir
+    if (pixPollingInterval) {
+      clearInterval(pixPollingInterval);
+    }
+
+    // Configurar expiração (1 hora)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    setPixExpiredAt(expiresAt);
+
+    const checkPaymentStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("[DEBUG PIX] Sessão não encontrada, parando polling");
+          stopPixPolling();
+          return;
+        }
+
+        // Verificar se expirou
+        if (new Date() > expiresAt) {
+          console.log("[DEBUG PIX] PIX expirado, parando polling");
+          stopPixPolling();
+          setError("O PIX expirou. Por favor, gere um novo código.");
+          return;
+        }
+
+        console.log("[DEBUG PIX] Verificando status do pedido:", orderId);
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-status`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ order_id: orderId }),
+          }
+        );
+
+        if (response.ok) {
+          const statusData = await response.json();
+          console.log("[DEBUG PIX] Status recebido:", statusData);
+
+          if (statusData.success) {
+            if (statusData.is_paid) {
+              console.log("[DEBUG PIX] ✅ Pagamento confirmado!");
+              stopPixPolling();
+              await handlePaymentSuccess(orderId);
+            } else if (statusData.is_failed) {
+              console.log("[DEBUG PIX] ❌ Pagamento falhou");
+              stopPixPolling();
+              setError("O pagamento PIX falhou. Tente novamente.");
+            } else {
+              console.log("[DEBUG PIX] ⏳ Pagamento ainda pendente");
+            }
+          }
+        } else {
+          console.log("[DEBUG PIX] Erro ao verificar status:", response.status);
+        }
+      } catch (err) {
+        console.error("[DEBUG PIX] Erro no polling:", err);
+      }
+    };
+
+    // Primeira verificação imediata
+    checkPaymentStatus();
+
+    // Depois verificar a cada 5 segundos
+    const interval = setInterval(checkPaymentStatus, 5000);
+    setPixPollingInterval(interval);
+
+    console.log("[DEBUG PIX] Polling configurado, verificando a cada 5 segundos até", expiresAt.toISOString());
+  };
+
+  const stopPixPolling = () => {
+    if (pixPollingInterval) {
+      clearInterval(pixPollingInterval);
+      setPixPollingInterval(null);
+    }
+    setPixExpiredAt(null);
+    console.log("[DEBUG PIX] Polling interrompido");
+  };
+
+  // Limpar polling quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      stopPixPolling();
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -1153,7 +1358,7 @@ export default function Payment() {
             error={error}
             termsAccepted={termsAccepted}
             availablePaymentMethods={availablePaymentMethods}
-            onPaymentMethodChange={handlePaymentMethodChange}
+            onPaymentMethodChange={setPaymentMethodHandler}
             onTermsAcceptedChange={setTermsAccepted}
             onSubmit={handleSubmit}
             onPaymentSuccess={handlePaymentSuccess}

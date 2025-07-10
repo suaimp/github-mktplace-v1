@@ -173,26 +173,27 @@ export default function PaymentMethodForm({
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path
-                    d="M12 4L4 8L12 12L20 8L12 4Z"
+                  <rect
+                    x="3"
+                    y="3"
+                    width="18"
+                    height="18"
+                    rx="2"
                     stroke="currentColor"
                     strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    fill="none"
                   />
                   <path
-                    d="M4 16L12 20L20 16"
+                    d="M8 8h8m-8 4h8m-8 4h5"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
-                    strokeLinejoin="round"
                   />
-                  <path
-                    d="M4 12L12 16L20 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <circle
+                    cx="18"
+                    cy="6"
+                    r="2"
+                    fill="currentColor"
                   />
                 </svg>
               )}
@@ -338,43 +339,74 @@ export default function PaymentMethodForm({
             <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
               Pagamento via PIX
             </h3>
-            <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-              Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar
-            </p>
-
-            <div className="flex justify-center mb-6">
-              {pixQrCodeUrl ? (
-                <img
-                  src={pixQrCodeUrl}
-                  alt="QR Code PIX"
-                  className="w-48 h-48 border border-gray-200 dark:border-gray-700 p-2 rounded"
-                />
-              ) : (
-                <div className="w-48 h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded">
-                  <span className="text-gray-400">Gerando QR Code...</span>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-6">
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Ou copie e cole o código abaixo no seu aplicativo bancário:
-              </p>
-              <div className="relative">
-                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-center">
-                  <p className="text-sm font-mono break-all select-all overflow-hidden">
-                    {pixCopiaECola || "Gerando código..."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyPixCode}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-brand-500 text-white text-xs rounded"
-                >
-                  {pixCopied ? "Copiado!" : "Copiar"}
-                </button>
+            
+            {processing && !pixQrCodeUrl && (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Gerando PIX...</p>
               </div>
-            </div>
+            )}
+
+            {pixQrCodeUrl && (
+              <>
+                <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+                  Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar
+                </p>
+
+                <div className="flex justify-center mb-6">
+                  <img
+                    src={pixQrCodeUrl}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 border border-gray-200 dark:border-gray-700 p-2 rounded"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Ou copie e cole o código abaixo no seu aplicativo bancário:
+                  </p>
+                  <div className="relative">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-center">
+                      <p className="text-sm font-mono break-all select-all overflow-hidden">
+                        {pixCopiaECola || "Gerando código..."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyPixCode}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-brand-500 text-white text-xs rounded"
+                    >
+                      {pixCopied ? "Copiado!" : "Copiar"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
+                  <div className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-blue-600 dark:text-blue-500 mt-0.5 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-400">
+                        Aguardando pagamento...
+                      </h4>
+                      <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                        Assim que você efetuar o pagamento, receberá uma confirmação automática e será redirecionado para a página de sucesso.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
               <div className="flex items-start">
@@ -396,10 +428,11 @@ export default function PaymentMethodForm({
                   </h4>
                   <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
                     <li>O pagamento via PIX é processado instantaneamente</li>
-                    <li>O QR Code e o código PIX são válidos por 30 minutos</li>
+                    <li>O QR Code e o código PIX são válidos por 1 hora</li>
                     <li>
-                      Após o pagamento, você receberá um email de confirmação
+                      Após o pagamento, você será redirecionado automaticamente
                     </li>
+                    <li>Você receberá um email de confirmação</li>
                   </ul>
                 </div>
               </div>
