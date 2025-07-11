@@ -71,52 +71,32 @@ export default function AdvertiserDashboard() {
         description="Painel de controle para anunciantes"
       />
 
-      {/* Novo layout principal */}
-      <div className="flex flex-col md:flex-row gap-8 mb-8 items-stretch">
-        {/* Coluna da esquerda */}
-        <div className="flex flex-col flex-[1.3] gap-4">
+      {/* Novo layout principal com grid de 2 colunas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-start">
+        {/* Primeira coluna */}
+        <div className="flex flex-col gap-4 h-full">
           <WelcomeMessage className="mb-4" />
-          <div className="flex flex-row gap-4 h-full">
-            <div className="flex-1 h-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full items-stretch">
+            <div className="h-full">
               <TopSitesPromoChart />
             </div>
-            <div className="flex-1 h-full">
+            <div className="h-full">
               <FavoriteSitesChart />
             </div>
           </div>
         </div>
-        {/* Coluna da direita */}
-        <div className="flex-1 min-w-[320px]">
+        {/* Segunda coluna */}
+        <div>
           <RecentOrdersTable />
         </div>
+        {/* Segunda linha */}
+        <div className="h-full">
+          <FAQ />
+        </div>
+        <div>
+          <FeedbackForm />
+        </div>
       </div>
-
-      {isAdmin ? (
-        // Layout completo para admins
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-12 space-y-6 w-full">
-            <EcommerceMetrics />
-            <RecentOrdersTable />
-          </div>
-
-          <div className="col-span-12 xl:col-span-5">
-            <FeedbackForm />
-          </div>
-          <div className="col-span-12 xl:col-span-7">
-            <FAQ />
-          </div>
-        </div>
-      ) : (
-        // Layout simplificado para usuários comuns
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-12 xl:col-span-5">
-            <FeedbackForm />
-          </div>
-          <div className="col-span-12 xl:col-span-7">
-            <FAQ />
-          </div>
-        </div>
-      )}
     </>
   );
 }
