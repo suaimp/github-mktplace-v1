@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/PageMeta";
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics/EcommerceMetrics";
-import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
+ import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
 
 import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
@@ -11,6 +10,7 @@ import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSit
 import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
 
 export default function AdvertiserDashboard() {
+  //@ts-ignore
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
