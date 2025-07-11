@@ -764,7 +764,9 @@ export default function Payment() {
         .finally(() => setLoadingItems(false));
     } catch (err) {
       console.error("Error updating order payment ID:", err);
-      setError(sanitizeErrorMessage(err.message || "Erro ao atualizar pagamento do pedido"));
+      setError(sanitizeErrorMessage(
+        err instanceof Error ? err.message : "Erro ao atualizar pagamento do pedido"
+      ));
     }
   };
 
