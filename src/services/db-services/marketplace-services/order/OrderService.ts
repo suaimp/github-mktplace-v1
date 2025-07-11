@@ -53,6 +53,7 @@ export interface CreateOrderInput {
   phone: string;
   payment_id?: string;
   metadata?: any;
+  idempotency_key?: string; // <--- Adicionado
   items: {
     entry_id?: string;
     product_name: string;
@@ -75,7 +76,20 @@ export async function createOrder(
     } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("User not authenticated");
-    } // Create order
+    }
+    // Verificar idempotência
+    if (input.idempotency_key) {
+      const { data: existingOrder } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("idempotency_key", input.idempotency_key)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (existingOrder) {
+        return existingOrder as Order;
+      }
+    }
+    // Create order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert([
@@ -94,7 +108,8 @@ export async function createOrder(
           billing_document_number: input.billing_document_number,
           phone: input.phone,
           payment_id: input.payment_id,
-          metadata: input.metadata
+          metadata: input.metadata,
+          idempotency_key: input.idempotency_key // <--- Adicionado
         }
       ])
       .select()

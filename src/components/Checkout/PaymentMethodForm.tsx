@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm, { StripePaymentFormRef } from "./StripePaymentForm";
 import { formatCurrency } from "../marketplace/utils";
@@ -17,6 +17,7 @@ interface PaymentMethodFormProps {
   processing: boolean;
   error: string | null;
   termsAccepted: boolean;
+  pixFormValid: boolean; // NOVO: indica se o formulário de informações de pagamento está válido
   availablePaymentMethods?: string[];
   onPaymentMethodChange: (method: string) => void;
   onTermsAcceptedChange: (accepted: boolean) => void;
@@ -28,6 +29,15 @@ interface PaymentMethodFormProps {
    * Recebe o objeto cardData atualizado.
    */
   onCardDataChange?: (cardData: any) => void;
+  /**
+   * Callback chamado sempre que os dados do cliente PIX mudam.
+   * Recebe o objeto pixCustomerData atualizado.
+   */
+  onPixCustomerDataChange?: (pixCustomerData: any) => void;
+  /**
+   * Callback chamado para gerar QR Code PIX.
+   */
+  onGeneratePixQrCode?: () => void;
 }
 
 export default function PaymentMethodForm({
@@ -40,13 +50,15 @@ export default function PaymentMethodForm({
   processing,
   error,
   termsAccepted,
+  pixFormValid,
   availablePaymentMethods = ["card", "pix", "boleto"],
   onPaymentMethodChange,
   onTermsAcceptedChange,
   onSubmit,
   onPaymentSuccess,
   onPaymentError,
-  onCardDataChange
+  onCardDataChange,
+  onGeneratePixQrCode
 }: PaymentMethodFormProps) {
   const [cardData, setCardData] = useState({
     cardNumber: "",
@@ -56,14 +68,33 @@ export default function PaymentMethodForm({
     country: "BR"
   });
   const [pixCopied, setPixCopied] = useState(false);
+  const [isGeneratingQrCode, setIsGeneratingQrCode] = useState(false);
+  const [qrCodeTimer, setQrCodeTimer] = useState(0);
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
   const stripePaymentRef = useRef<StripePaymentFormRef>(null);
 
-  // Filter payment methods based on available methods from settings
+  // Debug logs for payment methods
+  console.log("PAYMENT METHOD FORM DEBUG:", {
+    availablePaymentMethods,
+    availablePaymentMethodsType: typeof availablePaymentMethods,
+    availablePaymentMethodsIsArray: Array.isArray(availablePaymentMethods),
+    availablePaymentMethodsLength: availablePaymentMethods?.length,
+    timestamp: new Date().toISOString()
+  });
+
+  // Always show PIX and card only - boleto removed
   const filteredPaymentMethods = [
     { id: "card", label: "Cartão de Crédito", icon: "credit-card" },
-    { id: "pix", label: "PIX", icon: "pix" },
-    { id: "boleto", label: "Boleto", icon: "barcode" }
-  ].filter((method) => availablePaymentMethods.includes(method.id));
+    { id: "pix", label: "PIX", icon: "pix" }
+  ];
+
+  console.log("FIXED PAYMENT METHODS (ALWAYS AVAILABLE):", {
+    availablePaymentMethods,
+    fixedPaymentMethods: filteredPaymentMethods.map((m) => m.id),
+    count: filteredPaymentMethods.length,
+    note: "PIX and card will always be available (boleto removed)",
+    timestamp: new Date().toISOString()
+  });
 
   const handleCardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -71,6 +102,7 @@ export default function PaymentMethodForm({
     setCardData(updated);
     if (onCardDataChange) onCardDataChange(updated);
   };
+
   const handleCopyPixCode = () => {
     if (pixCopiaECola) {
       navigator.clipboard
@@ -83,6 +115,47 @@ export default function PaymentMethodForm({
           console.error("Erro ao copiar código PIX:", err);
         });
     }
+  };
+
+  // Função para iniciar o cronômetro de 45 segundos (otimizado para produção)
+  const startQrCodeTimer = () => {
+    setIsGeneratingQrCode(true);
+    setQrCodeTimer(45); // 45 segundos (QR Code gerado em ~60s no Pagar.me)
+    
+    const interval = setInterval(() => {
+      setQrCodeTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsGeneratingQrCode(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    setTimerInterval(interval);
+  };
+
+  // Função para parar o cronômetro quando QR Code é gerado
+  const stopQrCodeTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setIsGeneratingQrCode(false);
+    setQrCodeTimer(0);
+  };
+
+  // Parar o cronômetro quando QR Code é gerado com sucesso
+  if (pixQrCodeUrl && isGeneratingQrCode) {
+    stopQrCodeTimer();
+  }
+
+  // Formatação do tempo (mm:ss)
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handlePaymentSubmit = async () => {
@@ -173,27 +246,26 @@ export default function PaymentMethodForm({
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect
-                    x="3"
-                    y="3"
-                    width="18"
-                    height="18"
-                    rx="2"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                  />
                   <path
-                    d="M8 8h8m-8 4h8m-8 4h5"
+                    d="M12 4L4 8L12 12L20 8L12 4Z"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                  <circle
-                    cx="18"
-                    cy="6"
-                    r="2"
-                    fill="currentColor"
+                  <path
+                    d="M4 16L12 20L20 16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 12L12 16L20 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               )}
@@ -339,74 +411,108 @@ export default function PaymentMethodForm({
             <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
               Pagamento via PIX
             </h3>
+
+            {/* Checkbox de termos e condições acima do botão de gerar QR Code PIX */}
+            <div className="mb-4 flex flex-col items-center">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => onTermsAcceptedChange(e.target.checked)}
+                  className="form-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
+                />
+                <span>
+                  Eu aceito os{' '}
+                  <button
+                    type="button"
+                    className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                  >
+                    termos e condições
+                  </button>
+                </span>
+              </label>
+              {!termsAccepted && (
+                <div className="text-error-500 text-sm mt-1">
+                  Por favor, aceite os termos e condições para continuar
+                </div>
+              )}
+            </div>
+
+            {/* Botão para gerar QR Code com cronômetro */}
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  // Iniciar cronômetro
+                  startQrCodeTimer();
+                  // Call the generate PIX QR Code function
+                  if (onGeneratePixQrCode) {
+                    onGeneratePixQrCode();
+                  }
+                }}
+                disabled={processing || isGeneratingQrCode || !termsAccepted || !pixFormValid}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {processing || isGeneratingQrCode ? "Gerando QR Code..." : "Gerar QR Code PIX"}
+              </button>
+              
+              {/* Cronômetro de 2 minutos */}
+              {isGeneratingQrCode && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-800 rounded-lg border border-orange-200">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-mono font-medium">
+                    {formatTime(qrCodeTimer)}
+                  </span>
+                  <span className="text-xs">restante</span>
+                </div>
+              )}
+            </div>
             
-            {processing && !pixQrCodeUrl && (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4"></div>
-                <p className="text-gray-600 dark:text-gray-400">Gerando PIX...</p>
-              </div>
+            {isGeneratingQrCode && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                ⏳ Aguardando processamento PIX (pode levar até 2 minutos em produção)
+              </p>
             )}
 
-            {pixQrCodeUrl && (
-              <>
-                <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-                  Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar
-                </p>
+            <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+              {pixQrCodeUrl ? "Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar" : "Preencha seus dados e clique em 'Gerar QR Code PIX' para continuar"}
+            </p>
 
-                <div className="flex justify-center mb-6">
-                  <img
-                    src={pixQrCodeUrl}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 border border-gray-200 dark:border-gray-700 p-2 rounded"
-                  />
+            <div className="flex justify-center mb-6">
+              {pixQrCodeUrl ? (
+                <img
+                  src={pixQrCodeUrl}
+                  alt="QR Code PIX"
+                  className="w-48 h-48 border border-gray-200 dark:border-gray-700 p-2 rounded"
+                />
+              ) : (
+                <div className="w-48 h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded">
+                  <span className="text-gray-400">Gerando QR Code...</span>
                 </div>
+              )}
+            </div>
 
-                <div className="mb-6">
-                  <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Ou copie e cole o código abaixo no seu aplicativo bancário:
+            <div className="mb-6">
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Ou copie e cole o código abaixo no seu aplicativo bancário:
+              </p>
+              <div className="relative">
+                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-center">
+                  <p className="text-sm font-mono break-all select-all overflow-hidden">
+                    {pixCopiaECola || "Gerando código..."}
                   </p>
-                  <div className="relative">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-center">
-                      <p className="text-sm font-mono break-all select-all overflow-hidden">
-                        {pixCopiaECola || "Gerando código..."}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyPixCode}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-brand-500 text-white text-xs rounded"
-                    >
-                      {pixCopied ? "Copiado!" : "Copiar"}
-                    </button>
-                  </div>
                 </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
-                  <div className="flex items-start">
-                    <svg
-                      className="w-5 h-5 text-blue-600 dark:text-blue-500 mt-0.5 mr-2"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <div>
-                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-400">
-                        Aguardando pagamento...
-                      </h4>
-                      <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                        Assim que você efetuar o pagamento, receberá uma confirmação automática e será redirecionado para a página de sucesso.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+                <button
+                  type="button"
+                  onClick={handleCopyPixCode}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-brand-500 text-white text-xs rounded"
+                >
+                  {pixCopied ? "Copiado!" : "Copiar"}
+                </button>
+              </div>
+            </div>
 
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
               <div className="flex items-start">
@@ -430,9 +536,9 @@ export default function PaymentMethodForm({
                     <li>O pagamento via PIX é processado instantaneamente</li>
                     <li>O QR Code e o código PIX são válidos por 1 hora</li>
                     <li>
-                      Após o pagamento, você será redirecionado automaticamente
+                      Após o pagamento, você receberá um email de confirmação
                     </li>
-                    <li>Você receberá um email de confirmação</li>
+                    <li>Preencha seus dados reais para garantir a aprovação do pagamento</li>
                   </ul>
                 </div>
               </div>
@@ -492,39 +598,17 @@ export default function PaymentMethodForm({
             </div>
           </div>
         )}
-      </div>
-      <div className="mb-4 space-y-2 text-gray-500 dark:text-gray-400">
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => onTermsAcceptedChange(e.target.checked)}
-            className="form-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
-          />
-          <span>
-            Eu aceito os{" "}
-            <button
-              type="button"
-              className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
-            >
-              termos e condições
-            </button>
-          </span>
-        </label>
-        {!termsAccepted && (
-          <div className="text-error-500 text-sm">
-            Por favor, aceite os termos e condições para continuar
-          </div>
-        )}
       </div>{" "}
-      <button
-        type="button"
-        onClick={handlePaymentSubmit}
-        disabled={processing || !termsAccepted}
-        className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
-      >
-        {processing ? "Processando..." : `Pagar ${formatCurrency(total)}`}
-      </button>
+      {paymentMethod !== "pix" && (
+        <button
+          type="button"
+          onClick={handlePaymentSubmit}
+          disabled={processing || !termsAccepted}
+          className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
+        >
+          {processing ? "Processando..." : `Pagar ${formatCurrency(total)}`}
+        </button>
+      )}
     </div>
   );
 }

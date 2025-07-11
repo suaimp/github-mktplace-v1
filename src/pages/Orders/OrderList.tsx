@@ -41,6 +41,7 @@ export default function OrderList() {
       case "completed":
         return <Badge color="success">Concluído</Badge>;
       case "processing":
+      case "approved":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400">
             Aguardando artigo

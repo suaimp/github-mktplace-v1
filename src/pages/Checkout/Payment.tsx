@@ -13,6 +13,8 @@ import { sanitizeErrorMessage } from "../../utils/errorSanitizer";
 import { formatCurrency } from "../../components/marketplace/utils";
 // import { validatePhone } from "../../utils/phoneValidation"; // [PAUSADO] Temporariamente comentado
 import { OrderItemService } from "../../services/db-services/marketplace-services/order/OrderItemService";
+import PixPaymentWatcher from "./PixPaymentWatcher";
+import { v4 as uuidv4 } from 'uuid';
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -79,7 +81,7 @@ export default function Payment() {
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
     string[]
-  >(["card", "pix"]);
+  >(["card", "pix", "boleto"]);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
@@ -92,8 +94,7 @@ export default function Payment() {
     cardholderName: "",
     country: "BR"
   });
-  const [pixPollingInterval, setPixPollingInterval] = useState<NodeJS.Timeout | null>(null);
-  const [pixExpiredAt, setPixExpiredAt] = useState<Date | null>(null);
+  const [idempotencyKey] = useState(() => uuidv4());
 
   useEffect(() => {
     loadPaymentSettings();
@@ -186,42 +187,37 @@ export default function Payment() {
       }
 
       // Set available payment methods from settings
-      if (data?.payment_methods && Array.isArray(data.payment_methods)) {
-        // Garantir que PIX sempre esteja disponível
-        const paymentMethods = [...data.payment_methods];
-        if (!paymentMethods.includes("pix")) {
-          paymentMethods.push("pix");
-        }
-        setAvailablePaymentMethods(paymentMethods);
+      if (data?.payment_methods && Array.isArray(data.payment_methods) && data.payment_methods.length > 0) {
+        setAvailablePaymentMethods(data.payment_methods);
 
-        console.log("PAYMENT METHODS SET:", {
-          paymentMethods: paymentMethods,
-          defaultMethod: paymentMethods[0],
+        console.log("PAYMENT METHODS SET FROM DATABASE:", {
+          paymentMethods: data.payment_methods,
+          defaultMethod: data.payment_methods[0],
           timestamp: new Date().toISOString(),
         });
 
         // Set default payment method to the first available one
-        if (paymentMethods.length > 0) {
-          setPaymentMethod(paymentMethods[0]);
-        }
+        setPaymentMethod(data.payment_methods[0]);
       } else {
-        // Se não houver configuração no banco, usar métodos padrão
-        setAvailablePaymentMethods(["card", "pix"]);
-        setPaymentMethod("card");
-        
-        console.log("NO PAYMENT METHODS FOUND - USING DEFAULTS:", {
+        // Use default payment methods including PIX if not configured in database
+        const defaultPaymentMethods = ["card", "pix", "boleto"];
+        setAvailablePaymentMethods(defaultPaymentMethods);
+        setPaymentMethod(defaultPaymentMethods[0]);
+
+        console.log("USING DEFAULT PAYMENT METHODS:", {
           hasPaymentMethods: !!data?.payment_methods,
           isArray: Array.isArray(data?.payment_methods),
           paymentMethodsData: data?.payment_methods,
-          defaultMethods: ["card", "pix"],
+          defaultPaymentMethods: defaultPaymentMethods,
+          defaultMethod: defaultPaymentMethods[0],
           timestamp: new Date().toISOString(),
         });
       }
-    } catch (err) {
-      console.error("Error loading payment settings:", err);
+    } catch (error) {
+      console.error("Error loading payment settings:", error);
       console.log("PAYMENT SETTINGS LOADING ERROR:", {
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),
       });
       setError("Erro ao carregar configurações de pagamento");
@@ -255,11 +251,11 @@ export default function Payment() {
           totalFinalPrice: Number(data.total_final_price),
         }));
       }
-    } catch (err) {
-      console.error("Error loading order total:", err);
+    } catch (error) {
+      console.error("Error loading order total:", error);
       console.log("ORDER TOTAL LOADING ERROR:", {
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),
       });
     }
@@ -286,11 +282,11 @@ export default function Payment() {
           items: cartItems,
         }));
       }
-    } catch (err) {
-      console.error("Error loading cart items:", err);
+    } catch (error) {
+      console.error("Error loading cart items:", error);
       console.log("CART ITEMS LOADING ERROR:", {
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),
       });
     }
@@ -333,11 +329,11 @@ export default function Payment() {
 
         data;
       }
-    } catch (err) {
-      console.error("Error loading company data:", err);
+    } catch (error) {
+      console.error("Error loading company data:", error);
       console.log("COMPANY DATA LOADING ERROR:", {
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),
       });
     }
@@ -353,60 +349,81 @@ export default function Payment() {
     }));
   };
 
-  const setPaymentMethodHandler = (method: string) => {
-    console.log("[DEBUG] Mudando método de pagamento para:", method);
-    
-    // Limpar polling do PIX se estava ativo
+  const handlePaymentMethodChange = (method: string) => {
+    setPaymentMethod(method);
+
+    // Clear PIX data when switching methods
     if (method !== "pix") {
-      stopPixPolling();
       setPixQrCodeUrl(null);
       setPixCopiaECola(null);
-      setCurrentOrderId(null);
     }
-    
-    setPaymentMethod(method);
-    setError(null); // Limpar erros anteriores
-    
-    // Gerar PIX automaticamente quando selecionado
-    if (method === "pix") {
-      generatePixQrCode();
-    }
+    // For PIX, we'll generate QR Code when user fills the form data
   };
+
+  // 1. Função para criar o pedido PIX antes de gerar o QR Code
+  async function createPixOrderInDatabase() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Prepare order items
+    const orderItems = orderSummary.items.map((item) => {
+      let nicheData = item.niche_selected || null;
+      if (typeof nicheData === "string") {
+        try { nicheData = JSON.parse(nicheData); } catch (e) { nicheData = null; }
+      }
+      let serviceData = item.service_selected || null;
+      if (typeof serviceData === "string") {
+        try { serviceData = JSON.parse(serviceData); } catch (e) { serviceData = null; }
+      }
+      return {
+        entry_id: item.entry_id,
+        product_name: item.product_url || "Produto",
+        product_url: item.product_url,
+        quantity: item.quantity || 1,
+        unit_price: Number(item.price) || 0,
+        total_price: (Number(item.price) || 0) * (item.quantity || 1),
+        niche: nicheData,
+        service_content: serviceData,
+      };
+    });
+    const totalAmount = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+    const order = await createOrder({
+      payment_method: "pix",
+      total_amount: totalAmount,
+      billing_name: formData.name,
+      billing_email: formData.email,
+      billing_address: formData.address,
+      billing_city: formData.city,
+      billing_state: formData.state,
+      billing_zip_code: formData.zipCode,
+      billing_document_number: formData.documentNumber,
+      phone: formData.phone,
+      items: orderItems,
+      idempotency_key: idempotencyKey, // <--- Envia o idempotency_key
+    });
+    if (!order) throw new Error("Failed to create order");
+    setCurrentOrderId(order.id);
+    return order.id;
+  }
 
   const generatePixQrCode = async () => {
     try {
       setProcessing(true);
-
-      // Get the current session
+      // 1. Crie o pedido no banco (se ainda não existir)
+      let orderId = currentOrderId;
+      if (!orderId) {
+        orderId = await createPixOrderInDatabase();
+      }
+      // 2. Gere o QR Code PIX, enviando o orderId
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session) {
         throw new Error("No authenticated session found");
       }
-
-      // Get the total amount
-      const total =
-        orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-
-      // Preparar itens do pedido para o PIX
-      const orderItems = orderSummary.items.map((item, index) => ({
-        amount: Math.round((item.total_price || 0) * 100), // converter para centavos
-        description: item.product_name || `Item ${index + 1}`,
-        quantity: item.quantity || 1,
-        code: item.product_id || `ITEM_${index + 1}`
-      }));
-
-      console.log("[DEBUG PIX] Dados enviados para PIX:", {
-        amount: Math.round(total * 100),
-        customer_name: formData.name,
-        customer_email: formData.email,
-        customer_document: formData.documentNumber,
-        order_items: orderItems
-      });
-
-      // Call the pagarme-pix-payment function
+      const total = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-payment`,
         {
@@ -416,48 +433,77 @@ export default function Payment() {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            amount: Math.round(total * 100), // Convert to cents
+            amount: Math.round(total * 100),
             customer_name: formData.name,
             customer_email: formData.email,
-            customer_document: formData.documentNumber,
-            order_items: orderItems
+            customer_document: formData.documentNumber.replace(/\D/g, ""),
+            customer_phone: formData.phone.replace(/\D/g, ""),
+            order_id: orderId, // ENVIE O orderId JUNTO!
+            order_items: orderSummary.items.map((item: any) => ({
+              amount: Math.round(Number(item.price) * 100),
+              description: item.product_url || "Produto Marketplace",
+              quantity: item.quantity || 1,
+              code: item.entry_id || `ITEM_${Date.now()}`
+            }))
           }),
         }
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate PIX QR code");
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (jsonErr) {
+        responseData = {};
       }
-
-      const pixData = await response.json();
-      console.log("[DEBUG PIX] Resposta do PIX:", pixData);
-
-      if (pixData.success && pixData.qr_code_url) {
-        setPixQrCodeUrl(pixData.qr_code_url);
-        setPixCopiaECola(pixData.qr_code);
-        
-        // Iniciar polling para verificar status do pagamento
-        if (pixData.order_id) {
-          setCurrentOrderId(pixData.order_id);
-          startPixPolling(pixData.order_id);
-        }
+      // 3. Assim que receber o charge_id/payment_id, atualize o pedido no banco
+      if (responseData.raw_response?.charges?.[0]?.id) {
+        const paymentId = responseData.raw_response.charges[0].id;
+        await updateOrderPaymentId(orderId, paymentId);
+      }
+      if (responseData.success && responseData.qr_code_url && responseData.qr_code) {
+        setPixQrCodeUrl(responseData.qr_code_url);
+        setPixCopiaECola(responseData.qr_code);
       } else {
-        throw new Error("Dados do PIX inválidos na resposta");
+        // Mesmo em erro, tente exibir o QR Code se vier na resposta
+        if (responseData.qr_code_url && responseData.qr_code) {
+          setPixQrCodeUrl(responseData.qr_code_url);
+          setPixCopiaECola(responseData.qr_code);
+        }
+        throw new Error(responseData.error || responseData.message || "Failed to generate PIX QR code");
       }
-    } catch (err: any) {
-      console.error("Error generating PIX QR code:", err);
+    } catch (error: any) {
+      // Tentar extrair o QR Code do erro, caso venha no corpo do erro
+      if (error && error.message && typeof error.message === 'string') {
+        try {
+          // Se o erro for do tipo lançado acima, já tentamos setar o QR Code
+          // Mas se for outro erro, tente extrair do texto
+          const matchQr = error.message.match(/qr_code_url.*(https?:\/\/[^\"]+)/);
+          const matchCopia = error.message.match(/qr_code.*([0-9A-Z]{20,})/);
+          if (matchQr && matchQr[1]) {
+            setPixQrCodeUrl(matchQr[1]);
+          }
+          if (matchCopia && matchCopia[1]) {
+            setPixCopiaECola(matchCopia[1]);
+          }
+        } catch (parseErr) {}
+      }
+      console.error("Error generating PIX QR code:", error);
       console.log("PIX QR CODE GENERATION ERROR:", {
-        errorMessage: err.message,
-        errorStack: err.stack,
+        errorMessage: error.message,
+        errorStack: error.stack,
         paymentMethod: "pix",
         timestamp: new Date().toISOString(),
         totalAmount:
           orderSummary.totalProductPrice + orderSummary.totalContentPrice,
         sessionInfo: "PIX QR Code generation failed",
+        pixCustomerData: {
+          name: formData.name,
+          email: formData.email,
+          document: formData.documentNumber,
+          phone: formData.phone
+        },
       });
       const sanitizedMessage = sanitizeErrorMessage(
-        err.message || "Erro ao gerar QR code PIX"
+        error.message || "Erro ao gerar QR code PIX"
       );
       setError(sanitizedMessage);
     } finally {
@@ -562,11 +608,11 @@ export default function Payment() {
 
       // Show success message
       setSuccess(true);
-    } catch (err) {
-      console.error("Error processing successful payment:", err);
+    } catch (error) {
+      console.error("Error processing successful payment:", error);
       console.log("PAYMENT SUCCESS PROCESSING ERROR:", {
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         paymentId: paymentId,
         timestamp: new Date().toISOString(),
         orderSummary: orderSummary,
@@ -647,6 +693,7 @@ export default function Payment() {
         phone: formData.phone,
         payment_id: paymentId,
         items: orderItems,
+        idempotency_key: idempotencyKey, // <--- Envia o idempotency_key
       });
 
       if (!order) {
@@ -677,6 +724,47 @@ export default function Payment() {
         },
       });
       throw error;
+    }
+  };
+
+  const updateOrderPaymentId = async (orderId: string, paymentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ payment_id: paymentId })
+        .eq("id", orderId);
+
+      if (error) {
+        console.error("Error updating order payment ID:", error);
+        throw new Error(`Failed to update payment ID for order ${orderId}: ${error.message}`);
+      }
+      console.log(`✅ Payment ID ${paymentId} updated for order ${orderId}`);
+      // Re-fetch order items to update their payment_id
+      setLoadingItems(true);
+      OrderItemService.listOrderItemsByOrder(orderId)
+        .then((items) => {
+          setOrderItems(items || []);
+          // Corrigido: extrai benefits corretamente
+          const fornecidoPeloCliente = (items || []).filter((item: any) => {
+            const benefits = extrairBenefits(item.service_content);
+            return (
+              benefits === undefined ||
+              benefits === null ||
+              (Array.isArray(benefits) && benefits.length === 0) ||
+              (typeof benefits === "string" && benefits.trim() === "")
+            );
+          });
+          setConteudoCliente(fornecidoPeloCliente);
+          setOutrosProdutos(
+            (items || []).filter(
+              (item: any) => !fornecidoPeloCliente.includes(item)
+            )
+          );
+        })
+        .finally(() => setLoadingItems(false));
+    } catch (err) {
+      console.error("Error updating order payment ID:", err);
+      setError(sanitizeErrorMessage(err.message || "Erro ao atualizar pagamento do pedido"));
     }
   };
 
@@ -911,109 +999,23 @@ export default function Payment() {
         console.log('Status aceitos:', statusesAceitos);
         throw new Error(`Status do pagamento: ${result.status}. Aguarde a confirmação ou tente novamente.`);
       }
-    } catch (err: any) {
-      console.error('[ERROR] Erro no handleSubmit:', err);
-      setError(err.message || "Erro ao processar pagamento");
+    } catch (error) {
+      console.error('[ERROR] Erro no handleSubmit:', error);
+      setError(error instanceof Error ? error.message : "Erro ao processar pagamento");
     } finally {
       setProcessing(false);
     }
   }
 
-  // Função para fazer polling do status do PIX
-  const startPixPolling = (orderId: string) => {
-    console.log("[DEBUG PIX] Iniciando polling para order_id:", orderId);
-    
-    // Limpar polling anterior se existir
-    if (pixPollingInterval) {
-      clearInterval(pixPollingInterval);
-    }
-
-    // Configurar expiração (1 hora)
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
-    setPixExpiredAt(expiresAt);
-
-    const checkPaymentStatus = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          console.log("[DEBUG PIX] Sessão não encontrada, parando polling");
-          stopPixPolling();
-          return;
-        }
-
-        // Verificar se expirou
-        if (new Date() > expiresAt) {
-          console.log("[DEBUG PIX] PIX expirado, parando polling");
-          stopPixPolling();
-          setError("O PIX expirou. Por favor, gere um novo código.");
-          return;
-        }
-
-        console.log("[DEBUG PIX] Verificando status do pedido:", orderId);
-
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-status`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ order_id: orderId }),
-          }
-        );
-
-        if (response.ok) {
-          const statusData = await response.json();
-          console.log("[DEBUG PIX] Status recebido:", statusData);
-
-          if (statusData.success) {
-            if (statusData.is_paid) {
-              console.log("[DEBUG PIX] ✅ Pagamento confirmado!");
-              stopPixPolling();
-              await handlePaymentSuccess(orderId);
-            } else if (statusData.is_failed) {
-              console.log("[DEBUG PIX] ❌ Pagamento falhou");
-              stopPixPolling();
-              setError("O pagamento PIX falhou. Tente novamente.");
-            } else {
-              console.log("[DEBUG PIX] ⏳ Pagamento ainda pendente");
-            }
-          }
-        } else {
-          console.log("[DEBUG PIX] Erro ao verificar status:", response.status);
-        }
-      } catch (err) {
-        console.error("[DEBUG PIX] Erro no polling:", err);
-      }
-    };
-
-    // Primeira verificação imediata
-    checkPaymentStatus();
-
-    // Depois verificar a cada 5 segundos
-    const interval = setInterval(checkPaymentStatus, 5000);
-    setPixPollingInterval(interval);
-
-    console.log("[DEBUG PIX] Polling configurado, verificando a cada 5 segundos até", expiresAt.toISOString());
+  // Função para validar se o formulário de informações de pagamento está preenchido para PIX
+  const isPixFormValid = () => {
+    return (
+      !!formData.name &&
+      !!formData.email &&
+      !!formData.documentNumber &&
+      !!formData.phone
+    );
   };
-
-  const stopPixPolling = () => {
-    if (pixPollingInterval) {
-      clearInterval(pixPollingInterval);
-      setPixPollingInterval(null);
-    }
-    setPixExpiredAt(null);
-    console.log("[DEBUG PIX] Polling interrompido");
-  };
-
-  // Limpar polling quando o componente for desmontado
-  useEffect(() => {
-    return () => {
-      stopPixPolling();
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -1338,6 +1340,14 @@ export default function Payment() {
       />
       <PageBreadcrumb pageTitle="Pagamento" />
 
+      {/* Watcher para pagamento PIX */}
+      {paymentMethod === "pix" && currentOrderId && (
+        <PixPaymentWatcher
+          orderId={currentOrderId}
+          onPixPaid={() => handlePaymentSuccess(currentOrderId)}
+        />
+      )}
+
       <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto">
         <div className="w-full md:w-3/5">
           <PaymentInformationForm
@@ -1357,13 +1367,15 @@ export default function Payment() {
             processing={processing}
             error={error}
             termsAccepted={termsAccepted}
+            pixFormValid={isPixFormValid()}
             availablePaymentMethods={availablePaymentMethods}
-            onPaymentMethodChange={setPaymentMethodHandler}
+            onPaymentMethodChange={handlePaymentMethodChange}
             onTermsAcceptedChange={setTermsAccepted}
             onSubmit={handleSubmit}
             onPaymentSuccess={handlePaymentSuccess}
             onPaymentError={handlePaymentError}
             onCardDataChange={handleCardDataChange}
+            onGeneratePixQrCode={generatePixQrCode}
           />
         </div>
 
