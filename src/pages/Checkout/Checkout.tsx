@@ -10,11 +10,15 @@ import Button from "../../components/ui/button/Button";
 import CheckoutCards from "../../components/ServicePackages/cards/CheckoutCards";
 import ResumeTable from "../../components/Checkout/ResumeTable";
 import FinishOrder from "../../components/Checkout/FinishOrder";
+import { useCustomSticky } from "../../hooks/useCustomSticky";
 
 export default function Checkout() {
   const { items } = useCart();
   const navigate = useNavigate();
   const [success] = useState(false); // Remover se não for usado
+
+  // Hook para sticky positioning personalizado
+  const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
 
   if (success) {
     return (
@@ -105,23 +109,21 @@ export default function Checkout() {
       <PageMeta title="Checkout | Marketplace" description="Finalizar compra" />
       <PageBreadcrumb pageTitle="Checkout" />
 
-      <div className="w-full flex mx-auto">
-        <div className="w-full flex flex-col md:flex-row mx-auto gap-8">
-          <div className="flex-1 flex flex-col gap-8 mb-8">
-            <CheckoutCards />
-            <ResumeTable />
-          </div>
-
-          <div className="w-[450px] mx-auto mt-[80px]     ">
-            {/*     <CheckoutForm
-              formData={formData}
-              loading={loading}
-              totalPrice={totalPrice}
-              handleChange={handleChange}
-              handleSelectChange={handleSelectChange}
-              handleSubmit={handleSubmit}
-            /> */}
-
+      <div className="w-full flex mx-auto min-h-screen gap-4">
+        <div className="flex-1 flex flex-col gap-8 mb-8">
+          <CheckoutCards />
+          <ResumeTable />
+        </div>
+        {/* Lateral direita com sticky customizado */}
+        <div className="my-5 w-full flex-none md:my-0 md:w-72 lg:w-2/6 ml-2 md:ml-3 lg:ml-4">
+          {/* Placeholder para manter o espaço quando sticky estiver ativo */}
+          <div ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+          
+          <div 
+            ref={stickyHook.ref}
+            style={stickyHook.style}
+            className="w-full"
+          >
             <FinishOrder />
           </div>
         </div>

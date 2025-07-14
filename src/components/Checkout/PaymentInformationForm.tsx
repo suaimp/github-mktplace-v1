@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Input from "../form/input/InputField";
+import MaskedInput from "../form/input/MaskedInput";
 import Label from "../form/Label";
 import Select from "../form/Select";
 import { supabase } from "../../lib/supabase";
@@ -18,17 +19,81 @@ interface PaymentInformationFormProps {
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
+  onValidSubmit: (isValid: boolean) => void;
 }
 
-export default function PaymentInformationForm({
+function PaymentInformationForm({
   formData,
-  onChange
+  onChange,
+  onValidSubmit
 }: PaymentInformationFormProps) {
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false); // Proteção contra múltiplas execuções
 
   const [accountType, setAccountType] = useState<"individual" | "business">(
     "individual"
   );
+
+  // Função para limpar valores com máscara para validação
+  const cleanValue = (value: string): string => {
+    // Para números (CPF, CNPJ, CEP, telefone), remove tudo que não é dígito
+    // Para email e texto, mantém caracteres válidos
+    return value?.replace(/\D/g, "") || "";
+  };
+
+  // Função de validação do formulário
+  const validatePaymentInfoForm = () => {
+    console.log("🔍 VALIDANDO FORMULÁRIO DE INFORMAÇÕES DE PAGAMENTO");
+    console.log("📋 ESTADO ATUAL DO FORMDATA:", formData);
+    
+    const nameValid = !!formData.name?.trim() && formData.name.trim().length >= 2;
+    const emailValid = !!formData.email?.trim() && formData.email.includes("@") && formData.email.includes(".");
+    const addressValid = !!formData.address?.trim() && formData.address.trim().length >= 5;
+    const cityValid = !!formData.city?.trim() && formData.city.trim().length >= 2;
+    const stateValid = !!formData.state?.trim() && formData.state.trim().length >= 2;
+    
+    // Para campos que vêm do MaskedInput, o valor já está limpo (sem máscara)
+    const zipCodeClean = cleanValue(formData.zipCode);
+    const documentClean = cleanValue(formData.documentNumber);
+    const phoneClean = cleanValue(formData.phone);
+    
+    const zipCodeValid = !!zipCodeClean && zipCodeClean.length === 8;
+    const documentValid = !!documentClean && documentClean.length >= 11;
+    const phoneValid = !!phoneClean && (phoneClean.length === 10 || phoneClean.length === 11);
+
+    console.log("🔍 VALIDAÇÃO DETALHADA:", {
+      name: { value: formData.name, valid: nameValid },
+      email: { value: formData.email, valid: emailValid },
+      address: { value: formData.address, valid: addressValid },
+      city: { value: formData.city, valid: cityValid },
+      state: { value: formData.state, valid: stateValid },
+      zipCode: { value: formData.zipCode, cleaned: zipCodeClean, valid: zipCodeValid },
+      document: { value: formData.documentNumber, cleaned: documentClean, valid: documentValid },
+      phone: { value: formData.phone, cleaned: phoneClean, valid: phoneValid }
+    });
+
+    const isValid = nameValid && emailValid && addressValid && cityValid && stateValid && zipCodeValid && documentValid && phoneValid;
+    
+    console.log("✅ RESULTADO DA VALIDAÇÃO:", { isValid });
+
+    return isValid;
+  };
+
+  // Função para lidar com o submit do formulário
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("� SUBMIT BUTTON CLICKED - PaymentInformationForm");
+    console.log("�📝 SUBMIT DO FORMULÁRIO DE INFORMAÇÕES DE PAGAMENTO");
+    
+    const isValid = validatePaymentInfoForm();
+    
+    console.log("🎯 ENVIANDO RESULTADO DA VALIDAÇÃO PARA O COMPONENTE PAI:", {
+      isValid: isValid,
+      timestamp: new Date().toISOString()
+    });
+    
+    onValidSubmit(isValid);
+  };
 
   const brazilianStates = [
     { value: "AC", label: "Acre" },
@@ -61,16 +126,56 @@ export default function PaymentInformationForm({
   ];
 
   useEffect(() => {
-    loadUserData();
-  }, []);
+    // Carregar dados do usuário apenas uma vez no início, antes do usuário interagir
+    // ADICIONADO timeout para garantir que o componente pai inicializou completamente
+    const timer = setTimeout(() => {
+      loadUserData();
+    }, 100); // 100ms de delay para garantir sincronização
+    
+    return () => clearTimeout(timer);
+  }, []); // Array vazio = executa apenas uma vez no mount
+
+  // Garantir sincronização de valores digitados (correção para race condition)
+  useEffect(() => {
+    // Após dados carregados, verificar se há campos com valor no display mas vazios no formData
+    if (dataLoaded) {
+      const fieldsToSync = ['phone', 'zipCode', 'documentNumber'];
+      fieldsToSync.forEach(fieldName => {
+        const currentValue = formData[fieldName as keyof typeof formData];
+        if (!currentValue || currentValue.trim() === "") {
+          // Campo está vazio no formData, mas pode ter valor no input
+          console.log(`🔄 Verificando sincronização para ${fieldName}:`, currentValue);
+        }
+      });
+    }
+  }, [dataLoaded, formData]);
+
+  // Debug effect para mostrar o valor atual do telefone
+  useEffect(() => {
+    console.log("📞 PHONE VALUE CHANGED:", {
+      phoneValue: formData.phone,
+      phoneType: typeof formData.phone,
+      phoneLength: formData.phone?.length || 0,
+      phoneClean: cleanValue(formData.phone),
+      timestamp: new Date().toISOString()
+    });
+  }, [formData.phone]);
 
   async function loadUserData() {
     try {
       setLoading(true);
+      console.log("🔍 LOADING USER DATA - PaymentInformationForm");
+      
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log("❌ No user found");
+        setDataLoaded(true);
+        return;
+      }
+
+      console.log("👤 User found:", user.id);
 
       // First check if user is admin
       const { data: adminData } = await supabase
@@ -78,6 +183,8 @@ export default function PaymentInformationForm({
         .select("id, email, first_name, last_name")
         .eq("id", user.id)
         .maybeSingle();
+
+      console.log("🔍 Admin data:", adminData);
 
       if (adminData) {
         // Get company data for admin
@@ -87,59 +194,43 @@ export default function PaymentInformationForm({
           .eq("admin_id", user.id)
           .maybeSingle();
 
+        console.log("🏢 Company data for admin:", data);
+
         if (data) {
-          setAccountType(data.legal_status || "individual");
+          setAccountType(data.legal_status || "individual");            const dataToUpdate = {
+              name: data.legal_status === "business" ? data.company_name || "" : `${adminData.first_name} ${adminData.last_name}`,
+              email: adminData.email || "",
+              address: data.address || "",
+              city: data.city || "",
+              state: data.state || "",
+              zipCode: data.zip_code || "",
+              documentNumber: data.document_number || "",
+              phone: (data.phone !== null && data.phone !== undefined) ? String(data.phone) : ""
+            };
 
-          // Update form data based on account type
-          const event = {
-            target: {
-              name: "name",
-              value:
-                data.legal_status === "business"
-                  ? data.company_name || ""
-                  : `${adminData.first_name} ${adminData.last_name}`
-            }
-          } as React.ChangeEvent<HTMLInputElement>;
-          onChange(event);
-
-          // Update email
-          onChange({
-            target: { name: "email", value: adminData.email }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update address
-          onChange({
-            target: { name: "address", value: data.address || "" }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update city
-          onChange({
-            target: { name: "city", value: data.city || "" }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update state
-          onChange({
-            target: { name: "state", value: data.state || "" }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update zipCode
-          onChange({
-            target: { name: "zipCode", value: data.zip_code || "" }
-          } as React.ChangeEvent<HTMLInputElement>); // Update documentNumber
-          onChange({
-            target: {
-              name: "documentNumber",
-              value: data.document_number || ""
-            }
-          } as React.ChangeEvent<HTMLInputElement>);
-
-          // Update phone
-          onChange({
-            target: {
-              name: "phone",
-              value: data.phone || ""
-            }
-          } as React.ChangeEvent<HTMLInputElement>);
+          console.log("📝 Data to update form (admin):", dataToUpdate);            // Update each field individually with detailed logs - APENAS CAMPOS VAZIOS
+            Object.entries(dataToUpdate).forEach(([key, value]) => {
+              console.log(`🔄 Updating ${key} with value:`, value);
+              console.log(`🔄 Field "${key}" - Before onChange:`, formData[key as keyof typeof formData]);
+              
+              // PROTEÇÃO ABSOLUTA: Nunca sobrescrever valores não vazios
+              const currentValue = formData[key as keyof typeof formData];
+              if (currentValue && currentValue.toString().trim() !== "") {
+                console.log(`🛡️ PROTEÇÃO: Campo ${key} já tem valor, não sobrescrever:`, currentValue);
+                return;
+              }
+              
+              // PROTEÇÃO ADICIONAL: Garantir que value nunca seja undefined ou null
+              const safeValue = (value !== null && value !== undefined) ? String(value) : "";
+              
+              // Apenas preencher campos completamente vazios
+              if (!currentValue || currentValue.toString().trim() === "") {
+                console.log(`✅ Preenchendo ${key} com valor do banco:`, safeValue);
+                onChange({
+                  target: { name: key, value: safeValue }
+                } as React.ChangeEvent<HTMLInputElement>);
+              }
+            });
         }
       } else {
         // Get user data for platform user
@@ -149,6 +240,8 @@ export default function PaymentInformationForm({
           .eq("id", user.id)
           .maybeSingle();
 
+        console.log("👥 Platform user data:", platformUserData);
+
         if (platformUserData) {
           // Get company data for platform user
           const { data } = await supabase
@@ -157,80 +250,93 @@ export default function PaymentInformationForm({
             .eq("user_id", user.id)
             .maybeSingle();
 
+          console.log("🏢 Company data for platform user:", data);
+
           if (data) {
             setAccountType(data.legal_status || "individual");
 
-            // Update form data based on account type
-            const event = {
-              target: {
-                name: "name",
-                value:
-                  data.legal_status === "business"
-                    ? data.company_name || ""
-                    : `${platformUserData.first_name} ${platformUserData.last_name}`
+            const dataToUpdate = {
+              name: data.legal_status === "business" ? data.company_name || "" : `${platformUserData.first_name} ${platformUserData.last_name}`,
+              email: platformUserData.email || "",
+              address: data.address || "",
+              city: data.city || "",
+              state: data.state || "",
+              zipCode: data.zip_code || "",
+              documentNumber: data.document_number || "",
+              phone: (data.phone !== null && data.phone !== undefined) ? String(data.phone) : ""
+            };
+
+            console.log("📝 Data to update form (platform user with company):", dataToUpdate);
+
+            // Update each field individually with detailed logs - APENAS CAMPOS VAZIOS
+            Object.entries(dataToUpdate).forEach(([key, value]) => {
+              console.log(`🔄 Updating ${key} with value:`, value);
+              console.log(`🔄 Field "${key}" - Before onChange:`, formData[key as keyof typeof formData]);
+              
+              // PROTEÇÃO ABSOLUTA: Nunca sobrescrever valores não vazios
+              const currentValue = formData[key as keyof typeof formData];
+              if (currentValue && currentValue.toString().trim() !== "") {
+                console.log(`🛡️ PROTEÇÃO: Campo ${key} já tem valor, não sobrescrever:`, currentValue);
+                return;
               }
-            } as React.ChangeEvent<HTMLInputElement>;
-            onChange(event);
-
-            // Update email
-            onChange({
-              target: { name: "email", value: platformUserData.email }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update address
-            onChange({
-              target: { name: "address", value: data.address || "" }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update city
-            onChange({
-              target: { name: "city", value: data.city || "" }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update state
-            onChange({
-              target: { name: "state", value: data.state || "" }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update zipCode
-            onChange({
-              target: { name: "zipCode", value: data.zip_code || "" }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update documentNumber
-            onChange({
-              target: {
-                name: "documentNumber",
-                value: data.document_number || ""
+              
+              // PROTEÇÃO ADICIONAL: Garantir que value nunca seja undefined ou null
+              const safeValue = (value !== null && value !== undefined) ? String(value) : "";
+              
+              // Apenas preencher campos completamente vazios
+              if (!currentValue || currentValue.toString().trim() === "") {
+                console.log(`✅ Preenchendo ${key} com valor do banco:`, safeValue);
+                onChange({
+                  target: { name: key, value: safeValue }
+                } as React.ChangeEvent<HTMLInputElement>);
               }
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            // Update phone
-            onChange({
-              target: {
-                name: "phone",
-                value: data.phone || ""
-              }
-            } as React.ChangeEvent<HTMLInputElement>);
+            });
           } else {
             // No company data, just use platform user data
-            onChange({
-              target: {
-                name: "name",
-                value: `${platformUserData.first_name} ${platformUserData.last_name}`
-              }
-            } as React.ChangeEvent<HTMLInputElement>);
+            const dataToUpdate = {
+              name: `${platformUserData.first_name} ${platformUserData.last_name}`,
+              email: platformUserData.email || "",
+              address: "",
+              city: "",
+              state: "",
+              zipCode: "",
+              documentNumber: "",
+              phone: ""
+            };
 
-            onChange({
-              target: { name: "email", value: platformUserData.email }
-            } as React.ChangeEvent<HTMLInputElement>);
+            console.log("📝 Data to update form (platform user without company):", dataToUpdate);
+
+            Object.entries(dataToUpdate).forEach(([key, value]) => {
+              console.log(`🔄 Updating ${key} with value:`, value);
+              console.log(`🔄 Field "${key}" - Before onChange:`, formData[key as keyof typeof formData]);
+              
+              // PROTEÇÃO ABSOLUTA: Nunca sobrescrever valores não vazios
+              const currentValue = formData[key as keyof typeof formData];
+              if (currentValue && currentValue.toString().trim() !== "") {
+                console.log(`🛡️ PROTEÇÃO: Campo ${key} já tem valor, não sobrescrever:`, currentValue);
+                return;
+              }
+              
+              // PROTEÇÃO ADICIONAL: Garantir que value nunca seja undefined ou null
+              const safeValue = (value !== null && value !== undefined) ? String(value) : "";
+              
+              // Apenas preencher campos completamente vazios
+              if (!currentValue || currentValue.toString().trim() === "") {
+                console.log(`✅ Preenchendo ${key} com valor do banco:`, safeValue);
+                onChange({
+                  target: { name: key, value: safeValue }
+                } as React.ChangeEvent<HTMLInputElement>);
+              }
+            });
           }
         }
       }
     } catch (err) {
-      console.error("Error loading user data:", err);
+      console.error("❌ Error loading user data:", err);
     } finally {
       setLoading(false);
+      setDataLoaded(true);
+      console.log("✅ Loading user data completed");
     }
   }
 
@@ -263,110 +369,123 @@ export default function PaymentInformationForm({
           : "Dados Pessoais"}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>
-            {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
-            <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={onChange}
-            required
-          />
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>
+              {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
+              <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Email <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask="email"
+              name="email"
+              value={formData.email}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Endereço <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Cidade <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Estado <span className="text-error-500">*</span>
+            </Label>
+            <Select
+              options={brazilianStates}
+              value={formData.state}
+              onChange={(value) =>
+                onChange({
+                  target: { name: "state", value }
+                } as React.ChangeEvent<HTMLSelectElement>)
+              }
+              placeholder="Selecione um estado"
+            />
+          </div>
+          <div>
+            <Label>
+              CEP <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask="cep"
+              name="zipCode"
+              value={formData.zipCode}
+              onChange={onChange}
+              required
+            />
+          </div>{" "}
+          <div>
+            <Label>
+              {accountType === "business" ? "CNPJ" : "CPF"}{" "}
+              <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask={accountType === "business" ? "cnpj" : "cpf"}
+              name="documentNumber"
+              value={formData.documentNumber}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Telefone/Celular <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={onChange}
+              required
+            />
+          </div>
         </div>
-        <div>
-          <Label>
-            Email <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            required
-          />
+        
+        {/* Botão de submit */}
+        <div className="mt-6">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+          >
+            Validar Informações de Pagamento
+          </button>
         </div>
-        <div>
-          <Label>
-            Endereço <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={onChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>
-            Cidade <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="text"
-            name="city"
-            value={formData.city}
-            onChange={onChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>
-            Estado <span className="text-error-500">*</span>
-          </Label>
-          <Select
-            options={brazilianStates}
-            value={formData.state}
-            onChange={(value) =>
-              onChange({
-                target: { name: "state", value }
-              } as React.ChangeEvent<HTMLSelectElement>)
-            }
-            placeholder="Selecione um estado"
-          />
-        </div>
-        <div>
-          <Label>
-            CEP <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="text"
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={onChange}
-            required
-          />
-        </div>{" "}
-        <div>
-          <Label>
-            {accountType === "business" ? "CNPJ" : "CPF"}{" "}
-            <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="text"
-            name="documentNumber"
-            value={formData.documentNumber}
-            onChange={onChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>
-            Telefone/Celular <span className="text-error-500">*</span>
-          </Label>
-          <Input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={onChange}
-            placeholder="(11) 99999-9999"
-            required
-          />
-        </div>
-      </div>
+      </form>
     </div>
   );
 }
+
+export default memo(PaymentInformationForm);

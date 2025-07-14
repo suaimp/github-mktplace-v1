@@ -43,6 +43,11 @@ interface PaymentMethodFormProps {
    * Indica se todos os campos obrigatórios dos dois formulários estão preenchidos
    */
   allFormsValid: boolean;
+  /**
+   * Estados de validação individuais para cada formulário
+   */
+  isPaymentInfoFormValid: boolean;
+  isCardFormValid: boolean;
   cardData: {
     cardNumber: string;
     cardExpiry: string;
@@ -73,6 +78,8 @@ export default function PaymentMethodForm({
   onCardDataChange,
   onGeneratePixQrCode,
   allFormsValid,
+  isPaymentInfoFormValid,
+  isCardFormValid,
   cardData,
   setCardData
 }: PaymentMethodFormProps) {
@@ -102,6 +109,18 @@ export default function PaymentMethodForm({
     fixedPaymentMethods: filteredPaymentMethods.map((m) => m.id),
     count: filteredPaymentMethods.length,
     note: "PIX and card will always be available (boleto removed)",
+    timestamp: new Date().toISOString()
+  });
+
+  // Log das props de validação recebidas
+  console.log("🔧 PAYMENT FORM VALIDATION PROPS:", {
+    termsAccepted: termsAccepted,
+    pixFormValid: pixFormValid,
+    allFormsValid: allFormsValid,
+    isPaymentInfoFormValid: isPaymentInfoFormValid,
+    isCardFormValid: isCardFormValid,
+    processing: processing,
+    paymentMethod: paymentMethod,
     timestamp: new Date().toISOString()
   });
 
@@ -229,25 +248,11 @@ export default function PaymentMethodForm({
                 <svg
                   className="w-6 h-6"
                   viewBox="0 0 24 24"
-                  fill="none"
+                  fill="currentColor"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect
-                    x="2\"
-                    y="5\"
-                    width="20\"
-                    height="14\"
-                    rx="2\"
-                    stroke="currentColor\"
-                    strokeWidth="2"
-                  />
-                  <path d="M2 10H22\" stroke="currentColor\" strokeWidth="2" />
-                  <path
-                    d="M6 15H10\"
-                    stroke="currentColor\"
-                    strokeWidth="2\"
-                    strokeLinecap="round"
-                  />
+                  <path d="M4 5C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H20C21.1046 19 22 18.1046 22 17V7C22 5.89543 21.1046 5 20 5H4ZM4 7H20V9H4V7ZM4 11H20V17H4V11Z" />
+                  <path d="M6 14H10V15H6V14Z" />
                 </svg>
               )}
               {method.id === "pix" && (
@@ -439,8 +444,19 @@ export default function PaymentMethodForm({
             {/* Botão de pagar */}
             <button
               type="button"
-              onClick={handlePaymentSubmit}
-              disabled={processing || !termsAccepted || !allFormsValid}
+              onClick={() => {
+                console.log("💳 CARD BUTTON CLICKED:", {
+                  processing: processing,
+                  termsAccepted: termsAccepted,
+                  isPaymentInfoFormValid: isPaymentInfoFormValid,
+                  isCardFormValid: isCardFormValid,
+                  bothFormsValid: isPaymentInfoFormValid && isCardFormValid,
+                  disabled: processing || !termsAccepted || !isPaymentInfoFormValid || !isCardFormValid,
+                  timestamp: new Date().toISOString()
+                });
+                handlePaymentSubmit();
+              }}
+              disabled={processing || !termsAccepted || !isPaymentInfoFormValid || !isCardFormValid}
               className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
             >
               {processing ? "Processando..." : `Pagar ${formatCurrency(total)}`}
@@ -485,6 +501,14 @@ export default function PaymentMethodForm({
               <button
                 type="button"
                 onClick={() => {
+                  console.log("🎯 PIX BUTTON CLICKED:", {
+                    processing: processing,
+                    isGeneratingQrCode: isGeneratingQrCode,
+                    termsAccepted: termsAccepted,
+                    isPaymentInfoFormValid: isPaymentInfoFormValid,
+                    disabled: processing || isGeneratingQrCode || !termsAccepted || !isPaymentInfoFormValid,
+                    timestamp: new Date().toISOString()
+                  });
                   // Iniciar cronômetro
                   startQrCodeTimer();
                   // Call the generate PIX QR Code function
@@ -492,7 +516,7 @@ export default function PaymentMethodForm({
                     onGeneratePixQrCode();
                   }
                 }}
-                disabled={processing || isGeneratingQrCode || !termsAccepted || !pixFormValid}
+                disabled={processing || isGeneratingQrCode || !termsAccepted || !isPaymentInfoFormValid}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {processing || isGeneratingQrCode ? "Gerando QR Code..." : "Gerar QR Code PIX"}

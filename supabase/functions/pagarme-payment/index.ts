@@ -17,9 +17,7 @@ serve(async (req) => {
   const secret_key = Deno.env.get('PAGARME'); // Chave secreta (sk_) para pagamentos
   const public_key = Deno.env.get('PAGARME_PUBLIC_KEY'); // Chave pública (pk_) para tokenização
   
-  if (!secret_key) {
-    console.log("ERRO: Variável PAGARME não encontrada no ambiente da Edge Function!");
-    return new Response(JSON.stringify({ 
+  if (!secret_key) {return new Response(JSON.stringify({ 
       error: 'Secret key não configurada',
       debug: 'Variável PAGARME não definida nas secrets do Supabase'
     }), {
@@ -28,9 +26,7 @@ serve(async (req) => {
     });
   }
 
-  if (!public_key) {
-    console.log("ERRO: Variável PAGARME_PUBLIC_KEY não encontrada no ambiente da Edge Function!");
-    return new Response(JSON.stringify({ 
+  if (!public_key) {return new Response(JSON.stringify({ 
       error: 'Public key não configurada',
       debug: 'Variável PAGARME_PUBLIC_KEY não definida nas secrets do Supabase'
     }), {
@@ -66,20 +62,9 @@ serve(async (req) => {
   const basicAuth = "Basic " + btoa(secret_key + ":");
   
   console.log("[DEBUG] Secret key configurada:", secret_key.substring(0, 6) + "..." + secret_key.slice(-4));
-  console.log("[DEBUG] Public key configurada:", public_key.substring(0, 6) + "..." + public_key.slice(-4));
-  console.log("[DEBUG] Modo de teste detectado:", isTestMode);
-
-  // Autenticação do usuário
+  console.log("[DEBUG] Public key configurada:", public_key.substring(0, 6) + "..." + public_key.slice(-4));// Autenticação do usuário
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  
-  console.log("[DEBUG] Configuração Supabase:", {
-    hasUrl: !!supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    url: supabaseUrl
-  });
-  
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   const authHeader = req.headers.get("Authorization");
   const jwt = authHeader ? authHeader.replace("Bearer ", "") : "";
@@ -90,18 +75,7 @@ serve(async (req) => {
     jwtPrefix: jwt ? jwt.substring(0, 20) + "..." : "VAZIO"
   });
   
-  const { data: { user }, error } = await supabase.auth.getUser(jwt);
-  
-  console.log("[DEBUG] Resultado auth:", {
-    hasUser: !!user,
-    userId: user?.id,
-    errorMessage: error?.message,
-    errorName: error?.name
-  });
-  
-  if (error || !user) {
-    console.log("[ERROR] Erro de autenticação:", { error, user });
-    return new Response(JSON.stringify({ 
+  const { data: { user }, error } = await supabase.auth.getUser(jwt);if (error || !user) {return new Response(JSON.stringify({ 
       error: 'Não autorizado',
       debug: {
         hasAuthHeader: !!authHeader,
@@ -119,14 +93,10 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));
-    console.log("[DEBUG] ===== INÍCIO DO PROCESSAMENTO =====");
-    console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
+    console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
 
     // TOKENIZAÇÃO - Primeiro passo do fluxo seguro
-    if (body.action === 'tokenize') {
-      console.log("[DEBUG] ===== INICIANDO TOKENIZAÇÃO =====");
-      const { 
+    if (body.action === 'tokenize') {const { 
         card_number, 
         card_exp_month, 
         card_exp_year, 
@@ -180,13 +150,7 @@ serve(async (req) => {
       try {
         // IMPORTANTE: Para tokenização, usar chave pública como query parameter appId
         // Conforme documentação: https://docs.pagar.me/reference/pagarme-js
-        const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;
-        
-        console.log("[DEBUG] URL de tokenização:", tokenUrl);
-        console.log("[DEBUG] Chave pública enviada via appId:", public_key.substring(0, 10) + "...");
-        console.log("[DEBUG] Billing address recebido:", billing_address);
-        console.log("[DEBUG] Billing address final usado:", finalBillingAddress);
-        console.log("[DEBUG] Dados do cartão para tokenização:", {
+        const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;console.log("[DEBUG] Chave pública enviada via appId:", public_key.substring(0, 10) + "...");console.log("[DEBUG] Dados do cartão para tokenização:", {
           number: card_number ? card_number.substring(0, 4) + '****' : 'VAZIO',
           exp_month: card_exp_month,
           exp_year: card_exp_year,
@@ -211,16 +175,7 @@ serve(async (req) => {
               billing_address: finalBillingAddress
             }
           })
-        });
-
-        console.log("[DEBUG] ===== RESPOSTA DA TOKENIZAÇÃO =====");
-        const tokenBodyRaw = await tokenRes.text();
-        console.log("[DEBUG] Status tokenização:", tokenRes.status);
-        console.log("[DEBUG] Headers resposta:", Object.fromEntries(tokenRes.headers.entries()));
-        console.log("[DEBUG] Resposta tokenização:", tokenBodyRaw);
-        console.log("[DEBUG] ========================================");
-
-        let tokenData;
+        });const tokenBodyRaw = await tokenRes.text();console.log("[DEBUG] Headers resposta:", Object.fromEntries(tokenRes.headers.entries()));let tokenData;
         try {
           tokenData = JSON.parse(tokenBodyRaw);
         } catch (e) {
@@ -233,9 +188,7 @@ serve(async (req) => {
           });
         }
 
-        if (!tokenRes.ok || !tokenData.id) {
-          console.log("[ERROR] Falha na tokenização:", tokenData);
-          return new Response(JSON.stringify({ 
+        if (!tokenRes.ok || !tokenData.id) {return new Response(JSON.stringify({ 
             error: tokenData.message || 'Erro ao tokenizar cartão', 
             details: tokenData.errors || 'Erro na tokenização',
             raw: tokenBodyRaw 
@@ -243,10 +196,7 @@ serve(async (req) => {
             status: tokenRes.status,
             headers: corsHeaders,
           });
-        }
-
-        console.log("[DEBUG] Tokenização bem-sucedida, token:", tokenData.id);
-        return new Response(JSON.stringify({ 
+        }return new Response(JSON.stringify({ 
           card_token: tokenData.id,
           success: true 
         }), {
@@ -288,11 +238,7 @@ serve(async (req) => {
         amountInt = parseInt(amount.replace(/[^\d]/g, ''));
       } else {
         amountInt = Math.round(Number(amount));
-      }
-      
-      console.log("[DEBUG] Valor processado:", amountInt);
-      
-      if (isNaN(amountInt) || amountInt < 100) {
+      }if (isNaN(amountInt) || amountInt < 100) {
         return new Response(JSON.stringify({ 
           error: 'Valor inválido',
           debug: `Valor deve ser pelo menos R$ 1,00 (100 centavos). Recebido: ${amountInt}`
@@ -399,11 +345,7 @@ serve(async (req) => {
           body: JSON.stringify(pagarmePayload),
         });
 
-        const pagarmeBodyRaw = await pagarmeRes.text();
-        console.log("[DEBUG] Status pagamento:", pagarmeRes.status);
-        console.log("[DEBUG] Resposta pagamento:", pagarmeBodyRaw);
-
-        let pagarmeData;
+        const pagarmeBodyRaw = await pagarmeRes.text();let pagarmeData;
         try {
           pagarmeData = JSON.parse(pagarmeBodyRaw);
         } catch (e) {
@@ -416,30 +358,10 @@ serve(async (req) => {
           });
         }
 
-        // LOGS DETALHADOS DA RESPOSTA FINAL
-        console.log("[DEBUG] ===== RESPOSTA FINAL PAGAR.ME =====");
-        console.log("[DEBUG] Status HTTP:", pagarmeRes.status);
-        console.log("[DEBUG] Status do pedido:", pagarmeData.status);
-        console.log("[DEBUG] ID do pedido:", pagarmeData.id);
-        
-        if (pagarmeData.charges && pagarmeData.charges.length > 0) {
-          const charge = pagarmeData.charges[0];
-          console.log("[DEBUG] Status do charge:", charge.status);
-          console.log("[DEBUG] ID do charge:", charge.id);
-          
-          if (charge.last_transaction) {
-            console.log("[DEBUG] Status da transação:", charge.last_transaction.status);
-            console.log("[DEBUG] Código de resposta:", charge.last_transaction.acquirer_return_code);
-            console.log("[DEBUG] Mensagem:", charge.last_transaction.acquirer_message);
-            
-            if (charge.last_transaction.gateway_response) {
-              console.log("[DEBUG] Resposta do gateway:", charge.last_transaction.gateway_response);
-            }
+        // LOGS DETALHADOS DA RESPOSTA FINALif (pagarmeData.charges && pagarmeData.charges.length > 0) {
+          const charge = pagarmeData.charges[0];if (charge.last_transaction) {if (charge.last_transaction.gateway_response) {}
           }
-        }
-        console.log("[DEBUG] =====================================");
-
-        return new Response(JSON.stringify(pagarmeData), {
+        }return new Response(JSON.stringify(pagarmeData), {
           status: pagarmeRes.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

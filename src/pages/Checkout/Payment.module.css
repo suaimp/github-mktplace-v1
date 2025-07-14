@@ -1,0 +1,35 @@
+/* Custom sticky solution for checkout payment page */
+.payment-sticky-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.payment-sticky-sidebar {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+  /* Force a new stacking context */
+  transform: translateZ(0);
+  /* Enable GPU acceleration */
+  will-change: transform;
+  /* Ensure it's above other content */
+  z-index: 5;
+}
+
+/* Create a dedicated container that respects sticky positioning */
+.payment-content-wrapper {
+  /* Force contain: layout to create a new formatting context */
+  contain: layout;
+  /* Minimum height to ensure sticky works */
+  min-height: 100vh;
+}
+
+/* For mobile, remove sticky behavior */
+@media (max-width: 767px) {
+  .payment-sticky-sidebar {
+    position: static;
+    top: auto;
+    transform: none;
+    will-change: auto;
+  }
+}

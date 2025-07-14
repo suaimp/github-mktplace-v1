@@ -14,17 +14,10 @@ serve(async (req) => {
 
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  console.log("SERVICE_ROLE_KEY:", serviceRoleKey ? serviceRoleKey.substring(0, 8) + "..." : "NOT FOUND");
-  console.log("SUPABASE_URL:", supabaseUrl);
-
-  if (!serviceRoleKey) {
-    console.log("ERRO: SUPABASE_SERVICE_ROLE_KEY não encontrada no ambiente!");
-    return new Response(JSON.stringify({ error: "Service Role Key não encontrada no ambiente da função." }), { status: 500, headers: corsHeaders });
+  console.log("SERVICE_ROLE_KEY:", serviceRoleKey ? serviceRoleKey.substring(0, 8) + "..." : "NOT FOUND");if (!serviceRoleKey) {return new Response(JSON.stringify({ error: "Service Role Key não encontrada no ambiente da função." }), { status: 500, headers: corsHeaders });
   }
 
-  if (!supabaseUrl) {
-    console.log("ERRO: SUPABASE_URL não encontrada no ambiente!");
-    return new Response(JSON.stringify({ error: "SUPABASE_URL não encontrada no ambiente da função." }), { status: 500, headers: corsHeaders });
+  if (!supabaseUrl) {return new Response(JSON.stringify({ error: "SUPABASE_URL não encontrada no ambiente da função." }), { status: 500, headers: corsHeaders });
   }
 
   const supabase = createClient(
@@ -33,10 +26,7 @@ serve(async (req) => {
   );
 
   try {
-    const { userId } = await req.json();
-    console.log("userId recebido:", userId);
-
-    if (!userId) {
+    const { userId } = await req.json();if (!userId) {
       return new Response(JSON.stringify({ error: "userId obrigatório" }), { status: 400, headers: corsHeaders });
     }
 
@@ -47,8 +37,6 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders });
-  } catch (err) {
-    console.log("Erro interno:", err);
-    return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500, headers: corsHeaders });
+  } catch (err) {return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500, headers: corsHeaders });
   }
 }); 

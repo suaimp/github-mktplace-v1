@@ -15,6 +15,7 @@ import { formatCurrency } from "../../components/marketplace/utils";
 import { OrderItemService } from "../../services/db-services/marketplace-services/order/OrderItemService";
 import PixPaymentWatcher from "./PixPaymentWatcher";
 import { v4 as uuidv4 } from 'uuid';
+import { useCustomSticky } from "../../hooks/useCustomSticky";
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -70,6 +71,7 @@ export default function Payment() {
     documentNumber: "",
     phone: "",
   });
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderSummary, setOrderSummary] = useState({
     items: [] as any[],
@@ -95,6 +97,13 @@ export default function Payment() {
     country: "BR"
   });
   const [idempotencyKey] = useState(() => uuidv4());
+
+  // Estados de validação individuais para cada formulário
+  const [isPaymentInfoFormValid, setIsPaymentInfoFormValid] = useState(false);
+  const [isCardFormValid, setIsCardFormValid] = useState(false);
+
+  // Hook para sticky positioning personalizado
+  const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
 
   useEffect(() => {
     loadPaymentSettings();
@@ -188,16 +197,33 @@ export default function Payment() {
 
       // Set available payment methods from settings
       if (data?.payment_methods && Array.isArray(data.payment_methods) && data.payment_methods.length > 0) {
-        setAvailablePaymentMethods(data.payment_methods);
-
-        console.log("PAYMENT METHODS SET FROM DATABASE:", {
-          paymentMethods: data.payment_methods,
-          defaultMethod: data.payment_methods[0],
-          timestamp: new Date().toISOString(),
-        });
-
-        // Set default payment method to the first available one
-        setPaymentMethod(data.payment_methods[0]);
+        // Filter out any invalid payment methods
+        const validPaymentMethods = data.payment_methods.filter(method => 
+          typeof method === 'string' && ['card', 'pix', 'boleto'].includes(method)
+        );
+        
+        if (validPaymentMethods.length > 0) {
+          setAvailablePaymentMethods(validPaymentMethods);
+          setPaymentMethod(validPaymentMethods[0]);
+          
+          console.log("PAYMENT METHODS SET FROM DATABASE:", {
+            originalPaymentMethods: data.payment_methods,
+            validPaymentMethods: validPaymentMethods,
+            defaultMethod: validPaymentMethods[0],
+            timestamp: new Date().toISOString(),
+          });
+        } else {
+          // Fallback to default if no valid methods found
+          const defaultPaymentMethods = ["card", "pix", "boleto"];
+          setAvailablePaymentMethods(defaultPaymentMethods);
+          setPaymentMethod(defaultPaymentMethods[0]);
+          
+          console.log("NO VALID PAYMENT METHODS FROM DATABASE, USING DEFAULT:", {
+            originalPaymentMethods: data.payment_methods,
+            defaultPaymentMethods: defaultPaymentMethods,
+            timestamp: new Date().toISOString(),
+          });
+        }
       } else {
         // Use default payment methods including PIX if not configured in database
         const defaultPaymentMethods = ["card", "pix", "boleto"];
@@ -343,10 +369,58 @@ export default function Payment() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    // PROTEÇÃO: Garantir que value nunca seja undefined ou null
+    const safeValue = (value !== null && value !== undefined) ? String(value) : "";
+    
+    console.log("🔄 DEBUG INPUT CHANGE (Payment.tsx):", {
+      name: name,
+      rawValue: value,
+      safeValue: safeValue,
+      valueLength: safeValue?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Log específico para telefone
+    if (name === "phone") {
+      console.log("📞 PHONE FIELD CHANGE DETECTED:", {
+        rawValue: value,
+        safeValue: safeValue,
+        valueType: typeof safeValue,
+        valueLength: safeValue?.length || 0,
+        rawValueJSON: JSON.stringify(value),
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // CORREÇÃO: Usar setFormData diretamente para garantir que o valor seja definido
+    setFormData((prev) => {
+      const newFormData = {
+        ...prev,
+        [name]: safeValue,
+      };
+      
+      console.log("🔄 FORM DATA UPDATED (Payment.tsx):", {
+        field: name,
+        oldValue: prev[name as keyof typeof prev],
+        newValue: safeValue,
+        newFormData: newFormData,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Log específico quando telefone é atualizado no formData
+      if (name === "phone") {
+        console.log("📞 PHONE IN FORM DATA AFTER UPDATE:", {
+          phoneValue: newFormData.phone,
+          phoneType: typeof newFormData.phone,
+          phoneLength: newFormData.phone?.length || 0,
+          allFormData: newFormData,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      return newFormData;
+    });
   };
 
   const handlePaymentMethodChange = (method: string) => {
@@ -510,50 +584,47 @@ export default function Payment() {
       setProcessing(false);
     }
   };
+  // Função específica para sucesso de pagamento PIX (evita duplicação com cartão)
   const handlePaymentSuccess = async (paymentId: string) => {
     try {
       setProcessing(true);
 
-      console.log("🎉 PAYMENT SUCCESS - Processando pagamento bem-sucedido:", {
+      console.log("🎉 PIX PAYMENT SUCCESS - Processando pagamento PIX bem-sucedido:", {
         paymentId: paymentId,
         paymentMethod: paymentMethod,
         timestamp: new Date().toISOString(),
-      }); // Create order in database
-      const order = await createOrderInDatabase(paymentId);
-
-      if (order) {
-        // Store the order ID
-        setCurrentOrderId(order.id);
-
-        // Update payment status to "paid" for successful payments
-        console.log("💳 Atualizando status do pagamento para 'paid':", {
-          orderId: order.id,
-          paymentMethod: paymentMethod,
+      }); 
+      
+      // Para PIX, o pedido já foi criado em createPixOrderInDatabase
+      // Apenas atualizar o status e mostrar sucesso
+      if (currentOrderId) {
+        // Update payment status to "paid" for successful PIX payments
+        console.log("💳 Atualizando status do pagamento PIX para 'paid':", {
+          orderId: currentOrderId,
+          paymentMethod: "pix",
         });
 
         const { updateOrderStatus } = await import(
           "../../services/db-services/marketplace-services/order/OrderService"
         );
         const updateSuccess = await updateOrderStatus(
-          order.id,
+          currentOrderId,
           "approved",
           "paid"
         );
 
         if (updateSuccess) {
-          console.log(
-            "✅ Status do pagamento atualizado com sucesso para 'paid'"
-          );
+          console.log("✅ Status do pagamento PIX atualizado com sucesso para 'paid'");
         } else {
-          console.error("❌ Falha ao atualizar status do pagamento");
+          console.error("❌ Falha ao atualizar status do pagamento PIX");
         }
 
-        // Enviar e-mail de compra para MoisesDev2022@gmail.com (notificação de compra)
+        // Enviar e-mail de compra para PIX
         try {
           const orderEmailData = {
             name: formData.name,
             email: formData.email,
-            total: order.total_amount,
+            total: orderSummary.totalProductPrice + orderSummary.totalContentPrice,
             items: orderSummary.items.map((item: any) => {
               // Niche
               let niche = "";
@@ -588,10 +659,8 @@ export default function Payment() {
               };
             }),
           };
-          const payload = {
-            order: orderEmailData,
-          };
-          console.log("Dados enviados para função Edge:", JSON.stringify(payload));
+          const payload = { order: orderEmailData };
+          console.log("Dados enviados para função Edge (PIX):", JSON.stringify(payload));
           await fetch(
             "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
             {
@@ -600,17 +669,17 @@ export default function Payment() {
               body: JSON.stringify(payload),
             }
           );
-          console.log("E-mail de notificação de compra enviado para cliente e administrador (boleto/pix)");
+          console.log("E-mail de notificação de compra enviado para cliente e administrador (PIX)");
         } catch (emailErr) {
-          console.error("Erro ao enviar e-mail de compra (boleto/pix):", emailErr);
+          console.error("Erro ao enviar e-mail de compra (PIX):", emailErr);
         }
       }
 
       // Show success message
       setSuccess(true);
     } catch (error) {
-      console.error("Error processing successful payment:", error);
-      console.log("PAYMENT SUCCESS PROCESSING ERROR:", {
+      console.error("Error processing successful PIX payment:", error);
+      console.log("PIX PAYMENT SUCCESS PROCESSING ERROR:", {
         errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
         paymentId: paymentId,
@@ -618,7 +687,7 @@ export default function Payment() {
         orderSummary: orderSummary,
         formData: formData,
       });
-      setError("Erro ao finalizar o pagamento");
+      setError("Erro ao finalizar o pagamento PIX");
     } finally {
       setProcessing(false);
     }
@@ -995,7 +1064,90 @@ export default function Payment() {
       const statusesAceitos = ['paid', 'approved', 'processing', 'pending_payment', 'authorized'];
       if (statusesAceitos.includes(result.status)) {
         console.log('✅ Pagamento aceito com status:', result.status);
-        await handlePaymentSuccess(result.id);
+        
+        // Para cartão, criar pedido diretamente aqui (não duplicar via handlePaymentSuccess)
+        const order = await createOrderInDatabase(result.id);
+        
+        if (order) {
+          setCurrentOrderId(order.id);
+          
+          // Update payment status to "paid" for successful payments
+          console.log("💳 Atualizando status do pagamento para 'paid':", {
+            orderId: order.id,
+            paymentMethod: paymentMethod,
+          });
+
+          const { updateOrderStatus } = await import(
+            "../../services/db-services/marketplace-services/order/OrderService"
+          );
+          const updateSuccess = await updateOrderStatus(
+            order.id,
+            "approved",
+            "paid"
+          );
+
+          if (updateSuccess) {
+            console.log("✅ Status do pagamento atualizado com sucesso para 'paid'");
+          } else {
+            console.error("❌ Falha ao atualizar status do pagamento");
+          }
+
+          // Enviar e-mail de confirmação
+          try {
+            const orderEmailData = {
+              name: formData.name,
+              email: formData.email,
+              total: order.total_amount,
+              items: orderSummary.items.map((item: any) => {
+                let niche = "";
+                if (Array.isArray(item.niche_selected) && item.niche_selected.length > 0) {
+                  try {
+                    const parsed = JSON.parse(item.niche_selected[0]);
+                    niche = parsed.niche || parsed.title || parsed.name || "";
+                  } catch {
+                    niche = "";
+                  }
+                }
+                let pacote = "";
+                let word_count = "";
+                if (Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+                  try {
+                    const parsed = JSON.parse(item.service_selected[0]);
+                    pacote = parsed.title || parsed.name || "";
+                    word_count = parsed.word_count || "";
+                  } catch {
+                    pacote = "";
+                    word_count = "";
+                  }
+                }
+                return {
+                  name: item.product_url || "Produto",
+                  quantity: item.quantity,
+                  price: item.price,
+                  niche,
+                  package: pacote,
+                  word_count,
+                };
+              }),
+            };
+            const payload = { order: orderEmailData };
+            console.log("Dados enviados para função Edge:", JSON.stringify(payload));
+            await fetch(
+              "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              }
+            );
+            console.log("E-mail de notificação de compra enviado para cliente e administrador (cartão)");
+          } catch (emailErr) {
+            console.error("Erro ao enviar e-mail de compra (cartão):", emailErr);
+          }
+          
+          // Show success message
+          setSuccess(true);
+        }
       } else {
         console.log('❌ Status não aceito:', result.status);
         console.log('Status aceitos:', statusesAceitos);
@@ -1009,29 +1161,58 @@ export default function Payment() {
     }
   }
 
+  // Função para validar apenas o formulário de cartão de crédito
+  const validateCardForm = () => {
+    const cardNumberValid = !!(cardData.cardNumber && cardData.cardNumber.trim().length >= 13);
+    const cardExpiryValid = !!(cardData.cardExpiry && cardData.cardExpiry.trim().length >= 4);
+    const cardCvcValid = !!(cardData.cardCvc && cardData.cardCvc.trim().length >= 3);
+    const cardHolderValid = !!(cardData.cardholderName && cardData.cardholderName.trim().length >= 2);
+    const countryValid = !!(cardData.country && cardData.country.trim().length >= 2);
+    
+    return cardNumberValid && cardExpiryValid && cardCvcValid && cardHolderValid && countryValid;
+  };
+
   // Função para validar se o formulário de informações de pagamento está preenchido para PIX
   const isPixFormValid = () => {
-    return (
-      !!formData.name &&
-      !!formData.email &&
-      !!formData.documentNumber &&
-      !!formData.phone
-    );
+    const nameValid = !!(formData.name && formData.name.trim().length >= 2);
+    const emailValid = !!(formData.email && formData.email.trim().includes('@'));
+    const documentValid = !!(formData.documentNumber && formData.documentNumber.trim().length >= 8);
+    const phoneValid = !!(formData.phone && formData.phone.trim().length >= 8);
+    
+    return nameValid && emailValid && documentValid && phoneValid;
   };
 
   // Função para validar se todos os campos obrigatórios dos dois formulários estão preenchidos
   const isAllFormsValid = () => {
-    // Campos obrigatórios do formulário de informações de pagamento
-    const infoValid = !!formData.name && !!formData.email && !!formData.address && !!formData.city && !!formData.state && !!formData.zipCode && !!formData.documentNumber && !!formData.phone;
-    // Campos obrigatórios do cartão de crédito
-    const cardValid = !!cardData.cardNumber && !!cardData.cardExpiry && !!cardData.cardCvc && !!cardData.cardholderName && !!cardData.country;
-    // Só exige cartão se o método for cartão
+    // Para cartão, precisa dos dois formulários válidos
     if (paymentMethod === "card") {
-      return infoValid && cardValid;
+      return isPaymentInfoFormValid && isCardFormValid;
     }
-    // Para outros métodos, só exige infoValid
-    return infoValid;
+    // Para outros métodos, só precisa do formulário de informações
+    return isPaymentInfoFormValid;
   };
+
+  // useEffect para atualizar estado de validação do formulário de cartão
+  useEffect(() => {
+    const isValid = validateCardForm();
+    setIsCardFormValid(isValid);
+  }, [cardData]);
+
+  // useEffect para monitorar mudanças no isPaymentInfoFormValid
+  useEffect(() => {
+    console.log("🎯 isPaymentInfoFormValid CHANGED:", {
+      newValue: isPaymentInfoFormValid,
+      timestamp: new Date().toISOString()
+    });
+  }, [isPaymentInfoFormValid]);
+
+  // useEffect para monitorar mudanças no isPaymentInfoFormValid
+  useEffect(() => {
+    console.log("🎯 isPaymentInfoFormValid CHANGED:", {
+      newValue: isPaymentInfoFormValid,
+      timestamp: new Date().toISOString()
+    });
+  }, [isPaymentInfoFormValid]);
 
   if (loading) {
     return (
@@ -1364,43 +1545,66 @@ export default function Payment() {
         />
       )}
 
-      <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto">
-        <div className="w-full md:w-3/5">
-          <PaymentInformationForm
-            formData={formData}
-            onChange={handleInputChange}
-          />
+      <div className="min-h-screen">
+        <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto items-start">
+          <div className="w-full md:w-3/5">
+            <PaymentInformationForm
+              formData={formData}
+              onChange={handleInputChange}
+              onValidSubmit={(isValid) => {
+                console.log("🎯 RECEBIDO RESULTADO DA VALIDAÇÃO NO PAYMENT.TSX:", {
+                  isValid: isValid,
+                  timestamp: new Date().toISOString()
+                });
+                console.log("📝 ANTES: isPaymentInfoFormValid =", isPaymentInfoFormValid);
+                setIsPaymentInfoFormValid(isValid);
+                console.log("📝 DEPOIS: setIsPaymentInfoFormValid chamado com:", isValid);
+              }}
+            />
 
-          <PaymentMethodForm
-            paymentMethod={paymentMethod}
-            // stripePromise={stripePromise} // [PAUSADO] Stripe temporariamente desativado
-            totalAmount={totalAmount}
-            pixQrCodeUrl={pixQrCodeUrl}
-            pixCopiaECola={pixCopiaECola}
-            total={
-              orderSummary.totalProductPrice + orderSummary.totalContentPrice
-            }
-            processing={processing}
-            error={error}
-            termsAccepted={termsAccepted}
-            pixFormValid={isPixFormValid()}
-            availablePaymentMethods={availablePaymentMethods}
-            onPaymentMethodChange={handlePaymentMethodChange}
-            onTermsAcceptedChange={setTermsAccepted}
-            onSubmit={handleSubmit}
-            onPaymentSuccess={handlePaymentSuccess}
-            onPaymentError={handlePaymentError}
-            onCardDataChange={handleCardDataChange}
-            cardData={cardData}
-            setCardData={setCardData}
-            onGeneratePixQrCode={generatePixQrCode}
-            allFormsValid={isAllFormsValid()}
-          />
-        </div>
+            <PaymentMethodForm
+              paymentMethod={paymentMethod}
+              // stripePromise={stripePromise} // [PAUSADO] Stripe temporariamente desativado
+              totalAmount={totalAmount}
+              pixQrCodeUrl={pixQrCodeUrl}
+              pixCopiaECola={pixCopiaECola}
+              total={
+                orderSummary.totalProductPrice + orderSummary.totalContentPrice
+              }
+              processing={processing}
+              error={error}
+              termsAccepted={termsAccepted}
+              pixFormValid={isPixFormValid()}
+              availablePaymentMethods={availablePaymentMethods}
+              onPaymentMethodChange={handlePaymentMethodChange}
+              onTermsAcceptedChange={setTermsAccepted}
+              onSubmit={handleSubmit}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onCardDataChange={handleCardDataChange}
+              cardData={cardData}
+              setCardData={setCardData}
+              onGeneratePixQrCode={generatePixQrCode}
+              allFormsValid={isAllFormsValid()}
+              // NOVOS: Estados de validação individuais
+              isPaymentInfoFormValid={isPaymentInfoFormValid}
+              isCardFormValid={isCardFormValid}
+            />
+          </div>
 
-        <div className="w-full md:w-2/5">
-          {/* Substituído OrderSummary por FinishOrder */}
-          <FinishOrder />
+          {/* Container com largura fixa para o sticky */}
+          <div className="w-full md:w-2/5">
+            {/* Placeholder para manter o espaço quando sticky estiver ativo */}
+            <div ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+            
+            <div 
+              ref={stickyHook.ref}
+              style={stickyHook.style}
+              className="w-full"
+            >
+              <FinishOrder />
+            </div>
+          </div>
         </div>
       </div>
     </>
