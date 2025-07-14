@@ -79,22 +79,6 @@ function PaymentInformationForm({
     return isValid;
   };
 
-  // Função para lidar com o submit do formulário
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("� SUBMIT BUTTON CLICKED - PaymentInformationForm");
-    console.log("�📝 SUBMIT DO FORMULÁRIO DE INFORMAÇÕES DE PAGAMENTO");
-    
-    const isValid = validatePaymentInfoForm();
-    
-    console.log("🎯 ENVIANDO RESULTADO DA VALIDAÇÃO PARA O COMPONENTE PAI:", {
-      isValid: isValid,
-      timestamp: new Date().toISOString()
-    });
-    
-    onValidSubmit(isValid);
-  };
-
   const brazilianStates = [
     { value: "AC", label: "Acre" },
     { value: "AL", label: "Alagoas" },
@@ -160,6 +144,28 @@ function PaymentInformationForm({
       timestamp: new Date().toISOString()
     });
   }, [formData.phone]);
+
+  // Effect para validação automática quando todos os campos estiverem preenchidos
+  useEffect(() => {
+    // Só executa se os dados já foram carregados (para evitar validar durante o loading inicial)
+    if (dataLoaded && !loading) {
+      // Pequeno delay para garantir que todas as mudanças foram aplicadas
+      const validationTimer = setTimeout(() => {
+        console.log("🔍 AUTO VALIDATION CHECK - Verificando se formulário está completo");
+        
+        const isValid = validatePaymentInfoForm();
+        
+        console.log("🎯 ENVIANDO RESULTADO DA VALIDAÇÃO PARA O COMPONENTE PAI:", {
+          isValid: isValid,
+          timestamp: new Date().toISOString()
+        });
+        
+        onValidSubmit(isValid);
+      }, 300); // 300ms de delay para aguardar sincronização completa
+      
+      return () => clearTimeout(validationTimer);
+    }
+  }, [formData, dataLoaded, loading]); // Executa sempre que formData mudar
 
   async function loadUserData() {
     try {
@@ -369,121 +375,109 @@ function PaymentInformationForm({
           : "Dados Pessoais"}
       </p>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label>
-              {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
-              <span className="text-error-500">*</span>
-            </Label>
-            <Input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>
-              Email <span className="text-error-500">*</span>
-            </Label>
-            <MaskedInput
-              mask="email"
-              name="email"
-              value={formData.email}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>
-              Endereço <span className="text-error-500">*</span>
-            </Label>
-            <Input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>
-              Cidade <span className="text-error-500">*</span>
-            </Label>
-            <Input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>
-              Estado <span className="text-error-500">*</span>
-            </Label>
-            <Select
-              options={brazilianStates}
-              value={formData.state}
-              onChange={(value) =>
-                onChange({
-                  target: { name: "state", value }
-                } as React.ChangeEvent<HTMLSelectElement>)
-              }
-              placeholder="Selecione um estado"
-            />
-          </div>
-          <div>
-            <Label>
-              CEP <span className="text-error-500">*</span>
-            </Label>
-            <MaskedInput
-              mask="cep"
-              name="zipCode"
-              value={formData.zipCode}
-              onChange={onChange}
-              required
-            />
-          </div>{" "}
-          <div>
-            <Label>
-              {accountType === "business" ? "CNPJ" : "CPF"}{" "}
-              <span className="text-error-500">*</span>
-            </Label>
-            <MaskedInput
-              mask={accountType === "business" ? "cnpj" : "cpf"}
-              name="documentNumber"
-              value={formData.documentNumber}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>
-              Telefone/Celular <span className="text-error-500">*</span>
-            </Label>
-            <MaskedInput
-              mask="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={onChange}
-              required
-            />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label>
+            {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
+            <span className="text-error-500">*</span>
+          </Label>
+          <Input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={onChange}
+            required
+          />
         </div>
-        
-        {/* Botão de submit */}
-        <div className="mt-6">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
-          >
-            Validar Informações de Pagamento
-          </button>
+        <div>
+          <Label>
+            Email <span className="text-error-500">*</span>
+          </Label>
+          <MaskedInput
+            mask="email"
+            name="email"
+            value={formData.email}
+            onChange={onChange}
+            required
+          />
         </div>
-      </form>
+        <div>
+          <Label>
+            Endereço <span className="text-error-500">*</span>
+          </Label>
+          <Input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={onChange}
+            required
+          />
+        </div>
+        <div>
+          <Label>
+            Cidade <span className="text-error-500">*</span>
+          </Label>
+          <Input
+            type="text"
+            name="city"
+            value={formData.city}
+            onChange={onChange}
+            required
+          />
+        </div>
+        <div>
+          <Label>
+            Estado <span className="text-error-500">*</span>
+          </Label>
+          <Select
+            options={brazilianStates}
+            value={formData.state}
+            onChange={(value) =>
+              onChange({
+                target: { name: "state", value }
+              } as React.ChangeEvent<HTMLSelectElement>)
+            }
+            placeholder="Selecione um estado"
+          />
+        </div>
+        <div>
+          <Label>
+            CEP <span className="text-error-500">*</span>
+          </Label>
+          <MaskedInput
+            mask="cep"
+            name="zipCode"
+            value={formData.zipCode}
+            onChange={onChange}
+            required
+          />
+        </div>
+        <div>
+          <Label>
+            {accountType === "business" ? "CNPJ" : "CPF"}{" "}
+            <span className="text-error-500">*</span>
+          </Label>
+          <MaskedInput
+            mask={accountType === "business" ? "cnpj" : "cpf"}
+            name="documentNumber"
+            value={formData.documentNumber}
+            onChange={onChange}
+            required
+          />
+        </div>
+        <div>
+          <Label>
+            Telefone/Celular <span className="text-error-500">*</span>
+          </Label>
+          <MaskedInput
+            mask="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={onChange}
+            required
+          />
+        </div>
+      </div>
     </div>
   );
 }
