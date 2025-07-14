@@ -6,6 +6,7 @@ import InputMask from "react-input-mask";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Select from "../form/Select";
+import Checkbox from "../form/input/Checkbox";
 
 interface PaymentMethodFormProps {
   paymentMethod: string;
@@ -38,6 +39,18 @@ interface PaymentMethodFormProps {
    * Callback chamado para gerar QR Code PIX.
    */
   onGeneratePixQrCode?: () => void;
+  /**
+   * Indica se todos os campos obrigatórios dos dois formulários estão preenchidos
+   */
+  allFormsValid: boolean;
+  cardData: {
+    cardNumber: string;
+    cardExpiry: string;
+    cardCvc: string;
+    cardholderName: string;
+    country: string;
+  };
+  setCardData: (data: any) => void;
 }
 
 export default function PaymentMethodForm({
@@ -58,15 +71,11 @@ export default function PaymentMethodForm({
   onPaymentSuccess,
   onPaymentError,
   onCardDataChange,
-  onGeneratePixQrCode
+  onGeneratePixQrCode,
+  allFormsValid,
+  cardData,
+  setCardData
 }: PaymentMethodFormProps) {
-  const [cardData, setCardData] = useState({
-    cardNumber: "",
-    cardExpiry: "",
-    cardCvc: "",
-    cardholderName: "",
-    country: "BR"
-  });
   const [pixCopied, setPixCopied] = useState(false);
   const [isGeneratingQrCode, setIsGeneratingQrCode] = useState(false);
   const [qrCodeTimer, setQrCodeTimer] = useState(0);
@@ -176,6 +185,17 @@ export default function PaymentMethodForm({
       onSubmit({ preventDefault: () => {} } as React.FormEvent);
     }
   };
+
+  // NOVO: Função para validar se todos os campos obrigatórios do cartão e do formulário de pagamento estão preenchidos
+  function isCreditCardFormValid() {
+    // Validação dos campos do cartão
+    const cardOk = !!cardData.cardNumber && !!cardData.cardExpiry && !!cardData.cardCvc && !!cardData.cardholderName && !!cardData.country;
+    // Validação dos campos do formulário de informações de pagamento
+    // Recebemos via props: formData (do Payment.tsx), mas aqui não temos acesso direto
+    // Solução: receber um novo prop chamado creditCardFormValid (boolean) do pai
+    // Por enquanto, só validamos os campos do cartão aqui
+    return cardOk;
+  }
 
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
@@ -314,96 +334,127 @@ export default function PaymentMethodForm({
         )}
 
         {paymentMethod === "card" && (
-          <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
-            {" "}
-            {stripePromise ? (
-              <Elements stripe={stripePromise}>
-                <StripePaymentForm
-                  ref={stripePaymentRef}
-                  amount={totalAmount}
-                  currency="brl"
-                  onSuccess={onPaymentSuccess}
-                  onError={onPaymentError}
-                />
-              </Elements>
-            ) : (
-              <form className="space-y-4">
-                <div>
-                  <Label>Nome no cartão</Label>
-                  <Input
-                    type="text"
-                    name="cardholderName"
-                    value={cardData.cardholderName}
-                    onChange={handleCardInputChange}
-                    placeholder="Nome como aparece no cartão"
-                    required
+          <>
+            <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
+              {stripePromise ? (
+                <Elements stripe={stripePromise}>
+                  <StripePaymentForm
+                    ref={stripePaymentRef}
+                    amount={totalAmount}
+                    currency="brl"
+                    onSuccess={onPaymentSuccess}
+                    onError={onPaymentError}
                   />
-                </div>
-
-                <div>
-                  <Label>Número do cartão</Label>
-                  <InputMask
-                    mask="9999 9999 9999 9999"
-                    value={cardData.cardNumber}
-                    onChange={handleCardInputChange}
-                    name="cardNumber"
-                    placeholder="0000 0000 0000 0000"
-                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                </Elements>
+              ) : (
+                <form className="space-y-4">
                   <div>
-                    <Label>Data de expiração</Label>
-                    <InputMask
-                      mask="99/99"
-                      value={cardData.cardExpiry}
+                    <Label>Nome no cartão</Label>
+                    <Input
+                      type="text"
+                      name="cardholderName"
+                      value={cardData.cardholderName}
                       onChange={handleCardInputChange}
-                      name="cardExpiry"
-                      placeholder="MM/AA"
+                      placeholder="Nome como aparece no cartão"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Número do cartão</Label>
+                    <InputMask
+                      mask="9999 9999 9999 9999"
+                      value={cardData.cardNumber}
+                      onChange={handleCardInputChange}
+                      name="cardNumber"
+                      placeholder="0000 0000 0000 0000"
                       className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       required
                     />
                   </div>
-
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Data de expiração</Label>
+                      <InputMask
+                        mask="99/99"
+                        value={cardData.cardExpiry}
+                        onChange={handleCardInputChange}
+                        name="cardExpiry"
+                        placeholder="MM/AA"
+                        className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Código de segurança</Label>
+                      <InputMask
+                        mask="999"
+                        value={cardData.cardCvc}
+                        onChange={handleCardInputChange}
+                        name="cardCvc"
+                        placeholder="CVC"
+                        className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                        required
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <Label>Código de segurança</Label>
-                    <InputMask
-                      mask="999"
-                      value={cardData.cardCvc}
-                      onChange={handleCardInputChange}
-                      name="cardCvc"
-                      placeholder="CVC"
-                      className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      required
+                    <Label>País</Label>
+                    <Select
+                      options={[
+                        { value: "BR", label: "Brasil" },
+                        { value: "US", label: "Estados Unidos" },
+                        { value: "CA", label: "Canadá" },
+                        { value: "MX", label: "México" },
+                        { value: "AR", label: "Argentina" },
+                        { value: "CL", label: "Chile" },
+                        { value: "CO", label: "Colômbia" },
+                        { value: "PE", label: "Peru" },
+                        { value: "UY", label: "Uruguai" }
+                      ]}
+                      value={cardData.country}
+                    onChange={(value) => {
+                      const updated = { ...cardData, country: value };
+                      setCardData(updated);
+                      if (onCardDataChange) onCardDataChange(updated);
+                    }}
                     />
                   </div>
+                </form>
+              )}
+            </div>
+            {/* Checkbox de termos e condições acima do botão de pagar */}
+            <div className="mb-4 flex flex-col items-start mt-6">
+              <Checkbox
+                checked={termsAccepted}
+                onChange={onTermsAcceptedChange}
+                label={
+                  <span>
+                    Eu aceito os{' '}
+                    <button
+                      type="button"
+                      className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                    >
+                      termos e condições
+                    </button>
+                  </span>
+                }
+              />
+              {!termsAccepted && (
+                <div className="text-error-500 text-sm mt-1">
+                  Por favor, aceite os termos e condições para continuar
                 </div>
-
-                <div>
-                  <Label>País</Label>
-                  <Select
-                    options={[
-                      { value: "BR", label: "Brasil" },
-                      { value: "US", label: "Estados Unidos" },
-                      { value: "CA", label: "Canadá" },
-                      { value: "MX", label: "México" },
-                      { value: "AR", label: "Argentina" },
-                      { value: "CL", label: "Chile" },
-                      { value: "CO", label: "Colômbia" },
-                      { value: "PE", label: "Peru" },
-                      { value: "UY", label: "Uruguai" }
-                    ]}
-                    value={cardData.country}
-                    onChange={(value) =>
-                      setCardData((prev) => ({ ...prev, country: value }))
-                    }
-                  />
-                </div>
-              </form>
-            )}
-          </div>
+              )}
+            </div>
+            {/* Botão de pagar */}
+            <button
+              type="button"
+              onClick={handlePaymentSubmit}
+              disabled={processing || !termsAccepted || !allFormsValid}
+              className="w-full px-4 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:bg-brand-300"
+            >
+              {processing ? "Processando..." : `Pagar ${formatCurrency(total)}`}
+            </button>
+          </>
         )}
 
         {paymentMethod === "pix" && (
@@ -598,8 +649,8 @@ export default function PaymentMethodForm({
             </div>
           </div>
         )}
-      </div>{" "}
-      {paymentMethod !== "pix" && (
+      </div>
+      {paymentMethod === "boleto" && (
         <button
           type="button"
           onClick={handlePaymentSubmit}

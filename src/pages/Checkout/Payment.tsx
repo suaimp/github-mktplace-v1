@@ -1019,6 +1019,20 @@ export default function Payment() {
     );
   };
 
+  // Função para validar se todos os campos obrigatórios dos dois formulários estão preenchidos
+  const isAllFormsValid = () => {
+    // Campos obrigatórios do formulário de informações de pagamento
+    const infoValid = !!formData.name && !!formData.email && !!formData.address && !!formData.city && !!formData.state && !!formData.zipCode && !!formData.documentNumber && !!formData.phone;
+    // Campos obrigatórios do cartão de crédito
+    const cardValid = !!cardData.cardNumber && !!cardData.cardExpiry && !!cardData.cardCvc && !!cardData.cardholderName && !!cardData.country;
+    // Só exige cartão se o método for cartão
+    if (paymentMethod === "card") {
+      return infoValid && cardValid;
+    }
+    // Para outros métodos, só exige infoValid
+    return infoValid;
+  };
+
   if (loading) {
     return (
       <>
@@ -1377,7 +1391,10 @@ export default function Payment() {
             onPaymentSuccess={handlePaymentSuccess}
             onPaymentError={handlePaymentError}
             onCardDataChange={handleCardDataChange}
+            cardData={cardData}
+            setCardData={setCardData}
             onGeneratePixQrCode={generatePixQrCode}
+            allFormsValid={isAllFormsValid()}
           />
         </div>
 

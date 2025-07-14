@@ -1,7 +1,8 @@
 import type React from "react";
+import type { ReactNode } from "react";
 
 interface CheckboxProps {
-  label?: string;
+  label?: ReactNode;
   checked: boolean;
   className?: string;
   id?: string;
