@@ -186,16 +186,7 @@ export default function PaymentMethodForm({
     }
   };
 
-  // NOVO: Função para validar se todos os campos obrigatórios do cartão e do formulário de pagamento estão preenchidos
-  function isCreditCardFormValid() {
-    // Validação dos campos do cartão
-    const cardOk = !!cardData.cardNumber && !!cardData.cardExpiry && !!cardData.cardCvc && !!cardData.cardholderName && !!cardData.country;
-    // Validação dos campos do formulário de informações de pagamento
-    // Recebemos via props: formData (do Payment.tsx), mas aqui não temos acesso direto
-    // Solução: receber um novo prop chamado creditCardFormValid (boolean) do pai
-    // Por enquanto, só validamos os campos do cartão aqui
-    return cardOk;
-  }
+ 
 
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
