@@ -31,7 +31,6 @@ serve(async (req) => {
   }
 
   if (!secret_key_prod.startsWith('sk_')) {
-    console.log("ERRO: Chave PAGARME deve ser uma chave secreta (sk_)!");
     return new Response(JSON.stringify({ 
       error: 'Secret key inválida',
       debug: 'Use uma chave secreta (sk_) na variável PAGARME'
@@ -42,7 +41,6 @@ serve(async (req) => {
   }
 
   if (!public_key_prod.startsWith('pk_')) {
-    console.log("ERRO: Chave PAGARME_PUBLIC_KEY deve ser uma chave pública (pk_)!");
     return new Response(JSON.stringify({ 
       error: 'Public key inválida',
       debug: 'Use uma chave pública (pk_) na variável PAGARME_PUBLIC_KEY'
@@ -55,11 +53,18 @@ serve(async (req) => {
   // Autenticação do usuário (precisa ser antes de buscar configurações)
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
   const authHeader = req.headers.get("Authorization");
   const jwt = authHeader ? authHeader.replace("Bearer ", "") : "";
-  
+
+  // Cria o client do Supabase já com o JWT do usuário nas headers globais
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    },
+  });
+
   const { data: { user }, error } = await supabase.auth.getUser(jwt);
   if (error || !user) {
     return new Response(JSON.stringify({ 
@@ -79,35 +84,52 @@ serve(async (req) => {
   }
 
   // Buscar configuração do modo teste no banco
-  const { data: settings } = await supabase
+  const { data: settingsArr, error: settingsError } = await supabase
     .from("pagarme_settings")
     .select("pagarme_test_mode")
-    .single();
-  
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const settings = settingsArr && settingsArr.length > 0 ? settingsArr[0] : null;
+
+  // NOVO LOG: Mostra o valor lido do banco e se houve erro
+  let logAlternancia = {
+    settings,
+    settingsError,
+    pagarme_test_mode: settings?.pagarme_test_mode,
+    defaultedTo: settings?.pagarme_test_mode === undefined ? 'true (default)' : 'valor do banco',
+  };
+
   const useTestMode = settings?.pagarme_test_mode ?? true; // Default para teste
-  
+
   // Selecionar chaves baseado na configuração
-  let secret_key, public_key;
-  
+  let secret_key, public_key, ambiente;
+
   if (useTestMode && secret_key_test && public_key_test) {
-    // Usar chaves de teste se disponíveis e modo teste ativo
     secret_key = secret_key_test;
     public_key = public_key_test;
-    console.log("[DEBUG] Usando chaves de TESTE");
+    ambiente = 'TESTE';
   } else {
-    // Usar chaves de produção
     secret_key = secret_key_prod;
     public_key = public_key_prod;
-    console.log("[DEBUG] Usando chaves de PRODUÇÃO");
+    ambiente = 'PRODUCAO';
   }
 
-  // Verificar o tipo de ambiente baseado na chave
-  const isTestMode = secret_key.includes('test');
+  // NOVO LOG: Mostra qual ambiente está sendo usado e as chaves (parcial)
+  logAlternancia = {
+    ...logAlternancia,
+    useTestMode,
+    ambiente,
+    secret_key_inicio: secret_key.substring(0, 6),
+    secret_key_fim: secret_key.slice(-4),
+    public_key_inicio: public_key.substring(0, 6),
+    public_key_fim: public_key.slice(-4),
+  };
+
+  // Substitui todos os logs antigos por um único log objetivo
+  console.log('[ALTERNANCIA_PAGARME]', JSON.stringify(logAlternancia));
+
   const basicAuth = "Basic " + btoa(secret_key + ":");
   
-  console.log("[DEBUG] Secret key configurada:", secret_key.substring(0, 6) + "..." + secret_key.slice(-4));
-  console.log("[DEBUG] Public key configurada:", public_key.substring(0, 6) + "..." + public_key.slice(-4));
-
   try {
     const body = await req.json();
     console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));
@@ -118,7 +140,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true,
         message: 'Chaves configuradas corretamente',
-        test_mode: isTestMode,
+        test_mode: useTestMode,
         keys_configured: true
       }), {
         status: 200,
