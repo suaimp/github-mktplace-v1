@@ -941,10 +941,10 @@ export default function Payment() {
       console.log('[DEBUG] Passo 1: Tokenizando cartão...');
       
       // Garantir que o billing_address siga EXATAMENTE o padrão da documentação oficial da Pagar.me
-      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser INTEGER
+      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser STRING de 8 dígitos
       const billingAddress = {
         line_1: formData.address?.trim() || "Rua das Flores, 123",
-        zip_code: parseInt((formData.zipCode?.replace(/\D/g, "") || "01234567")), // INTEGER conforme documentação
+        zip_code: (formData.zipCode?.replace(/\D/g, "") || "01234567"), // STRING de 8 dígitos, preserva zeros à esquerda
         city: formData.city?.trim() || "São Paulo", 
         state: formData.state?.trim() || "SP", // Sigla do estado
         country: "BR" // Sempre BR para Brasil
@@ -954,8 +954,8 @@ export default function Payment() {
       if (!billingAddress.line_1 || billingAddress.line_1.trim() === '') {
         billingAddress.line_1 = "Rua das Flores, 123";
       }
-      if (!billingAddress.zip_code || isNaN(billingAddress.zip_code)) {
-        billingAddress.zip_code = 1234567;
+      if (!billingAddress.zip_code || isNaN(parseInt(billingAddress.zip_code))) {
+        billingAddress.zip_code = "12345678";
       }
       if (!billingAddress.city || billingAddress.city.trim() === '') {
         billingAddress.city = "São Paulo";
