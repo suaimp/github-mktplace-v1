@@ -523,23 +523,7 @@ function PaymentInformationForm({
           />
         </div>
         {/* Exemplo de campo de cartão de crédito */}
-        <div>
-          <Label>Número do cartão</Label>
-          <input
-            type="text"
-            name="cardNumber"
-            value={cardNumber}
-            onChange={handleCardNumberChange}
-            className="input"
-            placeholder="0000 0000 0000 0000"
-          />
-          {cardBrand && cardNumberValid && (
-            <div className="text-green-600 text-sm mt-1">Bandeira: {cardBrand.toUpperCase()}</div>
-          )}
-          {cardNumberError && (
-            <div className="text-error-500 text-sm mt-1">{cardNumberError}</div>
-          )}
-        </div>
+        {/* Removido campo de exemplo de número do cartão conforme solicitado */}
       </div>
     </div>
   );
