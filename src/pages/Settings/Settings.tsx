@@ -3,9 +3,10 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import LogoSettings from "./LogoSettings";
 import SmtpSettings from "./SmtpSettings";
-import StripeSettings from "./StripeSettings";
+// import StripeSettings from "./StripeSettings";
+import PagarmeSettings from "./PagarmeSettings";
 
-type TabType = "logo" | "smtp" | "stripe";
+type TabType = "logo" | "smtp" | "pagarme";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabType>("logo");
@@ -42,10 +43,20 @@ export default function Settings() {
             >
               SMTP
             </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab("stripe")}
               className={`inline-flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium hover:text-gray-700 dark:hover:text-gray-300 ${
                 activeTab === "stripe"
+                  ? "border-brand-500 text-brand-500 dark:text-brand-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400"
+              }`}
+            >
+              Pagamento Marketplace
+            </button> */}
+            <button
+              onClick={() => setActiveTab("pagarme")}
+              className={`inline-flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium hover:text-gray-700 dark:hover:text-gray-300 ${
+                activeTab === "pagarme"
                   ? "border-brand-500 text-brand-500 dark:text-brand-400"
                   : "border-transparent text-gray-500 dark:text-gray-400"
               }`}
@@ -59,7 +70,8 @@ export default function Settings() {
         <div className="p-5 lg:p-6">
           {activeTab === "logo" && <LogoSettings />}
           {activeTab === "smtp" && <SmtpSettings />}
-          {activeTab === "stripe" && <StripeSettings />}
+          {/* {activeTab === "stripe" && <StripeSettings />} */}
+          {activeTab === "pagarme" && <PagarmeSettings />}
         </div>
       </div>
     </>

@@ -13,29 +13,24 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Configuração da API Pagar.me
-  const secret_key = Deno.env.get('PAGARME'); // Chave secreta (sk_) para pagamentos
-  const public_key = Deno.env.get('PAGARME_PUBLIC_KEY'); // Chave pública (pk_) para tokenização
+  // Configuração da API Pagar.me - Sistema híbrido para teste/produção
+  const secret_key_prod = Deno.env.get('PAGARME'); // Chaves de produção (mantém as atuais)
+  const public_key_prod = Deno.env.get('PAGARME_PUBLIC_KEY');
+  const secret_key_test = Deno.env.get('PAGARME_TEST_SECRET'); // Novas chaves de teste
+  const public_key_test = Deno.env.get('PAGARME_TEST_PUBLIC');
   
-  if (!secret_key) {return new Response(JSON.stringify({ 
-      error: 'Secret key não configurada',
-      debug: 'Variável PAGARME não definida nas secrets do Supabase'
+  // Verificar se pelo menos as chaves de produção existem
+  if (!secret_key_prod || !public_key_prod) {
+    return new Response(JSON.stringify({ 
+      error: 'Chaves de produção não configuradas',
+      debug: 'Variáveis PAGARME e PAGARME_PUBLIC_KEY não definidas'
     }), {
       status: 500,
       headers: corsHeaders,
     });
   }
 
-  if (!public_key) {return new Response(JSON.stringify({ 
-      error: 'Public key não configurada',
-      debug: 'Variável PAGARME_PUBLIC_KEY não definida nas secrets do Supabase'
-    }), {
-      status: 500,
-      headers: corsHeaders,
-    });
-  }
-
-  if (!secret_key.startsWith('sk_')) {
+  if (!secret_key_prod.startsWith('sk_')) {
     console.log("ERRO: Chave PAGARME deve ser uma chave secreta (sk_)!");
     return new Response(JSON.stringify({ 
       error: 'Secret key inválida',
@@ -46,7 +41,7 @@ serve(async (req) => {
     });
   }
 
-  if (!public_key.startsWith('pk_')) {
+  if (!public_key_prod.startsWith('pk_')) {
     console.log("ERRO: Chave PAGARME_PUBLIC_KEY deve ser uma chave pública (pk_)!");
     return new Response(JSON.stringify({ 
       error: 'Public key inválida',
@@ -57,25 +52,17 @@ serve(async (req) => {
     });
   }
 
-  // Verificar o tipo de ambiente (test/live) baseado na chave
-  const isTestMode = secret_key.includes('test');
-  const basicAuth = "Basic " + btoa(secret_key + ":");
-  
-  console.log("[DEBUG] Secret key configurada:", secret_key.substring(0, 6) + "..." + secret_key.slice(-4));
-  console.log("[DEBUG] Public key configurada:", public_key.substring(0, 6) + "..." + public_key.slice(-4));// Autenticação do usuário
+  // Autenticação do usuário (precisa ser antes de buscar configurações)
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   const authHeader = req.headers.get("Authorization");
   const jwt = authHeader ? authHeader.replace("Bearer ", "") : "";
   
-  console.log("[DEBUG] Autenticação:", {
-    hasAuthHeader: !!authHeader,
-    jwtLength: jwt?.length || 0,
-    jwtPrefix: jwt ? jwt.substring(0, 20) + "..." : "VAZIO"
-  });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(jwt);if (error || !user) {return new Response(JSON.stringify({ 
+  const { data: { user }, error } = await supabase.auth.getUser(jwt);
+  if (error || !user) {
+    return new Response(JSON.stringify({ 
       error: 'Não autorizado',
       debug: {
         hasAuthHeader: !!authHeader,
@@ -91,9 +78,53 @@ serve(async (req) => {
     });
   }
 
+  // Buscar configuração do modo teste no banco
+  const { data: settings } = await supabase
+    .from("pagarme_settings")
+    .select("pagarme_test_mode")
+    .single();
+  
+  const useTestMode = settings?.pagarme_test_mode ?? true; // Default para teste
+  
+  // Selecionar chaves baseado na configuração
+  let secret_key, public_key;
+  
+  if (useTestMode && secret_key_test && public_key_test) {
+    // Usar chaves de teste se disponíveis e modo teste ativo
+    secret_key = secret_key_test;
+    public_key = public_key_test;
+    console.log("[DEBUG] Usando chaves de TESTE");
+  } else {
+    // Usar chaves de produção
+    secret_key = secret_key_prod;
+    public_key = public_key_prod;
+    console.log("[DEBUG] Usando chaves de PRODUÇÃO");
+  }
+
+  // Verificar o tipo de ambiente baseado na chave
+  const isTestMode = secret_key.includes('test');
+  const basicAuth = "Basic " + btoa(secret_key + ":");
+  
+  console.log("[DEBUG] Secret key configurada:", secret_key.substring(0, 6) + "..." + secret_key.slice(-4));
+  console.log("[DEBUG] Public key configurada:", public_key.substring(0, 6) + "..." + public_key.slice(-4));
+
   try {
     const body = await req.json();
-    console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
+    console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));
+    console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
+
+    // CHECK_KEYS - Verificar se as chaves estão configuradas
+    if (body.action === 'check_keys') {
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Chaves configuradas corretamente',
+        test_mode: isTestMode,
+        keys_configured: true
+      }), {
+        status: 200,
+        headers: corsHeaders,
+      });
+    }
 
     // TOKENIZAÇÃO - Primeiro passo do fluxo seguro
     if (body.action === 'tokenize') {const { 
@@ -188,10 +219,18 @@ serve(async (req) => {
           });
         }
 
-        if (!tokenRes.ok || !tokenData.id) {return new Response(JSON.stringify({ 
-            error: tokenData.message || 'Erro ao tokenizar cartão', 
-            details: tokenData.errors || 'Erro na tokenização',
-            raw: tokenBodyRaw 
+        if (!tokenRes.ok || !tokenData.id) {
+          let userMessage = "Ocorreu um erro ao processar o cartão.";
+          if (tokenRes.status === 422 || (tokenData.message && tokenData.message.toLowerCase().includes("invalid"))) {
+            userMessage = "Dados inválidos. Verifique as informações e tente novamente.";
+          } else if (tokenData.message && tokenData.message.toLowerCase().includes("denied")) {
+            userMessage = "Pagamento negado pelo gateway. Tente outro cartão ou método de pagamento.";
+          } else if (tokenData.message) {
+            userMessage = "Dados do cartão inválidos. Verifique as informações e tente novamente.";
+          }
+          return new Response(JSON.stringify({ 
+            error: userMessage, 
+            details: tokenData.errors || 'Erro na tokenização'
           }), {
             status: tokenRes.status,
             headers: corsHeaders,
@@ -226,7 +265,7 @@ serve(async (req) => {
 
       // Validação dos dados obrigatórios
       if (!amount || !card_token) {
-        return new Response(JSON.stringify({ error: 'Dados incompletos: amount e card_token são obrigatórios' }), {
+        return new Response(JSON.stringify({ error: 'Preencha todos os campos obrigatórios.' }), {
           status: 400,
           headers: corsHeaders,
         });
@@ -240,8 +279,7 @@ serve(async (req) => {
         amountInt = Math.round(Number(amount));
       }if (isNaN(amountInt) || amountInt < 100) {
         return new Response(JSON.stringify({ 
-          error: 'Valor inválido',
-          debug: `Valor deve ser pelo menos R$ 1,00 (100 centavos). Recebido: ${amountInt}`
+          error: 'Valor mínimo para pagamento é R$ 1,00.'
         }), {
           status: 400,
           headers: corsHeaders,
@@ -254,8 +292,7 @@ serve(async (req) => {
         documentClean = customer_document.replace(/\D/g, '');
         if (documentClean.length !== 11) {
           return new Response(JSON.stringify({ 
-            error: 'CPF inválido',
-            debug: `CPF deve ter 11 dígitos. Recebido: ${documentClean.length} dígitos`
+            error: 'CPF inválido. Verifique e tente novamente.'
           }), {
             status: 400,
             headers: corsHeaders,
@@ -358,17 +395,33 @@ serve(async (req) => {
           });
         }
 
-        // LOGS DETALHADOS DA RESPOSTA FINALif (pagarmeData.charges && pagarmeData.charges.length > 0) {
-          const charge = pagarmeData.charges[0];if (charge.last_transaction) {if (charge.last_transaction.gateway_response) {}
+        // LOGS DETALHADOS DA RESPOSTA FINAL
+        if (pagarmeData.charges && pagarmeData.charges.length > 0) {
+          const charge = pagarmeData.charges[0];
+          if (charge.last_transaction) {
+            if (charge.last_transaction.gateway_response) {
+              // Log adicional se necessário
+            }
           }
-        }return new Response(JSON.stringify(pagarmeData), {
+        }
+        
+        if (!pagarmeRes.ok || (pagarmeData && pagarmeData.message && pagarmeData.message.toLowerCase().includes("denied"))) {
+          return new Response(JSON.stringify({ 
+            error: "Pagamento negado pelo gateway. Tente outro cartão ou método de pagamento."
+          }), {
+            status: pagarmeRes.status,
+            headers: corsHeaders,
+          });
+        }
+        
+        return new Response(JSON.stringify(pagarmeData), {
           status: pagarmeRes.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
       } catch (err) {
         console.error("[ERROR] Erro no pagamento:", err);
-        return new Response(JSON.stringify({ error: err.message || String(err) }), {
+        return new Response(JSON.stringify({ error: "Ocorreu um erro inesperado. Tente novamente ou entre em contato com o suporte." }), {
           status: 500,
           headers: corsHeaders,
         });
@@ -386,7 +439,7 @@ serve(async (req) => {
 
   } catch (err) {
     console.error("[ERROR] Erro geral:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "Ocorreu um erro inesperado. Tente novamente ou entre em contato com o suporte." }), {
       status: 500,
       headers: corsHeaders,
     });

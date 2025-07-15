@@ -975,55 +975,63 @@ export default function Payment() {
         all_fields_valid: !!(billingAddress.line_1 && billingAddress.zip_code && billingAddress.city && billingAddress.state && billingAddress.country)
       });
       
+      const tokenPayload = {
+        action: 'tokenize',
+        card_number: cardData.cardNumber.replace(/\s/g, ""),
+        card_exp_month: cardData.cardExpiry.substring(0, 2),
+        card_exp_year: "20" + cardData.cardExpiry.substring(3, 5),
+        card_cvv: cardData.cardCvc,
+        card_holder_name: cardData.cardholderName,
+        billing_address: billingAddress
+      };
+      console.log('[DEBUG] Payload enviado para tokenização:', tokenPayload);
       const tokenResponse = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${access_token}`,
         },
-        body: JSON.stringify({
-          action: 'tokenize',
-          card_number: cardData.cardNumber.replace(/\s/g, ""),
-          card_exp_month: cardData.cardExpiry.substring(0, 2),
-          card_exp_year: "20" + cardData.cardExpiry.substring(3, 5),
-          card_cvv: cardData.cardCvc,
-          card_holder_name: cardData.cardholderName,
-          billing_address: billingAddress
-        })
+        body: JSON.stringify(tokenPayload)
       });
 
       const tokenResult = await tokenResponse.json();
       console.log('[DEBUG] Resultado da tokenização:', tokenResult);
 
       if (!tokenResponse.ok) {
-        throw new Error(tokenResult.error || 'Erro ao tokenizar cartão');
+        const errorMsg = tokenResult.error || 'Ocorreu um erro inesperado. Tente novamente.';
+        setError(errorMsg);
+        setProcessing(false);
+        return;
       }
 
       if (!tokenResult.card_token) {
-        throw new Error('Token do cartão não foi gerado');
+        setError('Token do cartão não foi gerado.');
+        setProcessing(false);
+        return;
       }
 
       // PASSO 2: Usar o token para fazer o pagamento
       console.log('[DEBUG] Passo 2: Processando pagamento com token...');
+      const paymentPayload = {
+        action: 'payment_with_token',
+        amount: totalAmount,
+        card_token: tokenResult.card_token,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_document: formData.documentNumber,
+        billing_address: billingAddress // Incluir billing_address no pagamento também
+      };
+      console.log('[DEBUG] Payload enviado para pagamento:', paymentPayload);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${access_token}`,
         },
-        body: JSON.stringify({
-          action: 'payment_with_token',
-          amount: totalAmount,
-          card_token: tokenResult.card_token,
-          customer_name: formData.name,
-          customer_email: formData.email,
-          customer_document: formData.documentNumber,
-          billing_address: billingAddress // Incluir billing_address no pagamento também
-        })
+        body: JSON.stringify(paymentPayload)
       });
 
       const result = await response.json();
-      
       // LOGS DETALHADOS PARA DEBUG DO STATUS
       console.log('=== DEBUG RESPOSTA PAGAR.ME ===');
       console.log('Status HTTP:', response.status);
@@ -1031,26 +1039,12 @@ export default function Payment() {
       console.log('Resultado completo:', JSON.stringify(result, null, 2));
       console.log('Status do pagamento:', result.status);
       console.log('ID do pedido:', result.id);
-      
-      if (result.charges && result.charges.length > 0) {
-        const charge = result.charges[0];
-        console.log('Status do charge:', charge.status);
-        console.log('ID do charge:', charge.id);
-        
-        if (charge.last_transaction) {
-          console.log('Status da transação:', charge.last_transaction.status);
-          console.log('Código de resposta:', charge.last_transaction.acquirer_return_code);
-          console.log('Mensagem:', charge.last_transaction.acquirer_message);
-          
-          if (charge.last_transaction.gateway_response) {
-            console.log('Resposta do gateway:', charge.last_transaction.gateway_response);
-          }
-        }
-      }
-      console.log('===============================');
-      
+
       if (!response.ok) {
-        throw new Error(result.error || result.message || 'Erro ao processar pagamento');
+        const errorMsg = result.error || 'Ocorreu um erro inesperado. Tente novamente.';
+        setError(errorMsg);
+        setProcessing(false);
+        return;
       }
 
       // Verificar se o pagamento foi realmente aprovado
