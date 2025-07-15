@@ -190,7 +190,7 @@ export default function PagarmeSettings() {
       } else {
         // INSERT (só se não existe nenhum registro)
         // Busca novamente para garantir que não existe nenhum registro
-        const { data: existing, error: fetchError } = await supabase
+        const { data: existing } = await supabase
           .from("pagarme_settings")
           .select("id")
           .order("created_at", { ascending: true })
