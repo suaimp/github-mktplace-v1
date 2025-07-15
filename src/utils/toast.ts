@@ -37,16 +37,22 @@ export function showToast(
       </div>
     `;
     toast.style.position = "fixed";
-    toast.style.top = "80px";
-    toast.style.right = "32px";
+    toast.style.bottom = "32px"; // Alterado de top para bottom
+    toast.style.left = "32px";   // Alterado de right para left
     toast.style.zIndex = "99999";
     toast.style.maxWidth = "340px";
     toast.style.width = "100%";
     toast.style.opacity = "1";
     toast.style.transition = "opacity 0.3s";
     toast.style.pointerEvents = "auto";
-    toast.style.backgroundColor = "#fff";
+    toast.style.backgroundColor = "transparent"; // Corrigido para não interferir na tooltip
     document.body.appendChild(toast);
+    // Adiciona box-shadow na div de conteúdo do toast
+    const toastContent = toast.querySelector('div');
+    if (toastContent) {
+      toastContent.style.boxShadow = "0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 6px 0 rgba(60,60,60,0.10)";
+      toastContent.style.borderRadius = "12px";
+    }
     // Fechar ao clicar no botão
     const closeBtn = toast.querySelector("#global-toast-close-btn");
     if (closeBtn) {

@@ -4,7 +4,7 @@ import MaskedInput from "../form/input/MaskedInput";
 import Label from "../form/Label";
 import Select from "../form/Select";
 import { supabase } from "../../lib/supabase";
-import { getCardBrand } from "./PaymentInformationForm/Installments/installmentsUtils";
+ 
 
 interface PaymentInformationFormProps {
   formData: {
@@ -35,10 +35,7 @@ function PaymentInformationForm({
     "individual"
   );
 
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardBrand, setCardBrand] = useState("");
-  const [cardNumberValid, setCardNumberValid] = useState(false);
-  const [cardNumberError, setCardNumberError] = useState("");
+ 
 
   // Função para limpar valores com máscara para validação
   const cleanValue = (value: string): string => {
@@ -47,44 +44,10 @@ function PaymentInformationForm({
     return value?.replace(/\D/g, "") || "";
   };
 
-  // Validação simples de número de cartão (Luhn + tamanho)
-  function validateCardNumber(number: string): boolean {
-    const clean = number.replace(/\D/g, "");
-    if (clean.length < 13 || clean.length > 19) return false;
-    let sum = 0, shouldDouble = false;
-    for (let i = clean.length - 1; i >= 0; i--) {
-      let digit = parseInt(clean.charAt(i));
-      if (shouldDouble) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-      shouldDouble = !shouldDouble;
-    }
-    return sum % 10 === 0;
-  }
+ 
 
   // Atualiza estado do número do cartão e valida
-  function handleCardNumberChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    setCardNumber(value);
-    if (value.replace(/\D/g, "").length >= 13) {
-      if (validateCardNumber(value)) {
-        setCardNumberValid(true);
-        setCardNumberError("");
-        const brand = getCardBrand(value);
-        setCardBrand(brand);
-      } else {
-        setCardNumberValid(false);
-        setCardBrand("");
-        setCardNumberError("Número de cartão inválido");
-      }
-    } else {
-      setCardNumberValid(false);
-      setCardBrand("");
-      setCardNumberError("");
-    }
-  }
+ 
 
   // Função de validação do formulário
   const validatePaymentInfoForm = () => {
