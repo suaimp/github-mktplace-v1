@@ -16,6 +16,7 @@ import { OrderItemService } from "../../services/db-services/marketplace-service
 import PixPaymentWatcher from "./PixPaymentWatcher";
 import { v4 as uuidv4 } from 'uuid';
 import { useCustomSticky } from "../../hooks/useCustomSticky";
+import { InstallmentOption } from "../../components/Checkout/PaymentInformationForm/Installments/types";
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -97,6 +98,9 @@ export default function Payment() {
     country: "BR"
   });
   const [idempotencyKey] = useState(() => uuidv4());
+  // [1] Adicione o estado para armazenar o número de parcelas selecionado
+  const [selectedInstallments, setSelectedInstallments] = useState<number>(1);
+  const [installmentsOptions, setInstallmentsOptions] = useState<InstallmentOption[]>([]);
 
   // Estados de validação individuais para cada formulário
   const [isPaymentInfoFormValid, setIsPaymentInfoFormValid] = useState(false);
@@ -875,6 +879,7 @@ export default function Payment() {
   };
 
   async function handleSubmit(e: React.FormEvent) {
+    console.log('[DEBUG] handleSubmit chamado');
     e.preventDefault();
     setProcessing(true);
     setError(null);
@@ -985,6 +990,12 @@ export default function Payment() {
         billing_address: billingAddress
       };
       console.log('[DEBUG] Payload enviado para tokenização:', tokenPayload);
+      console.log('[DEBUG] URL da função edge:', url);
+      console.log('[DEBUG] access_token enviado:', access_token);
+      console.log('[DEBUG] Headers enviados:', {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${access_token}`
+      });
       const tokenResponse = await fetch(url, {
         method: 'POST',
         headers: {
@@ -998,6 +1009,7 @@ export default function Payment() {
       console.log('[DEBUG] Resultado da tokenização:', tokenResult);
 
       if (!tokenResponse.ok) {
+        console.log('[DEBUG] return: tokenResponse não ok');
         const errorMsg = tokenResult.error || 'Ocorreu um erro inesperado. Tente novamente.';
         setError(errorMsg);
         setProcessing(false);
@@ -1005,23 +1017,55 @@ export default function Payment() {
       }
 
       if (!tokenResult.card_token) {
+        console.log('[DEBUG] return: tokenResult.card_token não gerado');
         setError('Token do cartão não foi gerado.');
         setProcessing(false);
         return;
       }
 
+      console.log('[DEBUG] Token recebido, preparando para montar payload de pagamento');
+
       // PASSO 2: Usar o token para fazer o pagamento
-      console.log('[DEBUG] Passo 2: Processando pagamento com token...');
+      console.log('[DEBUG] Passo 2: Montando payload de pagamento...');
+      const selectedInstallmentObj = installmentsOptions.find(opt => opt.installments === selectedInstallments);
+      if (!selectedInstallmentObj) {
+        console.log('[DEBUG] return: selectedInstallmentObj não encontrado');
+        setError('Selecione uma opção de parcelamento válida.');
+        setProcessing(false);
+        return;
+      }
       const paymentPayload = {
-        action: 'payment_with_token',
-        amount: totalAmount,
-        card_token: tokenResult.card_token,
-        customer_name: formData.name,
-        customer_email: formData.email,
-        customer_document: formData.documentNumber,
-        billing_address: billingAddress // Incluir billing_address no pagamento também
+        items: [
+          {
+            amount: selectedInstallmentObj.amount, // valor em centavos
+            description: "Pedido Marketplace",
+            quantity: 1,
+            code: "ITEM_" + Date.now()
+          }
+        ],
+        customer: {
+          name: formData.name,
+          email: formData.email,
+          document: formData.documentNumber.replace(/\D/g, ""),
+          document_type: "cpf",
+          type: "individual"
+        },
+        payments: [
+          {
+            payment_method: "credit_card",
+            credit_card: {
+              installments: selectedInstallmentObj.installments,
+              statement_descriptor: "MARKETPLACE",
+              card_token: tokenResult.card_token,
+              card: {
+                billing_address: billingAddress
+              }
+            }
+          }
+        ]
       };
-      console.log('[DEBUG] Payload enviado para pagamento:', paymentPayload);
+      console.log('[DEBUG] Payload de pagamento montado:', paymentPayload);
+      console.log('[DEBUG] Vai enviar o pagamento para a função edge');
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -1030,8 +1074,8 @@ export default function Payment() {
         },
         body: JSON.stringify(paymentPayload)
       });
-
       const result = await response.json();
+      console.log('[DEBUG] Resposta recebida da função edge:', result);
       // LOGS DETALHADOS PARA DEBUG DO STATUS
       console.log('=== DEBUG RESPOSTA PAGAR.ME ===');
       console.log('Status HTTP:', response.status);
@@ -1041,6 +1085,7 @@ export default function Payment() {
       console.log('ID do pedido:', result.id);
 
       if (!response.ok) {
+        console.log('[DEBUG] return: response não ok');
         const errorMsg = result.error || 'Ocorreu um erro inesperado. Tente novamente.';
         setError(errorMsg);
         setProcessing(false);
@@ -1583,6 +1628,12 @@ export default function Payment() {
               // NOVOS: Estados de validação individuais
               isPaymentInfoFormValid={isPaymentInfoFormValid}
               isCardFormValid={isCardFormValid}
+              // [2] No JSX, passe o setter para o componente de seleção de parcelas (exemplo):
+              // <InstallmentsOptions selected={selectedInstallments} onSelect={setSelectedInstallments} ... />
+              selectedInstallments={selectedInstallments}
+              onInstallmentsChange={setSelectedInstallments}
+              installmentsOptions={installmentsOptions}
+              setInstallmentsOptions={setInstallmentsOptions}
             />
           </div>
 

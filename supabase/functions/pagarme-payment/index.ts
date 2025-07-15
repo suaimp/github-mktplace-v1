@@ -3,14 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "*",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
 };
 
 serve(async (req) => {
   // TRATE O OPTIONS PRIMEIRO!
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   // Configuração da API Pagar.me - Sistema híbrido para teste/produção
@@ -48,14 +48,40 @@ serve(async (req) => {
       status: 500,
       headers: corsHeaders,
     });
-  }
+  } 
 
   // Autenticação do usuário (precisa ser antes de buscar configurações)
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return new Response(JSON.stringify({
+      error: 'Variáveis de ambiente SUPABASE_URL ou SUPABASE_ANON_KEY não configuradas',
+      debug: { supabaseUrl, supabaseAnonKey }
+    }), {
+      status: 500,
+      headers: corsHeaders,
+    });
+  }
   const authHeader = req.headers.get("Authorization");
-  const jwt = authHeader ? authHeader.replace("Bearer ", "") : "";
-
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({
+      error: 'Token de autenticação ausente ou mal formatado',
+      debug: { hasAuthHeader: !!authHeader, authHeader }
+    }), {
+      status: 401,
+      headers: corsHeaders,
+    });
+  }
+  const jwt = authHeader.replace("Bearer ", "");
+  if (!jwt || jwt.length < 10) {
+    return new Response(JSON.stringify({
+      error: 'Token JWT ausente ou inválido',
+      debug: { jwtLength: jwt?.length || 0 }
+    }), {
+      status: 401,
+      headers: corsHeaders,
+    });
+  }
   // Cria o client do Supabase já com o JWT do usuário nas headers globais
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -64,10 +90,9 @@ serve(async (req) => {
       },
     },
   });
-
   const { data: { user }, error } = await supabase.auth.getUser(jwt);
   if (error || !user) {
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Não autorizado',
       debug: {
         hasAuthHeader: !!authHeader,
@@ -132,142 +157,53 @@ serve(async (req) => {
   
   try {
     const body = await req.json();
-    console.log("[DEBUG] Body recebido na edge function:", JSON.stringify(body));
-    console.log("[DEBUG] Action solicitada:", body.action || 'payment_with_token (padrão)');
-
-    // CHECK_KEYS - Verificar se as chaves estão configuradas
-    if (body.action === 'check_keys') {
-      return new Response(JSON.stringify({ 
-        success: true,
-        message: 'Chaves configuradas corretamente',
-        test_mode: useTestMode,
-        keys_configured: true
-      }), {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
+    console.log('[DEBUG] Body recebido na edge function:', JSON.stringify(body));
 
     // TOKENIZAÇÃO - Primeiro passo do fluxo seguro
-    if (body.action === 'tokenize') {const { 
-        card_number, 
-        card_exp_month, 
-        card_exp_year, 
-        card_cvv, 
-        card_holder_name,
-        billing_address 
-      } = body;
-      
+    if (body.action === 'tokenize') {
+      const { card_number, card_exp_month, card_exp_year, card_cvv, card_holder_name, billing_address } = body;
       if (!card_number || !card_exp_month || !card_exp_year || !card_cvv || !card_holder_name) {
         return new Response(JSON.stringify({ error: 'Dados do cartão incompletos para tokenização' }), {
           status: 400,
           headers: corsHeaders,
         });
       }
-
-      console.log("[DEBUG] Iniciando tokenização com chave pública (conforme documentação)...");
-      
-      // Preparar o billing_address seguindo EXATAMENTE o padrão da documentação oficial da Pagar.me
-      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser INTEGER
-      const defaultBillingAddress = {
-        line_1: "Rua das Flores, 123",
-        zip_code: 1234567, // INTEGER conforme documentação
-        city: "São Paulo",
-        state: "SP", // Sigla do estado  
-        country: "BR" // Sempre BR para Brasil
-      };
-
-      // Validar e garantir que o billing_address tenha todos os campos obrigatórios conforme documentação
-      let finalBillingAddress = defaultBillingAddress;
-      
-      if (billing_address && typeof billing_address === 'object') {
-        // Tratar zip_code que pode vir como string ou number
-        let zipCodeClean = '01234567';
-        if (billing_address.zip_code) {
-          if (typeof billing_address.zip_code === 'number') {
-            zipCodeClean = billing_address.zip_code.toString();
-          } else if (typeof billing_address.zip_code === 'string') {
-            zipCodeClean = billing_address.zip_code.replace(/\D/g, '');
-          }
+      // Montar payload conforme documentação v5
+      const tokenPayload = {
+        type: 'card',
+        card: {
+          number: card_number,
+          exp_month: Number(card_exp_month),
+          exp_year: Number(card_exp_year),
+          cvv: card_cvv,
+          holder_name: card_holder_name,
+          billing_address: billing_address
         }
-        
-        finalBillingAddress = {
-          line_1: (billing_address.line_1 && billing_address.line_1.trim() !== '') ? billing_address.line_1 : defaultBillingAddress.line_1,
-          zip_code: zipCodeClean ? parseInt(zipCodeClean) : defaultBillingAddress.zip_code, // Converter para INTEGER
-          city: (billing_address.city && billing_address.city.trim() !== '') ? billing_address.city : defaultBillingAddress.city,
-          state: (billing_address.state && billing_address.state.trim() !== '') ? billing_address.state : defaultBillingAddress.state,
-          country: "BR" // Sempre BR conforme documentação
-        };
-      }
-      
+      };
+      const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;
+      console.log('[DEBUG] URL de tokenização:', tokenUrl);
+      console.log('[DEBUG] Payload enviado para tokenização Pagar.me:', JSON.stringify(tokenPayload));
       try {
-        // IMPORTANTE: Para tokenização, usar chave pública como query parameter appId
-        // Conforme documentação: https://docs.pagar.me/reference/pagarme-js
-        const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;console.log("[DEBUG] Chave pública enviada via appId:", public_key.substring(0, 10) + "...");console.log("[DEBUG] Dados do cartão para tokenização:", {
-          number: card_number ? card_number.substring(0, 4) + '****' : 'VAZIO',
-          exp_month: card_exp_month,
-          exp_year: card_exp_year,
-          cvv: card_cvv ? '***' : 'VAZIO',
-          holder_name: card_holder_name
-        });
-        
         const tokenRes = await fetch(tokenUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-            // ATENÇÃO: Para tokenização, NÃO usar Authorization header!
-          },
-          body: JSON.stringify({
-            type: 'card',
-            card: {
-              number: card_number,
-              exp_month: parseInt(card_exp_month),
-              exp_year: parseInt(card_exp_year),
-              cvv: card_cvv,
-              holder_name: card_holder_name,
-              billing_address: finalBillingAddress
-            }
-          })
-        });const tokenBodyRaw = await tokenRes.text();console.log("[DEBUG] Headers resposta:", Object.fromEntries(tokenRes.headers.entries()));let tokenData;
-        try {
-          tokenData = JSON.parse(tokenBodyRaw);
-        } catch (e) {
-          return new Response(JSON.stringify({ 
-            error: 'Resposta inválida da Pagar.me', 
-            raw: tokenBodyRaw 
-          }), {
-            status: 500,
-            headers: corsHeaders,
-          });
-        }
-
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tokenPayload)
+        });
+        const tokenData = await tokenRes.json();
+        console.log('[DEBUG] Resposta da tokenização Pagar.me:', JSON.stringify(tokenData));
         if (!tokenRes.ok || !tokenData.id) {
-          let userMessage = "Ocorreu um erro ao processar o cartão.";
-          if (tokenRes.status === 422 || (tokenData.message && tokenData.message.toLowerCase().includes("invalid"))) {
-            userMessage = "Dados inválidos. Verifique as informações e tente novamente.";
-          } else if (tokenData.message && tokenData.message.toLowerCase().includes("denied")) {
-            userMessage = "Pagamento negado pelo gateway. Tente outro cartão ou método de pagamento.";
-          } else if (tokenData.message) {
-            userMessage = "Dados do cartão inválidos. Verifique as informações e tente novamente.";
-          }
-          return new Response(JSON.stringify({ 
-            error: userMessage, 
-            details: tokenData.errors || 'Erro na tokenização'
-          }), {
+          return new Response(JSON.stringify({ error: tokenData.message || 'Erro ao tokenizar cartão', details: tokenData }), {
             status: tokenRes.status,
             headers: corsHeaders,
           });
-        }return new Response(JSON.stringify({ 
-          card_token: tokenData.id,
-          success: true 
-        }), {
+        }
+        return new Response(JSON.stringify({ card_token: tokenData.id, success: true }), {
           status: 200,
           headers: corsHeaders,
         });
-
       } catch (err) {
-        console.error("[ERROR] Erro na tokenização:", err);
-        return new Response(JSON.stringify({ error: err.message || String(err) }), {
+        console.error('[ERROR] Erro na tokenização:', err);
+        return new Response(JSON.stringify({ error: 'Erro inesperado na tokenização', details: String(err) }), {
           status: 500,
           headers: corsHeaders,
         });
@@ -276,123 +212,22 @@ serve(async (req) => {
 
     // PAGAMENTO COM TOKEN - Segundo passo do fluxo seguro
     if (body.action === 'payment_with_token' || !body.action) {
-      const {
-        amount,
-        card_token,
-        customer_name,
-        customer_email,
-        customer_document,
-        billing_address
-      } = body;
-
-      // Validação dos dados obrigatórios
-      if (!amount || !card_token) {
-        return new Response(JSON.stringify({ error: 'Preencha todos os campos obrigatórios.' }), {
+      // Validar se os campos principais existem
+      if (!body.items || !body.customer || !body.payments) {
+        return new Response(JSON.stringify({ error: 'Payload de pagamento incompleto.' }), {
           status: 400,
           headers: corsHeaders,
         });
       }
-
-      // Validar e ajustar o valor (mínimo R$ 1,00 = 100 centavos)
-      let amountInt;
-      if (typeof amount === 'string') {
-        amountInt = parseInt(amount.replace(/[^\d]/g, ''));
-      } else {
-        amountInt = Math.round(Number(amount));
-      }if (isNaN(amountInt) || amountInt < 100) {
-        return new Response(JSON.stringify({ 
-          error: 'Valor mínimo para pagamento é R$ 1,00.'
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
-      // Validar CPF se fornecido
-      let documentClean = "11144477735"; // CPF padrão de teste
-      if (customer_document && customer_document.trim() !== '') {
-        documentClean = customer_document.replace(/\D/g, '');
-        if (documentClean.length !== 11) {
-          return new Response(JSON.stringify({ 
-            error: 'CPF inválido. Verifique e tente novamente.'
-          }), {
-            status: 400,
-            headers: corsHeaders,
-          });
-        }
-      }
-
-      // Preparar billing_address para o pagamento (também necessário aqui)
-      const defaultBillingAddress = {
-        line_1: "Rua das Flores, 123",
-        zip_code: "01234567", // String no pagamento conforme exemplos da documentação
-        city: "São Paulo",
-        state: "SP",
-        country: "BR"
-      };
-
-      let finalBillingAddress = defaultBillingAddress;
-      
-      if (billing_address && typeof billing_address === 'object') {
-        let zipCodeClean = '01234567';
-        if (billing_address.zip_code) {
-          if (typeof billing_address.zip_code === 'number') {
-            zipCodeClean = billing_address.zip_code.toString();
-          } else if (typeof billing_address.zip_code === 'string') {
-            zipCodeClean = billing_address.zip_code.replace(/\D/g, '');
-          }
-        }
-        
-        finalBillingAddress = {
-          line_1: (billing_address.line_1 && billing_address.line_1.trim() !== '') ? billing_address.line_1 : defaultBillingAddress.line_1,
-          zip_code: zipCodeClean || defaultBillingAddress.zip_code, // String no pagamento
-          city: (billing_address.city && billing_address.city.trim() !== '') ? billing_address.city : defaultBillingAddress.city,
-          state: (billing_address.state && billing_address.state.trim() !== '') ? billing_address.state : defaultBillingAddress.state,
-          country: "BR"
-        };
-      }
-
-      console.log("[DEBUG] billing_address final usado no pagamento:", JSON.stringify(finalBillingAddress));
-      
+      // Log do payload recebido
+      console.log('[DEBUG] Payload de pagamento recebido:', JSON.stringify(body));
+      // Repassar diretamente para a Pagar.me
       const pagarmePayload = {
-        items: [
-          {
-            amount: amountInt,
-            description: "Pedido Marketplace",
-            quantity: 1,
-            code: "ITEM_001"
-          }
-        ],
-        payments: [
-          {
-            payment_method: 'credit_card',
-            credit_card: {
-              installments: 1,
-              statement_descriptor: "MARKETPLACE",
-              card_token: card_token,
-              card: {
-                billing_address: finalBillingAddress
-              }
-            }
-          }
-        ],
-        customer: {
-          name: customer_name || "Cliente",
-          email: customer_email || "cliente@exemplo.com",
-          document: documentClean,
-          document_type: "cpf",
-          type: "individual",
-          phones: {
-            home_phone: {
-              country_code: "55",
-              area_code: "11", 
-              number: "999999999"
-            }
-          }
-        }
+        items: body.items,
+        customer: body.customer,
+        payments: body.payments
       };
-
-      console.log("[DEBUG] Payload pagamento:", JSON.stringify(pagarmePayload, null, 2));
+      console.log('[DEBUG] Payload enviado para Pagar.me:', JSON.stringify(pagarmePayload));
 
       try {
         const pagarmeRes = await fetch('https://api.pagar.me/core/v5/orders', {
@@ -427,18 +262,30 @@ serve(async (req) => {
           }
         }
         
-        if (!pagarmeRes.ok || (pagarmeData && pagarmeData.message && pagarmeData.message.toLowerCase().includes("denied"))) {
+        if (!pagarmeRes.ok) {
           return new Response(JSON.stringify({ 
-            error: "Pagamento negado pelo gateway. Tente outro cartão ou método de pagamento."
+            error: pagarmeData.message || 'Erro ao processar pagamento',
+            details: pagarmeData.errors || pagarmeData
           }), {
             status: pagarmeRes.status,
             headers: corsHeaders,
           });
         }
         
-        return new Response(JSON.stringify(pagarmeData), {
-          status: pagarmeRes.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        // Após pagamento bem-sucedido
+        const selected_installment = body.payments?.[0]?.credit_card?.installments;
+        const status = pagarmeData.status || null;
+        const id = pagarmeData.id || null;
+        return new Response(JSON.stringify({
+          success: true,
+          selected_installment,
+          request_id: crypto.randomUUID(),
+          message: "Pagamento iniciado com sucesso",
+          status,
+          id
+        }), {
+          status: 200,
+          headers: corsHeaders,
         });
 
       } catch (err) {
@@ -449,15 +296,6 @@ serve(async (req) => {
         });
       }
     }
-
-    // Ação não reconhecida
-    return new Response(JSON.stringify({ 
-      error: 'Ação não reconhecida',
-      supportedActions: ['tokenize', 'payment_with_token']
-    }), {
-      status: 400,
-      headers: corsHeaders,
-    });
 
   } catch (err) {
     console.error("[ERROR] Erro geral:", err);

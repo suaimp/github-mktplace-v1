@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm, { StripePaymentFormRef } from "./StripePaymentForm";
 import { formatCurrency } from "../marketplace/utils";
@@ -7,6 +7,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Select from "../form/Select";
 import Checkbox from "../form/input/Checkbox";
+import { InstallmentsOptions, fetchInstallments, getCardBrand, InstallmentOption } from "./PaymentInformationForm/Installments";
 
 interface PaymentMethodFormProps {
   paymentMethod: string;
@@ -56,6 +57,10 @@ interface PaymentMethodFormProps {
     country: string;
   };
   setCardData: (data: any) => void;
+  selectedInstallments?: number;
+  onInstallmentsChange?: (installments: number) => void;
+  installmentsOptions: InstallmentOption[];
+  setInstallmentsOptions: (opts: InstallmentOption[]) => void;
 }
 
 export default function PaymentMethodForm({
@@ -81,13 +86,22 @@ export default function PaymentMethodForm({
   isPaymentInfoFormValid,
   isCardFormValid,
   cardData,
-  setCardData
+  setCardData,
+  selectedInstallments: selectedInstallmentsProp,
+  onInstallmentsChange,
+  installmentsOptions,
+  setInstallmentsOptions
 }: PaymentMethodFormProps) {
   const [pixCopied, setPixCopied] = useState(false);
   const [isGeneratingQrCode, setIsGeneratingQrCode] = useState(false);
   const [qrCodeTimer, setQrCodeTimer] = useState(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
   const stripePaymentRef = useRef<StripePaymentFormRef>(null);
+  const [selectedInstallmentsState, setSelectedInstallmentsState] = useState(1);
+  const [loadingInstallments, setLoadingInstallments] = useState(false);
+  const [installmentsError, setInstallmentsError] = useState<string | null>(null);
+  const [cardBrand, setCardBrand] = useState("");
+  const [cardNumberValid, setCardNumberValid] = useState(false);
 
   // Debug logs for payment methods
   console.log("PAYMENT METHOD FORM DEBUG:", {
@@ -205,7 +219,42 @@ export default function PaymentMethodForm({
     }
   };
 
- 
+  // Atualiza bandeira e validação do cartão
+  useEffect(() => {
+    const brand = getCardBrand(cardData.cardNumber);
+    setCardBrand(brand);
+    setCardNumberValid(cardData.cardNumber.replace(/\D/g, "").length >= 13 && brand !== "desconhecida");
+  }, [cardData.cardNumber]);
+
+  // Buscar opções de parcelamento somente após bandeira válida e número válido
+  useEffect(() => {
+    async function fetchOptions() {
+      setLoadingInstallments(true);
+      setInstallmentsError(null);
+      try {
+        if (!cardBrand || !cardNumberValid || !totalAmount) return;
+        const options = await fetchInstallments(totalAmount, cardBrand);
+        setInstallmentsOptions(options);
+        setSelectedInstallmentsState(options[0]?.installments || 1);
+      } catch (err: any) {
+        setInstallmentsError(err.message || "Erro ao buscar opções de parcelamento");
+      } finally {
+        setLoadingInstallments(false);
+      }
+    }
+    if (paymentMethod === "card" && cardBrand && cardNumberValid && totalAmount > 0) {
+      fetchOptions();
+    } else {
+      setInstallmentsOptions([]);
+    }
+  }, [cardBrand, cardNumberValid, totalAmount, paymentMethod]);
+
+  // Use o valor controlado se vier por prop, senão use o local
+  const installmentsValue = selectedInstallmentsProp !== undefined ? selectedInstallmentsProp : selectedInstallmentsState;
+  const setInstallments = (val: number) => {
+    if (onInstallmentsChange) onInstallmentsChange(val);
+    setSelectedInstallmentsState(val);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
@@ -418,6 +467,24 @@ export default function PaymentMethodForm({
                 </form>
               )}
             </div>
+            {/* Opções de parcelamento */}
+            {cardBrand && cardNumberValid ? (
+              loadingInstallments ? (
+                <div className="my-4 text-sm text-gray-500">Carregando opções de parcelamento...</div>
+              ) : installmentsError ? (
+                <div className="my-4 text-sm text-error-500">{installmentsError}</div>
+              ) : installmentsOptions.length > 0 ? (
+                <InstallmentsOptions
+                  options={installmentsOptions}
+                  selected={installmentsValue}
+                  onSelect={setInstallments}
+                />
+              ) : (
+                <div className="my-4 text-sm text-gray-500">Nenhuma opção de parcelamento disponível para esta bandeira/valor.</div>
+              )
+            ) : (
+              <div className="my-4 text-sm text-gray-500">Digite o número do cartão para ver as opções de parcelamento.</div>
+            )}
             {/* Checkbox de termos e condições acima do botão de pagar */}
             <div className="mb-4 flex flex-col items-start mt-6">
               <Checkbox
