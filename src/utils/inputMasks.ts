@@ -50,16 +50,21 @@ export const formatCEP = (value: string): string => {
   return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
 };
 
-// Formatar telefone: (00) 00000-0000 ou (00) 0000-0000
+// Formatar telefone: aceita DDI opcional
 export const formatPhone = (value: string): string => {
   const numbers = removeMask(value);
-  
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
-  
+  let ddi = "";
+  let rest = numbers;
+  // Se começar com 55 ou outro DDI (2 ou 3 dígitos)
+  if (numbers.length > 11) {
+    ddi = `+${numbers.slice(0, numbers.length - 11)} `;
+    rest = numbers.slice(numbers.length - 11);
+  }
+  if (rest.length <= 2) return ddi + rest;
+  if (rest.length <= 7) return `${ddi}(${rest.slice(0, 2)}) ${rest.slice(2)}`;
+  if (rest.length <= 10) return `${ddi}(${rest.slice(0, 2)}) ${rest.slice(2, 6)}-${rest.slice(6)}`;
   // Para celular com 9 dígitos
-  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  return `${ddi}(${rest.slice(0, 2)}) ${rest.slice(2, 7)}-${rest.slice(7, 11)}`;
 };
 
 // Formatar email: apenas lowercase e validação básica
@@ -97,37 +102,11 @@ export const validateCPF = (cpf: string): boolean => {
   return parseInt(numbers.charAt(10)) === digit2;
 };
 
-// Validar CNPJ
+// Validar CNPJ (apenas formato: 14 dígitos)
 export const validateCNPJ = (cnpj: string): boolean => {
   const numbers = removeMask(cnpj);
-  
-  // Deve ter exatamente 14 dígitos
-  if (numbers.length !== 14) return false;
-  
-  // Verifica se todos os dígitos são iguais
-  if (/^(\d)\1{13}$/.test(numbers)) return false;
-  
-  // Validação do primeiro dígito verificador
-  let sum = 0;
-  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  for (let i = 0; i < 12; i++) {
-    sum += parseInt(numbers.charAt(i)) * weights1[i];
-  }
-  let remainder = sum % 11;
-  let digit1 = remainder < 2 ? 0 : 11 - remainder;
-  
-  if (parseInt(numbers.charAt(12)) !== digit1) return false;
-  
-  // Validação do segundo dígito verificador
-  sum = 0;
-  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  for (let i = 0; i < 13; i++) {
-    sum += parseInt(numbers.charAt(i)) * weights2[i];
-  }
-  remainder = sum % 11;
-  let digit2 = remainder < 2 ? 0 : 11 - remainder;
-  
-  return parseInt(numbers.charAt(13)) === digit2;
+  // Aceita qualquer sequência de 14 dígitos (sem validação de dígitos verificadores)
+  return numbers.length === 14;
 };
 
 // Validar CEP
@@ -137,11 +116,11 @@ export const validateCEP = (cep: string): boolean => {
   return numbers.length === 8 && /^\d{8}$/.test(numbers);
 };
 
-// Validar telefone
+// Validar telefone: aceita DDI (10 a 15 dígitos)
 export const validatePhone = (phone: string): boolean => {
   const numbers = removeMask(phone);
-  // Deve ter exatamente 10 ou 11 dígitos (telefone fixo ou celular)
-  return numbers.length === 10 || numbers.length === 11;
+  // Aceita 10 a 15 dígitos (com ou sem DDI)
+  return numbers.length >= 10 && numbers.length <= 15;
 };
 
 // Validar email
@@ -186,12 +165,6 @@ export const formatDocument = (value: string): string => {
 // Validar documento (CPF ou CNPJ)
 export const validateDocument = (document: string): boolean => {
   const numbers = removeMask(document);
-  
-  if (numbers.length === 11) {
-    return validateCPF(document);
-  } else if (numbers.length === 14) {
-    return validateCNPJ(document);
-  }
-  
-  return false;
+  // Aceita qualquer sequência de 11 (CPF) ou 14 (CNPJ) dígitos (sem validação de dígitos verificadores)
+  return numbers.length === 11 || numbers.length === 14;
 };

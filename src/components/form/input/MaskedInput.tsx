@@ -65,6 +65,13 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
     }
   }, [value]);
 
+  // Atualiza a validação sempre que displayValue mudar
+  useEffect(() => {
+    const { isValid, message } = validateValue(displayValue);
+    setIsValid(isValid);
+    setValidationMessage(message);
+  }, [displayValue]);
+
   // Função para aplicar a máscara baseada no tipo
   const formatValue = (val: string): string => {
     if (!val) return "";
@@ -89,15 +96,23 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
 
   // Função para validar baseada no tipo
   const validateValue = (val: string): { isValid: boolean; message: string } => {
-    if (!val && !required) {
+    const cleaned = mask === "phone" ? removeMask(val) : val;
+    if (!cleaned && !required) {
       return { isValid: true, message: "" };
     }
-
-    if (!val && required) {
+    if (!cleaned && required) {
       return { isValid: false, message: "Este campo é obrigatório" };
     }
-
     switch (mask) {
+      case "phone": {
+        // Validar apenas a quantidade de dígitos (após remover máscara), aceitando DDI
+        const phoneDigits = removeMask(val);
+        const phoneValid = phoneDigits.length >= 10 && phoneDigits.length <= 15;
+        return {
+          isValid: phoneValid,
+          message: !val ? "" : (phoneValid ? "" : "Telefone deve conter entre 10 e 15 dígitos"),
+        };
+      }
       case "cpf":
         const cpfValid = validateCPF(val);
         return {
@@ -115,12 +130,6 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
         return {
           isValid: cepValid,
           message: cepValid ? "" : "CEP deve ter 8 dígitos",
-        };
-      case "phone":
-        const phoneValid = validatePhone(val);
-        return {
-          isValid: phoneValid,
-          message: phoneValid ? "" : "Telefone deve ter 10 ou 11 dígitos",
         };
       case "email":
         const emailValid = validateEmail(val);
@@ -151,7 +160,7 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
       case "cep":
         return "00000-000";
       case "phone":
-        return "(00) 00000-0000";
+        return "+99 (99) 99999-9999";
       case "email":
         return "exemplo@email.com";
       case "document":
@@ -173,7 +182,7 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
       case "cep":
         return 9; // 00000-000
       case "phone":
-        return 15; // (00) 00000-0000
+        return 25; // Permite DDI internacional completo com formatação
       case "document":
         return 18; // Máximo para CNPJ
       default:
@@ -191,7 +200,7 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
       case "cep":
         return "CEP deve ter 8 dígitos";
       case "phone":
-        return "Telefone deve ter 10 ou 11 dígitos";
+        return "Telefone deve conter entre 10 e 15 dígitos";
       case "email":
         return "Email inválido";
       case "document":
@@ -235,16 +244,23 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // No blur, fazer validação completa
     if (required && displayValue) {
-      // Usar a função isFieldComplete para verificar se está completo
-      const isComplete = isFieldComplete(displayValue, mask);
-      if (isComplete) {
+      // Para telefone, validar apenas a quantidade de dígitos (10 a 15)
+      if (mask === "phone") {
         const validation = validateValue(displayValue);
         setIsValid(validation.isValid);
         setValidationMessage(validation.message);
       } else {
-        // Campo incompleto - marcar como inválido
-        setIsValid(false);
-        setValidationMessage(getIncompleteMessage());
+        // Usar a função isFieldComplete para outros casos
+        const isComplete = isFieldComplete(displayValue, mask);
+        if (isComplete) {
+          const validation = validateValue(displayValue);
+          setIsValid(validation.isValid);
+          setValidationMessage(validation.message);
+        } else {
+          // Campo incompleto - marcar como inválido
+          setIsValid(false);
+          setValidationMessage(getIncompleteMessage());
+        }
       }
     } else if (validateOnBlur) {
       const validation = validateValue(displayValue);
@@ -267,26 +283,34 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
 
   // Mostrar feedback visual vermelho (sem ícone)
   const inputError = isValid === false;
-  const inputHint = validationMessage || hint;
+  // Exibir mensagem de erro apenas se o campo não estiver vazio e for inválido
+  const showError = isValid === false && displayValue && displayValue.length > 0;
+  // Só mostra hint se não for erro
+  const inputHint = showError ? undefined : (validationMessage || hint);
 
   return (
-    <div className="relative">
+    <div className={"relative w-full"}>
       <Input
         type={mask === "email" ? "email" : mask === "phone" ? "tel" : type}
         id={id}
         name={name}
-        placeholder={getPlaceholder()}
         value={displayValue}
         onChange={handleChange}
         onBlur={handleBlur}
+        placeholder={getPlaceholder()}
         className={className}
         disabled={disabled}
         required={required}
         maxLength={getMaxLength()}
         autoComplete={autoComplete}
-        error={inputError}
+        error={!!showError}
         hint={inputHint}
       />
+      {showError && (
+        <span className="text-xs text-error-500 absolute left-0 -bottom-5">
+          {validationMessage}
+        </span>
+      )}
     </div>
   );
 };

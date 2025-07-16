@@ -4,6 +4,8 @@ import MaskedInput from "../form/input/MaskedInput";
 import Label from "../form/Label";
 import Select from "../form/Select";
 import { supabase } from "../../lib/supabase";
+import { CountryStates } from "../UserProfile/company/CountryStates";
+import { validateCNPJ, validateCPF } from "../../utils/inputMasks";
  
 
 interface PaymentInformationFormProps {
@@ -16,6 +18,9 @@ interface PaymentInformationFormProps {
     zipCode: string;
     documentNumber: string;
     phone: string;
+    legal_status: "individual" | "business";
+    country: string;
+    company_name?: string;
   };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -28,14 +33,32 @@ function PaymentInformationForm({
   onChange,
   onValidSubmit
 }: PaymentInformationFormProps) {
+  console.log('[DEBUG PaymentInformationForm] legal_status:', formData.legal_status, '| documentNumber:', formData.documentNumber);
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false); // Proteção contra múltiplas execuções
 
-  const [accountType, setAccountType] = useState<"individual" | "business">(
-    "individual"
-  );
+  const [legalStatus, setLegalStatus] = useState<'business' | 'individual'>(formData.legal_status || 'individual');
+  const [country, setCountry] = useState(formData.country || 'BR');
+  const stateOptions = CountryStates[country] || [];
 
- 
+  // Atualiza legalStatus/country no formData e local
+  const handleLegalStatusChange = (value: string) => {
+    setLegalStatus(value as 'business' | 'individual');
+    // Criar evento sintético compatível com handleInputChange do pai
+    const syntheticEvent = {
+      target: {
+        name: 'legal_status',
+        value: value as 'business' | 'individual',
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    onChange(syntheticEvent);
+  };
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+    onChange({ target: { name: 'country', value } } as React.ChangeEvent<HTMLInputElement>);
+    // Limpa estado se país mudar
+    onChange({ target: { name: 'state', value: '' } } as React.ChangeEvent<HTMLInputElement>);
+  };
 
   // Função para limpar valores com máscara para validação
   const cleanValue = (value: string): string => {
@@ -53,21 +76,34 @@ function PaymentInformationForm({
   const validatePaymentInfoForm = () => {
     console.log("🔍 VALIDANDO FORMULÁRIO DE INFORMAÇÕES DE PAGAMENTO");
     console.log("📋 ESTADO ATUAL DO FORMDATA:", formData);
-    
+
     const nameValid = !!formData.name?.trim() && formData.name.trim().length >= 2;
     const emailValid = !!formData.email?.trim() && formData.email.includes("@") && formData.email.includes(".");
     const addressValid = !!formData.address?.trim() && formData.address.trim().length >= 5;
     const cityValid = !!formData.city?.trim() && formData.city.trim().length >= 2;
     const stateValid = !!formData.state?.trim() && formData.state.trim().length >= 2;
-    
-    // Para campos que vêm do MaskedInput, o valor já está limpo (sem máscara)
     const zipCodeClean = cleanValue(formData.zipCode);
     const documentClean = cleanValue(formData.documentNumber);
     const phoneClean = cleanValue(formData.phone);
-    
-    const zipCodeValid = !!zipCodeClean && zipCodeClean.length === 8;
-    const documentValid = !!documentClean && documentClean.length >= 11;
-    const phoneValid = !!phoneClean && (phoneClean.length === 10 || phoneClean.length === 11);
+    const zipCodeValid = !!zipCodeClean && zipCodeClean.length >= 5; // Aceita CEP ou código internacional
+    const phoneValid = !!phoneClean && phoneClean.length >= 10 && phoneClean.length <= 13;
+
+    let documentValid = false;
+    let companyNameValid = true;
+    if (formData.legal_status === "business") {
+      console.log("[VALIDAÇÃO DOCUMENTO] Usando validateCNPJ | legal_status:", formData.legal_status, "| valor:", formData.documentNumber);
+      // LOG DE DEPURAÇÃO PARA DOCUMENTO CNPJ
+      const rawDoc = formData.documentNumber;
+      const cleanedDoc = rawDoc ? rawDoc.replace(/\D/g, "") : "";
+      const validCNPJ = validateCNPJ(rawDoc);
+      console.log("[DEBUG CNPJ] raw:", rawDoc, "| cleaned:", cleanedDoc, "| valid:", validCNPJ);
+      // CNPJ obrigatório: exatamente 14 dígitos (usando função utilitária)
+      documentValid = validCNPJ;
+      companyNameValid = !!formData.company_name?.trim() && formData.company_name.trim().length >= 2;
+    } else {
+      console.log("[VALIDAÇÃO DOCUMENTO] Usando validateCPF | legal_status:", formData.legal_status, "| valor:", formData.documentNumber);
+      documentValid = validateCPF(formData.documentNumber);
+    }
 
     console.log("🔍 VALIDAÇÃO DETALHADA:", {
       name: { value: formData.name, valid: nameValid },
@@ -77,45 +113,18 @@ function PaymentInformationForm({
       state: { value: formData.state, valid: stateValid },
       zipCode: { value: formData.zipCode, cleaned: zipCodeClean, valid: zipCodeValid },
       document: { value: formData.documentNumber, cleaned: documentClean, valid: documentValid },
-      phone: { value: formData.phone, cleaned: phoneClean, valid: phoneValid }
+      phone: { value: formData.phone, cleaned: phoneClean, valid: phoneValid },
+      company_name: { value: formData.company_name, valid: companyNameValid }
     });
 
-    const isValid = nameValid && emailValid && addressValid && cityValid && stateValid && zipCodeValid && documentValid && phoneValid;
-    
-    console.log("✅ RESULTADO DA VALIDAÇÃO:", { isValid });
+    let isValid = nameValid && emailValid && addressValid && cityValid && stateValid && zipCodeValid && documentValid && phoneValid;
+    if (formData.legal_status === "business") {
+      isValid = isValid && companyNameValid;
+    }
 
+    console.log("✅ RESULTADO DA VALIDAÇÃO:", { isValid });
     return isValid;
   };
-
-  const brazilianStates = [
-    { value: "AC", label: "Acre" },
-    { value: "AL", label: "Alagoas" },
-    { value: "AP", label: "Amapá" },
-    { value: "AM", label: "Amazonas" },
-    { value: "BA", label: "Bahia" },
-    { value: "CE", label: "Ceará" },
-    { value: "DF", label: "Distrito Federal" },
-    { value: "ES", label: "Espírito Santo" },
-    { value: "GO", label: "Goiás" },
-    { value: "MA", label: "Maranhão" },
-    { value: "MT", label: "Mato Grosso" },
-    { value: "MS", label: "Mato Grosso do Sul" },
-    { value: "MG", label: "Minas Gerais" },
-    { value: "PA", label: "Pará" },
-    { value: "PB", label: "Paraíba" },
-    { value: "PR", label: "Paraná" },
-    { value: "PE", label: "Pernambuco" },
-    { value: "PI", label: "Piauí" },
-    { value: "RJ", label: "Rio de Janeiro" },
-    { value: "RN", label: "Rio Grande do Norte" },
-    { value: "RS", label: "Rio Grande do Sul" },
-    { value: "RO", label: "Rondônia" },
-    { value: "RR", label: "Roraima" },
-    { value: "SC", label: "Santa Catarina" },
-    { value: "SP", label: "São Paulo" },
-    { value: "SE", label: "Sergipe" },
-    { value: "TO", label: "Tocantins" }
-  ];
 
   useEffect(() => {
     // Carregar dados do usuário apenas uma vez no início, antes do usuário interagir
@@ -157,20 +166,19 @@ function PaymentInformationForm({
   useEffect(() => {
     // Só executa se os dados já foram carregados (para evitar validar durante o loading inicial)
     if (dataLoaded && !loading) {
-      // Pequeno delay para garantir que todas as mudanças foram aplicadas
+      // Só valida se todos os campos obrigatórios já têm valor preenchido
+      const obrigatorios = [
+        'name', 'email', 'address', 'city', 'state', 'zipCode', 'documentNumber', 'phone',
+      ];
+      if (formData.legal_status === 'business') obrigatorios.push('company_name');
+      const allFilled = obrigatorios.every(
+        (key) => formData[key] && formData[key].toString().trim() !== ""
+      );
+      if (!allFilled) return;
       const validationTimer = setTimeout(() => {
-        console.log("🔍 AUTO VALIDATION CHECK - Verificando se formulário está completo");
-        
         const isValid = validatePaymentInfoForm();
-        
-        console.log("🎯 ENVIANDO RESULTADO DA VALIDAÇÃO PARA O COMPONENTE PAI:", {
-          isValid: isValid,
-          timestamp: new Date().toISOString()
-        });
-        
         onValidSubmit(isValid);
-      }, 300); // 300ms de delay para aguardar sincronização completa
-      
+      }, 300);
       return () => clearTimeout(validationTimer);
     }
   }, [formData, dataLoaded, loading]); // Executa sempre que formData mudar
@@ -194,7 +202,7 @@ function PaymentInformationForm({
       // First check if user is admin
       const { data: adminData } = await supabase
         .from("admins")
-        .select("id, email, first_name, last_name")
+        .select("id, email, first_name, last_name, phone")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -208,19 +216,32 @@ function PaymentInformationForm({
           .eq("admin_id", user.id)
           .maybeSingle();
 
-        console.log("🏢 Company data for admin:", data);
+        // Busca o telefone do admin
+        const adminPhone = adminData.phone || "";
+        // Busca o nome completo do admin
+        const adminFullName = `${adminData.first_name || ""} ${adminData.last_name || ""}`.trim();
 
         if (data) {
-          setAccountType(data.legal_status || "individual");            const dataToUpdate = {
-              name: data.legal_status === "business" ? data.company_name || "" : `${adminData.first_name} ${adminData.last_name}`,
-              email: adminData.email || "",
-              address: data.address || "",
-              city: data.city || "",
-              state: data.state || "",
-              zipCode: data.zip_code || "",
-              documentNumber: data.document_number || "",
-              phone: (data.phone !== null && data.phone !== undefined) ? String(data.phone) : ""
-            };
+          setLegalStatus(data.legal_status || "individual");
+          setCountry(data.country || "BR");
+          // NOVO: Atualizar legal_status no formData também
+          onChange({
+            target: {
+              name: 'legal_status',
+              value: data.legal_status || 'individual',
+            }
+          } as React.ChangeEvent<HTMLInputElement>);
+          const dataToUpdate = {
+            name: adminFullName, // Sempre nome do usuário logado, nunca o nome da empresa
+            email: adminData.email || "",
+            address: data.address || "",
+            city: data.city || "",
+            state: data.state || "",
+            zipCode: data.zip_code || "",
+            documentNumber: data.document_number || "",
+            phone: adminPhone,
+            company_name: data.company_name || ""
+          };
 
           console.log("📝 Data to update form (admin):", dataToUpdate);            // Update each field individually with detailed logs - APENAS CAMPOS VAZIOS
             Object.entries(dataToUpdate).forEach(([key, value]) => {
@@ -256,6 +277,9 @@ function PaymentInformationForm({
 
         console.log("👥 Platform user data:", platformUserData);
 
+        // Busca o telefone do usuário
+        const userPhone = platformUserData?.phone || "";
+
         if (platformUserData) {
           // Get company data for platform user
           const { data } = await supabase
@@ -264,20 +288,29 @@ function PaymentInformationForm({
             .eq("user_id", user.id)
             .maybeSingle();
 
-          console.log("🏢 Company data for platform user:", data);
+          // Busca o nome completo do usuário
+          const userFullName = `${platformUserData.first_name || ""} ${platformUserData.last_name || ""}`.trim();
 
           if (data) {
-            setAccountType(data.legal_status || "individual");
-
+            setLegalStatus(data.legal_status || "individual");
+            setCountry(data.country || "BR");
+            // NOVO: Atualizar legal_status no formData também
+            onChange({
+              target: {
+                name: 'legal_status',
+                value: data.legal_status || 'individual',
+              }
+            } as React.ChangeEvent<HTMLInputElement>);
             const dataToUpdate = {
-              name: data.legal_status === "business" ? data.company_name || "" : `${platformUserData.first_name} ${platformUserData.last_name}`,
+              name: userFullName, // Sempre nome do usuário logado, nunca o nome da empresa
               email: platformUserData.email || "",
               address: data.address || "",
               city: data.city || "",
               state: data.state || "",
               zipCode: data.zip_code || "",
               documentNumber: data.document_number || "",
-              phone: (data.phone !== null && data.phone !== undefined) ? String(data.phone) : ""
+              phone: userPhone,
+              company_name: data.company_name || ""
             };
 
             console.log("📝 Data to update form (platform user with company):", dataToUpdate);
@@ -350,6 +383,11 @@ function PaymentInformationForm({
     } finally {
       setLoading(false);
       setDataLoaded(true);
+      // Chama validação imediatamente após preenchimento automático
+      setTimeout(() => {
+        const isValid = validatePaymentInfoForm();
+        onValidSubmit(isValid);
+      }, 0);
       console.log("✅ Loading user data completed");
     }
   }
@@ -378,47 +416,84 @@ function PaymentInformationForm({
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         {loading
           ? "Carregando informações..."
-          : accountType === "business"
+          : legalStatus === "business"
           ? "Dados da Empresa"
           : "Dados Pessoais"}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Linha: Nome Completo (ou Nome da Empresa para PF), Email */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <Label>
-            {accountType === "business" ? "Nome da Empresa" : "Nome Completo"}{" "}
-            <span className="text-error-500">*</span>
+            Nome Completo <span className="text-error-500">*</span>
           </Label>
           <Input
             type="text"
             name="name"
-            value={formData.name}
+            value={formData.name || ""}
             onChange={onChange}
             required
+            placeholder="Digite o nome completo"
+            // Campo sempre habilitado
           />
         </div>
         <div>
           <Label>
             Email <span className="text-error-500">*</span>
           </Label>
-          <MaskedInput
-            mask="email"
+          <Input
+            type="email"
             name="email"
-            value={formData.email}
+            value={formData.email || ""}
             onChange={onChange}
             required
+            placeholder="Digite o email"
+          />
+        </div>
+      </div>
+      {/* Linha: Tipo de Pessoa, País */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
+        <div>
+          <Label>
+            Tipo de Pessoa <span className="text-error-500">*</span>
+          </Label>
+          <Select
+            options={[
+              { value: "individual", label: "Pessoa Física" },
+              { value: "business", label: "Pessoa Jurídica" }
+            ]}
+            value={legalStatus}
+            onChange={handleLegalStatusChange}
           />
         </div>
         <div>
           <Label>
-            Endereço <span className="text-error-500">*</span>
+            País <span className="text-error-500">*</span>
           </Label>
-          <Input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={onChange}
-            required
+          <Select
+            options={Object.entries(CountryStates).map(([code, states]) => ({
+              value: code,
+              label: code,
+              icon: undefined // Adapte para mostrar bandeira se quiser
+            }))}
+            value={country}
+            onChange={handleCountryChange}
+          />
+        </div>
+      </div>
+      {/* Linha: Estado, Cidade */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
+        <div>
+          <Label>
+            Estado {stateOptions.length > 0 && <span className="text-error-500">*</span>}
+          </Label>
+          <Select
+            options={stateOptions.length > 0 ? [{ value: "", label: "Selecione o estado" }, ...stateOptions] : [{ value: "", label: "Selecione o país primeiro" }]}
+            value={formData.state || ""}
+            onChange={(value) =>
+              onChange({ target: { name: "state", value } } as React.ChangeEvent<HTMLInputElement>)
+            }
+            disabled={stateOptions.length === 0}
           />
         </div>
         <div>
@@ -433,61 +508,111 @@ function PaymentInformationForm({
             required
           />
         </div>
+      </div>
+      {/* Linha: Endereço, CEP */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
         <div>
           <Label>
-            Estado <span className="text-error-500">*</span>
+            Endereço <span className="text-error-500">*</span>
           </Label>
-          <Select
-            options={brazilianStates}
-            value={formData.state}
-            onChange={(value) =>
-              onChange({
-                target: { name: "state", value }
-              } as React.ChangeEvent<HTMLSelectElement>)
-            }
-            placeholder="Selecione um estado"
+          <Input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={onChange}
+            required
           />
         </div>
         <div>
           <Label>
-            CEP <span className="text-error-500">*</span>
+            {country === "BR" ? "CEP" : "Código Postal"}
+            {country === "BR" && <span className="text-error-500">*</span>}
           </Label>
           <MaskedInput
-            mask="cep"
+            mask={country === "BR" ? "cep" : "none"}
             name="zipCode"
             value={formData.zipCode}
             onChange={onChange}
             required
           />
         </div>
-        <div>
-          <Label>
-            {accountType === "business" ? "CNPJ" : "CPF"}{" "}
-            <span className="text-error-500">*</span>
-          </Label>
-          <MaskedInput
-            mask={accountType === "business" ? "cnpj" : "cpf"}
-            name="documentNumber"
-            value={formData.documentNumber}
-            onChange={onChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>
-            Telefone/Celular <span className="text-error-500">*</span>
-          </Label>
-          <MaskedInput
-            mask="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={onChange}
-            required
-          />
-        </div>
-        {/* Exemplo de campo de cartão de crédito */}
-        {/* Removido campo de exemplo de número do cartão conforme solicitado */}
       </div>
+      {/* Linha: CNPJ/CPF, Nome da Empresa (apenas para PJ) */}
+      {legalStatus === "business" && (
+        <>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
+            <div>
+              <Label>
+                CNPJ <span className="text-error-500">*</span>
+              </Label>
+              <MaskedInput
+                mask="cnpj"
+                name="documentNumber"
+                value={formData.documentNumber || ""}
+                onChange={onChange}
+                required
+                placeholder="Digite o CNPJ"
+              />
+            </div>
+            <div>
+              <Label>
+                Nome da Empresa <span className="text-error-500">*</span>
+              </Label>
+              <Input
+                type="text"
+                name="company_name"
+                value={formData.company_name || ""}
+                onChange={onChange}
+                required
+                placeholder="Digite o nome da empresa"
+              />
+            </div>
+          </div>
+          {/* Linha: Telefone/Celular para PJ */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
+            <div>
+              <Label>
+                Telefone/Celular <span className="text-error-500">*</span>
+              </Label>
+              <MaskedInput
+                mask="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={onChange}
+                required
+              />
+            </div>
+          </div>
+        </>
+      )}
+      {legalStatus === "individual" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-6">
+          <div>
+            <Label>
+              CPF <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask="cpf"
+              name="documentNumber"
+              value={formData.documentNumber}
+              onChange={onChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>
+              Telefone/Celular <span className="text-error-500">*</span>
+            </Label>
+            <MaskedInput
+              mask="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={onChange}
+              required
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,10 +2,12 @@ import Label from "../../form/Label";
 import Input from "../../form/input/InputField";
 import Select from "../../form/Select";
 import InputMask from "react-input-mask";
+import { CountryStates } from "./CountryStates";
 
 interface CompanyData {
   legal_status: "business" | "individual";
   country: string;
+  state?: string; // <-- Adicionado campo de estado
   company_name?: string;
   city: string;
   zip_code: string;
@@ -942,6 +944,8 @@ export default function CompanyInfoForm({
     onChange({ ...data, [field]: value });
   };
 
+  const stateOptions = CountryStates[data.country] || [];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -970,20 +974,49 @@ export default function CompanyInfoForm({
           />
         </div>
 
+        {/* CNPJ e Nome da Empresa lado a lado, só para Pessoa Jurídica */}
         {data.legal_status === "business" && (
-          <div className="lg:col-span-2">
-            <Label>
-              Nome da Empresa <span className="text-error-500">*</span>
-            </Label>
-            <Input
-              type="text"
-              value={data.company_name || ""}
-              onChange={(e) => handleChange("company_name", e.target.value)}
-              required={data.legal_status === "business"}
-            />
-          </div>
+          <>
+            <div>
+              <Label>
+                CNPJ <span className="text-error-500">*</span>
+              </Label>
+              <InputMask
+                mask="99.999.999/9999-99"
+                value={data.document_number}
+                onChange={(e) => handleChange("document_number", e.target.value)}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                placeholder="00.000.000/0000-00"
+                required
+              />
+            </div>
+            <div>
+              <Label>
+                Nome da Empresa <span className="text-error-500">*</span>
+              </Label>
+              <Input
+                type="text"
+                value={data.company_name || ""}
+                onChange={(e) => handleChange("company_name", e.target.value)}
+                required
+                placeholder="Digite o nome da empresa"
+              />
+            </div>
+          </>
         )}
 
+        {/* Estado e Cidade lado a lado */}
+        <div>
+          <Label>
+            Estado {stateOptions.length > 0 && <span className="text-error-500">*</span>}
+          </Label>
+          <Select
+            options={stateOptions.length > 0 ? [{ value: "", label: "Selecione o estado" }, ...stateOptions] : [{ value: "", label: "Selecione o país primeiro" }]}
+            value={data.state || ""}
+            onChange={(value) => handleChange("state", value)}
+            disabled={stateOptions.length === 0}
+          />
+        </div>
         <div>
           <Label>
             Cidade <span className="text-error-500">*</span>
@@ -996,41 +1029,23 @@ export default function CompanyInfoForm({
           />
         </div>
 
+        {/* Última linha: CEP e Endereço */}
         <div>
           <Label>
-            {data.country === "BR" ? "CEP" : "Código Postal"}
-            {data.country === "BR" && <span className="text-error-500">*</span>}
+            CEP <span className="text-error-500">*</span>
           </Label>
           <div className="relative">
-            {data.country === "BR" ? (
-              <InputMask
-                mask="99999-999"
-                value={data.zip_code}
-                onChange={(e) => handleChange("zip_code", e.target.value)}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                placeholder="00000-000"
-                required={data.country === "BR"}
-              />
-            ) : (
-              <Input
-                type="text"
-                value={data.zip_code}
-                onChange={(e) => handleChange("zip_code", e.target.value)}
-                required={data.country === "BR"}
-                maxLength={10}
-                placeholder="Enter postal/zip code"
-              />
-            )}
+            <InputMask
+              mask="99999-999"
+              value={data.zip_code}
+              onChange={(e) => handleChange("zip_code", e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+              placeholder="00000-000"
+              required
+            />
           </div>
-          {/* Substitui isRequiredField("zipcode") por checagem inline */}
-          {data.country !== "BR" && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Optional for non-Brazilian addresses
-            </p>
-          )}
         </div>
-
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
           <Label>
             Endereço <span className="text-error-500">*</span>
           </Label>
@@ -1041,63 +1056,22 @@ export default function CompanyInfoForm({
             required
           />
         </div>
-
-        <div>
-          <Label>
-            {data.country === "BR"
-              ? data.legal_status === "business"
-                ? "CNPJ"
-                : "CPF"
-              : data.legal_status === "business"
-              ? "Tax ID"
-              : "Document Number"}
-            {data.country === "BR" && <span className="text-error-500">*</span>}
-          </Label>
-          <div className="relative">
-            {data.country === "BR" ? (
-              <InputMask
-                mask={
-                  data.legal_status === "business"
-                    ? "99.999.999/9999-99"
-                    : "999.999.999-99"
-                }
-                value={data.document_number}
-                onChange={(e) =>
-                  handleChange("document_number", e.target.value)
-                }
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                placeholder={
-                  data.legal_status === "business"
-                    ? "00.000.000/0000-00"
-                    : "000.000.000-00"
-                }
-                required={data.country === "BR"}
-              />
-            ) : (
-              <Input
-                type="text"
-                value={data.document_number}
-                onChange={(e) =>
-                  handleChange("document_number", e.target.value)
-                }
-                required={data.country === "BR"}
-                maxLength={20}
-                placeholder={`Enter ${
-                  data.legal_status === "business"
-                    ? "tax ID"
-                    : "document number"
-                }`}
-              />
-            )}
+        {/* Novo campo CPF ao final, apenas para Pessoa Física */}
+        {data.legal_status === 'individual' && (
+          <div className="lg:col-span-1">
+            <Label>
+              CPF <span className="text-error-500">*</span>
+            </Label>
+            <InputMask
+              mask="999.999.999-99"
+              value={data.document_number}
+              onChange={(e) => handleChange("document_number", e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+              placeholder="000.000.000-00"
+              required
+            />
           </div>
-          {/* Substitui isRequiredField("document") por checagem inline */}
-          {data.country !== "BR" && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Optional for non-Brazilian{" "}
-              {data.legal_status === "business" ? "companies" : "individuals"}
-            </p>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

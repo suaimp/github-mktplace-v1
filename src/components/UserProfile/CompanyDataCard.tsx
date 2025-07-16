@@ -8,6 +8,7 @@ interface AdminProfile {
   id: string;
   email: string;
   phone?: string;
+  role?: string; // Adicionado para permitir checagem de admin
 }
 
 interface CompanyData {
@@ -60,14 +61,15 @@ export default function CompanyDataCard({
   });
 
   useEffect(() => {
-    if (profile?.id) {
+    if (profile && profile.id) {
       loadCompanyData();
     }
-  }, [profile?.id]);
+    // Corrigir dependência para evitar erro de profile possivelmente null
+  }, [profile && profile.id]);
 
   useEffect(() => {
     // Set Brazil as default country if phone starts with +55
-    if (profile?.phone?.startsWith("+55") && !companyData.id) {
+    if (profile && profile.phone?.startsWith("+55") && !companyData.id) {
       setCompanyData((prev) => ({
         ...prev,
         country: "BR"
@@ -80,17 +82,19 @@ export default function CompanyDataCard({
       setLoading(true);
       setError("");
 
-      const { data, error: fetchError } = await supabase
-        .from("company_data")
-        .select("*")
-        .eq("admin_id", profile?.id)
-        .maybeSingle();
+      let query = supabase.from("company_data").select("*");
+      if (profile && profile.role === 'admin') {
+        query = query.eq("admin_id", profile.id);
+      } else if (profile && profile.id) {
+        query = query.eq("user_id", profile.id);
+      }
+      const { data, error: fetchError } = await query.maybeSingle();
 
       if (fetchError) throw fetchError;
 
       if (data) {
         setCompanyData(data);
-      } else if (profile?.phone?.startsWith("+55")) {
+      } else if (profile && profile.phone?.startsWith("+55")) {
         // If no data exists and phone is Brazilian, set Brazil as default
         setCompanyData((prev) => ({
           ...prev,
@@ -113,34 +117,56 @@ export default function CompanyDataCard({
       setError("");
       setSuccess(false);
 
-      const { data: existingData } = await supabase
-        .from("company_data")
-        .select("id")
-        .eq("admin_id", profile?.id)
-        .maybeSingle();
+      // Antes de inserir, verificar se já existe registro para o usuário
+      let existingRow: any = null;
+      if (profile) {
+        let checkQuery = supabase.from("company_data").select("id");
+        if (profile.role === 'admin') {
+          checkQuery = checkQuery.eq("admin_id", profile.id);
+        } else {
+          checkQuery = checkQuery.eq("user_id", profile.id);
+        }
+        const { data: checkData } = await checkQuery.maybeSingle();
+        existingRow = checkData;
+      }
 
-      if (existingData?.id) {
-        // Update existing record
+      if (existingRow && existingRow.id) {
+        // Se já existe, faz update
+        let admin_id: string | null = null;
+        let user_id: string | null = null;
+        if (profile && profile.id) {
+          admin_id = profile.role === 'admin' ? profile.id : null;
+          user_id = profile.role !== 'admin' ? profile.id : null;
+        }
+        const updatePayload = {
+          ...companyData,
+          updated_at: new Date().toISOString(),
+          admin_id: admin_id as string | null,
+          user_id: user_id as string | null
+        };
+        console.log('Payload UPDATE company_data:', updatePayload);
         const { error: updateError } = await supabase
           .from("company_data")
-          .update({
-            ...companyData,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", existingData.id);
-
+          .update(updatePayload)
+          .eq("id", existingRow.id);
         if (updateError) throw updateError;
       } else {
-        // Insert new record
+        // Se não existe, faz insert
+        let admin_id: string | null = null;
+        let user_id: string | null = null;
+        if (profile && profile.id) {
+          admin_id = profile.role === 'admin' ? profile.id : null;
+          user_id = profile.role !== 'admin' ? profile.id : null;
+        }
+        const insertPayload = {
+          ...companyData,
+          admin_id: admin_id as string | null,
+          user_id: user_id as string | null
+        };
+        console.log('Payload INSERT company_data:', insertPayload);
         const { error: insertError } = await supabase
           .from("company_data")
-          .insert([
-            {
-              ...companyData,
-              admin_id: profile?.id
-            }
-          ]);
-
+          .insert([insertPayload]);
         if (insertError) throw insertError;
       }
 

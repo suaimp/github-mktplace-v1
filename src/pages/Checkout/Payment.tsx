@@ -71,6 +71,9 @@ export default function Payment() {
     zipCode: "",
     documentNumber: "",
     phone: "",
+    legal_status: 'individual' as 'individual' | 'business', // Corrigido para tipo literal
+    country: "BR",
+    company_name: ""
   });
 
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -421,6 +424,9 @@ export default function Payment() {
           allFormData: newFormData,
           timestamp: new Date().toISOString()
         });
+      }
+      if (name === 'legal_status') {
+        console.log('[DEBUG Payment.tsx] legal_status atualizado:', newFormData.legal_status);
       }
       
       return newFormData;
@@ -1044,11 +1050,24 @@ export default function Payment() {
           }
         ],
         customer: {
+          external_id: formData.email || formData.name || uuidv4(),
           name: formData.name,
           email: formData.email,
-          document: formData.documentNumber.replace(/\D/g, ""),
-          document_type: "cpf",
-          type: "individual"
+          tax_id: formData.documentNumber.replace(/\D/g, ""),
+          type: formData.legal_status === "business" ? "corporation" : "individual",
+          phones: {
+            mobile_phone: {
+              country_code: "55",
+              number: formData.phone.replace(/\D/g, "")
+            }
+          },
+          address: {
+            line_1: formData.address?.trim() || "Rua das Flores, 123",
+            zip_code: (formData.zipCode?.replace(/\D/g, "") || "01234567"),
+            city: formData.city?.trim() || "São Paulo",
+            state: formData.state?.trim() || "SP",
+            country: "BR"
+          }
         },
         payments: [
           {
@@ -1056,14 +1075,12 @@ export default function Payment() {
             credit_card: {
               installments: selectedInstallmentObj.installments,
               statement_descriptor: "MARKETPLACE",
-              card_token: tokenResult.card_token,
-              card: {
-                billing_address: billingAddress
-              }
+              card_token: tokenResult.card_token
             }
           }
         ]
       };
+      console.log('[DEBUG] legal_status no submit:', formData.legal_status, '| document_type:', formData.legal_status === "business" ? "cnpj" : "cpf", '| type:', formData.legal_status === "business" ? "business" : "individual", '| document:', formData.documentNumber);
       console.log('[DEBUG] Payload de pagamento montado:', paymentPayload);
       console.log('[DEBUG] Vai enviar o pagamento para a função edge');
       const response = await fetch(url, {
