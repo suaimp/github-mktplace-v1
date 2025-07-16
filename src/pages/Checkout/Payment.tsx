@@ -1031,6 +1031,31 @@ export default function Payment() {
 
       console.log('[DEBUG] Token recebido, preparando para montar payload de pagamento');
 
+      // Função utilitária para extrair country_code, area_code e number do telefone
+      function parsePhone(phone: string) {
+        // Remove tudo que não é número
+        const digits = phone.replace(/\D/g, "");
+        // country_code: 2 primeiros dígitos (ou 55 se não informado)
+        let country_code = "55";
+        let area_code = "";
+        let number = "";
+        if (digits.length >= 12) {
+          country_code = digits.substring(0, 2);
+          area_code = digits.substring(2, 4);
+          number = digits.substring(4);
+        } else if (digits.length === 11) {
+          area_code = digits.substring(0, 2);
+          number = digits.substring(2);
+        } else if (digits.length === 10) {
+          area_code = digits.substring(0, 2);
+          number = digits.substring(2);
+        } else {
+          // fallback: tenta pegar os últimos 9 dígitos como número
+          number = digits.slice(-9);
+          area_code = digits.slice(-11, -9);
+        }
+        return { country_code, area_code, number };
+      }
       // PASSO 2: Usar o token para fazer o pagamento
       console.log('[DEBUG] Passo 2: Montando payload de pagamento...');
       const selectedInstallmentObj = installmentsOptions.find(opt => opt.installments === selectedInstallments);
@@ -1040,6 +1065,8 @@ export default function Payment() {
         setProcessing(false);
         return;
       }
+      // Extrai os campos do telefone
+      const parsedPhone = parsePhone(formData.phone || "");
       const paymentPayload = {
         items: [
           {
@@ -1053,12 +1080,13 @@ export default function Payment() {
           external_id: formData.email || formData.name || uuidv4(),
           name: formData.name,
           email: formData.email,
-          tax_id: formData.documentNumber.replace(/\D/g, ""),
-          type: formData.legal_status === "business" ? "corporation" : "individual",
+          document: formData.documentNumber.replace(/\D/g, ""), // Corrigido de tax_id para document
+          type: formData.legal_status === "business" ? "company" : "individual", // Corrigido para company/individual
           phones: {
             mobile_phone: {
-              country_code: "55",
-              number: formData.phone.replace(/\D/g, "")
+              country_code: parsedPhone.country_code,
+              area_code: parsedPhone.area_code,
+              number: parsedPhone.number
             }
           },
           address: {
