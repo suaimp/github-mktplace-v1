@@ -1070,7 +1070,7 @@ export default function Payment() {
       const paymentPayload = {
         items: [
           {
-            amount: selectedInstallmentObj.amount, // valor em centavos
+            amount: totalAmount, // valor total em centavos (CORRETO)
             description: "Pedido Marketplace",
             quantity: 1,
             code: "ITEM_" + Date.now()
