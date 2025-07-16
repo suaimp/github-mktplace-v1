@@ -471,7 +471,7 @@ function PaymentInformationForm({
             País <span className="text-error-500">*</span>
           </Label>
           <Select
-            options={Object.entries(CountryStates).map(([code, states]) => ({
+            options={Object.entries(CountryStates).map(([code]) => ({
               value: code,
               label: code,
               icon: undefined // Adapte para mostrar bandeira se quiser

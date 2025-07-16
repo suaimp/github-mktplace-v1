@@ -11,7 +11,7 @@ import {
   validateCPF,
   validateCNPJ,
   validateCEP,
-  validatePhone,
+ 
   validateEmail,
   validateDocument,
   isFieldComplete,
@@ -281,8 +281,8 @@ const MaskedInput: React.FC<MaskedInputProps> = ({
     onBlur?.(syntheticEvent);
   };
 
-  // Mostrar feedback visual vermelho (sem ícone)
-  const inputError = isValid === false;
+  
+ 
   // Exibir mensagem de erro apenas se o campo não estiver vazio e for inválido
   const showError = isValid === false && displayValue && displayValue.length > 0;
   // Só mostra hint se não for erro
