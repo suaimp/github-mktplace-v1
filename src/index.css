@@ -120,15 +120,37 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    @apply size-1.5;
+    width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply rounded-full;
+    background: #e5e7eb; /* gray-200 */
+    border-radius: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full dark:bg-gray-700;
+    background: #9ca3af; /* gray-400 */
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; /* gray-500 */
+  }
+
+  /* Dark mode para custom-scrollbar */
+  .dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: #1f2937; /* gray-800 */
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #374151; /* gray-700 */
+    border: 1px solid #1f2937;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #4b5563; /* gray-600 */
   }
 
   input[type="date"]::-webkit-inner-spin-button,
@@ -737,4 +759,122 @@ span.flatpickr-weekday,
 
 .fc .fc-list-day-cushion {
   @apply bg-gray-50 dark:bg-gray-800;
+}
+
+/* === Scrollbar global para darkmode e lightmode === */
+
+/* Webkit browsers - Light mode (cinza) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: #e5e7eb; /* gray-200 */
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #9ca3af; /* gray-400 */
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
+}
+
+/* Dark mode com classe dark do Tailwind */
+.dark *::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+}
+.dark *::-webkit-scrollbar-thumb {
+  background: #374151; /* gray-700 */
+  border: 1px solid #1f2937;
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* gray-600 */
+}
+
+/* Firefox - Light mode */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #e5e7eb; /* thumb track */
+}
+
+/* Firefox - Dark mode com classe dark do Tailwind */
+.dark * {
+  scrollbar-color: #374151 #1f2937; /* thumb track */
+}
+
+/* === Conteúdo dinâmico para dark mode === */
+.dark .dynamic-content,
+.dark .dynamic-content * {
+  color: rgb(209, 213, 219) !important; /* gray-300 */
+}
+
+.dark .dynamic-content h1,
+.dark .dynamic-content h2,
+.dark .dynamic-content h3,
+.dark .dynamic-content h4,
+.dark .dynamic-content h5,
+.dark .dynamic-content h6 {
+  color: rgba(255, 255, 255, 0.9) !important; /* white/90 */
+}
+
+.dark .dynamic-content a {
+  color: rgb(96, 165, 250) !important; /* brand-400 */
+}
+
+.dark .dynamic-content strong,
+.dark .dynamic-content b {
+  color: rgba(255, 255, 255, 0.9) !important; /* white/90 */
+}
+
+/* Override inline styles no dark mode */
+.dark .dynamic-content [style*="color"] {
+  color: rgb(209, 213, 219) !important; /* gray-300 */
+}
+
+.dark .dynamic-content [style*="color"]:is(h1, h2, h3, h4, h5, h6) {
+  color: rgba(255, 255, 255, 0.9) !important; /* white/90 */
+}
+
+.dark .dynamic-content [style*="color"]:is(a) {
+  color: rgb(96, 165, 250) !important; /* brand-400 */
+}
+
+.dark .dynamic-content [style*="color"]:is(strong, b) {
+  color: rgba(255, 255, 255, 0.9) !important; /* white/90 */
+}
+
+/* Garante que texto dinâmico funcione em dark mode */
+.prose.dark\:prose-invert div,
+.prose.dark\:prose-invert p,
+.prose.dark\:prose-invert span {
+  color: inherit !important;
+}
+
+/* Remove cores inline que possam interferir no dark mode */
+.dark .prose div[style*="color"],
+.dark .prose p[style*="color"], 
+.dark .prose span[style*="color"] {
+  color: rgb(209, 213, 219) !important; /* gray-300 */
+}
+
+/* Força cores para títulos no dark mode */
+.dark .prose h1,
+.dark .prose h2, 
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Força cores para links no dark mode */
+.dark .prose a {
+  color: rgb(96, 165, 250) !important; /* blue-400 */
+}
+
+/* Força cor padrão para texto em geral no dark mode */
+.dark .prose {
+  color: rgb(209, 213, 219) !important; /* gray-300 */
 }

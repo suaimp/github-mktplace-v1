@@ -47,6 +47,7 @@ import FormSettings from "./pages/Forms/FormSettings";
 import FormPreview from "./pages/Forms/FormPreview";
 import ServicePackages from "./pages/ServicePackages/ServicePackages";
 import ServicePackagesCards from "./pages/ServicePackages/ServicePackagesCards";
+import Coupons from "./pages/Coupons/Coupons";
 import DynamicFavicon from "./components/common/DynamicFavicon";
 import EditorialManager from "./pages/EditorialManager/EditorialManager";
 import Checkout from "./pages/Checkout/Checkout";
@@ -55,6 +56,7 @@ import BoletoSuccessPage from "./pages/Checkout/BoletoSuccessPage";
 import OrderList from "./pages/Orders/OrderList";
 import OrderDetail from "./pages/Orders/OrderDetail";
 import AdminRegister from "./pages/Users/AdminRegister";
+import TicketEditPage from "./pages/Coupons/[id]";
 
 function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -180,6 +182,8 @@ export default function App() {
               path="/service-packages/:id"
               element={<ServicePackagesCards />}
             />
+            <Route path="/tickets" element={<Coupons />} />
+            <Route path="/tickets/:id" element={<TicketEditPage />} />
           </Route>
 
           <Route path="/editorial" element={<EditorialManager />} />

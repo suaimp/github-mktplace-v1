@@ -2,7 +2,7 @@ import {
   SidebarProvider,
   useSidebar,
 } from "../services/context/SidebarContext";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import TawkChat from "../components/TawkChat/TawkChat";
@@ -39,10 +39,12 @@ const LayoutContent: React.FC = () => {
 const AppLayout: React.FC<{ hideTawkChat?: boolean }> = ({
   hideTawkChat = false,
 }) => {
+  const location = useLocation();
+  const isTicketOrServiceRoute = location.pathname.startsWith("/tickets") || location.pathname.startsWith("/service-packages");
   return (
     <SidebarProvider>
       <LayoutContent />
-      {!hideTawkChat && <TawkChat />}
+      {!hideTawkChat && !isTicketOrServiceRoute && <TawkChat />}
     </SidebarProvider>
   );
 };

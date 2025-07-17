@@ -233,7 +233,7 @@ export default function EntriesTable({
         </div>
       </div>
       {/* Tabela */}
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[1102px]">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">

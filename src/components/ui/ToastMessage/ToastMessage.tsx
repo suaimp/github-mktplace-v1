@@ -53,7 +53,9 @@ export default function ToastMessage({
     <div
       ref={toastRef}
       className={`fixed right-0 z-[999999] transition-transform duration-500 ${
-        type === "success" ? "bg-green-500" : "bg-red-500"
+        type === "success" 
+          ? "bg-success-500 dark:bg-success-600" 
+          : "bg-error-500 dark:bg-error-600"
       } text-white px-6 py-3 rounded-l-lg shadow-lg flex items-center ${
         className || ""
       }`}

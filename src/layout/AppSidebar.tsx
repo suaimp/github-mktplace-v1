@@ -285,6 +285,11 @@ export default function AppSidebar() {
           icon: <Icons.BoxIcon />,
           name: "Serviços",
           path: "/service-packages"
+        },
+        {
+          icon: <Icons.TicketIcon />,
+          name: "Cupons",
+          path: "/tickets"
         }
       ]
     : [];

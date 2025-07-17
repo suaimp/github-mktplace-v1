@@ -37,6 +37,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   // Estado para o modal de detalhes
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
+  // Estado para detectar modo escuro
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredEntries.length / ordersPerPage);
@@ -60,6 +62,25 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   useEffect(() => {
     loadMarketplaceData();
   }, [formId]);
+
+  // Detectar mudanças no modo escuro
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Verificar inicialmente
+    checkDarkMode();
+
+    // Observar mudanças na classe dark do html
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Filter and sort entries when dependencies change
   useEffect(() => {
@@ -446,12 +467,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         </div>
 
         <div 
-          className="w-full overflow-x-auto overflow-y-hidden" 
+          className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar" 
           style={{ 
             maxWidth: '100%',
-            overflowY: 'hidden',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e0 transparent'
+            overflowY: 'hidden'
           }}
         >            <table 
               className="w-full xl:min-w-[1200px] divide-y divide-gray-200 dark:divide-gray-800"
@@ -745,7 +764,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 <div className="hidden xl:contents">
                   {buttonBuyField && (
                     <th
-                      scope="col"
+                      scope="col" 
                       className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white"
                       style={{ 
                         boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
@@ -986,8 +1005,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <div className="hidden xl:contents">
                       {buttonBuyField && (
                         <td 
-                          className="sticky right-0 z-10 bg-white dark:bg-white/[0.03] whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm"
+                          className="sticky right-0 z-10 whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm"
                           style={{ 
+                            backgroundColor: isDarkMode ? 'rgb(17, 24, 39)' : 'rgb(252, 252, 253)', /* ainda mais sutil */
                             boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
                             minWidth: '120px'
                           }}

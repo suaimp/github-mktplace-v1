@@ -152,7 +152,29 @@ export default function ViewPage() {
           {page.title}
         </h1>
 
-        <div className="w-full prose max-w-none dark:prose-invert prose-headings:text-gray-800 dark:prose-headings:text-white/90 prose-p:text-gray-500 dark:prose-p:text-gray-400 overflow-hidden">
+        <div className="w-full prose max-w-none dark:prose-invert 
+                     prose-headings:text-gray-800 dark:prose-headings:text-white/90 
+                     prose-p:text-gray-600 dark:prose-p:text-gray-300 
+                     prose-strong:text-gray-800 dark:prose-strong:text-white/90
+                     prose-a:text-brand-600 dark:prose-a:text-brand-400
+                     prose-li:text-gray-600 dark:prose-li:text-gray-300
+                     prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-300
+                     [&>div]:text-gray-600 [&>div]:dark:text-gray-300
+                     [&_p]:text-gray-600 [&_p]:dark:text-gray-300
+                     [&_h1]:text-gray-800 [&_h1]:dark:text-white/90
+                     [&_h2]:text-gray-800 [&_h2]:dark:text-white/90  
+                     [&_h3]:text-gray-800 [&_h3]:dark:text-white/90
+                     [&_h4]:text-gray-800 [&_h4]:dark:text-white/90
+                     [&_h5]:text-gray-800 [&_h5]:dark:text-white/90
+                     [&_h6]:text-gray-800 [&_h6]:dark:text-white/90
+                     [&_span]:text-gray-600 [&_span]:dark:text-gray-300
+                     [&_div_p]:text-gray-600 [&_div_p]:dark:text-gray-300
+                     [&_*]:dark:text-gray-300
+                     [&_*[style*='color']]:dark:!text-gray-300
+                     [&_div]:dark:!text-gray-300
+                     dynamic-content
+                     overflow-hidden"
+        >
           {renderContent(page.content)}
         </div>
       </div>

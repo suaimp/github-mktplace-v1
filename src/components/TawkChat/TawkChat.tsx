@@ -8,22 +8,30 @@ declare global {
   }
 }
 
+function removeTawkChatFromDOM() {
+  const script = document.getElementById("tawkto-script");
+  if (script) {
+    script.remove();
+  }
+  // Remove o widget do DOM se já estiver renderizado
+  const widget = document.querySelector("iframe[src*='tawk.to']")?.parentElement;
+  if (widget) {
+    widget.remove();
+  }
+}
+
 const TawkChat = () => {
   const location = useLocation();
-  const shouldHide = location.pathname.includes("/service-packages");
+  const shouldHide = location.pathname.startsWith("/service-packages") || location.pathname.startsWith("/tickets");
+
   useEffect(() => {
-    console.log('[TawkChat] pathname:', location.pathname);
     if (shouldHide) {
-      console.log('[TawkChat] Ocultando chat nesta rota.');
+      removeTawkChatFromDOM();
       return;
     }
     if (document.getElementById("tawkto-script")) {
-      console.log('[TawkChat] Script já inserido.');
       return;
     }
-    console.log('[TawkChat] Inserindo script do TawkChat...');
-
-    // Define estilo personalizado antes do script
     window.Tawk_API = window.Tawk_API || {};
     window.Tawk_API.zIndex = "9 !important";
     window.Tawk_API.customStyle = {
@@ -32,7 +40,7 @@ const TawkChat = () => {
         desktop: {
           position: "br",
           xOffset: 20,
-          yOffset: 30, // 10px mais acima
+          yOffset: 30,
         },
         mobile: {
           position: "br",
@@ -46,17 +54,15 @@ const TawkChat = () => {
         },
       },
     };
-
     const s1 = document.createElement("script");
     s1.id = "tawkto-script";
     s1.async = true;
     s1.src = "https://embed.tawk.to/60394afb385de407571a81b8/1evfum410";
     s1.charset = "UTF-8";
     s1.setAttribute("crossorigin", "*");
-
     const s0 = document.getElementsByTagName("script")[0];
     s0?.parentNode?.insertBefore(s1, s0);
-  }, []);
+  }, [location.pathname, shouldHide]);
 
   return null;
 };
