@@ -39,21 +39,14 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-const columnConfig = [
-  { key: "code", label: "Código" },
-  { key: "name", label: "Nome" },
-  { key: "discount_value", label: "Desconto" },
-  { key: "usage_count", label: "Usos" },
-  { key: "end_date", label: "Validade" },
-  { key: "is_active", label: "Status" },
-];
+ 
 
 const CouponsTable: React.FC<CouponsTableProps> = ({
   coupons,
   onDelete,
-  onEdit,
+ 
   onToggleStatus,
-  onRefresh
+ 
 }) => {
   const [toggles, setToggles] = React.useState<{ [id: string]: boolean }>(() => {
     const initial: { [id: string]: boolean } = {};
