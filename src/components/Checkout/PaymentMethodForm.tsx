@@ -282,105 +282,112 @@ export default function PaymentMethodForm({
       </p>
       <div className="mb-6">
         <div className="flex flex-wrap gap-4 mb-6">
-          {filteredPaymentMethods.map((method) => (
-            <button
-              key={method.id}
-              type="button"
-              onClick={() => onPaymentMethodChange(method.id)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg border ${
-                paymentMethod === method.id
-                  ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20 dark:border-brand-400"
-                  : "border-gray-200 hover:border-brand-500 dark:border-gray-700 dark:hover:border-brand-400"
-              }`}
-            >
-              {method.id === "card" && (
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M4 5C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H20C21.1046 19 22 18.1046 22 17V7C22 5.89543 21.1046 5 20 5H4ZM4 7H20V9H4V7ZM4 11H20V17H4V11Z" />
-                  <path d="M6 14H10V15H6V14Z" />
-                </svg>
-              )}
-              {method.id === "pix" && (
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 4L4 8L12 12L20 8L12 4Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4 16L12 20L20 16"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4 12L12 16L20 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-              {method.id === "boleto" && (
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M4 6H20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M4 10H20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M4 14H20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M4 18H20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-              <span>{method.label}</span>
-            </button>
-          ))}
+          {filteredPaymentMethods.map((method) => {
+            const isSelected = paymentMethod === method.id;
+            return (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => onPaymentMethodChange(method.id)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors duration-150
+                  ${isSelected
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20 dark:border-brand-400"
+                    : "border-gray-200 hover:border-brand-500 dark:border-gray-700 dark:hover:border-brand-400"}
+                `}
+              >
+                {/* Ícones com cor dinâmica */}
+                {method.id === "card" && (
+                  <svg
+                    className={`w-6 h-6 ${isSelected ? "text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-300"}`}
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M4 5C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H20C21.1046 19 22 18.1046 22 17V7C22 5.89543 21.1046 5 20 5H4ZM4 7H20V9H4V7ZM4 11H20V17H4V11Z" />
+                    <path d="M6 14H10V15H6V14Z" />
+                  </svg>
+                )}
+                {method.id === "pix" && (
+                  <svg
+                    className={`w-6 h-6 ${isSelected ? "text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-300"}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 4L4 8L12 12L20 8L12 4Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 16L12 20L20 16"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 12L12 16L20 12"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+                {method.id === "boleto" && (
+                  <svg
+                    className={`w-6 h-6 ${isSelected ? "text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-300"}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M4 6H20"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M4 10H20"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M4 14H20"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M4 18H20"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                )}
+                {/* Texto do botão com cor dinâmica */}
+                <span className={`${isSelected ? "text-brand-500 dark:text-brand-400" : "text-gray-700 dark:text-gray-200"} font-medium`}>
+                  {method.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {error && (
-          <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
+          <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/10 dark:text-error-300">
             {error}
           </div>
         )}
 
         {paymentMethod === "card" && (
           <>
-            <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="mt-6     rounded-lg">
               {stripePromise ? (
                 <Elements stripe={stripePromise}>
                   <StripePaymentForm
@@ -470,9 +477,9 @@ export default function PaymentMethodForm({
             {/* Opções de parcelamento */}
             {cardBrand && cardNumberValid ? (
               loadingInstallments ? (
-                <div className="my-4 text-sm text-gray-500">Carregando opções de parcelamento...</div>
+                <div className="my-4 text-sm text-gray-500 dark:text-gray-300">Carregando opções de parcelamento...</div>
               ) : installmentsError ? (
-                <div className="my-4 text-sm text-error-500">{installmentsError}</div>
+                <div className="my-4 text-sm text-error-500 dark:text-error-300 dark:bg-error-500/10 dark:rounded">{installmentsError}</div>
               ) : installmentsOptions.length > 0 ? (
                 <InstallmentsOptions
                   options={installmentsOptions}
@@ -503,7 +510,7 @@ export default function PaymentMethodForm({
                 }
               />
               {!termsAccepted && (
-                <div className="text-error-500 text-sm mt-1">
+                <div className="text-error-500 text-sm mt-1 dark:text-error-300 dark:bg-error-500/10 dark:rounded">
                   Por favor, aceite os termos e condições para continuar
                 </div>
               )}
@@ -551,7 +558,6 @@ export default function PaymentMethodForm({
             <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
               Pagamento via PIX
             </h3>
-
             {/* Checkbox de termos e condições acima do botão de gerar QR Code PIX */}
             <div className="mb-4 flex flex-col items-center">
               <label className="flex items-center">
@@ -561,7 +567,7 @@ export default function PaymentMethodForm({
                   onChange={(e) => onTermsAcceptedChange(e.target.checked)}
                   className="form-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
                 />
-                <span>
+                <span className="text-gray-700 dark:text-gray-200">
                   Eu aceito os{' '}
                   <button
                     type="button"
@@ -572,12 +578,11 @@ export default function PaymentMethodForm({
                 </span>
               </label>
               {!termsAccepted && (
-                <div className="text-error-500 text-sm mt-1">
+                <div className="text-error-500 text-sm mt-1 dark:text-error-300 dark:bg-error-500/10 dark:rounded">
                   Por favor, aceite os termos e condições para continuar
                 </div>
               )}
             </div>
-
             {/* Botão para gerar QR Code com cronômetro */}
             <div className="flex items-center justify-center gap-4">
               <button
@@ -603,10 +608,9 @@ export default function PaymentMethodForm({
               >
                 {processing || isGeneratingQrCode ? "Gerando QR Code..." : "Gerar QR Code PIX"}
               </button>
-              
               {/* Cronômetro de 2 minutos */}
               {isGeneratingQrCode && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-800 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-800 rounded-lg border border-orange-200 dark:bg-yellow-900/40 dark:text-yellow-200 dark:border-yellow-900/40">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -617,9 +621,8 @@ export default function PaymentMethodForm({
                 </div>
               )}
             </div>
-            
             {isGeneratingQrCode && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
+              <p className="text-sm text-gray-400 dark:text-gray-300 mt-3">
                 ⏳ Aguardando processamento PIX (pode levar até 2 minutos em produção)
               </p>
             )}
@@ -637,7 +640,7 @@ export default function PaymentMethodForm({
                 />
               ) : (
                 <div className="w-48 h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded">
-                  <span className="text-gray-400">Gerando QR Code...</span>
+                  <span className="text-gray-400 dark:text-gray-300">Gerando código...</span>
                 </div>
               )}
             </div>
@@ -662,10 +665,10 @@ export default function PaymentMethodForm({
               </div>
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/40 p-4 rounded-lg mb-6">
               <div className="flex items-start">
                 <svg
-                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2"
+                  className="w-5 h-5 text-yellow-600 dark:text-yellow-200 mt-0.5 mr-2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   xmlns="http://www.w3.org/2000/svg"
@@ -677,10 +680,10 @@ export default function PaymentMethodForm({
                   />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
+                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                     Importante
                   </h4>
-                  <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
+                  <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-200 list-disc list-inside">
                     <li>O pagamento via PIX é processado instantaneamente</li>
                     <li>O QR Code e o código PIX são válidos por 1 hora</li>
                     <li>
@@ -715,10 +718,10 @@ export default function PaymentMethodForm({
               </p>
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/40 p-4 rounded-lg mb-6">
               <div className="flex items-start">
                 <svg
-                  className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2"
+                  className="w-5 h-5 text-yellow-600 dark:text-yellow-200 mt-0.5 mr-2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   xmlns="http://www.w3.org/2000/svg"
@@ -730,10 +733,10 @@ export default function PaymentMethodForm({
                   />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
+                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                     Importante
                   </h4>
-                  <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
+                  <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-200 list-disc list-inside">
                     <li>O boleto tem vencimento em 3 dias úteis</li>
                     <li>
                       Após o pagamento, a compensação pode levar até 3 dias
