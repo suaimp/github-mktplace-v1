@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface InfoTooltipProps {
-  text: string;
+  text: ReactNode;
   className?: string;
   children?: ReactNode;
 }
@@ -28,9 +28,11 @@ export default function InfoTooltip({
           />
         </svg>
       )}
-      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-        {text}
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white !text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50" style={{ color: '#fff' }}>
+        <span style={{ color: '#fff', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit', fontFamily: 'inherit', WebkitTextFillColor: '#fff', textShadow: 'none', filter: 'none', background: 'none', boxShadow: 'none', border: 'none', outline: 'none', textDecoration: 'none', fontStyle: 'inherit', letterSpacing: 'inherit', wordBreak: 'inherit', whiteSpace: 'inherit', textAlign: 'inherit', verticalAlign: 'inherit', textTransform: 'inherit', textRendering: 'inherit', MozOsxFontSmoothing: 'inherit', WebkitFontSmoothing: 'inherit', fontVariant: 'inherit', colorScheme: 'light' }}>
+          {text}
+        </span>
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900"></div>
       </div>
     </div>
   );

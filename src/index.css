@@ -805,11 +805,6 @@ span.flatpickr-weekday,
 }
 
 /* === Conteúdo dinâmico para dark mode === */
-.dark .dynamic-content,
-.dark .dynamic-content * {
-  color: rgb(209, 213, 219) !important; /* gray-300 */
-}
-
 .dark .dynamic-content h1,
 .dark .dynamic-content h2,
 .dark .dynamic-content h3,
@@ -843,13 +838,6 @@ span.flatpickr-weekday,
 
 .dark .dynamic-content [style*="color"]:is(strong, b) {
   color: rgba(255, 255, 255, 0.9) !important; /* white/90 */
-}
-
-/* Garante que texto dinâmico funcione em dark mode */
-.prose.dark\:prose-invert div,
-.prose.dark\:prose-invert p,
-.prose.dark\:prose-invert span {
-  color: inherit !important;
 }
 
 /* Remove cores inline que possam interferir no dark mode */

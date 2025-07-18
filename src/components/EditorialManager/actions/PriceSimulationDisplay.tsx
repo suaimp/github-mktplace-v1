@@ -154,7 +154,7 @@ export default function PriceSimulationDisplay({
           {/* Preço original como label (se showOriginalPrice ou se houver desconto) */}
           {(showOriginalPrice || priceInfo.promotionalPrice) &&
             priceInfo.originalPrice && (
-              <div className="text-xs text-gray-500 line-through mb-1">
+              <div className="text-xs text-gray-500 mb-1">
                 {formatCurrency(priceInfo.originalPrice)}
               </div>
             )}{" "}
@@ -165,7 +165,7 @@ export default function PriceSimulationDisplay({
             </span>
             {(showOriginalPrice || priceInfo.promotionalPrice) &&
               priceInfo.discountPercentage > 0 && (
-                <span className="text-green-600 text-xs font-medium dark:text-green-400">
+                <span className="text-success-600 text-xs font-medium dark:text-success-500">
                   {priceInfo.discountPercentage}%{" "}
                   {showOriginalPrice ? "OFF" : "OFF"}
                 </span>

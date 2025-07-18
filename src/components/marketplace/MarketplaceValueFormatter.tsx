@@ -327,9 +327,11 @@ export function renderNicheWithIcon(value: any) {
               <InfoTooltip
                 key={`${niche.text}-${index}`}
                 text={
-                  isActive
-                    ? `Aceita conteúdos relacionados a ${niche.text}`
-                    : `Não aceita conteúdos relacionados a ${niche.text}`
+                  <span style={{ color: '#fff' }}>
+                    {isActive
+                      ? `Aceita conteúdos relacionados a ${niche.text}`
+                      : `Não aceita conteúdos relacionados a ${niche.text}`}
+                  </span>
                 }
               >
                 <div
