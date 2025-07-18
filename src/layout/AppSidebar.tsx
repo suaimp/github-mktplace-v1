@@ -242,15 +242,17 @@ export default function AppSidebar() {
       name: "Pedidos",
       path: "/orders"
     },
-    ...filterMenuItems(menuItems).map((item) => ({
-      icon: getIconComponent(item.icon),
-      name: item.name,
-      path: item.path || undefined,
-      subItems: item.subItems?.map((subItem) => ({
-        name: subItem.name,
-        path: subItem.path || ""
+    ...filterMenuItems(menuItems)
+      .filter((item) => item.name !== "Cupons")
+      .map((item) => ({
+        icon: getIconComponent(item.icon),
+        name: item.name,
+        path: item.path || undefined,
+        subItems: item.subItems?.map((subItem) => ({
+          name: subItem.name,
+          path: subItem.path || ""
+        }))
       }))
-    }))
   ];
 
   // Admin menu items
