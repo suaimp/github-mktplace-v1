@@ -73,7 +73,10 @@ export default function Payment() {
     phone: "",
     legal_status: 'individual' as 'individual' | 'business', // Corrigido para tipo literal
     country: "BR",
-    company_name: ""
+    company_name: "",
+    neighborhood: "",
+    street: "",
+    streetNumber: ""
   });
 
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -110,6 +113,27 @@ export default function Payment() {
   const [isCardFormValid, setIsCardFormValid] = useState(false);
 
   // Hook para sticky positioning personalizado
+  // const { isFixed } = useCustomSticky(); // Não utilizado no momento
+
+  // Persistir formData no localStorage
+  useEffect(() => {
+    const savedFormData = localStorage.getItem('checkout-form-data');
+    if (savedFormData) {
+      try {
+        const parsedData = JSON.parse(savedFormData);
+        setFormData(prevData => ({ ...prevData, ...parsedData }));
+      } catch (error) {
+        console.warn('Erro ao recuperar dados salvos:', error);
+      }
+    }
+  }, []);
+
+  // Salvar formData no localStorage sempre que mudar
+  useEffect(() => {
+    if (formData.name || formData.email || formData.address) {
+      localStorage.setItem('checkout-form-data', JSON.stringify(formData));
+    }
+  }, [formData]);
   const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
 
   useEffect(() => {
@@ -687,6 +711,8 @@ export default function Payment() {
 
       // Show success message
       setSuccess(true);
+      // Limpar dados salvos após sucesso
+      localStorage.removeItem('checkout-form-data');
     } catch (error) {
       console.error("Error processing successful PIX payment:", error);
       console.log("PIX PAYMENT SUCCESS PROCESSING ERROR:", {
@@ -951,39 +977,56 @@ export default function Payment() {
       // PASSO 1: Tokenizar o cartão primeiro
       console.log('[DEBUG] Passo 1: Tokenizando cartão...');
       
-      // Garantir que o billing_address siga EXATAMENTE o padrão da documentação oficial da Pagar.me
-      // Ref: https://docs.pagar.me/reference/endereços - zip_code deve ser STRING de 8 dígitos
+      // Log dos dados coletados do formulário
+      console.log('[DEBUG] formData coletado do formulário:', {
+        name: formData.name,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        documentNumber: formData.documentNumber,
+        company_name: formData.company_name,
+        phone: formData.phone
+      });
+
+      // Garantir que o billing.address siga o padrão obrigatório da Pagar.me v5
+      // Usando os campos coletados do formulário "Dados da Empresa"
+      const rawAddress = formData.address?.trim() || "";
+      const rawZipCode = formData.zipCode?.replace(/\D/g, "") || "";
+      const rawCity = formData.city?.trim() || "";
+      const rawState = formData.state?.trim() || "";
+
+      // Construir line_1 completo no formato da documentação Pagar.me
+      const fullAddress = rawAddress || "Rua das Flores, 123, Centro";
+
       const billingAddress = {
-        line_1: formData.address?.trim() || "Rua das Flores, 123",
-        zip_code: (formData.zipCode?.replace(/\D/g, "") || "01234567"), // STRING de 8 dígitos, preserva zeros à esquerda
-        city: formData.city?.trim() || "São Paulo", 
-        state: formData.state?.trim() || "SP", // Sigla do estado
-        country: "BR" // Sempre BR para Brasil
+        line_1: fullAddress,
+        zip_code: rawZipCode.padStart(8, '0') || "01234567",
+        city: rawCity || "São Paulo",
+        state: rawState || "SP",
+        country: "BR"
       };
-      
-      // Validação extra para garantir que nenhum campo seja vazio (conforme documentação)
-      if (!billingAddress.line_1 || billingAddress.line_1.trim() === '') {
-        billingAddress.line_1 = "Rua das Flores, 123";
+
+      // Validação rigorosa: todos os campos obrigatórios devem estar preenchidos
+      const billingFieldsValid = Object.entries(billingAddress).every(([, v]) => typeof v === 'string' && v.length > 0);
+      if (!billingFieldsValid) {
+        console.log('[ERROR] Campos de billing inválidos:', {
+          billingAddress,
+          invalidFields: Object.entries(billingAddress).filter(([, v]) => !v || v.length === 0)
+        });
+        setError("Preencha todos os campos obrigatórios do endereço de cobrança.");
+        setProcessing(false);
+        return;
       }
-      if (!billingAddress.zip_code || isNaN(parseInt(billingAddress.zip_code))) {
-        billingAddress.zip_code = "12345678";
-      }
-      if (!billingAddress.city || billingAddress.city.trim() === '') {
-        billingAddress.city = "São Paulo";
-      }
-      if (!billingAddress.state || billingAddress.state.trim() === '') {
-        billingAddress.state = "SP";
-      }
-      
-      console.log('[DEBUG] Billing address final (padrão Pagar.me):', billingAddress);
-      console.log('[DEBUG] Validação billing address:', {
-        line_1_length: billingAddress.line_1.length,
-        zip_code: billingAddress.zip_code,
-        zip_code_type: typeof billingAddress.zip_code,
-        city_length: billingAddress.city.length,
-        state_length: billingAddress.state.length,
-        country: billingAddress.country,
-        all_fields_valid: !!(billingAddress.line_1 && billingAddress.zip_code && billingAddress.city && billingAddress.state && billingAddress.country)
+
+      console.log('[DEBUG] Billing address final (Pagar.me v5 - Estrutura Oficial):', billingAddress);
+      console.log('[DEBUG] Validação dos campos obrigatórios:', {
+        line_1: { value: billingAddress.line_1, valid: !!billingAddress.line_1 },
+        zip_code: { value: billingAddress.zip_code, valid: !!billingAddress.zip_code && billingAddress.zip_code.length === 8 },
+        city: { value: billingAddress.city, valid: !!billingAddress.city },
+        state: { value: billingAddress.state, valid: !!billingAddress.state },
+        country: { value: billingAddress.country, valid: !!billingAddress.country }
       });
       
       const tokenPayload = {
@@ -992,10 +1035,11 @@ export default function Payment() {
         card_exp_month: cardData.cardExpiry.substring(0, 2),
         card_exp_year: "20" + cardData.cardExpiry.substring(3, 5),
         card_cvv: cardData.cardCvc,
-        card_holder_name: cardData.cardholderName,
-        billing_address: billingAddress
+        card_holder_name: cardData.cardholderName
+        // billing_address NÃO é enviado na tokenização v5
       };
-      console.log('[DEBUG] Payload enviado para tokenização:', tokenPayload);
+      console.log('[DEBUG] Payload enviado para tokenização (SEM billing_address):', tokenPayload);
+      console.log('[DEBUG] billing_address será usado apenas no pagamento, não na tokenização v5');
       console.log('[DEBUG] URL da função edge:', url);
       console.log('[DEBUG] access_token enviado:', access_token);
       console.log('[DEBUG] Headers enviados:', {
@@ -1089,13 +1133,7 @@ export default function Payment() {
               number: parsedPhone.number
             }
           },
-          address: {
-            line_1: formData.address?.trim() || "Rua das Flores, 123",
-            zip_code: (formData.zipCode?.replace(/\D/g, "") || "01234567"),
-            city: formData.city?.trim() || "São Paulo",
-            state: formData.state?.trim() || "SP",
-            country: "BR"
-          }
+          address: billingAddress // Usar o mesmo objeto validado
         },
         payments: [
           {
@@ -1103,13 +1141,35 @@ export default function Payment() {
             credit_card: {
               installments: selectedInstallmentObj.installments,
               statement_descriptor: "MARKETPLACE",
-              card_token: tokenResult.card_token
+              card_token: tokenResult.card_token,
+              card: {
+                holder_name: cardData.cardholderName || formData.name,
+                billing_address: billingAddress
+              }
             }
           }
         ]
       };
       console.log('[DEBUG] legal_status no submit:', formData.legal_status, '| document_type:', formData.legal_status === "business" ? "cnpj" : "cpf", '| type:', formData.legal_status === "business" ? "business" : "individual", '| document:', formData.documentNumber);
       console.log('[DEBUG] Payload de pagamento montado:', paymentPayload);
+      
+      // Validação adicional do billing_address
+      console.log('[DEBUG] Validação billing_address:', {
+        customer_address: paymentPayload.customer.address,
+        credit_card_billing_address: paymentPayload.payments[0].credit_card.card.billing_address,
+        objects_are_same: paymentPayload.customer.address === paymentPayload.payments[0].credit_card.card.billing_address,
+        tokenization_address: billingAddress,
+        all_three_match: (
+          paymentPayload.customer.address === billingAddress &&
+          paymentPayload.payments[0].credit_card.card.billing_address === billingAddress
+        ),
+        // Validação do campo billing obrigatório dentro de credit_card
+        card_field_present: !!paymentPayload.payments[0].credit_card.card,
+        holder_name: paymentPayload.payments[0].credit_card.card?.holder_name,
+        billing_address_complete: paymentPayload.payments[0].credit_card.card?.billing_address,
+        billing_zipcode: paymentPayload.payments[0].credit_card.card?.billing_address?.zip_code
+      });
+      
       console.log('[DEBUG] Vai enviar o pagamento para a função edge');
       const response = await fetch(url, {
         method: 'POST',
@@ -1231,6 +1291,8 @@ export default function Payment() {
           
           // Show success message
           setSuccess(true);
+          // Limpar dados salvos após sucesso
+          localStorage.removeItem('checkout-form-data');
         }
       } else {
         console.log('❌ Status não aceito:', result.status);

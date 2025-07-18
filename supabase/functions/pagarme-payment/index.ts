@@ -161,14 +161,14 @@ serve(async (req) => {
 
     // TOKENIZAÇÃO - Primeiro passo do fluxo seguro
     if (body.action === 'tokenize') {
-      const { card_number, card_exp_month, card_exp_year, card_cvv, card_holder_name, billing_address } = body;
+      const { card_number, card_exp_month, card_exp_year, card_cvv, card_holder_name } = body;
       if (!card_number || !card_exp_month || !card_exp_year || !card_cvv || !card_holder_name) {
         return new Response(JSON.stringify({ error: 'Dados do cartão incompletos para tokenização' }), {
           status: 400,
           headers: corsHeaders,
         });
       }
-      // Montar payload conforme documentação v5
+      // Montar payload conforme documentação v5 - SEM billing_address na tokenização
       const tokenPayload = {
         type: 'card',
         card: {
@@ -176,8 +176,8 @@ serve(async (req) => {
           exp_month: Number(card_exp_month),
           exp_year: Number(card_exp_year),
           cvv: card_cvv,
-          holder_name: card_holder_name,
-          billing_address: billing_address
+          holder_name: card_holder_name
+          // billing_address NÃO é necessário na tokenização v5
         }
       };
       const tokenUrl = `https://api.pagar.me/core/v5/tokens?appId=${public_key}`;
@@ -221,6 +221,28 @@ serve(async (req) => {
       }
       // Log do payload recebido
       console.log('[DEBUG] Payload de pagamento recebido:', JSON.stringify(body));
+
+      // Validação extra: garantir que billing_address está presente e completo
+      const payment = body.payments?.[0]?.credit_card;
+      const billingAddress = payment?.card?.billing_address;
+      const requiredFields = ["line_1","zip_code","city","state","country"];
+      let missingFields: string[] = [];
+      if (!billingAddress || typeof billingAddress !== 'object') {
+        missingFields = requiredFields;
+      } else {
+        missingFields = requiredFields.filter(f => !billingAddress[f] || typeof billingAddress[f] !== 'string' || billingAddress[f].length === 0);
+      }
+      if (missingFields.length > 0) {
+        return new Response(JSON.stringify({
+          error: 'Endereço de cobrança incompleto ou ausente.',
+          missingFields,
+          received: billingAddress
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
       // Repassar diretamente para a Pagar.me
       const pagarmePayload = {
         items: body.items,
