@@ -94,7 +94,7 @@ export default function MarketplaceRowDetailsModal({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-4">
-              {detailFields.map((field, index) => {
+              {detailFields.map((field) => {
                 const settings = field.form_field_settings || {};
                 const displayName = settings.marketplace_label || field.label;
                 const value = modalEntry.values[field.id];
