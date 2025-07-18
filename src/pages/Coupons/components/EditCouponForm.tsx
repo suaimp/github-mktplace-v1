@@ -56,6 +56,10 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
       addToast("Desconto percentual não pode ser maior que 100%", "error");
       return false;
     }
+    if (formData.maximum_amount && formData.minimum_amount && formData.maximum_amount <= formData.minimum_amount) {
+      addToast("Valor máximo deve ser maior que o valor mínimo", "error");
+      return false;
+    }
     if (formData.end_date && formData.start_date && new Date(formData.end_date) <= new Date(formData.start_date)) {
       addToast("Data de fim deve ser posterior à data de início", "error");
       return false;
@@ -135,8 +139,9 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
             onChange={handleInputChange}
             className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
           >
-            <option value="percentage">Percentual (%)</option>
-            <option value="fixed">Valor fixo (R$)</option>
+            <option value="percentage">Desconto em porcentagem</option>
+            <option value="cart_fixed">Desconto fixo de carrinho</option>
+            <option value="product_fixed">Desconto fixo de produto</option>
           </select>
         </div>
         {/* Valor do desconto */}
@@ -185,6 +190,21 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
             step={0.01}
           />
         </div>
+        {/* Valor máximo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Valor máximo do pedido
+          </label>
+          <input
+            type="number"
+            name="maximum_amount"
+            value={formData.maximum_amount ?? ""}
+            onChange={handleInputChange}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
+            min={0}
+            step={0.01}
+          />
+        </div>
         {/* Limite de uso */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -194,6 +214,21 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
             type="number"
             name="usage_limit"
             value={formData.usage_limit ?? ""}
+            onChange={handleInputChange}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
+            min={0}
+            step={1}
+          />
+        </div>
+        {/* Limite de uso por cliente */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Limite de uso por cliente
+          </label>
+          <input
+            type="number"
+            name="usage_limit_per_customer"
+            value={formData.usage_limit_per_customer ?? ""}
             onChange={handleInputChange}
             className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
             min={0}
@@ -237,6 +272,42 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
           <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
             Cupom ativo
           </label>
+        </div>
+        {/* Apenas uso individual */}
+        <div className="flex items-start">
+          <input
+            type="checkbox"
+            name="individual_use_only"
+            checked={formData.individual_use_only || false}
+            onChange={handleInputChange}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5"
+          />
+          <div className="ml-2">
+            <label className="block text-sm text-gray-700 dark:text-gray-300 font-medium">
+              Apenas uso individual
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Marque esta opção caso o cupom não possa ser utilizado juntamente com outros cupons.
+            </p>
+          </div>
+        </div>
+        {/* Excluir itens em oferta */}
+        <div className="flex items-start">
+          <input
+            type="checkbox"
+            name="exclude_sale_items"
+            checked={formData.exclude_sale_items || false}
+            onChange={handleInputChange}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5"
+          />
+          <div className="ml-2">
+            <label className="block text-sm text-gray-700 dark:text-gray-300 font-medium">
+              Excluir itens em oferta
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Selecione esta opção caso o cupom não seja válido para produtos em promoção. Cupons aplicados por item funcionarão somente se o item não estiver em promoção. Cupons aplicados ao carrinho só serão válidos caso não haja produtos em promoção no carrinho.
+            </p>
+          </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button

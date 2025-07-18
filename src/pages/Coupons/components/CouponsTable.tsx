@@ -13,6 +13,7 @@ import {
 import { PencilIcon, TrashBinIcon, CopyIcon } from "../../../icons";
 import { Coupon } from "../types";
 import { useCouponTableSort } from "./useCouponTableSort";
+import { formatDiscountType, formatDiscountValue, formatCurrency as formatCurrencyHelper } from "../helpers/formatters";
 
 interface CouponsTableProps {
   coupons: Coupon[];
@@ -33,10 +34,7 @@ function formatDate(date: string) {
 }
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  }).format(value);
+  return formatCurrencyHelper(value);
 }
 
  
@@ -118,11 +116,7 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
   };
 
   const getDiscountDisplay = (coupon: Coupon) => {
-    if (coupon.discount_type === 'percentage') {
-      return `${coupon.discount_value}%`;
-    } else {
-      return formatCurrency(coupon.discount_value);
-    }
+    return formatDiscountValue(coupon);
   };
 
   const getStatusColor = (coupon: Coupon) => {
@@ -203,6 +197,27 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
                   >
                     <span>Desconto</span>
                     {sortField === "discount_value" && (
+                      <span className="flex flex-col gap-0.5 ml-1">
+                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
+                        </svg>
+                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  <div
+                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
+                    onClick={() => handleSort("discount_type")}
+                  >
+                    <span>Tipo</span>
+                    {sortField === "discount_type" && (
                       <span className="flex flex-col gap-0.5 ml-1">
                         <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
@@ -328,13 +343,46 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
                           Min: {formatCurrency(coupon.minimum_amount)}
                         </div>
                       )}
+                      {coupon.maximum_amount && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Max: {formatCurrency(coupon.maximum_amount)}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {coupon.usage_limit ? 
-                      `${coupon.usage_count}/${coupon.usage_limit}` : 
-                      `${coupon.usage_count} (ilimitado)`
-                    }
+                    <div>
+                      <div className="font-medium text-gray-800 dark:text-white/90 text-xs">
+                        {formatDiscountType(coupon.discount_type)}
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        {coupon.individual_use_only && (
+                          <span className="inline-block px-1 py-0.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">
+                            Individual
+                          </span>
+                        )}
+                        {coupon.exclude_sale_items && (
+                          <span className="inline-block px-1 py-0.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded">
+                            Sem promoção
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    <div>
+                      <div className="font-medium text-gray-800 dark:text-white/90">
+                        {coupon.usage_limit ? 
+                          `${coupon.usage_count}/${coupon.usage_limit}` : 
+                          `${coupon.usage_count} (ilimitado)`
+                        }
+                      </div>
+                      {coupon.usage_limit_per_customer && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Máx {coupon.usage_limit_per_customer}/cliente
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {coupon.end_date ? (
@@ -392,7 +440,7 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
               {coupons.length === 0 && (
                 <TableRow>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     Nenhum cupom encontrado.

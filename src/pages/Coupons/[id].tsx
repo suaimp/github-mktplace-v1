@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import EditCouponForm from "./components/EditCouponForm";
 import { Coupon, UpdateCouponInput } from "./types";
 import { getCouponById, updateCoupon } from "../../services/db-services/coupons/couponService";
+import { useCouponSticky } from "./hooks/useCouponSticky";
 
 const TicketEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +11,7 @@ const TicketEditPage: React.FC = () => {
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const sticky = useCouponSticky({ offsetTop: 20, onlyOnDesktop: true });
 
   useEffect(() => {
     if (!id) return;
@@ -76,7 +78,14 @@ const TicketEditPage: React.FC = () => {
               Voltar
             </button>
           </div>
-          <div className="border border-gray-200 dark:border-white/[0.05] rounded-xl bg-white dark:bg-gray-900 p-6 mb-6">
+          {/* Sticky placeholder */}
+          <div ref={sticky.placeholderRef} style={sticky.placeholderStyle} />
+          {/* Sticky bloco */}
+          <div
+            ref={sticky.ref}
+            style={sticky.style}
+            className="border border-gray-200 dark:border-white/[0.05] rounded-xl bg-white dark:bg-gray-900 p-6 mb-6"
+          >
             <div className="mb-4">
               <span className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome</span>
               <span className="text-lg font-semibold text-gray-800 dark:text-white">{coupon.name}</span>

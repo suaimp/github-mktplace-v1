@@ -74,7 +74,10 @@ export default function AddToCartButton({
     <button
       type="button"
       className={buttonClasses}
-      onClick={handleAddToCart}
+      onClick={e => {
+        e.stopPropagation();
+        handleAddToCart();
+      }}
       disabled={loading || inCart}
     >
       {loading ? (

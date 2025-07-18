@@ -874,7 +874,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         return (
                           <td
                             key={field.id}
-                            className="px-3 py-4 text-theme-2xs text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
+                            className="px-3 py-0 xl:py-4 text-theme-2xs text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
                           >
                             {(() => {
                               const fieldValue = entry.values[field.id];

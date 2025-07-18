@@ -14,7 +14,7 @@ const WordCountInput = ({ value, onChange, disabled }: WordCountInputProps) => {
         const val = Math.max(0, Number(e.target.value));
         onChange(val);
       }}
-      className="w-24 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 py-1 px-2"
+      className="w-24 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-300 py-0 h-7 px-2"
       style={{ MozAppearance: "textfield" }}
       disabled={disabled}
     />

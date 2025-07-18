@@ -12,9 +12,11 @@ import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
+import { useCouponInput } from "./utils/coupon/useCouponInput";
 
 interface ResumeTableProps {
   onReload?: () => void;
+  showCouponInput?: boolean;
 }
 
 // Hook personalizado para debounce
@@ -40,6 +42,7 @@ export default function ResumeTable(props: ResumeTableProps) {
   const [wordCountDebounceTimers, setWordCountDebounceTimers] = useState<{ [id: string]: number }>({});
 
   const logic = useResumeTableLogic();
+  const { couponValue, handleCouponChange } = useCouponInput();
 
   useEffect(() => {
     const handler = () => {
@@ -213,6 +216,21 @@ export default function ResumeTable(props: ResumeTableProps) {
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
         Revisão de pedido
       </h2>
+      {props.showCouponInput && (
+        <div className="mb-4 flex flex-col items-start gap-2">
+          <label htmlFor="coupon-input" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            Cupom de desconto
+          </label>
+          <input
+            id="coupon-input"
+            type="text"
+            value={couponValue}
+            onChange={handleCouponChange}
+            placeholder="Digite seu cupom"
+            className="w-full max-w-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          />
+        </div>
+      )}
       <div className="max-w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-800">
@@ -322,7 +340,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                               quantities[item.id] ?? item.quantity ?? 1
                             )
                           }
-                          className="w-16 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 py-1 px-2"
+                          className="w-16 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-300 py-0 h-7 px-2"
                           style={{ MozAppearance: "textfield" }}
                           disabled={!!loadingItem[item.id]}
                         />

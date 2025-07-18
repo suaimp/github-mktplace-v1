@@ -1,4 +1,5 @@
 import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
+import { useEffect, useState } from "react";
 
 interface MarketplaceRowDetailsModalProps {
   isOpen: boolean;
@@ -15,7 +16,29 @@ export default function MarketplaceRowDetailsModal({
   fields,
   productNameField
 }: MarketplaceRowDetailsModalProps) {
-  if (!entry) return null;
+  // Novo estado para controlar montagem/desmontagem
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [lastEntry, setLastEntry] = useState(entry);
+  const [isVisible, setIsVisible] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen && entry) {
+      setShouldRender(true);
+      setLastEntry(entry);
+      // Garante que a animação de entrada ocorra após montagem
+      setTimeout(() => setIsVisible(true), 10);
+    } else if (!isOpen && shouldRender) {
+      // Espera a animação terminar antes de desmontar
+      const timeout = setTimeout(() => setShouldRender(false), 300);
+      setIsVisible(false);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen, entry]);
+
+  // Só desmonta após animação
+  if (!shouldRender) return null;
+  const modalEntry = lastEntry;
+  if (!modalEntry) return null;
 
   // Filtrar os campos que não são essenciais (Site, categorias, preço, comprar)
   const essentialFields = ["url", "site_url", "categories", "category", "product", "button_buy"];
@@ -23,36 +46,28 @@ export default function MarketplaceRowDetailsModal({
 
   // Nome do produto para o título
   const productName = productNameField 
-    ? entry.values[productNameField.id] || "Produto"
+    ? modalEntry.values[productNameField.id] || "Produto"
     : "Detalhes do Produto";
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black z-[999999] transition-all duration-500 ease-out ${
-          isOpen ? "bg-opacity-50 visible" : "bg-opacity-0 invisible"
+        className={`fixed inset-0 z-[999999] bg-black transition-opacity duration-300 ${
+          isOpen ? 'bg-opacity-50 visible' : 'bg-opacity-0 invisible'
         }`}
         onClick={onClose}
       />
-      
+
       {/* Slide Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-all duration-500 ease-out transform ${
-          isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+        className={`fixed top-0 right-0 h-full w-full sm:w-96 max-w-md bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transform transition-transform duration-300 ease-in-out ${
+          isVisible ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div 
-            className={`flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 transition-all duration-700 delay-200 ${
-              isOpen ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
-            }`}
-          >
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-lg font-medium text-gray-800 dark:text-white">
               {productName}
             </h3>
@@ -77,16 +92,12 @@ export default function MarketplaceRowDetailsModal({
           </div>
 
           {/* Content */}
-          <div 
-            className={`flex-1 overflow-y-auto p-6 transition-all duration-700 delay-300 ${
-              isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
-          >
+          <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-4">
               {detailFields.map((field, index) => {
                 const settings = field.form_field_settings || {};
                 const displayName = settings.marketplace_label || field.label;
-                const value = entry.values[field.id];
+                const value = modalEntry.values[field.id];
 
                 // Pular campos vazios
                 if (value === null || value === undefined || value === "") {
@@ -94,15 +105,7 @@ export default function MarketplaceRowDetailsModal({
                 }
 
                 return (
-                  <div 
-                    key={field.id} 
-                    className={`space-y-1 transition-all duration-500 ${
-                      isOpen ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
-                    }`}
-                    style={{
-                      transitionDelay: `${400 + index * 50}ms`
-                    }}
-                  >
+                  <div key={field.id} className="space-y-1">
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {displayName}
                     </h4>
@@ -112,7 +115,6 @@ export default function MarketplaceRowDetailsModal({
                   </div>
                 );
               })}
-              
               {detailFields.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400">

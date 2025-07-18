@@ -112,7 +112,7 @@ export default function Checkout() {
       <div className="w-full flex mx-auto min-h-screen gap-4">
         <div className="flex-1 flex flex-col gap-8 mb-8">
           <CheckoutCards />
-          <ResumeTable />
+          <ResumeTable showCouponInput={true} />
         </div>
         {/* Lateral direita com sticky customizado */}
         <div className="my-5 w-full flex-none md:my-0 md:w-72 lg:w-2/6 ml-2 md:ml-3 lg:ml-4">
