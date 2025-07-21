@@ -153,11 +153,24 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
     }
   };
 
-  const formatDateForInput = (date: Date) => {
-    return date.toISOString().slice(0, 16);
-  };
+  // Função utilitária para formatar data para input datetime-local no horário local
+  function getLocalDateTimeString(date: Date) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return (
+      date.getFullYear() +
+      '-' +
+      pad(date.getMonth() + 1) +
+      '-' +
+      pad(date.getDate()) +
+      'T' +
+      pad(date.getHours()) +
+      ':' +
+      pad(date.getMinutes())
+    );
+  }
 
-  const today = formatDateForInput(new Date());
+  // Atualiza o valor mínimo para o campo de data/hora sempre que o componente renderiza
+  const now = getLocalDateTimeString(new Date());
 
   return (
     <>
@@ -374,7 +387,7 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
                         name="start_date"
                         value={formData.start_date}
                         onChange={handleInputChange}
-                        min={today}
+                        min={now}
                         className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
                       />
                     </div>
@@ -389,7 +402,7 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
                         name="end_date"
                         value={formData.end_date}
                         onChange={handleInputChange}
-                        min={formData.start_date || today}
+                        min={formData.start_date || now}
                         className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
                       />
                     </div>
