@@ -311,7 +311,7 @@ export function renderNicheWithIcon(value: any) {
 
       // Sempre renderiza todos os ícones de nicho disponíveis
       return (
-        <div className="flex flex-wrap gap-2">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
           {allNiches.map((niche, index) => {
             const isActive = siteNicheTexts.includes(niche.text);
             const IconComponent = niche.icon
