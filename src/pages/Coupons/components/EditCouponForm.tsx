@@ -1,6 +1,9 @@
 import { useState } from "react";
-import ToastMessage from "../../../components/ui/ToastMessage/ToastMessage";
+import ToastContainer from "./toast/ToastContainer";
+import { useToast } from "./toast/useToast";
 import { Coupon, UpdateCouponInput } from "../types";
+import { toDateTimeLocal } from "../utils/dateInputFormat";
+import { useEffect } from "react";
 
 interface EditCouponFormProps {
   initialCoupon: Coupon;
@@ -9,21 +12,12 @@ interface EditCouponFormProps {
 }
 
 export default function EditCouponForm({ initialCoupon, onSubmit, loading }: EditCouponFormProps) {
-  const [formData, setFormData] = useState<UpdateCouponInput>({ ...initialCoupon });
-  const [toasts, setToasts] = useState<{
-    id: string;
-    message: string;
-    type: "success" | "error";
-  }[]>([]);
-
-  const addToast = (message: string, type: "success" | "error") => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
+  const [formData, setFormData] = useState<UpdateCouponInput>(() => ({
+    ...initialCoupon,
+    start_date: toDateTimeLocal(initialCoupon.start_date),
+    end_date: toDateTimeLocal(initialCoupon.end_date),
+  }));
+  const { toasts, addToast, removeToast } = useToast();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -73,19 +67,18 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
     await onSubmit(formData);
   };
 
+  // Atualiza o estado se initialCoupon mudar (ex: após salvar)
+  useEffect(() => {
+    setFormData({
+      ...initialCoupon,
+      start_date: toDateTimeLocal(initialCoupon.start_date),
+      end_date: toDateTimeLocal(initialCoupon.end_date),
+    });
+  }, [initialCoupon]);
+
   return (
     <>
-      <div className="fixed top-4 right-4 z-[9999] space-y-2">
-        {toasts.map((toast) => (
-          <ToastMessage
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            show={true}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Código */}
         <div>
@@ -176,20 +169,7 @@ export default function EditCouponForm({ initialCoupon, onSubmit, loading }: Edi
           />
         </div>
         {/* Limite máximo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Desconto máximo permitido
-          </label>
-          <input
-            type="number"
-            name="maximum_discount"
-            value={formData.maximum_discount ?? ""}
-            onChange={handleInputChange}
-            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white"
-            min={0}
-            step={0.01}
-          />
-        </div>
+        {/* Removido campo 'Desconto máximo permitido' */}
         {/* Valor máximo */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

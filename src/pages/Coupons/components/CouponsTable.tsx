@@ -15,6 +15,14 @@ import { Coupon } from "../types";
 import { useCouponTableSort } from "./useCouponTableSort";
 import { formatDiscountType, formatDiscountValue, formatCurrency as formatCurrencyHelper } from "../helpers/formatters";
 
+// Sistema de Toasts: utilize o hook useToast e o componente ToastContainer de ./toast para exibir mensagens de sucesso/erro padronizadas nesta feature.
+// Exemplo:
+// const { toasts, addToast, removeToast } = useToast();
+// <ToastContainer toasts={toasts} onRemove={removeToast} />
+// addToast('Mensagem', 'success');
+//
+// Veja NewCouponModal ou EditCouponForm para exemplos práticos.
+
 interface CouponsTableProps {
   coupons: Coupon[];
   onDelete: (id: string) => void;

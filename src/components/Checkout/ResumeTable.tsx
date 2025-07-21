@@ -42,7 +42,7 @@ export default function ResumeTable(props: ResumeTableProps) {
   const [wordCountDebounceTimers, setWordCountDebounceTimers] = useState<{ [id: string]: number }>({});
 
   const logic = useResumeTableLogic();
-  const { couponValue, handleCouponChange } = useCouponInput();
+  // Remover import e uso de useCouponInput, pois não é mais utilizado
 
   useEffect(() => {
     const handler = () => {
@@ -216,21 +216,7 @@ export default function ResumeTable(props: ResumeTableProps) {
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
         Revisão de pedido
       </h2>
-      {props.showCouponInput && (
-        <div className="mb-4 flex flex-col items-start gap-2">
-          <label htmlFor="coupon-input" className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Cupom de desconto
-          </label>
-          <input
-            id="coupon-input"
-            type="text"
-            value={couponValue}
-            onChange={handleCouponChange}
-            placeholder="Digite seu cupom"
-            className="w-full max-w-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
-          />
-        </div>
-      )}
+      {/* Removido input de cupom de desconto para responsabilidade única */}
       <div className="max-w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-800">

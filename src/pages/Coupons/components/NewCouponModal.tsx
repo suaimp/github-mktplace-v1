@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from "uuid";
 /* components */
 import Button from "../../../components/ui/button/Button";
 import ToastMessage from "../../../components/ui/ToastMessage/ToastMessage";
+import ToastContainer from "./toast/ToastContainer";
+import { useToast } from "./toast/useToast";
 /* types */
 import { CreateCouponInput } from "../types";
 /* context */
@@ -37,24 +39,9 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
     exclude_sale_items: false
   });
   
-  const [toasts, setToasts] = useState<
-    {
-      id: string;
-      message: string;
-      type: "success" | "error";
-    }[]
-  >([]);
+  const { toasts, addToast, removeToast } = useToast();
   
   const { fetchCoupons } = useCoupons();
-
-  const addToast = (message: string, type: "success" | "error") => {
-    const id = uuidv4();
-    setToasts((prev) => [...prev, { id, message, type }]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -174,18 +161,7 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
 
   return (
     <>
-      {/* Toast Messages */}
-      <div className="fixed top-4 right-4 z-[9999] space-y-2">
-        {toasts.map((toast) => (
-          <ToastMessage
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            show={true}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <Button
         onClick={() => setOpen(true)}

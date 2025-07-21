@@ -54,7 +54,7 @@ export async function getCouponByCode(code: string): Promise<Coupon | null> {
     const { data, error } = await supabase
       .from("coupons")
       .select("*")
-      .eq("code", code.toUpperCase())
+      .ilike("code", code)
       .single();
 
     if (error) {
@@ -206,12 +206,12 @@ export async function validateCoupon(code: string, orderAmount: number): Promise
     
     // Check date range
     const now = new Date();
-    
-    if (coupon.start_date && new Date(coupon.start_date) > now) {
+    const startDate = coupon.start_date ? new Date(coupon.start_date) : null;
+    const endDate = coupon.end_date ? new Date(coupon.end_date) : null;
+    if (startDate && startDate.getTime() > now.getTime()) {
       return { valid: false, error: "Cupom ainda não está ativo" };
     }
-    
-    if (coupon.end_date && new Date(coupon.end_date) < now) {
+    if (endDate && endDate.getTime() < now.getTime()) {
       return { valid: false, error: "Cupom expirado" };
     }
     

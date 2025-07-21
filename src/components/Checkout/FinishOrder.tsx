@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
+import { useCouponInput } from "./utils/coupon/useCouponInput";
+import { useCouponDiscount } from "./utils/coupon/useCouponDiscount";
+import { formatCurrency } from "../../utils/currency";
 
 export default function FinishOrder() {
   const [totalProductPrice, setTotalProductPrice] = useState<number | null>(
@@ -15,6 +18,14 @@ export default function FinishOrder() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
+  const { couponValue, handleCouponChange } = useCouponInput();
+  const {
+    loading: couponLoading,
+    error: couponError,
+    appliedCoupon,
+    discountValue
+  } = useCouponDiscount(couponValue, totalFinalPrice ?? 0);
+
   useEffect(() => {
     async function fetchTotal() {
       try {
@@ -84,14 +95,83 @@ export default function FinishOrder() {
   // Usar o total_final_price do banco de dados
   const total = totalFinalPrice ?? 0;
 
-  const handleGoToPayment = () => {
-    navigate("/checkout/payment");
+  const handleGoToPayment = async () => {
+    // Salvar o valor total com desconto no banco antes de navegar
+    try {
+      setLoading(true);
+      setError(null);
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setError("Usuário não autenticado");
+        setLoading(false);
+        return;
+      }
+      // Buscar registro existente
+      const { data: existingRecord } = await supabase
+        .from("order_totals")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const recordData = {
+        user_id: user.id,
+        total_product_price: totalProductPrice ?? 0,
+        total_content_price: totalContentPrice ?? 0,
+        total_final_price: Math.max((total - discountValue), 0),
+        total_word_count: null,
+        updated_at: new Date().toISOString()
+      };
+      if (existingRecord) {
+        await supabase
+          .from("order_totals")
+          .update(recordData)
+          .eq("id", existingRecord.id);
+      } else {
+        await supabase
+          .from("order_totals")
+          .insert(recordData);
+      }
+      // Disparar evento para atualizar UI
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("order-totals-updated"));
+      }
+      setLoading(false);
+      navigate("/checkout/payment");
+    } catch (err) {
+      setError("Erro ao salvar total com desconto");
+      setLoading(false);
+    }
   };
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
       <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
         Resumo do pedido
       </h3>
+      {/* Input de cupom de desconto */}
+      {window.location.pathname === "/checkout" && (
+        <div className="mb-4 flex flex-col items-start gap-2">
+          <label htmlFor="coupon-input" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            Cupom de desconto
+          </label>
+          <input
+            id="coupon-input"
+            type="text"
+            value={couponValue}
+            onChange={handleCouponChange}
+            placeholder="Digite seu cupom"
+            className="w-full max-w-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          />
+          {couponLoading && <span className="text-xs text-gray-500">Validando cupom...</span>}
+          {couponError && <span className="text-xs text-red-500">{couponError}</span>}
+          {appliedCoupon && (
+            <span className="text-xs text-green-600">Cupom aplicado: {appliedCoupon.code} - {appliedCoupon.name}</span>
+          )}
+        </div>
+      )}
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -133,6 +213,13 @@ export default function FinishOrder() {
             )}
           </div>
         </div>
+        {/* Exibir desconto se houver */}
+        {discountValue > 0 && (
+          <div className="flex items-center justify-between mt-2">
+            <div className="text-gray-700 dark:text-gray-300">Desconto</div>
+            <div className="text-green-600 dark:text-green-400">- {formatCurrency(discountValue)}</div>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <div className="font-medium text-gray-800 dark:text-white">Total</div>
@@ -141,8 +228,7 @@ export default function FinishOrder() {
             <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-20 rounded"></div>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">
-              R$&nbsp;
-              {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {formatCurrency(Math.max((total - discountValue), 0))}
             </span>
           )}
         </div>
