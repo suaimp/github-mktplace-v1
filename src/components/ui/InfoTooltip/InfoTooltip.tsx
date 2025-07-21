@@ -13,7 +13,7 @@ export default function InfoTooltip({
   children
 }: InfoTooltipProps) {
   const { placement, alignX, triggerRef, tooltipRef } = useTooltipPosition();
-  const [maxWidth, setMaxWidth] = useState<number | undefined>(undefined);
+  const [  setMaxWidth] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!triggerRef.current) return;
@@ -28,11 +28,7 @@ export default function InfoTooltip({
       }
       parent = parent.parentElement;
     }
-    if (scrollContainer instanceof HTMLElement) {
-      setMaxWidth(scrollContainer.clientWidth - 24); // 24px de margem de segurança
-    } else {
-      setMaxWidth(window.innerWidth - 24);
-    }
+  
   }, [triggerRef.current]);
 
   let alignClass = '';
