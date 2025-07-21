@@ -279,7 +279,7 @@ export default function ResumeTable(props: ResumeTableProps) {
               <th className="px-3 py-3.5 text-left text-sm text-gray-700 dark:text-gray-200 font-normal">
                 Produto (URL)
               </th>
-              <th className="px-3 py-3.5 text-center text-sm text-gray-700 dark:text-gray-200 font-normal">
+              <th className="px-3 py-3.5 text-center text-sm text-gray-700 dark:text-gray-200 font-normal" style={{ display: 'none' }}>
                 Qtd
               </th>
               <th className="px-3 py-3.5 text-center text-sm text-gray-700 dark:text-gray-200 font-normal">
@@ -353,7 +353,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center" style={{ display: 'none' }}>
                       <div className="relative flex items-center justify-center">
                         <input
                           type="number"
