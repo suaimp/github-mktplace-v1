@@ -12,7 +12,7 @@ import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
-import { useCouponInput } from "./utils/coupon/useCouponInput";
+ 
 
 interface ResumeTableProps {
   onReload?: () => void;
