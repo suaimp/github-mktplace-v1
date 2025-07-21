@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { updateCartCheckoutResume } from "../../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
+import { getTotalProductPrice } from "../utils/getTotalProductPrice";
 
 export function useResumeTableEdit() {
   const [loadingItem, setLoadingItem] = useState<{ [id: string]: boolean }>({});
@@ -8,20 +9,25 @@ export function useResumeTableEdit() {
   async function handleQuantityChange(
     item: any,
     value: number,
-    setResumeData: (fn: (prev: any[]) => any[]) => void
+    setResumeData: (fn: (prev: any[]) => any[]) => void,
+    context: any
   ) {
     setResumeData((prev) =>
       prev.map((row) =>
         row.id === item.id ? { ...row, quantity: value } : row
       )
     );
+    // Use o valor total passado pelo contexto (totalsMap[item.id])
+    const item_total = context.item_total;
+    await updateCartCheckoutResume(item.id, { quantity: value, item_total });
   }
 
   // Persiste no banco ao sair do campo
-  async function handleQuantityBlur(item: any, quantity: number) {
+  async function handleQuantityBlur(item: any, quantity: number, context: any) {
     setLoadingItem((prev) => ({ ...prev, [item.id]: true }));
     try {
-      await updateCartCheckoutResume(item.id, { quantity });
+      const item_total = context.item_total;
+      await updateCartCheckoutResume(item.id, { quantity, item_total });
     } catch (err) {
       // Pode adicionar feedback de erro se desejar
       console.error("Erro ao atualizar quantidade", err);
@@ -36,7 +42,8 @@ export function useResumeTableEdit() {
     value: { niche: string; price: string }[],
     setSelectedNiches: (
       fn: (prev: { [id: string]: string }) => { [id: string]: string }
-    ) => void
+    ) => void,
+    context: any
   ) {
     // Atualiza apenas o nome do nicho no estado local (UI)
     setSelectedNiches((prev) => ({
@@ -44,8 +51,9 @@ export function useResumeTableEdit() {
       [item.id]: value[0]?.niche || ""
     }));
     try {
+      const item_total = context.item_total;
       // Envia array de objeto para o backend
-      await updateCartCheckoutResume(item.id, { niche_selected: value });
+      await updateCartCheckoutResume(item.id, { niche_selected: value, item_total });
     } catch (err) {
       console.error("Erro ao atualizar niche_selected", err);
     }
@@ -55,7 +63,8 @@ export function useResumeTableEdit() {
   async function handleWordCountChange(
     item: any,
     wordCount: number,
-    currentServiceSelected: any[]
+    currentServiceSelected: any[],
+    context: any
   ) {
     console.log("🔧 handleWordCountChange chamada:", {
       itemId: item.id,
@@ -107,8 +116,11 @@ export function useResumeTableEdit() {
         updatedServiceSelected: serviceArray
       });
 
+      // Use o valor total passado pelo contexto (totalsMap[item.id])
+      const item_total = context.item_total;
       const result = await updateCartCheckoutResume(item.id, {
-        service_selected: serviceArray
+        service_selected: serviceArray,
+        item_total
       });
       
       console.log("✅ Resultado da atualização:", result);

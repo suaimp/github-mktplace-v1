@@ -2,9 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
+import { getCartCheckoutResumeByUser, CartCheckoutResume } from "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
 import { useCouponInput } from "./utils/coupon/useCouponInput";
 import { useCouponDiscount } from "./utils/coupon/useCouponDiscount";
 import { formatCurrency } from "../../utils/currency";
+import { useOrderUrls } from "./hooks/useOrderUrls";
+import { useCheckoutTotal } from "./hooks/useCheckoutTotal";
 
 export default function FinishOrder() {
   const [totalProductPrice, setTotalProductPrice] = useState<number | null>(
@@ -21,12 +24,11 @@ export default function FinishOrder() {
   const { couponValue, handleCouponChange } = useCouponInput();
   const [couponInput, setCouponInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const {
-    loading: couponLoading,
-    error: couponError,
-    appliedCoupon,
-    discountValue
-  } = useCouponDiscount(couponValue, totalFinalPrice ?? 0);
+  // Substituir totalFinalPrice pelo valor do hook
+  const { total: checkoutTotal, loading: loadingCheckoutTotal, error: errorCheckoutTotal } = useCheckoutTotal();
+  // Estado para lista de itens do banco (cart_checkout_resume)
+  const [checkoutItems, setCheckoutItems] = useState<CartCheckoutResume[]>([]);
+  const [loadingCheckoutItems, setLoadingCheckoutItems] = useState(true);
 
   useEffect(() => {
     async function fetchTotal() {
@@ -83,6 +85,22 @@ export default function FinishOrder() {
   }, [refreshKey]);
 
   useEffect(() => {
+    async function fetchCheckoutItems() {
+      setLoadingCheckoutItems(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCheckoutItems([]);
+        setLoadingCheckoutItems(false);
+        return;
+      }
+      const items = await getCartCheckoutResumeByUser(user.id);
+      setCheckoutItems(items || []);
+      setLoadingCheckoutItems(false);
+    }
+    fetchCheckoutItems();
+  }, []);
+
+  useEffect(() => {
     // Listener para eventos de atualização do order_totals
     function handleOrderTotalUpdated() {
       setRefreshKey((k) => k + 1);
@@ -94,11 +112,17 @@ export default function FinishOrder() {
         handleOrderTotalUpdated
       );
   }, []);
-  // Usar o total_final_price do banco de dados
-  const total = totalFinalPrice ?? 0;
+  // Usar checkoutTotal como base do desconto
+  const {
+    loading: couponLoading,
+    error: couponError,
+    appliedCoupon,
+    discountValue
+  } = useCouponDiscount(couponValue, checkoutTotal);
+  // Usar checkoutTotal como base do total exibido
+  const total = checkoutTotal;
 
   const handleGoToPayment = async () => {
-    // Salvar o valor total com desconto no banco antes de navegar
     try {
       setLoading(true);
       setError(null);
@@ -123,7 +147,7 @@ export default function FinishOrder() {
         user_id: user.id,
         total_product_price: totalProductPrice ?? 0,
         total_content_price: totalContentPrice ?? 0,
-        total_final_price: Math.max((total - discountValue), 0),
+        total_final_price: Math.max((checkoutTotal - discountValue), 0),
         total_word_count: null,
         updated_at: new Date().toISOString()
       };
@@ -137,7 +161,6 @@ export default function FinishOrder() {
           .from("order_totals")
           .insert(recordData);
       }
-      // Disparar evento para atualizar UI
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("order-totals-updated"));
       }
@@ -195,6 +218,23 @@ export default function FinishOrder() {
           )}
         </div>
       )}
+      {/* Lista de Itens do pedido */}
+      <div className="mb-4">
+        <h4 className="text-sm text-gray-700 dark:text-gray-200 mb-1">Itens:</h4>
+        {loadingCheckoutItems ? (
+          <span className="text-xs text-gray-500">Carregando itens...</span>
+        ) : checkoutItems.length === 0 ? (
+          <span className="text-xs text-gray-400">Nenhum item encontrado.</span>
+        ) : (
+          <ul className="list-disc list-inside text-xs text-gray-700 dark:text-gray-200">
+            {checkoutItems.map((item, idx) => (
+              <li key={idx} className="break-all flex items-center">
+                <span>{item.product_url}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -247,11 +287,11 @@ export default function FinishOrder() {
       <div className="flex items-center justify-between">
         <div className="font-medium text-gray-800 dark:text-white">Total</div>
         <div>
-          {loading ? (
+          {loadingCheckoutTotal ? (
             <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-20 rounded"></div>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">
-              {formatCurrency(Math.max((total - discountValue), 0))}
+              {formatCurrency(Math.max((checkoutTotal - discountValue), 0))}
             </span>
           )}
         </div>

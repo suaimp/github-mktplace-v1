@@ -12,6 +12,7 @@ import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
+import { syncItemTotalsToDb } from "./utils/syncItemTotalsToDb";
  
 
 interface ResumeTableProps {
@@ -192,6 +193,60 @@ export default function ResumeTable(props: ResumeTableProps) {
     }
   };
 
+  // Função local para calcular o total de uma linha, idêntica à renderização
+  function getTotalForRow(item: any) {
+    return getTotalProductPrice({
+      item,
+      quantities,
+      selectedNiches,
+      selectedService,
+      wordCounts,
+      serviceCardsByActiveService,
+      getServicePackageArray,
+      getNichePrice
+    });
+  }
+
+  // State para armazenar o total de cada item por id
+  const [totalsMap, setTotalsMap] = useState<{ [id: string]: number }>({});
+
+  // Calcule todos os totais sempre que os dados relevantes mudarem
+  useEffect(() => {
+    const newTotals: { [id: string]: number } = {};
+    resumeData.forEach((item: any) => {
+      newTotals[item.id] = getTotalProductPrice({
+        item,
+        quantities,
+        selectedNiches,
+        selectedService,
+        wordCounts,
+        serviceCardsByActiveService,
+        getServicePackageArray,
+        getNichePrice
+      });
+    });
+    setTotalsMap(newTotals);
+    // Removido: syncItemTotalsToDb(newTotals);
+  }, [
+    resumeData,
+    quantities,
+    selectedNiches,
+    selectedService,
+    wordCounts,
+    serviceCardsByActiveService,
+    getServicePackageArray,
+    getNichePrice
+  ]);
+
+  // Loga o objeto e envia para o banco sempre que for alterado
+  useEffect(() => {
+    if (Object.keys(totalsMap).length > 0) {
+      const arr = Object.entries(totalsMap).map(([id, total]) => ({ id, total }));
+      console.log('totalsMap:', arr);
+      syncItemTotalsToDb(totalsMap);
+    }
+  }, [totalsMap]);
+
   if (loading) {
     // O skeleton deve ter o mesmo número de linhas que resumeData teria
     // Se resumeData já está vazio, pode usar um valor padrão (ex: 3)
@@ -278,6 +333,8 @@ export default function ResumeTable(props: ResumeTableProps) {
                     );
                   }
                 }
+                // Use o total calculado do totalsMap
+                const totalValue = totalsMap[item.id] ?? 0;
                 return (
                   <tr key={item.id}>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-left">
@@ -312,18 +369,37 @@ export default function ResumeTable(props: ResumeTableProps) {
                             await handleQuantityChange(
                               item,
                               value,
-                              (updater) => {
-                                // Atualiza resumeData localmente para refletir o valor no input
-                                // (updater é uma função que recebe o estado anterior do resumeData)
-                                // Aqui, só chamamos updater para manter compatibilidade, mas o estado é controlado por useState
-                                return updater;
+                              (updater) => updater,
+                              {
+                                item,
+                                quantities: { ...quantities, [item.id]: value },
+                                selectedNiches,
+                                selectedService,
+                                wordCounts,
+                                serviceCardsByActiveService,
+                                getServicePackageArray,
+                                getNichePrice,
+                                getTotalForRow,
+                                item_total: totalsMap[item.id] ?? 0
                               }
                             );
                           }}
                           onBlur={() =>
                             handleQuantityBlur(
                               item,
-                              quantities[item.id] ?? item.quantity ?? 1
+                              quantities[item.id] ?? item.quantity ?? 1,
+                              {
+                                item,
+                                quantities,
+                                selectedNiches,
+                                selectedService,
+                                wordCounts,
+                                serviceCardsByActiveService,
+                                getServicePackageArray,
+                                getNichePrice,
+                                getTotalForRow,
+                                item_total: totalsMap[item.id] ?? 0
+                              }
                             )
                           }
                           className="w-16 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-300 py-0 h-7 px-2"
@@ -353,7 +429,17 @@ export default function ResumeTable(props: ResumeTableProps) {
                               await handleNicheChange(
                                 item,
                                 [{ niche: "Nenhum", price: "0" }],
-                                setSelectedNiches
+                                setSelectedNiches,
+                                {
+                                  item,
+                                  quantities,
+                                  selectedNiches: { ...selectedNiches, [item.id]: "Nenhum" },
+                                  selectedService,
+                                  wordCounts,
+                                  serviceCardsByActiveService,
+                                  getServicePackageArray,
+                                  getNichePrice
+                                }
                               );
                               return;
                             }
@@ -374,7 +460,17 @@ export default function ResumeTable(props: ResumeTableProps) {
                             await handleNicheChange(
                               item,
                               [{ niche: value, price: priceString }],
-                              setSelectedNiches
+                              setSelectedNiches,
+                              {
+                                item,
+                                quantities,
+                                selectedNiches: { ...selectedNiches, [item.id]: value },
+                                selectedService,
+                                wordCounts,
+                                serviceCardsByActiveService,
+                                getServicePackageArray,
+                                getNichePrice
+                              }
                             );
                           }}
                         >
@@ -595,7 +691,21 @@ export default function ResumeTable(props: ResumeTableProps) {
                                       benefits: []
                                     }];
 
-                                await handleWordCountChange(item, value, serviceArray);
+                                await handleWordCountChange(
+                                  item,
+                                  value,
+                                  serviceArray,
+                                  {
+                                    item,
+                                    quantities,
+                                    selectedNiches,
+                                    selectedService,
+                                    wordCounts: { ...wordCounts, [item.id]: value },
+                                    serviceCardsByActiveService,
+                                    getServicePackageArray,
+                                    getNichePrice
+                                  }
+                                );
                               }, 500);
 
                               setWordCountDebounceTimers(prev => ({
@@ -608,25 +718,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                       })()}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-800 dark:text-white/90 text-right">
-                      {(() => {
-                        console.log(
-                          "[ResumeTable] Calculando total para item.price:",
-                          item.price
-                        );
-                        return formatCurrency(
-                          getTotalProductPrice({
-                            item,
-
-                            quantities,
-                            selectedNiches,
-                            selectedService,
-                            wordCounts,
-                            serviceCardsByActiveService,
-                            getServicePackageArray,
-                            getNichePrice
-                          })
-                        );
-                      })()}
+                      {formatCurrency(totalValue)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-center">
                       <button

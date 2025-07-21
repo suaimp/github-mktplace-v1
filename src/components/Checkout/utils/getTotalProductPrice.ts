@@ -51,12 +51,14 @@ export function getTotalProductPrice({
 
   const pricePerWord = selected.length > 0 && selected[0].price_per_word;
 
-  const wordCountPrice = pricePerWord * wordCountCalc;
+  // CORREÇÃO: Multiplicar o valor do conteúdo pela quantidade
+  const quantidade = quantities[item.id] ?? item.quantity ?? 1;
+  const wordCountPrice = pricePerWord * wordCountCalc * quantidade;
 
   // Se houver nicho selecionado, usar apenas o valor do nicho (vez de item.price)
   if (nichePrice > 0) {
     return (
-      nichePrice * (quantities[item.id] ?? item.quantity ?? 1) + wordCountPrice
+      nichePrice * quantidade + wordCountPrice
     );
   }
   // Caso contrário, usa o padrão

@@ -20,6 +20,7 @@ export type CartCheckoutResume = {
         is_free: boolean;
       }[]
     | null;
+  item_total?: number; // Adicionado para permitir update
 };
 
 export async function getCartCheckoutResumeByUser(
@@ -76,7 +77,7 @@ export async function createCartCheckoutResume(
 
 export async function updateCartCheckoutResume(
   id: string,
-  updates: Partial<Omit<CartCheckoutResume, "id" | "created_at">>
+  updates: Partial<Omit<CartCheckoutResume, "id" | "created_at"> & { item_total?: number }>
 ): Promise<CartCheckoutResume | null> {
   console.log("🔄 Atualizando cart_checkout_resume:", {
     id: id,
