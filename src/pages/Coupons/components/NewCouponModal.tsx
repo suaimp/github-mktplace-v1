@@ -78,34 +78,34 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
 
   const validateForm = (): boolean => {
     if (!formData.code.trim()) {
-      addToast("Código é obrigatório", "error");
+      addToast("[Código] Código é obrigatório", "error");
       return false;
     }
     
     if (!formData.name.trim()) {
-      addToast("Nome é obrigatório", "error");
+      addToast("[Nome] Nome é obrigatório", "error");
       return false;
     }
     
     if (formData.discount_value <= 0) {
-      addToast("Valor do desconto deve ser maior que zero", "error");
+      addToast("[Desconto] Valor do desconto deve ser maior que zero", "error");
       return false;
     }
     
     if (formData.discount_type === "percentage" && formData.discount_value > 100) {
-      addToast("Desconto percentual não pode ser maior que 100%", "error");
+      addToast("[Desconto] Desconto percentual não pode ser maior que 100%", "error");
       return false;
     }
     
     if (formData.maximum_amount && formData.minimum_amount && 
         formData.maximum_amount <= formData.minimum_amount) {
-      addToast("Valor máximo deve ser maior que o valor mínimo", "error");
+      addToast("[Valor Máximo] Valor máximo deve ser maior que o valor mínimo", "error");
       return false;
     }
     
     if (formData.end_date && formData.start_date && 
         new Date(formData.end_date) <= new Date(formData.start_date)) {
-      addToast("Data de fim deve ser posterior à data de início", "error");
+      addToast("[Datas] Data de fim deve ser posterior à data de início", "error");
       return false;
     }
     
@@ -117,8 +117,15 @@ export default function NewCouponModal({ field }: NewCouponModalProps) {
     
     if (!validateForm()) return;
 
+    // Corrigir datas opcionais: enviar undefined se vazio
+    const payload = {
+      ...formData,
+      start_date: formData.start_date || undefined,
+      end_date: formData.end_date || undefined,
+    };
+
     try {
-      const newCoupon = await createCoupon(formData);
+      const newCoupon = await createCoupon(payload);
       
       if (newCoupon) {
         addToast("Cupom criado com sucesso!", "success");

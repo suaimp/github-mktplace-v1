@@ -4,6 +4,8 @@ import EditCouponForm from "./components/EditCouponForm";
 import { Coupon, UpdateCouponInput } from "./types";
 import { getCouponById, updateCoupon } from "../../services/db-services/coupons/couponService";
 import { useCouponSticky } from "./hooks/useCouponSticky";
+import ToastContainer from "./components/toast/ToastContainer";
+import { useToast } from "./components/toast/useToast";
 
 const TicketEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +14,7 @@ const TicketEditPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const sticky = useCouponSticky({ offsetTop: 20, onlyOnDesktop: true });
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -24,10 +27,17 @@ const TicketEditPage: React.FC = () => {
   const handleSubmit = async (data: UpdateCouponInput) => {
     setSaving(true);
     try {
-      await updateCoupon({ ...data, id: id! });
-      // Buscar o cupom atualizado e atualizar o estado local
-      const updated = await getCouponById(id!);
-      setCoupon(updated);
+      const result = await updateCoupon({ ...data, id: id! });
+      if (result) {
+        addToast("Cupom atualizado com sucesso!", "success");
+        // Buscar o cupom atualizado e atualizar o estado local
+        const updated = await getCouponById(id!);
+        setCoupon(updated);
+      } else {
+        addToast("Erro ao atualizar cupom.", "error");
+      }
+    } catch (e) {
+      addToast("Erro inesperado ao atualizar cupom.", "error");
     } finally {
       setSaving(false);
     }
@@ -50,6 +60,7 @@ const TicketEditPage: React.FC = () => {
 
   return (
     <div className="w-full main-content p-4 mx-auto max-w-[--breakpoint-2xl] md:p-6 overflow-hidden">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <section className="flex min-h-screen">
         {/* Esquerda */}
         <div className="flex-1 pr-0 md:pr-4 lg:pr-8 xl:pr-12 2xl:pr-16 flex flex-col">

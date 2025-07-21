@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
@@ -19,6 +19,8 @@ export default function FinishOrder() {
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
   const { couponValue, handleCouponChange } = useCouponInput();
+  const [couponInput, setCouponInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const {
     loading: couponLoading,
     error: couponError,
@@ -146,6 +148,12 @@ export default function FinishOrder() {
       setLoading(false);
     }
   };
+  // Novo handler para aplicar cupom
+  const handleApplyCoupon = () => {
+    handleCouponChange({ target: { value: couponInput } } as any);
+    // Opcional: dar foco no input após aplicar
+    inputRef.current?.focus();
+  };
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
       <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
@@ -154,17 +162,32 @@ export default function FinishOrder() {
       {/* Input de cupom de desconto */}
       {window.location.pathname === "/checkout" && (
         <div className="mb-4 flex flex-col items-start gap-2">
-          <label htmlFor="coupon-input" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <label htmlFor="inputcode-textfield-with-link" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Cupom de desconto
           </label>
-          <input
-            id="coupon-input"
-            type="text"
-            value={couponValue}
-            onChange={handleCouponChange}
-            placeholder="Digite seu cupom"
-            className="w-full max-w-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
-          />
+          <div className="andes-form-control__control" style={{ width: '100%', maxWidth: 340, display: 'flex', alignItems: 'center' }}>
+            <input
+              autoComplete="off"
+              id="inputcode-textfield-with-link"
+              className="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
+              maxLength={23}
+              placeholder="Inserir código do cupom"
+              aria-label="Inserir código do cupom"
+              value={couponInput}
+              onChange={e => setCouponInput(e.target.value)}
+              style={{ minWidth: 0 }}
+              ref={inputRef}
+            />
+            <div style={{ marginLeft: 8 }}>
+              <button
+                type="button"
+                className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors"
+                onClick={handleApplyCoupon}
+              >
+                Adicionar
+              </button>
+            </div>
+          </div>
           {couponLoading && <span className="text-xs text-gray-500">Validando cupom...</span>}
           {couponError && <span className="text-xs text-red-500">{couponError}</span>}
           {appliedCoupon && (
