@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useTooltipPosition } from "./useTooltipPosition";
 
 interface InfoTooltipProps {
@@ -13,19 +13,16 @@ export default function InfoTooltip({
   children
 }: InfoTooltipProps) {
   const { placement, alignX, triggerRef, tooltipRef } = useTooltipPosition();
-  const [  setMaxWidth] = useState<number | undefined>(undefined);
+ 
 
   useEffect(() => {
     if (!triggerRef.current) return;
     // Detecta o container com scroll
-    let scrollContainer: HTMLElement | Window = window;
+ 
     let parent = triggerRef.current.parentElement;
     while (parent) {
-      const overflowY = getComputedStyle(parent).overflowY;
-      if (overflowY === 'auto' || overflowY === 'scroll') {
-        scrollContainer = parent;
-        break;
-      }
+ 
+    
       parent = parent.parentElement;
     }
   
