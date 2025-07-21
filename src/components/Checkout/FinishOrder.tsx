@@ -6,7 +6,7 @@ import { getCartCheckoutResumeByUser, CartCheckoutResume } from "../../services/
 import { useCouponInput } from "./utils/coupon/useCouponInput";
 import { useCouponDiscount } from "./utils/coupon/useCouponDiscount";
 import { formatCurrency } from "../../utils/currency";
-import { useOrderUrls } from "./hooks/useOrderUrls";
+ 
 import { useCheckoutTotal } from "./hooks/useCheckoutTotal";
 
 export default function FinishOrder() {
@@ -16,6 +16,7 @@ export default function FinishOrder() {
   const [totalContentPrice, setTotalContentPrice] = useState<number | null>(
     null
   );
+  //@ts-ignore
   const [totalFinalPrice, setTotalFinalPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export default function FinishOrder() {
   const [couponInput, setCouponInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   // Substituir totalFinalPrice pelo valor do hook
-  const { total: checkoutTotal, loading: loadingCheckoutTotal, error: errorCheckoutTotal } = useCheckoutTotal();
+  const { total: checkoutTotal, loading: loadingCheckoutTotal } = useCheckoutTotal();
   // Estado para lista de itens do banco (cart_checkout_resume)
   const [checkoutItems, setCheckoutItems] = useState<CartCheckoutResume[]>([]);
   const [loadingCheckoutItems, setLoadingCheckoutItems] = useState(true);
@@ -120,7 +121,7 @@ export default function FinishOrder() {
     discountValue
   } = useCouponDiscount(couponValue, checkoutTotal);
   // Usar checkoutTotal como base do total exibido
-  const total = checkoutTotal;
+ 
 
   const handleGoToPayment = async () => {
     try {

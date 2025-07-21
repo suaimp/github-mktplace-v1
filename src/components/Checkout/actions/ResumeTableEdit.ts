@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { updateCartCheckoutResume } from "../../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
-import { getTotalProductPrice } from "../utils/getTotalProductPrice";
+ 
 
 export function useResumeTableEdit() {
   const [loadingItem, setLoadingItem] = useState<{ [id: string]: boolean }>({});
