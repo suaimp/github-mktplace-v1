@@ -155,32 +155,19 @@ export function useShoppingCartToCheckoutResume() {
         item
       );
 
-      // NOVA LÓGICA: Busca o preço correto antes de atualizar
-      const correctPrice = await getPriceFromEntryWithCache(item.entry_id);
-
-      // Busca o registro do resumo pelo user_id e entry_id
+      // Remove todos os registros do entry_id desse usuário
       const resumes = (await getCartCheckoutResumeByUser(
         item.user_id
       )) as CartCheckoutResumeWithEntry[];
-      const found = resumes?.find((r) => r.entry_id === item.entry_id);
-      console.log("ShoppingCartToCheckoutResume.ts - found:", found);
-
-      if (found) {
-        // Atualiza quantidade e preço (se encontrado)
-        const updateData: any = { quantity: item.quantity };
-
-        if (correctPrice !== null) {
-          updateData.price = correctPrice;
-          console.log(
-            `[ShoppingCartToCheckoutResume] EDIT - Atualizando preço para entry_id ${item.entry_id}: ${correctPrice}`
-          );
-        }
-
-        await updateCartCheckoutResume(found.id, updateData);
-        console.log("ShoppingCartToCheckoutResume.ts - edit (update):", item);
-      } else {
-        console.warn("Resumo não encontrado para update", item);
+      const toRemove = resumes?.filter((r) => r.entry_id === item.entry_id) || [];
+      for (const reg of toRemove) {
+        await deleteCartCheckoutResume(reg.id);
       }
+      // Insere duplicidades conforme a quantidade
+      if (item.quantity > 0) {
+        await duplicateCartCheckoutResumeEntries(item.user_id, item.entry_id, item.quantity);
+      }
+      // Não atualiza mais o campo quantity diretamente!
     },
     []
   );
@@ -272,4 +259,115 @@ export function useShoppingCartToCheckoutResume() {
   }, []);
 
   return { add, edit, remove, get, syncPriceFromValue };
+}
+
+// Função utilitária para montar o payload do resumo do checkout
+export async function buildCartCheckoutResumePayload(user_id: string, entry_id: string) {
+  // Busca o preço correto
+  const correctPrice = await getPriceFromEntryWithCache(entry_id);
+  const price = correctPrice || 0;
+
+  // Busca os valores do entry_id para outras informações (URL, nichos, etc.)
+  const allEntryValues = await getFormEntryValuesByEntryId(entry_id);
+  // Busca url https e remove https://
+  const urlEntry = Array.isArray(allEntryValues)
+    ? allEntryValues.find(
+        (v) => typeof v.value === "string" && v.value.startsWith("https://")
+      )
+    : undefined;
+  let urlWithoutHttps: string | null = null;
+  if (urlEntry && typeof urlEntry.value === "string") {
+    urlWithoutHttps = urlEntry.value.replace(/^https:\/\//, "");
+  }
+  const onlyWithValueJson = Array.isArray(allEntryValues)
+    ? allEntryValues.filter((v) => !!v.value_json)
+    : [];
+  // Filtra apenas os que possuem value_json com algum item de array contendo campo niche
+  const entryValues = onlyWithValueJson.filter(
+    (v) =>
+      v.entry_id === entry_id &&
+      v.value_json &&
+      (() => {
+        try {
+          const json =
+            typeof v.value_json === "string"
+              ? JSON.parse(v.value_json)
+              : v.value_json;
+          if (Array.isArray(json)) {
+            return json.some(
+              (el) => el && typeof el === "object" && "niche" in el
+            );
+          }
+          if (json && typeof json === "object") {
+            return Object.values(json).some(
+              (arr) =>
+                Array.isArray(arr) &&
+                arr.some(
+                  (el) => el && typeof el === "object" && "niche" in el
+                )
+            );
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      })()
+  );
+  // Cria um array apenas com os value_json dos entryValues filtrados
+  const entryValuesValueJson = entryValues.map((v) => v.value_json);
+  // Filtra para retornar apenas os arrays de nichos (ex: [{niche: ..., price: ...}, ...])
+  const onlyNicheArrays = entryValuesValueJson
+    .map((json) => {
+      try {
+        const parsed = typeof json === "string" ? JSON.parse(json) : json;
+        if (
+          Array.isArray(parsed) &&
+          parsed.every(
+            (el) => el && typeof el === "object" && "niche" in el
+          )
+        ) {
+          return parsed;
+        }
+        if (parsed && typeof parsed === "object") {
+          const arr = Object.values(parsed).find(
+            (v) =>
+              Array.isArray(v) &&
+              v.every((el) => el && typeof el === "object" && "niche" in el)
+          );
+          return arr || null;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    })
+    .filter((arr) => Array.isArray(arr) && arr.length > 0);
+  // Pega apenas a instância 0 (primeiro array de niches)
+  const nichesArray = onlyNicheArrays[0] || [];
+  return {
+    user_id,
+    entry_id,
+    product_url: urlWithoutHttps,
+    quantity: 1, // sempre 1 para duplicidade
+    niche: JSON.stringify(nichesArray),
+    price,
+    service_content: ""
+  };
+}
+
+// Função para inserir múltiplos registros duplicados conforme a quantidade
+export async function duplicateCartCheckoutResumeEntries(user_id: string, entry_id: string, quantity: number) {
+  const payload = await buildCartCheckoutResumePayload(user_id, entry_id);
+  const inserts = Array.from({ length: quantity }, () => ({ ...payload }));
+  // Remove o campo id se vier do tipo
+  inserts.forEach((item) => { delete (item as any).id; });
+  // Inserção em lote
+  const { data, error } = await supabase
+    .from("cart_checkout_resume")
+    .insert(inserts);
+  if (error) {
+    console.error("Erro ao inserir duplicidades em cart_checkout_resume:", error.message);
+    throw error;
+  }
+  return data;
 }
