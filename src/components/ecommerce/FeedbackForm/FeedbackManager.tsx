@@ -4,8 +4,7 @@ import {
   updateFeedbackStatus,
   deleteFeedback,
   getFeedbackStats,
-  getCategoryName,
-  getPriorityName
+  getCategoryName
 } from "./actions/feedbackActions";
 import {
   FeedbackSubmission,
@@ -19,7 +18,6 @@ export default function FeedbackManager() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FeedbackStatus | "all">("all");
-  const [sortBy, setSortBy] = useState<"date" | "priority">("date");
 
   useEffect(() => {
     loadData();
@@ -39,8 +37,6 @@ export default function FeedbackManager() {
           subject: sub.subject,
           category: getCategoryName(sub.category),
           categoryId: sub.category,
-          priority: getPriorityName(sub.priority),
-          priorityId: sub.priority,
           status: sub.status,
           submittedAt: sub.submittedAt
         })),
@@ -78,14 +74,10 @@ export default function FeedbackManager() {
   const filteredSubmissions = submissions
     .filter((sub) => filter === "all" || sub.status === filter)
     .sort((a, b) => {
-      if (sortBy === "date") {
-        return (
-          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-        );
-      } else {
-        // Ordenação por prioridade: Alta(3) > Média(2) > Baixa(1)
-        return b.priority - a.priority;
-      }
+      // Ordenação por data: mais recente primeiro
+      return (
+        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      );
     });
 
   const getStatusColor = (status: FeedbackStatus) => {
@@ -98,19 +90,6 @@ export default function FeedbackManager() {
         return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
       case "rejected":
         return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400";
-    }
-  };
-  const getPriorityColor = (priorityId: number) => {
-    const priorityName = getPriorityName(priorityId);
-    switch (priorityName) {
-      case "Alta":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
-      case "Média":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
-      case "Baixa":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400";
     }
@@ -168,10 +147,9 @@ export default function FeedbackManager() {
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
-            {" "}
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Filtrar por Status:
-            </label>{" "}
+            </label>
             <select
               value={filter}
               onChange={(e) => {
@@ -181,7 +159,6 @@ export default function FeedbackManager() {
               }}
               className="px-3 py-1 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
-              {" "}
               <option value="all">Todos</option>
               {FEEDBACK_STATUSES.map((status) => (
                 <option key={status} value={status}>
@@ -190,24 +167,6 @@ export default function FeedbackManager() {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
-            {" "}
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Ordenar por:
-            </label>{" "}
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                const newSortBy = e.target.value as "date" | "priority";
-                console.log("🔄 Ordenação selecionada:", newSortBy);
-                setSortBy(newSortBy);
-              }}
-              className="px-3 py-1 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="date">Data</option>
-              <option value="priority">Prioridade</option>
-            </select>
-          </div>{" "}
           <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
             Mostrando {filteredSubmissions.length} de {submissions.length}{" "}
             submissões
@@ -241,14 +200,6 @@ export default function FeedbackManager() {
                       )}`}
                     >
                       {submission.status}
-                    </span>{" "}
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                        submission.priority
-                      )}`}
-                    >
-                      {getPriorityName(submission.priority).toLowerCase()}{" "}
-                      prioridade
                     </span>
                   </div>{" "}
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
@@ -272,8 +223,7 @@ export default function FeedbackManager() {
                         subject: submission.subject,
                         oldStatus: submission.status,
                         newStatus: newStatus,
-                        category: getCategoryName(submission.category),
-                        priority: getPriorityName(submission.priority)
+                        category: getCategoryName(submission.category)
                       });
                       handleStatusUpdate(submission.id, newStatus);
                     }}
