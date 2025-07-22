@@ -7,6 +7,8 @@ export interface OrderTotal {
   total_content_price: number;
   total_final_price: number;
   total_word_count: number;
+  applied_coupon_id?: string | null;
+  discount_value?: number;
   created_at: string;
   updated_at: string;
 }

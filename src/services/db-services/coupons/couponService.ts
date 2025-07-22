@@ -55,7 +55,10 @@ export async function getCouponByCode(code: string): Promise<Coupon | null> {
       .from("coupons")
       .select("*")
       .ilike("code", code)
-      .single();
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching coupon by code:", error);

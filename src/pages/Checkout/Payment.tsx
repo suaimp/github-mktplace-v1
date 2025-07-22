@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { supabase } from "../../lib/supabase";
+import { CouponProvider } from "../../components/Checkout/providers/CouponProvider";
 import PaymentInformationForm from "../../components/Checkout/PaymentInformationForm";
 import PaymentMethodForm from "../../components/Checkout/PaymentMethodForm";
 import FinishOrder from "../../components/Checkout/FinishOrder";
@@ -85,6 +86,8 @@ export default function Payment() {
     totalProductPrice: 0,
     totalContentPrice: 0,
     totalFinalPrice: 0,
+    appliedCouponId: null as string | null,
+    discountValue: 0,
   });
   const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
@@ -141,6 +144,25 @@ export default function Payment() {
     loadOrderTotal();
     loadCompanyData();
     loadCartItems();
+    
+    // Aguardar um pouco e recarregar totais novamente para garantir valores atualizados
+    const timeoutId = setTimeout(() => {
+      console.log("🔄 TIMEOUT: Recarregando order totals após delay");
+      loadOrderTotal();
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Listener para eventos de atualização do order_totals
+  useEffect(() => {
+    function handleOrderTotalUpdated() {
+      console.log("🔄 EVENT: order-totals-updated received, reloading order total");
+      loadOrderTotal();
+    }
+    window.addEventListener("order-totals-updated", handleOrderTotalUpdated);
+    return () =>
+      window.removeEventListener("order-totals-updated", handleOrderTotalUpdated);
   }, []);
 
   useEffect(() => {
@@ -292,9 +314,11 @@ export default function Payment() {
 
       const { data, error } = await supabase
         .from("order_totals")
-        .select("total_product_price, total_content_price, total_final_price")
+        .select("total_product_price, total_content_price, total_final_price, applied_coupon_id, discount_value")
         .eq("user_id", user.id)
-        .single();
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -306,7 +330,22 @@ export default function Payment() {
           totalProductPrice: Number(data.total_product_price),
           totalContentPrice: Number(data.total_content_price),
           totalFinalPrice: Number(data.total_final_price),
+          appliedCouponId: data.applied_coupon_id,
+          discountValue: Number(data.discount_value) || 0,
         }));
+        
+        // DEBUG: Log dos valores carregados do banco
+        console.log("🔍 ORDER TOTALS LOADED:", {
+          totalProductPrice: Number(data.total_product_price),
+          totalContentPrice: Number(data.total_content_price),
+          totalFinalPrice: Number(data.total_final_price),
+          appliedCouponId: data.applied_coupon_id,
+          discountValue: Number(data.discount_value) || 0,
+          calculatedWithoutDiscount: Number(data.total_product_price) + Number(data.total_content_price),
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log("⚠️ No order totals found for user");
       }
     } catch (error) {
       console.error("Error loading order total:", error);
@@ -496,7 +535,19 @@ export default function Payment() {
         service_content: serviceData,
       };
     });
-    const totalAmount = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+    const totalAmount = orderSummary.totalFinalPrice;
+    
+    // DEBUG: Log dos valores no momento da criação do pedido PIX
+    console.log("🐛 CREATE PIX ORDER - Valores do orderSummary:", {
+      totalFinalPrice: orderSummary.totalFinalPrice,
+      totalProductPrice: orderSummary.totalProductPrice,
+      totalContentPrice: orderSummary.totalContentPrice,
+      discountValue: orderSummary.discountValue,
+      appliedCouponId: orderSummary.appliedCouponId,
+      calculatedWithoutDiscount: orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+      timestamp: new Date().toISOString()
+    });
+    
     const order = await createOrder({
       payment_method: "pix",
       total_amount: totalAmount,
@@ -512,6 +563,11 @@ export default function Payment() {
       idempotency_key: idempotencyKey, // <--- Envia o idempotency_key
     });
     if (!order) throw new Error("Failed to create order");
+    
+    // Clear cart after successful PIX order creation (same as credit card flow)
+    await clearCart(user.id);
+    window.dispatchEvent(new Event("cart-cleared"));
+    
     setCurrentOrderId(order.id);
     return order.id;
   }
@@ -519,6 +575,14 @@ export default function Payment() {
   const generatePixQrCode = async () => {
     try {
       setProcessing(true);
+      
+      // FORÇAR RELOAD DOS TOTAIS ANTES DE GERAR PIX
+      console.log("🔄 Recarregando totais antes de gerar PIX...");
+      await loadOrderTotal();
+      
+      // Aguardar um frame para garantir que o state foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // 1. Crie o pedido no banco (se ainda não existir)
       let orderId = currentOrderId;
       if (!orderId) {
@@ -531,7 +595,34 @@ export default function Payment() {
       if (!session) {
         throw new Error("No authenticated session found");
       }
-      const total = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+      const total = orderSummary.totalFinalPrice;
+      
+      // DEBUG: Log dos valores enviados para PIX
+      console.log("🐛 PIX DEBUG - Valores sendo enviados:", {
+        totalFinalPrice: orderSummary.totalFinalPrice,
+        totalProductPrice: orderSummary.totalProductPrice,
+        totalContentPrice: orderSummary.totalContentPrice,
+        discountValue: orderSummary.discountValue,
+        appliedCouponId: orderSummary.appliedCouponId,
+        amountInCents: Math.round(total * 100),
+        calculatedTotal: orderSummary.totalProductPrice + orderSummary.totalContentPrice - orderSummary.discountValue,
+        timestamp: new Date().toISOString()
+      });
+
+      // DEBUG: Log dos valores dos items
+      const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+      const discountRatio = total / totalOriginal;
+      console.log("🐛 PIX DEBUG - Cálculo de desconto nos items:", {
+        totalOriginal,
+        totalWithDiscount: total,
+        discountRatio,
+        items: orderSummary.items.map((item: any) => ({
+          originalPrice: Number(item.price),
+          discountedPrice: Number(item.price) * discountRatio,
+          discountedPriceCents: Math.round(Number(item.price) * discountRatio * 100)
+        }))
+      });
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-payment`,
         {
@@ -547,12 +638,24 @@ export default function Payment() {
             customer_document: formData.documentNumber.replace(/\D/g, ""),
             customer_phone: formData.phone.replace(/\D/g, ""),
             order_id: orderId, // ENVIE O orderId JUNTO!
-            order_items: orderSummary.items.map((item: any) => ({
-              amount: Math.round(Number(item.price) * 100),
-              description: item.product_url || "Produto Marketplace",
-              quantity: item.quantity || 1,
-              code: item.entry_id || `ITEM_${Date.now()}`
-            }))
+            order_items: (() => {
+              // Calcular valores com desconto proporcional
+              const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
+              const totalWithDiscount = orderSummary.totalFinalPrice;
+              const discountRatio = totalWithDiscount / totalOriginal;
+              
+              return orderSummary.items.map((item: any) => {
+                const originalPrice = Number(item.price);
+                const discountedPrice = originalPrice * discountRatio;
+                
+                return {
+                  amount: Math.round(discountedPrice * 100),
+                  description: item.product_url || "Produto Marketplace",
+                  quantity: item.quantity || 1,
+                  code: item.entry_id || `ITEM_${Date.now()}`
+                };
+              });
+            })()
           }),
         }
       );
@@ -600,8 +703,7 @@ export default function Payment() {
         errorStack: error.stack,
         paymentMethod: "pix",
         timestamp: new Date().toISOString(),
-        totalAmount:
-          orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+        totalAmount: orderSummary.totalFinalPrice,
         sessionInfo: "PIX QR Code generation failed",
         pixCustomerData: {
           name: formData.name,
@@ -658,7 +760,7 @@ export default function Payment() {
           const orderEmailData = {
             name: formData.name,
             email: formData.email,
-            total: orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+            total: orderSummary.totalFinalPrice,
             items: orderSummary.items.map((item: any) => {
               // Niche
               let niche = "";
@@ -783,8 +885,7 @@ export default function Payment() {
       });
 
       // Calculate total amount
-      const totalAmount =
-        orderSummary.totalProductPrice + orderSummary.totalContentPrice; // Create order
+      const totalAmount = orderSummary.totalFinalPrice; // Create order
       const order = await createOrder({
         payment_method: paymentMethod,
         total_amount: totalAmount,
@@ -816,8 +917,7 @@ export default function Payment() {
         paymentMethod: paymentMethod,
         paymentId: paymentId,
         timestamp: new Date().toISOString(),
-        totalAmount:
-          orderSummary.totalProductPrice + orderSummary.totalContentPrice,
+        totalAmount: orderSummary.totalFinalPrice,
         billingInfo: {
           name: formData.name,
           email: formData.email,
@@ -1676,7 +1776,7 @@ export default function Payment() {
   }
 
   return (
-    <>
+    <CouponProvider>
       <PageMeta
         title="Pagamento | Marketplace"
         description="Página de pagamento"
@@ -1714,9 +1814,7 @@ export default function Payment() {
               totalAmount={totalAmount}
               pixQrCodeUrl={pixQrCodeUrl}
               pixCopiaECola={pixCopiaECola}
-              total={
-                orderSummary.totalProductPrice + orderSummary.totalContentPrice
-              }
+              total={orderSummary.totalFinalPrice}
               processing={processing}
               error={error}
               termsAccepted={termsAccepted}
@@ -1759,6 +1857,6 @@ export default function Payment() {
           </div>
         </div>
       </div>
-    </>
+    </CouponProvider>
   );
 }

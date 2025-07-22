@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useCart } from "../../components/marketplace/ShoppingCartContext";
+import { CouponProvider } from "../../components/Checkout/providers/CouponProvider";
 
 import Button from "../../components/ui/button/Button";
 
@@ -105,7 +106,7 @@ export default function Checkout() {
   }
 
   return (
-    <>
+    <CouponProvider>
       <PageMeta title="Checkout | Marketplace" description="Finalizar compra" />
       <PageBreadcrumb pageTitle="Checkout" />
 
@@ -128,6 +129,6 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-    </>
+    </CouponProvider>
   );
 }

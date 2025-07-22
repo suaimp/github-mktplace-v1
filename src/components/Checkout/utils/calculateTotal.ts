@@ -7,7 +7,9 @@ export async function calculateTotal(
   totalFinalArray: any[],
   totalProductArray?: any[],
   totalContentArray?: any[],
-  totalWordCountArray?: any[]
+  totalWordCountArray?: any[],
+  discountValue: number = 0,
+  couponId?: string | null
 ): Promise<number> {
   if (
     !totalFinalArray ||
@@ -49,7 +51,9 @@ export async function calculateTotal(
     somaProduct,
     somaContent,
     somaFinal,
-    somaWordCount
+    somaWordCount,
+    discountValue,
+    couponId
   );
   pendingOperations.set(user.id, operation);
 
@@ -67,7 +71,9 @@ async function performCalculation(
   somaProduct: number,
   somaContent: number,
   somaFinal: number,
-  somaWordCount: number
+  somaWordCount: number,
+  discountValue: number = 0,
+  couponId?: string | null
 ): Promise<number> {
   try {
     console.log("📊 [CALCULATE TOTAL] Salvando totais:", {
@@ -75,8 +81,13 @@ async function performCalculation(
       somaProduct,
       somaContent,
       somaFinal,
-      somaWordCount
+      somaWordCount,
+      discountValue,
+      couponId
     });
+
+    // Calcular o valor final com desconto
+    const finalPriceWithDiscount = Math.max(somaFinal - discountValue, 0);
 
     // Primeiro, tentar buscar se já existe um registro para este usuário
     const { data: existingRecord } = await supabase
@@ -91,19 +102,26 @@ async function performCalculation(
       user_id: userId,
       total_product_price: somaProduct,
       total_content_price: somaContent,
-      total_final_price: somaFinal,
+      total_final_price: finalPriceWithDiscount,
       total_word_count: somaWordCount,
+      applied_coupon_id: couponId || null,
+      discount_value: discountValue,
       updated_at: new Date().toISOString()
     };
+
+    console.log("💾 [SAVE ORDER TOTALS] Dados para salvar:", {
+      finalPriceWithDiscount,
+      originalTotal: somaFinal,
+      discountValue,
+      couponId,
+      recordData
+    });
 
     let result;
 
     if (existingRecord) {
       // Atualizar registro existente
-      console.log(
-        "🔄 [ORDER TOTALS] Atualizando registro existente:",
-        existingRecord.id
-      );
+      console.log("🔄 [ORDER TOTALS WITH DISCOUNT] Atualizando registro existente:", existingRecord.id);
       result = await supabase
         .from("order_totals")
         .update(recordData)
@@ -112,7 +130,7 @@ async function performCalculation(
         .single();
     } else {
       // Inserir novo registro
-      console.log("➕ [ORDER TOTALS] Criando novo registro");
+      console.log("➕ [ORDER TOTALS WITH DISCOUNT] Criando novo registro");
       result = await supabase
         .from("order_totals")
         .insert(recordData)
@@ -120,23 +138,26 @@ async function performCalculation(
         .single();
     }
 
-    const { error } = result;
-
-    if (error) {
-      console.error("❌ [ORDER TOTALS] Erro ao salvar:", error);
-      throw error;
-    } else {
-      console.log("✅ [ORDER TOTALS] Totais salvos com sucesso");
-
-      // Disparar evento global para atualizar UI
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("order-totals-updated"));
-      }
+    if (result.error) {
+      console.error("❌ [ORDER TOTALS WITH DISCOUNT] Erro ao salvar:", result.error);
+      throw new Error(`Erro ao salvar totais: ${result.error.message}`);
     }
 
-    return somaFinal;
+    console.log("✅ [ORDER TOTALS WITH DISCOUNT] Totais salvos com desconto:", {
+      originalTotal: somaFinal,
+      discountValue,
+      finalPriceWithDiscount,
+      couponId
+    });
+
+    // Disparar evento de atualização
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("order-totals-updated"));
+    }
+
+    return finalPriceWithDiscount;
   } catch (error) {
-    console.error("❌ [CALCULATE TOTAL] Erro em performCalculation:", error);
-    return somaFinal;
+    console.error("❌ [CALCULATE TOTAL] Erro:", error);
+    throw error;
   }
 }

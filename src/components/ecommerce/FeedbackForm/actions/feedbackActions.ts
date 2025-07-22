@@ -1,8 +1,7 @@
 import {
   FeedbackFormData,
   FeedbackSubmission,
-  FEEDBACK_CATEGORIES,
-  FEEDBACK_PRIORITIES
+  FEEDBACK_CATEGORIES
 } from "../types/feedback";
 import { FeedbackSubmissionsService } from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 
@@ -14,25 +13,11 @@ export function getCategoryName(categoryId: number): string {
   return category?.category || "Categoria não encontrada";
 }
 
-export function getPriorityName(priorityId: number): string {
-  const priority = FEEDBACK_PRIORITIES.find(
-    (pri) => pri.priority_id === priorityId
-  );
-  return priority?.priority || "Prioridade não encontrada";
-}
-
 export function getCategoryId(categoryName: string): number {
   const category = FEEDBACK_CATEGORIES.find(
     (cat) => cat.category === categoryName
   );
   return category?.category_id || 0;
-}
-
-export function getPriorityId(priorityName: string): number {
-  const priority = FEEDBACK_PRIORITIES.find(
-    (pri) => pri.priority === priorityName
-  );
-  return priority?.priority_id || 0;
 }
 
 // Função atualizada para usar o serviço do Supabase
@@ -59,37 +44,35 @@ export async function submitFeedback(
   if (!formData.message.trim()) {
     throw new Error("Mensagem é obrigatória");
   }
-
-  if (!formData.priority || formData.priority === 0) {
-    throw new Error("Prioridade é obrigatória");
-  }
   try {
     // Converter IDs para nomes usando as funções auxiliares
     const categoryName = getCategoryName(formData.category);
-    const priorityName = getPriorityName(formData.priority);
 
     // Criar os dados para o serviço
     const submissionData = {
       name: formData.name.trim(),
       email: formData.email.trim(),
       category: categoryName,
-      priority: priorityName,
+      priority: "Média", // Prioridade padrão
       subject: formData.subject.trim(),
       message: formData.message.trim(),
+      phone: formData.phone || "",
       user_type: "user",
       is_internal: false
     };
 
     // Usar o serviço para criar o feedback
-    const result = await FeedbackSubmissionsService.create(submissionData); // Converter o resultado para o formato esperado pelo componente
+    const result = await FeedbackSubmissionsService.create(submissionData);
+
+    // Converter o resultado para o formato esperado pelo componente
     const submission: FeedbackSubmission = {
       id: result.id,
       name: result.name,
       email: result.email,
       category: getCategoryId(result.category), // result.category agora é string
-      priority: getPriorityId(result.priority), // result.priority agora é string
       subject: result.subject,
       message: result.message,
+      phone: formData.phone || "", // Usar o valor do form
       submittedAt: new Date(result.created_at),
       status: result.status as
         | "pending"
@@ -116,9 +99,9 @@ export async function getFeedbackSubmissions(): Promise<FeedbackSubmission[]> {
       name: feedback.name,
       email: feedback.email,
       category: getCategoryId(feedback.category), // feedback.category agora é string
-      priority: getPriorityId(feedback.priority), // feedback.priority agora é string
       subject: feedback.subject,
       message: feedback.message,
+      phone: "", // Valor padrão vazio para telefone
       submittedAt: new Date(feedback.created_at),
       status: feedback.status as
         | "pending"
@@ -169,7 +152,6 @@ export async function getFeedbackStats(): Promise<{
   implemented: number;
   rejected: number;
   byCategory: Record<string, number>;
-  byPriority: Record<string, number>;
 }> {
   try {
     const stats = await FeedbackSubmissionsService.getStats();
@@ -180,8 +162,7 @@ export async function getFeedbackStats(): Promise<{
       reviewed: stats.reviewed,
       implemented: 0, // Pode ser mapeado se você tiver esse status
       rejected: 0, // Pode ser mapeado se você tiver esse status
-      byCategory: stats.by_category,
-      byPriority: stats.by_priority
+      byCategory: stats.by_category
     };
   } catch (error) {
     console.error("Erro ao buscar estatísticas:", error);
@@ -191,8 +172,7 @@ export async function getFeedbackStats(): Promise<{
       reviewed: 0,
       implemented: 0,
       rejected: 0,
-      byCategory: {},
-      byPriority: {}
+      byCategory: {}
     };
   }
 }
@@ -201,7 +181,6 @@ export async function getFeedbackStats(): Promise<{
 export async function getFeedbackByFilter(filters: {
   status?: FeedbackSubmission["status"];
   category?: number;
-  priority?: number;
   dateFrom?: Date;
   dateTo?: Date;
 }): Promise<FeedbackSubmission[]> {
@@ -211,22 +190,21 @@ export async function getFeedbackByFilter(filters: {
       category: filters.category
         ? getCategoryName(filters.category)
         : undefined,
-      priority: filters.priority
-        ? getPriorityName(filters.priority)
-        : undefined,
       date_from: filters.dateFrom?.toISOString(),
       date_to: filters.dateTo?.toISOString()
     };
 
-    const result = await FeedbackSubmissionsService.list(serviceFilters); // Converter o resultado para o formato esperado pelo componente
+    const result = await FeedbackSubmissionsService.list(serviceFilters);
+
+    // Converter o resultado para o formato esperado pelo componente
     return result.data.map((feedback) => ({
       id: feedback.id,
       name: feedback.name,
       email: feedback.email,
       category: getCategoryId(feedback.category), // feedback.category agora é string
-      priority: getPriorityId(feedback.priority), // feedback.priority agora é string
       subject: feedback.subject,
       message: feedback.message,
+      phone: "", // Valor padrão vazio para telefone
       submittedAt: new Date(feedback.created_at),
       status: feedback.status as
         | "pending"

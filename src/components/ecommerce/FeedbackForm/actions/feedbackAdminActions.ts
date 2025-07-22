@@ -4,7 +4,7 @@ import type {
   FeedbackSubmission as DBFeedbackSubmission
 } from "../../../../services/db-services/home-dashboard-services/feedbackSubmissionsService";
 import type { FeedbackSubmission } from "../types/feedback";
-import { getCategoryId, getPriorityId } from "./feedbackActions";
+import { getCategoryId } from "./feedbackActions";
 
 // Funções específicas para administração de feedback
 
@@ -16,8 +16,8 @@ function convertDisplayToComponentFormat(
     id: displayFeedback.id,
     name: displayFeedback.name,
     email: displayFeedback.email,
+    phone: (displayFeedback as any).phone || "",
     category: getCategoryId(displayFeedback.category),
-    priority: getPriorityId(displayFeedback.priority),
     subject: displayFeedback.subject,
     message: displayFeedback.message,
     submittedAt: new Date(displayFeedback.created_at),
@@ -33,22 +33,18 @@ function convertDisplayToComponentFormat(
 function convertDBToComponentFormat(
   dbFeedback: DBFeedbackSubmission
 ): FeedbackSubmission {
-  // Extrair a string do primeiro objeto no array para category e priority
+  // Extrair a string do primeiro objeto no array para category
   const categoryString =
     Array.isArray(dbFeedback.category) && dbFeedback.category.length > 0
       ? dbFeedback.category[0].category
-      : "";
-  const priorityString =
-    Array.isArray(dbFeedback.priority) && dbFeedback.priority.length > 0
-      ? dbFeedback.priority[0].priority
       : "";
 
   return {
     id: dbFeedback.id,
     name: dbFeedback.name,
     email: dbFeedback.email,
+    phone: (dbFeedback as any).phone || "",
     category: getCategoryId(categoryString),
-    priority: getPriorityId(priorityString),
     subject: dbFeedback.subject,
     message: dbFeedback.message,
     submittedAt: new Date(dbFeedback.created_at),
@@ -170,8 +166,7 @@ export async function getDetailedFeedbackStats() {
       reviewed: 0,
       in_progress: 0,
       resolved: 0,
-      by_category: {},
-      by_priority: {}
+      by_category: {}
     };
   }
 }
@@ -181,7 +176,6 @@ export async function searchFeedbacks(
   filters: {
     status?: string;
     category?: string;
-    priority?: string;
     user_type?: string;
     is_internal?: boolean;
     date_from?: string;

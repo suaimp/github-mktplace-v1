@@ -3,6 +3,7 @@ import Tooltip from "../ui/Tooltip";
 import { TrashBinIcon } from "../../icons";
 
 import { useResumeTableLogic } from "./useResumeTableLogic";
+import { useCouponTotalCalculation } from "./hooks/useCouponTotalCalculation";
 import WordCountInput from "./utils/WordCountInput";
 import ResumeTableSkeleton from "./utils/ResumeTableSkeleton";
 import { useCart } from "../marketplace/ShoppingCartContext";
@@ -10,7 +11,6 @@ import { useCart } from "../marketplace/ShoppingCartContext";
 import { getServicePackageArray } from "./utils/servicePackageSelectedUtils";
 import { getTotalProductPrice } from "./utils/getTotalProductPrice";
 import { getContentPrice } from "./utils/getContentPrice";
-import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
 import { syncItemTotalsToDb } from "./utils/syncItemTotalsToDb";
  
@@ -44,6 +44,27 @@ export default function ResumeTable(props: ResumeTableProps) {
 
   const logic = useResumeTableLogic();
   // Remover import e uso de useCouponInput, pois não é mais utilizado
+
+  // Arrays para cálculo de totais
+  const [totalArrays, setTotalArrays] = useState<{
+    finalPrices: any[];
+    productPrices: any[];
+    contentPrices: any[];
+    wordCounts: any[];
+  }>({
+    finalPrices: [],
+    productPrices: [],
+    contentPrices: [],
+    wordCounts: []
+  });
+
+  // Hook para recalcular totais considerando cupom
+  useCouponTotalCalculation(
+    totalArrays.finalPrices,
+    totalArrays.productPrices,
+    totalArrays.contentPrices,
+    totalArrays.wordCounts
+  );
 
   useEffect(() => {
     const handler = () => {
@@ -153,13 +174,14 @@ export default function ResumeTable(props: ResumeTableProps) {
         });
       });
 
-      calculateTotal(
-        totalFinalPricesArray,
-        totalProductPricesArray,
-        totalContentPricesArray,
-        totalWordCountArray
-      ).catch((error) => {
-        console.error("Erro ao calcular totais:", error);
+      // Remover chamada duplicada do calculateTotal - agora é gerenciado pelo hook useCouponTotalCalculation
+      
+      // Atualizar arrays para o hook de cupom
+      setTotalArrays({
+        finalPrices: totalFinalPricesArray,
+        productPrices: totalProductPricesArray,
+        contentPrices: totalContentPricesArray,
+        wordCounts: totalWordCountArray
       });
     }
   }, [debouncedCalculationTrigger]);

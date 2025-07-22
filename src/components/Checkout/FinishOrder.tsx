@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
 import { getCartCheckoutResumeByUser, CartCheckoutResume } from "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
@@ -18,10 +18,14 @@ export default function FinishOrder() {
   );
   //@ts-ignore
   const [totalFinalPrice, setTotalFinalPrice] = useState<number | null>(null);
+  //@ts-ignore
+  const [dbAppliedCouponId, setDbAppliedCouponId] = useState<string | null>(null);
+  const [dbDiscountValue, setDbDiscountValue] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const { couponValue, handleCouponChange } = useCouponInput();
   const [couponInput, setCouponInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +34,9 @@ export default function FinishOrder() {
   // Estado para lista de itens do banco (cart_checkout_resume)
   const [checkoutItems, setCheckoutItems] = useState<CartCheckoutResume[]>([]);
   const [loadingCheckoutItems, setLoadingCheckoutItems] = useState(true);
+
+  // Detectar se está na página de pagamento
+  const isPaymentPage = location.pathname === "/checkout/payment";
 
   useEffect(() => {
     async function fetchTotal() {
@@ -59,18 +66,27 @@ export default function FinishOrder() {
             const productPrice = Number(latestTotal.total_product_price) || 0;
             const contentPrice = Number(latestTotal.total_content_price) || 0;
             const finalPrice = Number(latestTotal.total_final_price) || 0;
+            const couponId = latestTotal.applied_coupon_id || null;
+            const discount = Number(latestTotal.discount_value) || 0;
+            
             setTotalProductPrice(productPrice);
             setTotalContentPrice(contentPrice);
             setTotalFinalPrice(finalPrice);
+            setDbAppliedCouponId(couponId);
+            setDbDiscountValue(discount);
           } else {
             setTotalProductPrice(0);
             setTotalContentPrice(0);
             setTotalFinalPrice(0);
+            setDbAppliedCouponId(null);
+            setDbDiscountValue(0);
           }
         } else {
           setTotalProductPrice(0);
           setTotalContentPrice(0);
           setTotalFinalPrice(0);
+          setDbAppliedCouponId(null);
+          setDbDiscountValue(0);
         }
       } catch (err) {
         setError("Erro ao carregar totais do pedido");
@@ -127,48 +143,24 @@ export default function FinishOrder() {
     try {
       setLoading(true);
       setError(null);
+      
       const {
         data: { user },
         error: userError
       } = await supabase.auth.getUser();
+      
       if (userError || !user) {
         setError("Usuário não autenticado");
         setLoading(false);
         return;
       }
-      // Buscar registro existente
-      const { data: existingRecord } = await supabase
-        .from("order_totals")
-        .select("id")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const recordData = {
-        user_id: user.id,
-        total_product_price: totalProductPrice ?? 0,
-        total_content_price: totalContentPrice ?? 0,
-        total_final_price: Math.max((checkoutTotal - discountValue), 0),
-        total_word_count: null,
-        updated_at: new Date().toISOString()
-      };
-      if (existingRecord) {
-        await supabase
-          .from("order_totals")
-          .update(recordData)
-          .eq("id", existingRecord.id);
-      } else {
-        await supabase
-          .from("order_totals")
-          .insert(recordData);
-      }
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("order-totals-updated"));
-      }
+
+      // Os totais com desconto já estão sendo salvos automaticamente pelo contexto de cupom
+      // Apenas navegar para a página de pagamento
       setLoading(false);
       navigate("/checkout/payment");
     } catch (err) {
-      setError("Erro ao salvar total com desconto");
+      setError("Erro ao prosseguir para pagamento");
       setLoading(false);
     }
   };
@@ -278,21 +270,26 @@ export default function FinishOrder() {
           </div>
         </div>
         {/* Exibir desconto se houver */}
-        {discountValue > 0 && (
+        {(isPaymentPage ? dbDiscountValue > 0 : discountValue > 0) && (
           <div className="flex items-center justify-between mt-2">
             <div className="text-gray-700 dark:text-gray-300">Desconto</div>
-            <div className="text-green-600 dark:text-green-400">- {formatCurrency(discountValue)}</div>
+            <div className="text-green-600 dark:text-green-400">
+              - {formatCurrency(isPaymentPage ? dbDiscountValue : discountValue)}
+            </div>
           </div>
         )}
       </div>
       <div className="flex items-center justify-between">
         <div className="font-medium text-gray-800 dark:text-white">Total</div>
         <div>
-          {loadingCheckoutTotal ? (
+          {loading || loadingCheckoutTotal ? (
             <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-20 rounded"></div>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">
-              {formatCurrency(Math.max((checkoutTotal - discountValue), 0))}
+              {isPaymentPage 
+                ? formatCurrency(totalFinalPrice || 0)
+                : formatCurrency(Math.max((checkoutTotal - discountValue), 0))
+              }
             </span>
           )}
         </div>
