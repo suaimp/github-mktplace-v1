@@ -15,6 +15,7 @@ import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationD
 import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
 import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
+import { useSorting, sortEntries } from "./sorting";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -27,8 +28,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [entries, setEntries] = useState<any[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   // @ts-ignore
@@ -39,6 +38,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   // Estado para detectar modo escuro
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Hook personalizado para gerenciar ordenação
+  const { sortState, handleSort } = useSorting();
   
   // Hook para gerenciar o estado da tabela e tooltips
   const { tableLoaded } = useTableState({ entriesCount: entries.length });
@@ -108,35 +110,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     }
 
     // Apply sorting if sort field is set
-    if (sortField) {
-      result.sort((a, b) => {
-        const aValue = a.values[sortField];
-        const bValue = b.values[sortField];
-
-        // Se ambos são números ou podem ser convertidos para número
-        const aNum = parseFloat(aValue);
-        const bNum = parseFloat(bValue);
-        const aIsNum = !isNaN(aNum);
-        const bIsNum = !isNaN(bNum);
-
-        if (aIsNum && bIsNum) {
-          return sortDirection === "desc" ? bNum - aNum : aNum - bNum;
-        }
-
-        // Se ambos são strings
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sortDirection === "desc"
-            ? bValue.localeCompare(aValue)
-            : aValue.localeCompare(bValue);
-        }
-
-        // Fallback: mantém ordem
-        return 0;
-      });
+    if (sortState.field) {
+      const sortField = fields.find(f => f.id === sortState.field);
+      if (sortField) {
+        result = sortEntries(result, sortField, sortState.direction);
+      }
     }
 
     setFilteredEntries(result);
-  }, [entries, searchTerm, sortField, sortDirection, fields]);
+  }, [entries, searchTerm, sortState.field, sortState.direction, fields]);
 
   async function loadMarketplaceData() {
     try {
@@ -157,13 +139,17 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
 
       if (fieldsError) throw fieldsError;
 
-      // Find sort field if any
+      // Find sort field if any and initialize sorting
       const sortFieldData = fieldsData.find(
         (field) => field.form_field_settings?.sort_by_field === true
       );
 
-      if (sortFieldData) {
-        setSortField(sortFieldData.id);
+      // Initialize sorting with the default field if found
+      if (sortFieldData && !sortState.field) {
+        // Usando um useEffect separado para não afetar este carregamento inicial
+        setTimeout(() => {
+          handleSort(sortFieldData.id);
+        }, 0);
       }
 
       // Filter fields to only show those that should be visible in marketplace
@@ -250,17 +236,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       setLoading(false);
     }
   }
-
-  const handleSort = (fieldId: string) => {
-    if (sortField === fieldId) {
-      // Toggle direction if same field
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      // Set new field and default to descending
-      setSortField(fieldId);
-      setSortDirection("desc");
-    }
-  };
 
   const handleSelectEntry = (
     entryId: string,
@@ -732,8 +707,14 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           </div>
                           {isSortable && (
                             <span className="flex flex-col gap-0.5 ml-1">
+                              {/* Seta para cima (ASC) */}
                               <svg
-                                className="fill-gray-300 dark:fill-gray-700"
+                                className={`
+                                  ${sortState.field === field.id && sortState.direction === 'asc' 
+                                    ? 'fill-brand-500 dark:fill-brand-400' 
+                                    : 'fill-gray-300 dark:fill-gray-700'
+                                  }
+                                `}
                                 width="8"
                                 height="5"
                                 viewBox="0 0 8 5"
@@ -746,8 +727,14 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                                 ></path>
                               </svg>
 
+                              {/* Seta para baixo (DESC) */}
                               <svg
-                                className="fill-gray-300 dark:fill-gray-700"
+                                className={`
+                                  ${sortState.field === field.id && sortState.direction === 'desc' 
+                                    ? 'fill-brand-500 dark:fill-brand-400' 
+                                    : 'fill-gray-300 dark:fill-gray-700'
+                                  }
+                                `}
                                 width="8"
                                 height="5"
                                 viewBox="0 0 8 5"
