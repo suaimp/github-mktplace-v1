@@ -67,8 +67,8 @@ export default function AddToCartButton({
   // Define button classes based on style
   const buttonClasses =
     buttonStyle === "primary"
-      ? "inline-flex items-center justify-center w-full gap-2 px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
-      : "inline-flex items-center justify-center w-full gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
+      ? "inline-flex items-center justify-center w-full gap-1 px-2 py-1.5 text-[10px] font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
+      : "inline-flex items-center justify-center w-full gap-1 rounded-lg bg-white px-2 py-1.5 text-[10px] font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
 
   return (
     <button
@@ -83,8 +83,8 @@ export default function AddToCartButton({
       {loading ? (
         <span className="animate-spin stroke-brand-500 text-gray-200 dark:text-gray-800">
           <svg
-            width="20"
-            height="20"
+            width="10"
+            height="10"
             viewBox="0 0 20 20"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +109,7 @@ export default function AddToCartButton({
         </span>
       ) : inCart ? (
         <svg
-          className="w-5 h-5 text-green-500"
+          className="w-[10px] h-[10px] text-green-500"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -123,7 +123,7 @@ export default function AddToCartButton({
         </svg>
       ) : (
         <>
-          <ShoppingCartIcon className="w-5 h-5" />
+          <ShoppingCartIcon className="w-[10px] h-[10px]" />
           {buttonText}
         </>
       )}

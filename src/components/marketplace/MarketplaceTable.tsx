@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
+import { isSortableField } from "./table/isSortableField";
 import { supabase } from "../../lib/supabase";
+import "./styles/MarketplaceTableStyles.css";
 
 import AddToCartButton from "./AddToCartButton";
 import { useCart } from "./ShoppingCartContext";
 import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
-import {
-  formatMarketplaceValue,
-  renderNicheHeader,
-} from "./MarketplaceValueFormatter";
+import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
 import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
-import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
+import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
+import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 
 interface MarketplaceTableProps {
@@ -39,6 +39,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   // Estado para detectar modo escuro
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Hook para gerenciar o estado da tabela e tooltips
+  const { tableLoaded } = useTableState({ entriesCount: entries.length });
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredEntries.length / ordersPerPage);
@@ -107,10 +110,28 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     // Apply sorting if sort field is set
     if (sortField) {
       result.sort((a, b) => {
-        const aValue = parseFloat(a.values[sortField]) || 0;
-        const bValue = parseFloat(b.values[sortField]) || 0;
+        const aValue = a.values[sortField];
+        const bValue = b.values[sortField];
 
-        return sortDirection === "desc" ? bValue - aValue : aValue - bValue;
+        // Se ambos são números ou podem ser convertidos para número
+        const aNum = parseFloat(aValue);
+        const bNum = parseFloat(bValue);
+        const aIsNum = !isNaN(aNum);
+        const bIsNum = !isNaN(bNum);
+
+        if (aIsNum && bIsNum) {
+          return sortDirection === "desc" ? bNum - aNum : aNum - bNum;
+        }
+
+        // Se ambos são strings
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortDirection === "desc"
+            ? bValue.localeCompare(aValue)
+            : aValue.localeCompare(bValue);
+        }
+
+        // Fallback: mantém ordem
+        return 0;
       });
     }
 
@@ -382,10 +403,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {/* Table Controls */}
         <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">Mostrar</span>
+            <span className="text-gray-500 dark:text-gray-400 text-[8px]">Mostrar</span>
             <div className="relative z-20 bg-transparent">
               <select
-                className="w-full py-2 pl-3 pr-8 text-theme-2xs xl:text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                className="w-full py-2 pl-3 pr-8 text-[8px] text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                 value={ordersPerPage}
                 onChange={handleOrdersPerPageChange}
               >
@@ -433,7 +454,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </svg>
               </span>
             </div>
-            <span className="text-gray-500 dark:text-gray-400 text-theme-2xs xl:text-sm">entradas</span>
+            <span className="text-gray-500 dark:text-gray-400 text-[8px]">entradas</span>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -457,7 +478,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               </button>
               <input
                 placeholder="Pesquisar..."
-                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-theme-2xs xl:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-[8px] text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
@@ -473,15 +494,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
             overflowY: 'hidden'
           }}
         >            <table 
-              className="w-full xl:min-w-[1200px] divide-y divide-gray-200 dark:divide-gray-800"
+              className="marketplace-table w-full divide-y divide-gray-200 dark:divide-gray-800"
             >
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th
                   scope="col"
-                  className="w-10 px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white"
+                  className="w-10 text-left text-[8px] font-semibold text-gray-900 dark:text-white"
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-start">
                     <div className="relative">
                       <input
                         type="checkbox"
@@ -542,7 +563,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       <th
                         key={field.id}
                         scope="col"
-                        className="px-3 py-3.5 text-left text-theme-2xs font-semibold text-gray-900 dark:text-white cursor-pointer"
+                        className="text-left text-[8px] font-semibold text-gray-900 dark:text-white cursor-pointer"
                       >
                         <span>{displayName}</span>
                       </th>
@@ -555,16 +576,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   {tableFields.map((field) => {
                     const settings = field.form_field_settings || {};
                     const displayName = settings.marketplace_label || field.label;
-                    const isSortable =
-                      field.field_type === "number" ||
-                      [
-                        "moz_da",
-                        "semrush_as",
-                        "ahrefs_dr",
-                        "ahrefs_traffic",
-                        "similarweb_traffic",
-                        "google_traffic",
-                      ].includes(field.field_type);
+                    const isSortable = isSortableField(field);
 
                   // Definições de tooltip por campo
                   let tooltipText = "";
@@ -684,7 +696,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <th
                       key={field.id}
                       scope="col"
-                      className={`px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white ${
+                      className={`text-left text-[8px] font-semibold text-gray-900 dark:text-white ${
                         isSortable
                           ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                           : ""
@@ -693,22 +705,33 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         isSortable ? () => handleSort(field.id) : undefined
                       }
                     >
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
-                        <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-start gap-2">
+                        <div className="flex items-center justify-start">
                           <div className="flex items-center gap-1">
                             {field.field_type === "niche" ? (
-                              renderNicheHeader(displayName)
+                              <div className="flex items-center gap-1">
+                                <span>{displayName}</span>
+                                <MarketplaceTableTooltip 
+                                  text={"O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna."} 
+                                  tableLoaded={tableLoaded}
+                                  entriesCount={entries.length}
+                                />
+                              </div>
                             ) : (
                               <>
                                 <span>{displayName}</span>
                                 {showTooltip && (
-                                  <InfoTooltip text={tooltipText} />
+                                  <MarketplaceTableTooltip 
+                                    text={tooltipText} 
+                                    tableLoaded={tableLoaded}
+                                    entriesCount={entries.length}
+                                  />
                                 )}
                               </>
                             )}
                           </div>
                           {isSortable && (
-                            <span className="flex flex-col gap-0.5">
+                            <span className="flex flex-col gap-0.5 ml-1">
                               <svg
                                 className="fill-gray-300 dark:fill-gray-700"
                                 width="8"
@@ -750,7 +773,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   {buttonBuyField && (
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-theme-2xs font-semibold text-gray-900 dark:text-white"
+                      className="text-left text-[8px] font-semibold text-gray-900 dark:text-white"
                     >
                       <span>
                         {buttonBuyField.form_field_settings?.marketplace_label ||
@@ -765,10 +788,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   {buttonBuyField && (
                     <th
                       scope="col" 
-                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 px-3 py-3.5 text-left text-theme-2xs xl:text-sm font-semibold text-gray-900 dark:text-white"
+                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[8px] font-semibold text-gray-900 dark:text-white"
                       style={{ 
-                        boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
-                        minWidth: '120px'
+                        boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)'
                       }}
                     >
                       <span>
@@ -820,8 +842,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       }
                     }}
                   >
-                    <td className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm">
-                      <div className="flex items-center">
+                    <td className="whitespace-nowrap text-[8px]">
+                      <div className="flex items-center justify-start">
                         <div className="relative">
                           <input
                             type="checkbox"
@@ -874,30 +896,32 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         return (
                           <td
                             key={field.id}
-                            className="px-3 py-0 xl:py-4 text-theme-2xs text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
+                            className="text-[8px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
                           >
-                            {(() => {
-                              const fieldValue = entry.values[field.id];
-                              if (field.field_type === "product") {
-                                const commissionValue = commissionField
-                                  ? parseFloat(entry.values[commissionField.id]) || 0
-                                  : 0;
-                                return (
-                                  <PriceSimulationDisplay
-                                    commission={commissionValue}
-                                    productData={fieldValue}
-                                    layout="inline"
-                                    showMarginBelow={false}
-                                    showOriginalPrice={true}
-                                  />
+                            <div className="flex items-center justify-start">
+                              {(() => {
+                                const fieldValue = entry.values[field.id];
+                                if (field.field_type === "product") {
+                                  const commissionValue = commissionField
+                                    ? parseFloat(entry.values[commissionField.id]) || 0
+                                    : 0;
+                                  return (
+                                    <PriceSimulationDisplay
+                                      commission={commissionValue}
+                                      productData={fieldValue}
+                                      layout="inline"
+                                      showMarginBelow={false}
+                                      showOriginalPrice={true}
+                                    />
+                                  );
+                                }
+                                return formatMarketplaceValue(
+                                  fieldValue,
+                                  field.field_type,
+                                  true
                                 );
-                              }
-                              return formatMarketplaceValue(
-                                fieldValue,
-                                field.field_type,
-                                true
-                              );
-                            })()}
+                              })()}
+                            </div>
                           </td>
                         );
                       })}
@@ -915,9 +939,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           return (
                             <td
                               key={field.id}
-                              className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
+                              className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
                             >
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                              <div className="flex items-center justify-start">
                                 {renderApiMetricWithBadge(
                                   entry.values[field.id],
                                   field.field_type
@@ -932,10 +956,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           return (
                             <td
                               key={field.id}
-                              className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
-                              style={{ minWidth: 120, maxWidth: 220, width: '1%', padding: '16px 12px' }}
+                              className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
                             >
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                              <div className="flex items-center justify-start">
                                 {formatMarketplaceValue(entry.values[field.id], field.field_type, true)}
                               </div>
                             </td>
@@ -945,9 +968,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         return (
                           <td
                             key={field.id}
-                            className="whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300"
+                            className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
                           >
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', width: 'max-content' }}>
+                            <div className="flex items-center justify-start">
                               {(() => {
                                 const fieldValue = entry.values[field.id];
                                 if (field.field_type === "product") {
@@ -979,24 +1002,26 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     {/* Botão de compra para mobile */}
                     <div className="xl:hidden contents">
                       {buttonBuyField && (
-                        <td className="px-3 py-4 text-theme-2xs xl:whitespace-nowrap">
-                          <AddToCartButton
-                            entryId={entry.id}
-                            productName={productName}
-                            price={productPrice}
-                            url={productUrl}
-                            buttonStyle={
-                              buttonBuyField.form_field_settings?.button_style ||
-                              "primary"
-                            }
-                            buttonText={
-                              buttonBuyField.form_field_settings
-                                ?.custom_button_text
-                                ? buttonBuyField.form_field_settings?.button_text
-                                : buttonBuyField.label
-                            }
-                            isInCart={isInCart}
-                          />
+                        <td className="text-[8px] xl:whitespace-nowrap">
+                          <div className="flex items-center justify-start">
+                            <AddToCartButton
+                              entryId={entry.id}
+                              productName={productName}
+                              price={productPrice}
+                              url={productUrl}
+                              buttonStyle={
+                                buttonBuyField.form_field_settings?.button_style ||
+                                "primary"
+                              }
+                              buttonText={
+                                buttonBuyField.form_field_settings
+                                  ?.custom_button_text
+                                  ? buttonBuyField.form_field_settings?.button_text
+                                  : buttonBuyField.label
+                              }
+                              isInCart={isInCart}
+                            />
+                          </div>
                         </td>
                       )}
                     </div>
@@ -1005,30 +1030,31 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <div className="hidden xl:contents">
                       {buttonBuyField && (
                         <td 
-                          className="sticky right-0 z-10 whitespace-nowrap px-3 py-4 text-theme-2xs xl:text-sm"
+                          className="sticky right-0 z-10 whitespace-nowrap text-[8px]"
                           style={{ 
                             backgroundColor: isDarkMode ? 'rgb(17, 24, 39)' : 'rgb(252, 252, 253)', /* ainda mais sutil */
-                            boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)',
-                            minWidth: '120px'
+                            boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)'
                           }}
                         >
-                          <AddToCartButton
-                            entryId={entry.id}
-                            productName={productName}
-                            price={productPrice}
-                            url={productUrl}
-                            buttonStyle={
-                              buttonBuyField.form_field_settings?.button_style ||
-                              "primary"
-                            }
-                            buttonText={
-                              buttonBuyField.form_field_settings
-                                ?.custom_button_text
-                                ? buttonBuyField.form_field_settings?.button_text
-                                : buttonBuyField.label
-                            }
-                            isInCart={isInCart}
-                          />
+                          <div className="flex items-center justify-start">
+                            <AddToCartButton
+                              entryId={entry.id}
+                              productName={productName}
+                              price={productPrice}
+                              url={productUrl}
+                              buttonStyle={
+                                buttonBuyField.form_field_settings?.button_style ||
+                                "primary"
+                              }
+                              buttonText={
+                                buttonBuyField.form_field_settings
+                                  ?.custom_button_text
+                                  ? buttonBuyField.form_field_settings?.button_text
+                                  : buttonBuyField.label
+                              }
+                              isInCart={isInCart}
+                            />
+                          </div>
                         </td>
                       )}
                     </div>
@@ -1043,7 +1069,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
             <div className="flex items-center">
-              <p className="text-theme-2xs xl:text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-[8px] text-gray-700 dark:text-gray-300">
                 Showing{" "}
                 <span className="font-medium">
                   {(currentPage - 1) * ordersPerPage + 1}

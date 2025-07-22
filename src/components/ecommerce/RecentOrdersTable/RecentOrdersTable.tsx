@@ -1,43 +1,12 @@
-import { useEffect, useState, useRef } from "react";
-import { fetchRecentOrderItems, fetchAllOrderItems } from "./actions/getRecentOrders";
+import { useRef } from "react";
 import { paginate } from "./actions/pagination";
- 
+import { OrderTableHeader } from "./components/OrderTableHeader";
+import { OrderTableRow } from "./components/OrderTableRow";
+import { useOrdersTable } from "./hooks/useOrdersTable";
+import "./styles/TableStyles.css";
 
 //@ts-ignore
-import { getOrderItems, OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService'; 
-
-import { getFaviconUrl } from '../../form/utils/formatters';
-import { supabase } from '../../../lib/supabase';
-
-// Função utilitária para mapear status para classes
-function getStatusClass(status: string) {
-  switch ((status || '').toLowerCase()) {
-    case 'success':
-    case 'aprovado':
-    case 'approved':
-    case 'delivered':
-      return 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500';
-    case 'error':
-    case 'rejected':
-    case 'cancelado':
-    case 'canceled':
-      return 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500';
-    case 'warning':
-    case 'pending':
-    case 'pendente':
-      return 'bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400';
-    case 'info':
-      return 'bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-500';
-    case 'primary':
-      return 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400';
-    case 'light':
-      return 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-white/80';
-    case 'dark':
-      return 'bg-gray-500 text-white dark:bg-white/5 dark:text-white';
-    default:
-      return 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-white/80';
-  }
-}
+import { OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService';
 
 // Função utilitária para centralizar o botão ativo na paginação
 function scrollToActivePageBtn(page: number, container: HTMLDivElement | null) {
@@ -52,50 +21,21 @@ function scrollToActivePageBtn(page: number, container: HTMLDivElement | null) {
 }
 
 export default function RecentOrdersTable() {
-  const [showAll, setShowAll] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  // @ts-ignore
-  const [ordersPerPage, setOrdersPerPage] = useState(9);
-  const [showFilter, setShowFilter] = useState(false);
-  const [filterValue, setFilterValue] = useState("");
-  const [isFiltering, setIsFiltering] = useState(false);
- 
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
- 
+  const {
+    showAll,
+    currentPage,
+    ordersPerPage,
+    showFilter,
+    filterValue,
+    isFiltering,
+    orderItems,
+    setCurrentPage,
+    setFilterValue,
+    toggleShowAll,
+    toggleFilter,
+  } = useOrdersTable();
+  
   const paginationRef = useRef<HTMLDivElement>(null);
-
-  // Atualizar modo de filtro
-  useEffect(() => {
-    setCurrentPage(1);
-    setIsFiltering(!!filterValue.trim());
-  }, [showAll, filterValue]);
-
-  useEffect(() => {
-    async function fetchItems() {
-      let items: OrderItem[] = [];
-      // Buscar usuário logado e se é admin
-      const { data: { user } } = await supabase.auth.getUser();
-      let isAdmin = false;
-      if (user) {
-        const { data: adminData } = await supabase
-          .from('admins')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
-        isAdmin = !!adminData;
-      }
-      const userId = user?.id;
-      if (isFiltering || showAll) {
-        const all = await fetchAllOrderItems(userId, isAdmin);
-        if (all) items = all;
-      } else {
-        const recent = await fetchRecentOrderItems(userId, isAdmin);
-        if (recent) items = recent;
-      }
-      setOrderItems(items);
-    }
-    fetchItems();
-  }, [showAll, isFiltering]);
 
   // Filtro sobre orderItems
   const filteredItems = isFiltering && filterValue.trim()
@@ -125,7 +65,7 @@ export default function RecentOrdersTable() {
           {!showFilter ? (
             <button
               className="text-theme-sm shadow-theme-xs inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
-              onClick={() => setShowFilter(true)}
+              onClick={toggleFilter}
             >
               <svg
                 className="stroke-current fill-white dark:fill-gray-800"
@@ -177,39 +117,18 @@ export default function RecentOrdersTable() {
           )}
           <button
             className="text-theme-sm shadow-theme-xs inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
-            onClick={() => { setShowAll((prev) => !prev); setFilterValue(""); }}
+            onClick={toggleShowAll}
           >
-            {(showAll || isFiltering) ? "Ver recentes" : "Ver todos"}
+            {(showAll || isFiltering) ? "Recentes" : "Todos"}
           </button>
         </div>
       </div>
       <div className="max-w-full overflow-x-auto custom-scrollbar" style={{height: '563px'}}>
-        <table className="min-w-full w-full h-full">
-          <thead className="border-gray-100 border-y dark:border-white/[0.05]">
-            <tr>
-              <th className="px-4 py-3 font-medium text-gray-500 sm:px-6 text-start text-theme-xs dark:text-gray-400">Produto</th>
-              <th className="px-4 py-3 font-medium text-gray-500 sm:px-6 text-start text-theme-xs dark:text-gray-400">ID</th>
-              <th className="px-4 py-3 font-medium text-gray-500 sm:px-6 text-start text-theme-xs dark:text-gray-400">Valor</th>
-              <th className="px-4 py-3 font-medium text-gray-500 sm:px-6 text-start text-theme-xs dark:text-gray-400">Status</th>
-            </tr>
-          </thead>
+        <table className="recent-orders-table min-w-full w-full h-full table-fixed">
+          <OrderTableHeader />
           <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {paginatedItems.map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-3 font-medium text-gray-800 sm:px-6 text-start text-theme-sm dark:text-white/90 flex items-center gap-2">
-                  <img src={getFaviconUrl(item.product_url || '')} alt="favicon" className="w-5 h-5 rounded" onError={e => (e.currentTarget.style.display = 'none')} />
-                  {item.product_name}
-                </td>
-                <td className="px-4 py-3 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">
-                  {item.order_id.split("-")[0]}
-                </td>
-                <td className="px-4 text-theme-sm sm:px-6 text-start text-success-600">
-                  {item.total_price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </td>
-                <td className="px-4 py-3 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm ${getStatusClass(item.publication_status || '-')}`}>{item.publication_status || '-'}</span>
-                </td>
-              </tr>
+              <OrderTableRow key={item.id} item={item} />
             ))}
           </tbody>
         </table>
@@ -222,8 +141,9 @@ export default function RecentOrdersTable() {
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="relative inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-all duration-150 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+              aria-label="Página anterior"
             >
-              Anterior
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div ref={paginationRef} className="flex items-center space-x-1 overflow-x-auto max-w-full scrollbar-thin pagination-slide-scroll">
               {(() => {
@@ -264,8 +184,9 @@ export default function RecentOrdersTable() {
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPagesItems))}
               disabled={currentPage === totalPagesItems}
               className="relative inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-all duration-150 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+              aria-label="Próxima página"
             >
-              Próximo
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
         </div>

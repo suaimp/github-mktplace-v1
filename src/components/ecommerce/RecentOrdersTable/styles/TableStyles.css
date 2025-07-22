@@ -1,0 +1,60 @@
+/* Estilos customizados para RecentOrdersTable */
+.recent-orders-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.recent-orders-table th,
+.recent-orders-table td {
+  vertical-align: middle;
+  overflow: hidden;
+  padding: 0; /* Remove todo padding das células */
+}
+
+.recent-orders-table .product-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-orders-table .price-cell {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.recent-orders-table tr {
+  height: 32px; /* Altura reduzida de 48px para 32px */
+}
+
+.recent-orders-table .product-content {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Reduzido de 8px para 6px */
+  height: 100%;
+  min-height: 24px; /* Reduzido de 32px para 24px */
+  padding-left: 12px; /* Padding movido para o container */
+}
+
+.recent-orders-table .price-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 24px; /* Reduzido de 32px para 24px */
+  padding-right: 12px; /* Padding movido para o container */
+}
+
+.recent-orders-table .favicon-image {
+  flex-shrink: 0;
+  width: 16px; /* Reduzido de 20px para 16px */
+  height: 16px; /* Reduzido de 20px para 16px */
+  border-radius: 3px; /* Reduzido de 4px para 3px */
+}
+
+.recent-orders-table .product-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-size: 0.875rem; /* Tamanho de fonte menor */
+  line-height: 1.25; /* Altura de linha menor */
+}

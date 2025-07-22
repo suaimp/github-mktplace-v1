@@ -1,0 +1,100 @@
+/* Estilos específicos para melhorar centralização da MarketplaceTable */
+
+/* Tipografia global da tabela - 10px */
+.marketplace-table th,
+.marketplace-table td {
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 0;
+  width: max-content;
+}
+
+/* Tipografia para links e âncoras na tabela */
+.marketplace-table a {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+/* Tipografia para spans e divs dentro da tabela */
+.marketplace-table span,
+.marketplace-table div {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+/* Centralização global das células da tabela */
+.marketplace-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Alinhamento específico para URLs com favicons */
+.marketplace-table .url-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.marketplace-table .url-cell img {
+  flex-shrink: 0;
+}
+
+.marketplace-table .url-cell a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Alinhamento para campos de preço */
+.marketplace-table .price-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
+/* Centralização para badges e métricas */
+.marketplace-table .metric-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Centralização para botões */
+.marketplace-table .button-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Centralização para checkboxes */
+.marketplace-table .checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Headers centralizados */
+.marketplace-table th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Redução de largura das colunas */
+.marketplace-table td,
+.marketplace-table th {
+  min-width: auto;
+  width: auto;
+  padding: 8px 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1279px) {
+  .marketplace-table td,
+  .marketplace-table th {
+    padding: 4px 8px;
+  }
+}

@@ -150,7 +150,7 @@ export default function PriceSimulationDisplay({
       <div className={className}>
         {" "}
         {/* Informações de preço inline */}
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start">
           {/* Preço original como label (se showOriginalPrice ou se houver desconto) */}
           {(showOriginalPrice || priceInfo.promotionalPrice) &&
             priceInfo.originalPrice && (
