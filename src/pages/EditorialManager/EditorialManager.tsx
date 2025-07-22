@@ -269,6 +269,18 @@ export default function EditorialManager() {
       setError("");
       setSuccess("");
 
+      // First, update cart_checkout_resume records to remove the reference
+      const { error: updateCartError } = await supabase
+        .from("cart_checkout_resume")
+        .update({ entry_id: null })
+        .eq("entry_id", entryId);
+
+      if (updateCartError) {
+        console.error("Error updating cart_checkout_resume:", updateCartError);
+        throw updateCartError;
+      }
+
+      // Then delete the form entry
       const { error: deleteError } = await supabase
         .from("form_entries")
         .delete()
