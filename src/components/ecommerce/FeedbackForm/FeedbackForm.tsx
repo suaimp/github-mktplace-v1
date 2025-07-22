@@ -1,89 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PaperPlaneIcon, UserCircleIcon } from "../../../icons";
-// import { submitFeedback } from "./actions/feedbackActions"; // [PAUSADO] Temporariamente comentado
 import { supabase } from "../../../lib/supabase";
-import {
-  FeedbackFormData,
-  FEEDBACK_CATEGORIES,
-  FEEDBACK_PRIORITIES
-} from "./types/feedback";
+import { FEEDBACK_CATEGORIES } from "./types/feedback";
+import PhoneInput from "../../form/group-input/PhoneInput";
+import usePhoneInput from "./hooks/usePhoneInput";
+import useFeedbackForm from "./hooks/useFeedbackForm";
 
 export default function FeedbackForm() {
-  const [formData, setFormData] = useState<FeedbackFormData>({
-    name: "",
-    email: "",
-    category: 0,
-    subject: "",
-    message: "",
-    priority: 0
-  });
+  const { 
+    formData, 
+    updateFormData, 
+    resetForm, 
+    isLoadingUser
+  } = useFeedbackForm();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const categories = FEEDBACK_CATEGORIES;
-  const priorities = FEEDBACK_PRIORITIES;
-  // Carregar dados do usuário logado
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const {
-          data: { user }
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          console.log("👤 Usuário logado encontrado:", {
-            id: user.id,
-            email: user.email,
-            metadata: user.user_metadata,
-            identities: user.identities
-          });
-
-          // Tentar várias fontes para o nome do usuário
-          let userName = "";
-          
-          // 1. Tentar user_metadata
-          if (user.user_metadata?.full_name) {
-            userName = user.user_metadata.full_name;
-          } else if (user.user_metadata?.name) {
-            userName = user.user_metadata.name;
-          } else if (user.user_metadata?.first_name && user.user_metadata?.last_name) {
-            userName = `${user.user_metadata.first_name} ${user.user_metadata.last_name}`;
-          } else if (user.user_metadata?.first_name) {
-            userName = user.user_metadata.first_name;
-          }
-          
-          // 2. Se não encontrou nos metadados, tentar nas identities (para login social)
-          if (!userName && user.identities && user.identities.length > 0) {
-            const identity = user.identities[0];
-            if (identity.identity_data?.full_name) {
-              userName = identity.identity_data.full_name;
-            } else if (identity.identity_data?.name) {
-              userName = identity.identity_data.name;
-            }
-          }
-          
-          // 3. Como último recurso, usar parte do email
-          if (!userName && user.email) {
-            userName = user.email.split('@')[0];
-          }
-
-          console.log("🔍 Nome extraído:", userName);          setFormData((prev) => ({
-            ...prev,
-            name: userName,
-            email: user.email || ""
-          }));
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dados do usuário:", error);
-      } finally {
-        setIsLoadingUser(false);
-      }
-    };
-
-    loadUserData();
-  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -91,10 +26,8 @@ export default function FeedbackForm() {
     >
   ) => {
     const { name, value } = e.target;
-    const newValue =
-      name === "category" || name === "priority" ? Number(value) : value;
+    const newValue = name === "category" ? Number(value) : value;
 
-    // Console.log para categorias e prioridades
     if (name === "category" && Number(value) > 0) {
       const selectedCategory = categories.find(
         (cat) => cat.category_id === Number(value)
@@ -106,21 +39,7 @@ export default function FeedbackForm() {
       });
     }
 
-    if (name === "priority" && Number(value) > 0) {
-      const selectedPriority = priorities.find(
-        (pri) => pri.priority_id === Number(value)
-      );
-      console.log("⚡ Prioridade selecionada:", {
-        id: Number(value),
-        name: selectedPriority?.priority,
-        allPriorities: priorities
-      });
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue
-    }));
+    updateFormData(name as keyof typeof formData, newValue);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,10 +51,7 @@ export default function FeedbackForm() {
       formData,
       categoryName: categories.find(
         (cat) => cat.category_id === formData.category
-      )?.category,
-      priorityName: priorities.find(
-        (pri) => pri.priority_id === formData.priority
-      )?.priority
+      )?.category
     });
     try {
       // Buscar token JWT do usuário autenticado
@@ -143,7 +59,6 @@ export default function FeedbackForm() {
       const token = data.session?.access_token;
       // Envio para edge function de e-mail
       const categoryName = categories.find(cat => cat.category_id === formData.category)?.category || "";
-      const priorityName = priorities.find(pri => pri.priority_id === formData.priority)?.priority || "";
       const response = await fetch("https://uxbeaslwirkepnowydfu.supabase.co/functions/v1/feedback-email", {
         method: "POST",
         headers: {
@@ -153,8 +68,7 @@ export default function FeedbackForm() {
         body: JSON.stringify({
           feedback: {
             ...formData,
-            category: categoryName,
-            priority: priorityName
+            category: categoryName
           }
         })
       });
@@ -162,14 +76,8 @@ export default function FeedbackForm() {
         throw new Error("Erro ao enviar feedback por e-mail");
       }
       setIsSubmitted(true);
-      // Resetar apenas os campos do formulário, mantendo nome e email do usuário
-      setFormData((prev) => ({
-        ...prev,
-        category: 0,
-        subject: "",
-        message: "",
-        priority: 0
-      }));
+      // Resetar formulário mantendo dados do usuário
+      resetForm();
     } catch (err) {
       console.error("❌ Erro ao enviar feedback:", err);
       setError(
@@ -263,7 +171,7 @@ export default function FeedbackForm() {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              className="w-full h-11 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               placeholder="Seu nome completo"
             />
           </div>
@@ -282,7 +190,7 @@ export default function FeedbackForm() {
               value={formData.email}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              className="w-full h-11 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               placeholder="seu.email@exemplo.com"
             />
           </div>
@@ -296,50 +204,58 @@ export default function FeedbackForm() {
             >
               Categoria *
             </label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            >
-              <option value={0}>Selecione uma categoria</option>
-              {categories.map((categoryOption) => (
-                <option
-                  key={categoryOption.category_id}
-                  value={categoryOption.category_id}
+            <div className="relative">
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                required
+                className="w-full h-11 px-3 py-2 pr-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white appearance-none bg-white dark:bg-gray-800"
+              >
+                <option value={0}>Selecione uma categoria</option>
+                {categories.map((categoryOption) => (
+                  <option
+                    key={categoryOption.category_id}
+                    value={categoryOption.category_id}
+                  >
+                    {categoryOption.category}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg
+                  className="stroke-gray-500 dark:stroke-gray-400"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  {categoryOption.category}
-                </option>
-              ))}
-            </select>
+                  <path
+                    d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </div>
           </div>
 
           <div>
             <label
-              htmlFor="priority"
+              htmlFor="phone"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Prioridade
+              Telefone
             </label>
-            <select
-              id="priority"
-              name="priority"
-              value={formData.priority}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            >
-              <option value={0}>Selecione uma prioridade</option>
-              {priorities.map((priorityOption) => (
-                <option
-                  key={priorityOption.priority_id}
-                  value={priorityOption.priority_id}
-                >
-                  {priorityOption.priority}
-                </option>
-              ))}
-            </select>
+            <PhoneInput
+              countries={usePhoneInput.countries}
+              value={formData.phone}
+              onChange={(value) => updateFormData("phone", value)}
+              placeholder="(99) 99999-9999"
+            />
           </div>
         </div>
 
@@ -357,7 +273,7 @@ export default function FeedbackForm() {
             value={formData.subject}
             onChange={handleInputChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="w-full h-11 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             placeholder="Breve descrição da sua sugestão"
           />
         </div>

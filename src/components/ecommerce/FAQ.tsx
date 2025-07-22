@@ -78,6 +78,9 @@ export default function FAQ() {
         <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
           <strong>Precisa de ajuda? Comece por aqui 👇</strong>
         </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Reunimos as dúvidas mais comuns para te ajudar a aproveitar ao máximo nosso marketplace
+        </p>
       </div>
       <div className="border-t border-gray-100 p-4 dark:border-gray-800 sm:p-6">
         <div className="space-y-4">

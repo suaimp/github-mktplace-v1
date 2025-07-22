@@ -28,8 +28,8 @@ serve(async (req) => {
       <h2>Novo feedback recebido!</h2>
       <p><strong>Nome:</strong> ${feedback.name}</p>
       <p><strong>Email:</strong> ${feedback.email}</p>
+      <p><strong>Telefone:</strong> ${feedback.phone}</p>
       <p><strong>Categoria:</strong> ${feedback.category}</p>
-      <p><strong>Prioridade:</strong> ${feedback.priority}</p>
       <p><strong>Assunto:</strong> ${feedback.subject}</p>
       <p><strong>Mensagem:</strong><br/>${feedback.message}</p>
     `;

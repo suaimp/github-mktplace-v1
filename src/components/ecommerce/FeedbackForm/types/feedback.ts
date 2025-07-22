@@ -4,7 +4,7 @@ export interface FeedbackFormData {
   category: number;
   subject: string;
   message: string;
-  priority: number;
+  phone: string;
 }
 
 export interface FeedbackSubmission extends FeedbackFormData {
@@ -20,11 +20,6 @@ export interface CategoryOption {
   category_id: number;
 }
 
-export interface PriorityOption {
-  priority: string;
-  priority_id: number;
-}
-
 export const FEEDBACK_CATEGORIES: CategoryOption[] = [
   { category: "Melhoria do Produto", category_id: 1 },
   { category: "Experiência do Usuário", category_id: 2 },
@@ -33,12 +28,6 @@ export const FEEDBACK_CATEGORIES: CategoryOption[] = [
   { category: "Relatório de Bug", category_id: 5 },
   { category: "Atendimento ao Cliente", category_id: 6 },
   { category: "Outros", category_id: 7 }
-];
-
-export const FEEDBACK_PRIORITIES: PriorityOption[] = [
-  { priority: "Baixa", priority_id: 1 },
-  { priority: "Média", priority_id: 2 },
-  { priority: "Alta", priority_id: 3 }
 ];
 
 export const FEEDBACK_STATUSES = [
