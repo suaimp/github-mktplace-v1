@@ -7,7 +7,7 @@ import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
 import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
-import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
+// import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
 
 export default function AdvertiserDashboard() {
   //@ts-ignore
@@ -76,12 +76,9 @@ export default function AdvertiserDashboard() {
         {/* Primeira coluna */}
         <div className="flex flex-col gap-4 h-full">
           <WelcomeMessage className="mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full items-stretch">
+          <div className="w-full h-full">
             <div className="h-full">
               <TopSitesPromoChart />
-            </div>
-            <div className="h-full">
-              <FavoriteSitesChart />
             </div>
           </div>
         </div>

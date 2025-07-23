@@ -5,6 +5,7 @@ import AnalyticsSummary from "../../components/ecommerce/AnalyticsSummary";
 import AnalyticsChart from "../../components/ecommerce/AnalyticsSummary/AnalyticsChart";
 import BestSellingSitesChart from "../../components/ecommerce/LegendStyleExample/BestSellingSitesChart";
 import TopClientsChart from "../../components/ecommerce/TopClientsChart/TopClientsChart";
+import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
 
 import FAQ from "../../components/ecommerce/FAQ";
 import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
@@ -89,6 +90,9 @@ export default function Home() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <BestSellingSitesChart />
                   <TopClientsChart />
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <TopSitesPromoChart />
                 </div>
               </div>
               <div className="xl:col-span-1">

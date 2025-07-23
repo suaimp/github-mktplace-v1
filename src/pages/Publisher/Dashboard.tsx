@@ -8,7 +8,7 @@ import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
 import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
-import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
+// import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
 
 export default function PublisherDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -76,12 +76,9 @@ export default function PublisherDashboard() {
         {/* Coluna da esquerda */}
         <div className="flex flex-col flex-[1.3] gap-4">
           <WelcomeMessage className="mb-4" />
-          <div className="flex flex-row gap-4 h-full">
-            <div className="flex-1 h-full">
+          <div className="w-full h-full">
+            <div className="w-full h-full">
               <TopSitesPromoChart />
-            </div>
-            <div className="flex-1 h-full">
-              <FavoriteSitesChart />
             </div>
           </div>
         </div>
