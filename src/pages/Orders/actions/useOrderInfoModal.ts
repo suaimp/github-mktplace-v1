@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { deleteCompleteOrder } from "../../../services/db-services/marketplace-services/order/OrderService";
+import { useOrderDeletionWithFiles } from "../hooks/useOrderDeletionWithFiles";
 
 export function useOrderInfoModal() {
-  const navigate = useNavigate();
   const [isOrderInfoModalOpen, setIsOrderInfoModalOpen] = useState(false);
   const [isDeletingOrder, setIsDeletingOrder] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // States for confirmation modal
+  // Estados for confirmation modal
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
     useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+
+  // Hook para exclusão com arquivos
+  const { deleteOrderWithFiles, navigateAfterDeletion } = useOrderDeletionWithFiles();
 
   const openOrderInfoModal = () => {
     setIsOrderInfoModalOpen(true);
@@ -54,26 +55,39 @@ export function useOrderInfoModal() {
       setIsDeletingOrder(true);
       setDeleteError(null);
 
-      console.log("🗑️ Iniciando exclusão do pedido:", pendingOrderId);
+      console.log("🗑️ Iniciando exclusão do pedido com arquivos:", pendingOrderId);
+      
+      // Usar o novo serviço de exclusão que inclui arquivos
+      const result = await deleteOrderWithFiles(pendingOrderId);
 
-      // Use the OrderService to delete the complete order (items + order)
-      const success = await deleteCompleteOrder(pendingOrderId);
+      if (result.success) {
+        console.log("✅ Pedido excluído com sucesso");
 
-      if (!success) {
-        throw new Error("Falha ao excluir o pedido. Tente novamente.");
+        // Fechar modais
+        closeConfirmDeleteModal();
+        closeOrderInfoModal();
+
+        // Navegar com resultado da exclusão
+        navigateAfterDeletion(result);
+      } else {
+        // Se houve erro, mostrar mensagem
+        throw new Error(result.error || "Falha ao excluir o pedido e/ou arquivos associados");
       }
-      console.log("✅ Pedido excluído com sucesso");
-
-      // Close both modals
-      closeConfirmDeleteModal();
-      closeOrderInfoModal();
-
-      // Show simple alert and navigate immediately
-      alert("Pedido excluído com sucesso!");
-      navigate("/orders");
     } catch (error: any) {
       console.error("❌ Erro na exclusão do pedido:", error);
-      const errorMessage = error.message || "Erro ao excluir pedido";
+      let errorMessage = "Erro ao excluir pedido";
+      
+      // Detectar erros específicos de permissão
+      if (error.message && error.message.includes("permission")) {
+        errorMessage = "Você não tem permissão para excluir este pedido";
+      } else if (error.message && error.message.includes("not found")) {
+        errorMessage = "Pedido não encontrado";
+      } else if (error.code === "42501") {
+        errorMessage = "Sem permissão para excluir - faltam políticas de DELETE no banco";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setDeleteError(errorMessage);
     } finally {
       setIsDeletingOrder(false);

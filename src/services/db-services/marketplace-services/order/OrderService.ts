@@ -285,17 +285,23 @@ export async function deleteOrderItems(orderId: string): Promise<boolean> {
   try {
     console.log("🗑️ Deleting order items for order:", orderId);
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from("order_items")
       .delete()
       .eq("order_id", orderId);
 
     if (error) {
       console.error("❌ Error deleting order items:", error);
+      console.error("❌ Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
-    console.log("✅ Order items deleted successfully");
+    console.log("✅ Order items deleted successfully:", data);
     return true;
   } catch (error) {
     console.error("Error deleting order items:", error);
@@ -310,14 +316,23 @@ export async function deleteOrderById(orderId: string): Promise<boolean> {
   try {
     console.log("🗑️ Deleting order:", orderId);
 
-    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+    const { error, data } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
 
     if (error) {
       console.error("❌ Error deleting order:", error);
+      console.error("❌ Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
-    console.log("✅ Order deleted successfully");
+    console.log("✅ Order deleted successfully:", data);
     return true;
   } catch (error) {
     console.error("Error deleting order:", error);

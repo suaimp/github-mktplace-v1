@@ -451,7 +451,27 @@ export function CartProvider({ children }: CartProviderProps) {
       });
 
       // Update local state
-      setItems(items.filter((item) => item.entry_id !== entryId));
+      const updatedItems = items.filter((item) => item.entry_id !== entryId);
+      setItems(updatedItems);
+
+      // ✅ NOVA LÓGICA: Se o carrinho ficou vazio, limpar order_totals
+      if (updatedItems.length === 0) {
+        console.log("🧹 [AUTO CLEAR] Carrinho ficou vazio, limpando order_totals...");
+        try {
+          const { error: totalsError } = await supabase
+            .from("order_totals")
+            .delete()
+            .eq("user_id", user.id);
+
+          if (totalsError) {
+            console.error("❌ Erro ao limpar order_totals:", totalsError);
+          } else {
+            console.log("✅ order_totals limpo automaticamente (carrinho vazio)");
+          }
+        } catch (err) {
+          console.error("❌ Erro ao limpar order_totals:", err);
+        }
+      }
     } catch (err) {
       console.error("Error removing item from cart:", err);
       setError("Unable to remove item from cart. Please try again.");
@@ -544,12 +564,31 @@ export function CartProvider({ children }: CartProviderProps) {
           totalItems: items.length
         });
 
+        // Delete all items from shopping_cart_items
         const { error: deleteError } = await supabase
           .from("shopping_cart_items")
           .delete()
           .eq("user_id", user.id);
 
         if (deleteError) throw deleteError;
+
+        // Delete cart_checkout_resume for this user
+        const { error: resumeError } = await supabase
+          .from("cart_checkout_resume")
+          .delete()
+          .eq("user_id", user.id);
+
+        if (resumeError) throw resumeError;
+
+        // Delete order_totals for this user (clear temporary totals)
+        const { error: totalsError } = await supabase
+          .from("order_totals")
+          .delete()
+          .eq("user_id", user.id);
+
+        if (totalsError) throw totalsError;
+
+        console.log("✅ Cart cleared successfully, including order_totals and cart_checkout_resume");
       });
 
       // Update local state

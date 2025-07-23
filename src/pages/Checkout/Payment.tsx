@@ -993,6 +993,16 @@ export default function Payment() {
 
       if (cartError) throw cartError;
 
+      // Delete order_totals for this user (clear temporary totals)
+      const { error: totalsError } = await supabase
+        .from("order_totals")
+        .delete()
+        .eq("user_id", userId);
+
+      if (totalsError) throw totalsError;
+
+      console.log("✅ Cart cleared successfully, including order_totals");
+
       return true;
     } catch (error) {
       console.error("Error clearing cart:", error);
