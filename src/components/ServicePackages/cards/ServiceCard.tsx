@@ -55,7 +55,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   return (
     <div
       className={`relative rounded-2xl border ${cardColors.border} ${cardColors.bg} p-6 ${cardColors.borderDark} ${cardColors.bgDark} xl:p-8`}
-      style={{ height: 519 }}
+      style={{ height: 480 }}
     >
       <div className="flex items-start justify-between -mb-4">
         <span
