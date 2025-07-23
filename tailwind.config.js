@@ -27,7 +27,7 @@ export default {
         'theme-md': ['36px', '44px'],
         'theme-sm': ['14px', '20px'],
         'theme-xs': ['12px', '18px'],
-        'theme-2xs': ['10px', '16px'],
+        'theme-2xs': ['13px', '18px'],
       },
       fontFamily: {
         outfit: ['Outfit', 'sans-serif'],

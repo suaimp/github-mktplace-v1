@@ -67,8 +67,8 @@ export default function AddToCartButton({
   // Define button classes based on style
   const buttonClasses =
     buttonStyle === "primary"
-      ? "inline-flex items-center justify-center w-full gap-1 px-2 py-1.5 text-[10px] font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
-      : "inline-flex items-center justify-center w-full gap-1 rounded-lg bg-white px-2 py-1.5 text-[10px] font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
+      ? "inline-flex items-center justify-center w-full gap-1 px-2 py-1.5 text-[13px] font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
+      : "inline-flex items-center justify-center w-full gap-1 rounded-lg bg-white px-2 py-1.5 text-[13px] font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
 
   return (
     <button

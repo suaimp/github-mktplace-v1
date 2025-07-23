@@ -3,8 +3,8 @@
  * This file centralizes all text styling to maintain consistency and single responsibility
  */
 
-// Base text size for all table text elements (8px)
-export const TABLE_TEXT_SIZE = 'text-[8px]';
+// Base text size for all table text elements (13px)
+export const TABLE_TEXT_SIZE = 'text-[13px]';
 
 // Typography classes for different table elements
 export const TABLE_TYPOGRAPHY = {

@@ -378,10 +378,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {/* Table Controls */}
         <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400 text-[8px]">Mostrar</span>
+            <span className="text-gray-500 dark:text-gray-400 text-[13px]">Mostrar</span>
             <div className="relative z-20 bg-transparent">
               <select
-                className="w-full py-2 pl-3 pr-8 text-[8px] text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                className="w-full py-2 pl-3 pr-8 text-[13px] text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                 value={ordersPerPage}
                 onChange={handleOrdersPerPageChange}
               >
@@ -429,7 +429,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </svg>
               </span>
             </div>
-            <span className="text-gray-500 dark:text-gray-400 text-[8px]">entradas</span>
+            <span className="text-gray-500 dark:text-gray-400 text-[13px]">entradas</span>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -453,7 +453,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               </button>
               <input
                 placeholder="Pesquisar..."
-                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-[8px] text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-[13px] text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
@@ -475,7 +475,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
               <tr>
                 <th
                   scope="col"
-                  className="w-10 text-left text-[8px] font-semibold text-gray-900 dark:text-white"
+                  className="w-10 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
                 >
                   <div className="flex items-center justify-start">
                     <div className="relative">
@@ -538,7 +538,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       <th
                         key={field.id}
                         scope="col"
-                        className="text-left text-[8px] font-semibold text-gray-900 dark:text-white cursor-pointer"
+                        className="text-left text-[13px] font-semibold text-gray-900 dark:text-white cursor-pointer"
                       >
                         <span>{displayName}</span>
                       </th>
@@ -671,7 +671,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <th
                       key={field.id}
                       scope="col"
-                      className={`text-left text-[8px] font-semibold text-gray-900 dark:text-white ${
+                      className={`text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
                         isSortable
                           ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                           : ""
@@ -760,7 +760,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   {buttonBuyField && (
                     <th
                       scope="col"
-                      className="text-left text-[8px] font-semibold text-gray-900 dark:text-white"
+                      className="text-left text-[13px] font-semibold text-gray-900 dark:text-white"
                     >
                       <span>
                         {buttonBuyField.form_field_settings?.marketplace_label ||
@@ -775,7 +775,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   {buttonBuyField && (
                     <th
                       scope="col" 
-                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[8px] font-semibold text-gray-900 dark:text-white"
+                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
                       style={{ 
                         boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)'
                       }}
@@ -829,7 +829,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       }
                     }}
                   >
-                    <td className="whitespace-nowrap text-[8px]">
+                    <td className="whitespace-nowrap text-[13px]">
                       <div className="flex items-center justify-start">
                         <div className="relative">
                           <input
@@ -883,7 +883,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         return (
                           <td
                             key={field.id}
-                            className="text-[8px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
+                            className="text-[13px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap"
                           >
                             <div className="flex items-center justify-start">
                               {(() => {
@@ -926,7 +926,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           return (
                             <td
                               key={field.id}
-                              className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
+                              className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300"
                             >
                               <div className="flex items-center justify-start">
                                 {renderApiMetricWithBadge(
@@ -943,7 +943,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                           return (
                             <td
                               key={field.id}
-                              className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
+                              className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300"
                             >
                               <div className="flex items-center justify-start">
                                 {formatMarketplaceValue(entry.values[field.id], field.field_type, true)}
@@ -955,7 +955,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         return (
                           <td
                             key={field.id}
-                            className="whitespace-nowrap text-[8px] text-gray-700 dark:text-gray-300"
+                            className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300"
                           >
                             <div className="flex items-center justify-start">
                               {(() => {
@@ -989,7 +989,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     {/* Botão de compra para mobile */}
                     <div className="xl:hidden contents">
                       {buttonBuyField && (
-                        <td className="text-[8px] xl:whitespace-nowrap">
+                        <td className="text-[13px] xl:whitespace-nowrap">
                           <div className="flex items-center justify-start">
                             <AddToCartButton
                               entryId={entry.id}
@@ -1017,7 +1017,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <div className="hidden xl:contents">
                       {buttonBuyField && (
                         <td 
-                          className="sticky right-0 z-10 whitespace-nowrap text-[8px]"
+                          className="sticky right-0 z-10 whitespace-nowrap text-[13px]"
                           style={{ 
                             backgroundColor: isDarkMode ? 'rgb(17, 24, 39)' : 'rgb(252, 252, 253)', /* ainda mais sutil */
                             boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)'
@@ -1056,7 +1056,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
             <div className="flex items-center">
-              <p className="text-[8px] text-gray-700 dark:text-gray-300">
+              <p className="text-[13px] text-gray-700 dark:text-gray-300">
                 Showing{" "}
                 <span className="font-medium">
                   {(currentPage - 1) * ordersPerPage + 1}

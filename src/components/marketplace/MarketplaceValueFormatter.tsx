@@ -6,7 +6,7 @@ import {
   parseNicheData,
   type NicheOption
 } from "../../services/db-services/form-services/formFieldNicheService";
-import InfoTooltip from "../ui/InfoTooltip/InfoTooltip";
+import { MarketplaceTableInfoTooltip } from "./Tooltip";
 
 // Cache para armazenar todos os nichos disponíveis
 let allAvailableNiches: NicheOption[] = [];
@@ -174,11 +174,11 @@ export function renderCountryFlags(
             }}
           />
           {showCountryCodes ? (
-            <span className="text-gray-700 dark:text-gray-300 text-xs font-medium">
+            <span className="text-gray-700 dark:text-gray-300 text-[13px] font-medium">
               {countryCode}
             </span>
           ) : percentage ? (
-            <span className="text-gray-500 dark:text-gray-400 text-xs">
+            <span className="text-gray-500 dark:text-gray-400 text-[13px]">
               ({percentage}%)
             </span>
           ) : null}
@@ -297,7 +297,7 @@ export function renderNicheWithIcon(value: any) {
             }
 
             return (
-              <InfoTooltip
+              <MarketplaceTableInfoTooltip
                 key={`${niche.text}-${index}`}
                 text={
                   <span style={{ color: '#fff' }}>
@@ -316,7 +316,7 @@ export function renderNicheWithIcon(value: any) {
                 >
                   <IconComponent className="w-[11px] h-[11px]" />
                 </div>
-              </InfoTooltip>
+              </MarketplaceTableInfoTooltip>
             );
           })}
         </div>
@@ -444,19 +444,19 @@ export function formatMarketplaceValue(
         const { state_name, city_names, state, cities } = value;
         if (Array.isArray(city_names) && city_names.length > 0) {
           return (
-            <span className="text-gray-500 dark:text-gray-400 text-xs">
+            <span className="text-gray-500 dark:text-gray-400 text-[13px]">
               {state_name} - {city_names.join(", ")}
             </span>
           );
         } else if (Array.isArray(cities) && cities.length > 0) {
           return (
-            <span className="text-gray-500 dark:text-gray-400 text-xs">
+            <span className="text-gray-500 dark:text-gray-400 text-[13px]">
               {state_name} - {cities.join(", ")}
             </span>
           );
         }
         return (
-          <span className="text-gray-500 dark:text-gray-400 text-xs">
+          <span className="text-gray-500 dark:text-gray-400 text-[13px]">
             {state_name || state || "-"}
           </span>
         );

@@ -1,25 +1,22 @@
-import React, { ReactNode } from "react";
-import { useMarketplaceTooltip } from "./hooks/useMarketplaceTooltip";
+import { ReactNode } from "react";
+import { useMarketplaceTableTooltipPosition } from "./hooks/useMarketplaceTableTooltipPosition";
 
-interface MarketplaceTableTooltipProps {
+interface MarketplaceTableInfoTooltipProps {
   text: ReactNode;
   className?: string;
   children?: ReactNode;
-  tableLoaded?: boolean;
-  entriesCount?: number;
 }
 
-const MarketplaceTableTooltip: React.FC<MarketplaceTableTooltipProps> = ({ 
-  text, 
-  className = "", 
-  children,
-  tableLoaded,
-  entriesCount
-}) => {
-  const { placement, alignX, triggerRef, tooltipRef } = useMarketplaceTooltip({
-    tableLoaded,
-    entriesCount
-  });
+/**
+ * Componente InfoTooltip especializado para a tabela marketplace.
+ * Usa posicionamento baseado nos limites da tabela em vez da div com overflow.
+ */
+export default function MarketplaceTableInfoTooltip({
+  text,
+  className = "",
+  children
+}: MarketplaceTableInfoTooltipProps) {
+  const { placement, alignX, triggerRef, tooltipRef } = useMarketplaceTableTooltipPosition();
 
   let alignClass = '';
   if (alignX === 'left') {
@@ -52,7 +49,38 @@ const MarketplaceTableTooltip: React.FC<MarketplaceTableTooltipProps> = ({
         className={`absolute ${alignClass} w-auto px-3 py-2 bg-gray-900 text-white !text-white text-[13px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
         style={{ color: '#fff', width: 'max-content' }}
       >
-        <span className="block" style={{ color: '#fff' }}>{text}</span>
+        <span
+          className="block"
+          style={{ 
+            color: '#fff', 
+            fontSize: 'inherit', 
+            fontWeight: 'inherit', 
+            lineHeight: 'inherit', 
+            fontFamily: 'inherit', 
+            WebkitTextFillColor: '#fff', 
+            textShadow: 'none', 
+            filter: 'none', 
+            background: 'none', 
+            boxShadow: 'none', 
+            border: 'none', 
+            outline: 'none', 
+            textDecoration: 'none', 
+            fontStyle: 'inherit', 
+            letterSpacing: 'inherit', 
+            wordBreak: 'normal', 
+            whiteSpace: 'normal', 
+            textAlign: 'inherit', 
+            verticalAlign: 'inherit', 
+            textTransform: 'inherit', 
+            textRendering: 'inherit', 
+            MozOsxFontSmoothing: 'inherit', 
+            WebkitFontSmoothing: 'inherit', 
+            fontVariant: 'inherit', 
+            colorScheme: 'light' 
+          }}
+        >
+          {text}
+        </span>
         {placement === 'top' ? (
           <div className={`absolute top-full ${alignX === 'center' ? 'left-1/2 -translate-x-1/2' : alignX === 'left' ? 'left-4' : 'right-4'} border-4 border-transparent border-t-gray-900`}></div>
         ) : (
@@ -61,6 +89,4 @@ const MarketplaceTableTooltip: React.FC<MarketplaceTableTooltipProps> = ({
       </div>
     </div>
   );
-};
-
-export default MarketplaceTableTooltip;
+}

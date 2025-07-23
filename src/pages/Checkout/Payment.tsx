@@ -118,25 +118,6 @@ export default function Payment() {
   // Hook para sticky positioning personalizado
   // const { isFixed } = useCustomSticky(); // Não utilizado no momento
 
-  // Persistir formData no localStorage
-  useEffect(() => {
-    const savedFormData = localStorage.getItem('checkout-form-data');
-    if (savedFormData) {
-      try {
-        const parsedData = JSON.parse(savedFormData);
-        setFormData(prevData => ({ ...prevData, ...parsedData }));
-      } catch (error) {
-        console.warn('Erro ao recuperar dados salvos:', error);
-      }
-    }
-  }, []);
-
-  // Salvar formData no localStorage sempre que mudar
-  useEffect(() => {
-    if (formData.name || formData.email || formData.address) {
-      localStorage.setItem('checkout-form-data', JSON.stringify(formData));
-    }
-  }, [formData]);
   const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
 
   useEffect(() => {
@@ -813,8 +794,6 @@ export default function Payment() {
 
       // Show success message
       setSuccess(true);
-      // Limpar dados salvos após sucesso
-      localStorage.removeItem('checkout-form-data');
     } catch (error) {
       console.error("Error processing successful PIX payment:", error);
       console.log("PIX PAYMENT SUCCESS PROCESSING ERROR:", {
@@ -1401,8 +1380,6 @@ export default function Payment() {
           
           // Show success message
           setSuccess(true);
-          // Limpar dados salvos após sucesso
-          localStorage.removeItem('checkout-form-data');
         }
       } else {
         console.log('❌ Status não aceito:', result.status);

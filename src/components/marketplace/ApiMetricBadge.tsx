@@ -63,7 +63,7 @@ export default function ApiMetricBadge({
       style={{
         backgroundColor: bgColor,
         color: textColor,
-        fontSize: '10px'
+        fontSize: '13px'
       }}
       title={`Score ${letter}`}
     >

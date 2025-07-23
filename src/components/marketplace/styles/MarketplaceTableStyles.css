@@ -1,9 +1,9 @@
 /* Estilos específicos para melhorar centralização da MarketplaceTable */
 
-/* Tipografia global da tabela - 10px */
+/* Tipografia global da tabela - 13px */
 .marketplace-table th,
 .marketplace-table td {
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.2;
   padding: 0;
   width: max-content;
@@ -11,14 +11,14 @@
 
 /* Tipografia para links e âncoras na tabela */
 .marketplace-table a {
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.2;
 }
 
 /* Tipografia para spans e divs dentro da tabela */
 .marketplace-table span,
 .marketplace-table div {
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.2;
 }
 
