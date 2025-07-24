@@ -19,6 +19,22 @@
 ALTER TABLE form_entry_values 
 ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
+-- Create debug table to track trigger execution
+CREATE TABLE IF NOT EXISTS debug_trigger_log (
+  id SERIAL PRIMARY KEY,
+  entry_id TEXT,
+  trigger_action TEXT,
+  price_val NUMERIC,
+  promotional_price_val NUMERIC,
+  price_string TEXT,
+  promo_string TEXT,
+  url_found TEXT,
+  has_pricing_data BOOLEAN,
+  existing_record_found BOOLEAN,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Add unique constraint on entry_id to prevent duplicates
 DO $$
 BEGIN
@@ -65,6 +81,10 @@ DECLARE
   price_data JSONB;
   url_data TEXT;
 BEGIN
+  -- Log que o trigger foi disparado
+  INSERT INTO debug_trigger_log (entry_id, trigger_action, created_at)
+  VALUES (NEW.entry_id, 'TRIGGER_STARTED', NOW());
+  
   -- Collect all data for this entry_id from different records
   -- Get pricing data (from value_json)
   SELECT value_json INTO price_data
@@ -131,9 +151,30 @@ BEGIN
       END;
       
       has_pricing_data := TRUE;
+      
+      -- Debug: log dos valores na tabela
+      INSERT INTO debug_trigger_log (
+        entry_id, trigger_action, price_val, promotional_price_val, 
+        price_string, promo_string, has_pricing_data
+      ) VALUES (
+        NEW.entry_id, 'PRICING_DATA_FOUND', price_val, promotional_price_val,
+        price_data->>'price', price_data->>'promotional_price', has_pricing_data
+      );
+      
       -- Se os dados de preço forem inválidos, exclui o registro e retorna
       IF price_data IS NULL OR price_val IS NULL OR price_val <= 0 OR promotional_price_val IS NULL OR promotional_price_val <= 0
          OR TRIM(COALESCE(price_data->>'price','')) = '' OR TRIM(COALESCE(price_data->>'promotional_price','')) = '' THEN
+        
+        INSERT INTO debug_trigger_log (
+          entry_id, trigger_action, price_val, promotional_price_val,
+          error_message
+        ) VALUES (
+          NEW.entry_id, 'VALIDATION_FAILED', price_val, promotional_price_val,
+          'price_data IS NULL: ' || (price_data IS NULL)::text || 
+          ', price_val <= 0: ' || (price_val <= 0)::text ||
+          ', promotional_price_val <= 0: ' || (promotional_price_val <= 0)::text
+        );
+        
         DELETE FROM promotion_sites WHERE entry_id = NEW.entry_id;
         RETURN NEW;
       END IF;
@@ -159,6 +200,14 @@ BEGIN
     FROM promotion_sites 
     WHERE entry_id = NEW.entry_id;
     
+    -- Log se já existe registro
+    INSERT INTO debug_trigger_log (
+      entry_id, trigger_action, existing_record_found, url_found
+    ) VALUES (
+      NEW.entry_id, 'CHECKING_EXISTING_RECORD', 
+      (existing_record_id IS NOT NULL), url_val
+    );
+    
     IF existing_record_id IS NOT NULL THEN
       -- Update existing record
       UPDATE promotion_sites SET
@@ -170,6 +219,9 @@ BEGIN
         url = CASE WHEN url_val != '' THEN url_val ELSE url END,
         updated_at = now()
       WHERE id = existing_record_id;
+      
+      INSERT INTO debug_trigger_log (entry_id, trigger_action) 
+      VALUES (NEW.entry_id, 'UPDATED_EXISTING_RECORD');
     ELSE
       -- Insert new record only if we have meaningful data
       IF has_pricing_data OR url_val != '' THEN
@@ -194,6 +246,12 @@ BEGIN
           now(),
           now()
         );
+        
+        INSERT INTO debug_trigger_log (entry_id, trigger_action) 
+        VALUES (NEW.entry_id, 'INSERTED_NEW_RECORD');
+      ELSE
+        INSERT INTO debug_trigger_log (entry_id, trigger_action) 
+        VALUES (NEW.entry_id, 'NO_MEANINGFUL_DATA_TO_INSERT');
       END IF;
     END IF;
     
@@ -217,8 +275,9 @@ BEGIN
   RETURN NEW;
 EXCEPTION
   WHEN OTHERS THEN
-    -- Log error but don't fail the original operation
-    RAISE WARNING 'Error in populate_promotion_sites(): %', SQLERRM;
+    -- Log error na tabela de debug
+    INSERT INTO debug_trigger_log (entry_id, trigger_action, error_message)
+    VALUES (NEW.entry_id, 'ERROR_OCCURRED', SQLERRM);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

@@ -19,23 +19,14 @@
 CREATE TABLE IF NOT EXISTS promotion_sites (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entry_id uuid REFERENCES form_entries(id) ON DELETE CASCADE,
-  percent numeric(5,2) CHECK (percent >= 0 AND percent <= 100),
-  price numeric(10,2) CHECK (price >= 0),
-  old_price numeric(10,2) CHECK (old_price >= 0),
-  promotional_price numeric(10,2) CHECK (promotional_price >= 0),
-  old_promotional_price numeric(10,2) CHECK (old_promotional_price >= 0),
+  percent numeric(5,2),
+  price numeric(10,2),
+  old_price numeric(10,2),
+  promotional_price numeric(10,2),
+  old_promotional_price numeric(10,2),
   url text,
   created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  
-  -- Constraints
-  CONSTRAINT valid_prices CHECK (
-    old_price IS NULL OR price IS NULL OR old_price >= price
-  ),
-  CONSTRAINT valid_promotional_prices CHECK (
-    old_promotional_price IS NULL OR promotional_price IS NULL OR 
-    old_promotional_price >= promotional_price
-  )
+  updated_at timestamptz DEFAULT now()
 );
 
 -- Enable RLS

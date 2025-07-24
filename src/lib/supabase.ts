@@ -88,8 +88,11 @@ function getRateLimitReset(key: string): number {
 
 export async function signInAdmin(email: string, password: string) {
   try {
+    // Normalize email to lowercase for rate limiting
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Rate limiting check
-    const rateLimitKey = `auth_attempts_${email}`;
+    const rateLimitKey = `auth_attempts_${normalizedEmail}`;
     if (!checkRateLimit(rateLimitKey)) {
       const remainingMinutes = getRateLimitReset(rateLimitKey);
       throw new Error(
@@ -98,11 +101,11 @@ export async function signInAdmin(email: string, password: string) {
     }
 
     // Basic validation
-    if (!email?.trim() || !password?.trim()) {
+    if (!normalizedEmail || !password?.trim()) {
       throw new Error("Email and password are required");
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       throw new Error("Invalid email");
     }
 
@@ -111,7 +114,7 @@ export async function signInAdmin(email: string, password: string) {
       data: { user, session },
       error
     } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: normalizedEmail,
       password: password.trim()
     });
 
@@ -159,8 +162,11 @@ export async function signInAdmin(email: string, password: string) {
 
 export async function signInUser(email: string, password: string) {
   try {
+    // Normalize email to lowercase for rate limiting
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Rate limiting check
-    const rateLimitKey = `auth_attempts_${email}`;
+    const rateLimitKey = `auth_attempts_${normalizedEmail}`;
     if (!checkRateLimit(rateLimitKey)) {
       const remainingMinutes = getRateLimitReset(rateLimitKey);
       throw new Error(
@@ -169,11 +175,11 @@ export async function signInUser(email: string, password: string) {
     }
 
     // Basic validation
-    if (!email?.trim() || !password?.trim()) {
+    if (!normalizedEmail || !password?.trim()) {
       throw new Error("Email and password are required");
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       throw new Error("Invalid email");
     }
 
@@ -182,7 +188,7 @@ export async function signInUser(email: string, password: string) {
       data: { user, session },
       error
     } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: normalizedEmail,
       password: password.trim()
     });
 
@@ -294,17 +300,20 @@ export async function getCurrentUser() {
 
 export async function resetPassword(email: string) {
   try {
+    // Normalize email to lowercase
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Basic email validation
-    if (!email?.trim()) {
+    if (!normalizedEmail) {
       throw new Error("Email é obrigatório");
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       throw new Error("Email inválido");
     }
 
     // Rate limiting check
-    const rateLimitKey = `reset_password_${email}`;
+    const rateLimitKey = `reset_password_${normalizedEmail}`;
     if (!checkRateLimit(rateLimitKey)) {
       const remainingMinutes = getRateLimitReset(rateLimitKey);
       throw new Error(
@@ -312,25 +321,25 @@ export async function resetPassword(email: string) {
       );
     }
 
-    // First check if email exists
+    // First check if email exists (case-insensitive)
     const { data: userData } = await supabase
       .from("platform_users")
       .select("id, email")
-      .eq("email", email.trim())
+      .ilike("email", normalizedEmail)
       .maybeSingle();
 
     const { data: adminData } = await supabase
       .from("admins")
       .select("id, email")
-      .eq("email", email.trim())
+      .ilike("email", normalizedEmail)
       .maybeSingle();
 
     if (!userData && !adminData) {
-      throw new Error("Email not found");
+      throw new Error("Email não encontrado");
     }
 
     // Request password reset
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${window.location.origin}/reset-password`
     });
 
