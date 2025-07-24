@@ -131,6 +131,12 @@ BEGIN
       END;
       
       has_pricing_data := TRUE;
+      -- Se os dados de preço forem inválidos, exclui o registro e retorna
+      IF price_data IS NULL OR price_val IS NULL OR price_val <= 0 OR promotional_price_val IS NULL OR promotional_price_val <= 0
+         OR TRIM(COALESCE(price_data->>'price','')) = '' OR TRIM(COALESCE(price_data->>'promotional_price','')) = '' THEN
+        DELETE FROM promotion_sites WHERE entry_id = NEW.entry_id;
+        RETURN NEW;
+      END IF;
     ELSE
       price_val := 0;
       promotional_price_val := 0;
