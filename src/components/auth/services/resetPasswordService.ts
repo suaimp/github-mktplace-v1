@@ -43,8 +43,11 @@ export const sendPasswordResetEmail = async (email: string): Promise<ResetPasswo
     }
 
     // Enviar email de reset
+    // Funciona com qualquer porta em desenvolvimento (5173, 5174, etc) e com URL de produção
+    const redirectUrl = import.meta.env.VITE_RESET_PASSWORD_REDIRECT || `${window.location.origin}/password-recovery`;
+    
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/reset-password`
+      redirectTo: redirectUrl
     });
 
     if (error) throw error;

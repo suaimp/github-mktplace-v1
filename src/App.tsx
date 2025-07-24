@@ -32,6 +32,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import ResetPassword from "./pages/auth/ResetPassword";
+import PasswordRecovery from "./pages/auth/PasswordRecovery";
 import PlatformUsers from "./pages/Users/PlatformUsers";
 import PublisherDashboard from "./pages/Publisher/Dashboard";
 import AdvertiserDashboard from "./pages/Advertiser/Dashboard";
@@ -121,11 +122,13 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/password-recovery" element={<PasswordRecovery />} />
         <Route path="/forms/preview/:id" element={<FormPreview />} />
 
         {/* Admin Routes */}
         <Route path="/adm" element={<Login />} />
         <Route path="/adm/reset-password" element={<ResetPassword />} />
+        <Route path="/adm/password-recovery" element={<PasswordRecovery />} />
 
         {/* Protected Routes */}
         <Route
