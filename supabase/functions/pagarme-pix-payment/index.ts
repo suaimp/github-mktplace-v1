@@ -118,7 +118,23 @@ serve(async (req)=>{
   try {
     console.log("[DEBUG PIX] Body recebido na edge function:", JSON.stringify(body));
     console.log("[DEBUG PIX] ===== INÍCIO DO PROCESSAMENTO PIX =====");
-    const { amount, customer_name, customer_email, customer_document, customer_phone, order_items } = body;
+    const { 
+      amount, 
+      customer_name, 
+      customer_email, 
+      customer_document, 
+      customer_phone, 
+      customer_legal_status, 
+      customer_company_name, 
+      order_items 
+    } = body;
+
+    // Determinar se é cliente pessoa jurídica baseado no legal_status
+    const isBusinessCustomer = customer_legal_status === "business";
+    const document_type = isBusinessCustomer ? "cnpj" : "cpf";
+    const customer_type = isBusinessCustomer ? "company" : "individual";
+    const documentTypeName = isBusinessCustomer ? "CNPJ" : "CPF";
+    const expectedDocumentLength = isBusinessCustomer ? 14 : 11;
     // Validação dos dados obrigatórios
     if (!amount || !customer_name || !customer_email || !customer_document) {
       return new Response(JSON.stringify({
@@ -183,12 +199,15 @@ serve(async (req)=>{
       }
       console.log("[INFO PIX] PRODUÇÃO - Processando valor:", `R$ ${(amountInt / 100).toFixed(2)}`);
     }
-    // Validar e limpar CPF
+    // Validar e limpar documento (CPF ou CNPJ baseado no legal_status)
     let documentClean = customer_document.replace(/\D/g, "");
-    if (documentClean.length !== 11) {
+    
+    if (documentClean.length !== expectedDocumentLength) {
       return new Response(JSON.stringify({
-        error: 'CPF inválido',
-        debug: `CPF deve ter 11 dígitos. Recebido: ${customer_document} -> ${documentClean} (${documentClean.length} dígitos)`
+        error: `${documentTypeName} inválido`,
+        debug: `${documentTypeName} deve ter ${expectedDocumentLength} dígitos. Recebido: ${customer_document} -> ${documentClean} (${documentClean.length} dígitos)`,
+        legal_status: customer_legal_status,
+        expected_document_type: document_type
       }), {
         status: 400,
         headers: corsHeaders
@@ -212,7 +231,20 @@ serve(async (req)=>{
       document: documentClean,
       phone: phoneClean,
       areaCode: areaCode,
-      phoneNumber: phoneNumber
+      phoneNumber: phoneNumber,
+      legal_status: customer_legal_status,
+      company_name: customer_company_name
+    });
+
+    // Usar as variáveis já declaradas no início
+    const customer_display_name = isBusinessCustomer && customer_company_name ? customer_company_name : customer_name;
+
+    console.log("[DEBUG PIX] Configuração do cliente:", {
+      legal_status: customer_legal_status,
+      document_type: document_type,
+      customer_type: customer_type,
+      customer_display_name: customer_display_name,
+      isBusinessCustomer: isBusinessCustomer
     });
     // Mapear itens do carrinho ou usar item padrão
     let items = [];
@@ -262,11 +294,11 @@ serve(async (req)=>{
         }
       ],
       customer: {
-        name: customer_name,
+        name: customer_display_name,
         email: customer_email,
         document: documentClean,
-        document_type: "cpf",
-        type: "individual",
+        document_type: document_type,
+        type: customer_type,
         address: {
           line_1: "Rua das Flores, 123",
           line_2: "Apto 101",
@@ -304,10 +336,14 @@ serve(async (req)=>{
     console.log("[DEBUG PIX] customer.email:", customerValidation.email);
     console.log("[DEBUG PIX] customer.document:", customerValidation.document);
     console.log("[DEBUG PIX] customer.document_type:", customerValidation.document_type);
+    console.log("[DEBUG PIX] customer.type:", customerValidation.type);
     console.log("[DEBUG PIX] customer.phones.home_phone:", JSON.stringify(customerValidation.phones.home_phone));
     console.log("[DEBUG PIX] pix.expires_in:", pixValidation.expires_in);
     console.log("[DEBUG PIX] payment_method:", pagarmePayload.payments[0].payment_method);
     console.log("[DEBUG PIX] items count:", pagarmePayload.items?.length || 0);
+    console.log("[DEBUG PIX] legal_status enviado:", customer_legal_status);
+    console.log("[DEBUG PIX] document_type determinado:", document_type);
+    console.log("[DEBUG PIX] customer_type determinado:", customer_type);
     console.log("[DEBUG PIX] ===============================================");
     // Validação adicional dos campos obrigatórios
     if (!customerValidation.name || !customerValidation.email || !customerValidation.document || !customerValidation.document_type || !pixValidation.expires_in) {

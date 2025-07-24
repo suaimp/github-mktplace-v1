@@ -557,6 +557,26 @@ export default function Payment() {
     try {
       setProcessing(true);
       
+      // CRÍTICO: Verificar se legal_status está definido
+      console.log("🚨 DEBUG CRÍTICO - Estado do formData antes do PIX:", {
+        formData,
+        legal_status: formData.legal_status,
+        legal_status_type: typeof formData.legal_status,
+        legal_status_defined: formData.legal_status !== undefined,
+        legal_status_not_null: formData.legal_status !== null,
+        legal_status_string: String(formData.legal_status),
+        all_formData_keys: Object.keys(formData),
+        timestamp: new Date().toISOString()
+      });
+
+      // VERIFICAÇÃO DE SEGURANÇA
+      if (!formData.legal_status) {
+        console.error("❌ ERRO CRÍTICO: legal_status não está definido!");
+        console.log("📋 FormData completo:", formData);
+        setError("Erro: Status legal do cliente não definido. Recarregue a página.");
+        return;
+      }
+      
       // FORÇAR RELOAD DOS TOTAIS ANTES DE GERAR PIX
       console.log("🔄 Recarregando totais antes de gerar PIX...");
       await loadOrderTotal();
@@ -578,30 +598,16 @@ export default function Payment() {
       }
       const total = orderSummary.totalFinalPrice;
       
-      // DEBUG: Log dos valores enviados para PIX
-      console.log("🐛 PIX DEBUG - Valores sendo enviados:", {
-        totalFinalPrice: orderSummary.totalFinalPrice,
-        totalProductPrice: orderSummary.totalProductPrice,
-        totalContentPrice: orderSummary.totalContentPrice,
-        discountValue: orderSummary.discountValue,
-        appliedCouponId: orderSummary.appliedCouponId,
-        amountInCents: Math.round(total * 100),
-        calculatedTotal: orderSummary.totalProductPrice + orderSummary.totalContentPrice - orderSummary.discountValue,
+      // DEBUG: Log dos dados críticos antes de enviar
+      console.log("🐛 PIX DEBUG - Dados críticos sendo enviados:", {
+        customer_legal_status: formData.legal_status,
+        customer_legal_status_type: typeof formData.legal_status,
+        customer_document: formData.documentNumber,
+        customer_document_clean: formData.documentNumber.replace(/\D/g, ""),
+        customer_document_length: formData.documentNumber.replace(/\D/g, "").length,
+        expected_document_type: formData.legal_status === "business" ? "cnpj" : "cpf",
+        expected_customer_type: formData.legal_status === "business" ? "company" : "individual",
         timestamp: new Date().toISOString()
-      });
-
-      // DEBUG: Log dos valores dos items
-      const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-      const discountRatio = total / totalOriginal;
-      console.log("🐛 PIX DEBUG - Cálculo de desconto nos items:", {
-        totalOriginal,
-        totalWithDiscount: total,
-        discountRatio,
-        items: orderSummary.items.map((item: any) => ({
-          originalPrice: Number(item.price),
-          discountedPrice: Number(item.price) * discountRatio,
-          discountedPriceCents: Math.round(Number(item.price) * discountRatio * 100)
-        }))
       });
       
       const response = await fetch(
@@ -618,7 +624,9 @@ export default function Payment() {
             customer_email: formData.email,
             customer_document: formData.documentNumber.replace(/\D/g, ""),
             customer_phone: formData.phone.replace(/\D/g, ""),
-            order_id: orderId, // ENVIE O orderId JUNTO!
+            customer_legal_status: formData.legal_status, // CRÍTICO: deve estar definido
+            customer_company_name: formData.company_name,
+            order_id: orderId,
             order_items: (() => {
               // Calcular valores com desconto proporcional
               const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
@@ -646,6 +654,10 @@ export default function Payment() {
       } catch (jsonErr) {
         responseData = {};
       }
+      
+      // Log da resposta completa para debug
+      console.log("🐛 PIX DEBUG - Resposta completa:", responseData);
+      
       // 3. Assim que receber o charge_id/payment_id, atualize o pedido no banco
       if (responseData.raw_response?.charges?.[0]?.id) {
         const paymentId = responseData.raw_response.charges[0].id;
@@ -663,35 +675,12 @@ export default function Payment() {
         throw new Error(responseData.error || responseData.message || "Failed to generate PIX QR code");
       }
     } catch (error: any) {
-      // Tentar extrair o QR Code do erro, caso venha no corpo do erro
-      if (error && error.message && typeof error.message === 'string') {
-        try {
-          // Se o erro for do tipo lançado acima, já tentamos setar o QR Code
-          // Mas se for outro erro, tente extrair do texto
-          const matchQr = error.message.match(/qr_code_url.*(https?:\/\/[^\"]+)/);
-          const matchCopia = error.message.match(/qr_code.*([0-9A-Z]{20,})/);
-          if (matchQr && matchQr[1]) {
-            setPixQrCodeUrl(matchQr[1]);
-          }
-          if (matchCopia && matchCopia[1]) {
-            setPixCopiaECola(matchCopia[1]);
-          }
-        } catch (parseErr) {}
-      }
-      console.error("Error generating PIX QR code:", error);
-      console.log("PIX QR CODE GENERATION ERROR:", {
-        errorMessage: error.message,
-        errorStack: error.stack,
-        paymentMethod: "pix",
-        timestamp: new Date().toISOString(),
-        totalAmount: orderSummary.totalFinalPrice,
-        sessionInfo: "PIX QR Code generation failed",
-        pixCustomerData: {
-          name: formData.name,
-          email: formData.email,
-          document: formData.documentNumber,
-          phone: formData.phone
-        },
+      console.error("❌ Erro completo na geração do PIX:", {
+        error,
+        message: error.message,
+        stack: error.stack,
+        formData_legal_status: formData.legal_status,
+        timestamp: new Date().toISOString()
       });
       const sanitizedMessage = sanitizeErrorMessage(
         error.message || "Erro ao gerar QR code PIX"
