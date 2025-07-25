@@ -182,7 +182,7 @@ export default function SidebarNav({
       <div className="flex flex-col gap-4">
         <div>
           <h2
-            className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+            className={`mb-4 text-theme-sm uppercase flex leading-[20px] text-gray-400 ${
               !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
             }`}
           >
@@ -198,7 +198,7 @@ export default function SidebarNav({
           <div className="menu-admin">
             {showOthersTitle && (
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                className={`mb-4 text-theme-sm uppercase flex leading-[20px] text-gray-400 ${
                   !isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"

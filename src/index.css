@@ -91,7 +91,7 @@
   }
 
   .menu-dropdown-badge {
-    @apply block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase text-brand-500 dark:text-brand-400;
+    @apply block rounded-full px-2.5 py-0.5 text-theme-sm font-medium uppercase text-brand-500 dark:text-brand-400;
   }
 
   .menu-dropdown-badge-active {

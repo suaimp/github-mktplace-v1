@@ -25,7 +25,7 @@ export default {
         'theme-xl': ['60px', '72px'],
         'theme-lg': ['48px', '60px'],
         'theme-md': ['36px', '44px'],
-        'theme-sm': ['14px', '20px'],
+        'theme-sm': ['13px', '18px'],
         'theme-xs': ['12px', '18px'],
         'theme-2xs': ['13px', '18px'],
       },

@@ -67,8 +67,8 @@ export default function AddToCartButton({
   // Define button classes based on style - removido py-1.5 para usar altura fixa
   const buttonClasses =
     buttonStyle === "primary"
-      ? "inline-flex items-center justify-center w-full gap-1 px-2 text-[13px] font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
-      : "inline-flex items-center justify-center w-full gap-1 rounded-lg bg-white px-2 text-[13px] font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
+      ? "inline-flex items-center justify-center w-full gap-1 px-2 text-[14px] font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
+      : "inline-flex items-center justify-center w-full gap-1 rounded-lg bg-white px-2 text-[14px] font-medium text-gray-700 shadow-theme-xs ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]";
 
   // Estilo para altura fixa de 38px e largura mínima de 80.58px
   const buttonHeightStyle = { height: '38px', minWidth: '80.58px' };
@@ -127,7 +127,7 @@ export default function AddToCartButton({
         </svg>
       ) : (
         <>
-          <ShoppingCartIcon className="w-[10px] h-[10px]" />
+          <ShoppingCartIcon className="w-[18px] h-[18px]" />
           {buttonText}
         </>
       )}
