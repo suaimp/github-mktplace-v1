@@ -429,7 +429,9 @@ export default function FormRenderer({ formId }: FormRendererProps) {
     const fieldTypeMapped = mapFieldType(field.field_type);
 
     const isNiche = fieldTypeMapped === "niche";
-    const fieldProps = {
+    const isImportCsv = fieldTypeMapped === "importCsv";
+    
+    let fieldProps: any = {
       field,
       settings: isNiche
         ? settings || {
@@ -460,6 +462,27 @@ export default function FormRenderer({ formId }: FormRendererProps) {
         }
       },
     };
+
+    // Adicionar formFields para campos import_csv
+    if (isImportCsv) {
+      const mappedFormFields = fields.map(f => ({
+        id: f.id,
+        key: f.field_key || f.label?.toLowerCase().replace(/\s+/g, '_'),
+        field_key: f.field_key,
+        type: f.field_type,
+        field_type: f.field_type,
+        label: f.label
+      }));
+      
+      console.log("🔧 [FormRenderer] Campo import_csv detectado! FormFields gerados:", mappedFormFields);
+      
+      fieldProps = {
+        ...fieldProps,
+        formFields: mappedFormFields,
+        formId: formId,
+        userId: currentUser?.id
+      };
+    }
 
     const renderFieldLabel = () => {
       if (field.field_type === "section" || field.field_type === "html") {
@@ -549,9 +572,14 @@ export default function FormRenderer({ formId }: FormRendererProps) {
       return "multiSelect";
     }
 
-    // Map niches end prices field to use NicheField component
+    // Map niches and prices field to use NicheField component
     if (fieldType === "niche") {
       return "niche";
+    }
+
+      // Map import_csv field to use ImportCsvField component
+    if (fieldType === "import_csv") {
+      return "importCsv";
     }
 
     // Return original field type for standard fields

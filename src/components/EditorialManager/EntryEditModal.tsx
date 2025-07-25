@@ -12,6 +12,7 @@ import { useFormFields } from "./hooks/useFormFields";
 import { useFormValues } from "./hooks/useFormValues";
 import { FormFieldsService } from "./services/formFieldsService";
 import { FormSubmissionService } from "./services/formSubmissionService";
+import { FormValidationService } from "./services/formValidationService";
 
 export default function EntryEditModal({
   isOpen,
@@ -140,7 +141,7 @@ export default function EntryEditModal({
       <div className="mb-4">
         <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-400">
           {field.label}
-          {field.is_required && <span className="text-error-500 ml-1">*</span>}
+          {FormValidationService.isFieldRequired(field) && <span className="text-error-500 ml-1">*</span>}
           {settings.visibility === "admin" && (
             <span className="ml-2 text-xs text-brand-500 dark:text-brand-400">
               (Admin Only)

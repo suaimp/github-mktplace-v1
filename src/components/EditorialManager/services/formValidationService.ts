@@ -5,6 +5,37 @@ import { FormField, ValidationError } from "../types/entryTypes";
  */
 export class FormValidationService {
   /**
+   * Checks if a field should be required (only URL, DA, and Price fields)
+   */
+  static isFieldRequired(field: FormField): boolean {
+    // Check for URL field (but exclude "Tipo de Link de Saída" which contains "URL")
+    if (field.field_type === 'url' || 
+        (field.label?.toLowerCase().includes('url') && 
+         !field.label?.toLowerCase().includes('tipo de link') &&
+         !field.label?.toLowerCase().includes('saída')) ||
+        field.label?.toLowerCase().includes('site')) {
+      return true;
+    }
+    
+    // Check for DA field (specifically Domain Authority, not generic DA)
+    if ((field.label?.toLowerCase().includes('da ') && !field.label?.toLowerCase().includes('tipo')) ||
+        field.label?.toLowerCase().includes('domain authority') ||
+        (field.field_type === 'number' && field.label?.toLowerCase().includes('domain'))) {
+      return true;
+    }
+    
+    // Check for Price field
+    if (field.field_type === 'product' ||
+        field.label?.toLowerCase().includes('preço') ||
+        field.label?.toLowerCase().includes('preco') ||
+        field.label?.toLowerCase().includes('price')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
    * Validates a single field value
    */
   static validateField(
@@ -12,8 +43,11 @@ export class FormValidationService {
     value: any, 
     fieldSettings: Record<string, any>
   ): string | null {
+    // Only validate as required if it's one of our specific required fields
+    const isRequired = this.isFieldRequired(field);
+    
     if (
-      field.is_required &&
+      isRequired &&
       (value === null || value === undefined || value === "")
     ) {
       return "Este campo é obrigatório";
@@ -75,12 +109,29 @@ export class FormValidationService {
   ): ValidationError {
     const errors: ValidationError = {};
 
+    console.log("🔍 [FormValidationService] Validando", fields.length, "campos");
+
     fields.forEach((field) => {
-      const error = this.validateField(field, formValues[field.id], fieldSettings);
+      const value = formValues[field.id];
+      const isRequired = this.isFieldRequired(field);
+      
+      if (isRequired) {
+        console.log(`🔍 [FormValidationService] Campo obrigatório: ${field.label} (${field.field_type}) = `, value);
+      }
+      
+      const error = this.validateField(field, value, fieldSettings);
       if (error) {
+        console.log(`❌ [FormValidationService] ERRO: ${field.label} - ${error}`);
         errors[field.id] = error;
       }
     });
+
+    if (Object.keys(errors).length > 0) {
+      console.log("❌ [FormValidationService] Total de erros:", Object.keys(errors).length);
+      console.log("❌ [FormValidationService] Detalhes dos erros:", errors);
+    } else {
+      console.log("✅ [FormValidationService] Validação concluída sem erros");
+    }
 
     return errors;
   }

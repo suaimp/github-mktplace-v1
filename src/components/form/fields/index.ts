@@ -21,6 +21,7 @@ import { default as CommissionField } from "./CommissionField";
 import { default as BrandField } from "./BrandField";
 import { default as ButtonBuyField } from "./ButtonBuyField";
 import { default as NicheField } from "./NicheField";
+import { default as ImportCsvField } from "./ImportCsvField";
 
 export {
   TextField,
@@ -45,7 +46,8 @@ export {
   CommissionField,
   BrandField,
   ButtonBuyField,
-  NicheField
+  NicheField,
+  ImportCsvField
 };
 
 export type { FormField, FormFieldSettings, BaseFieldProps } from "./types";

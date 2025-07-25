@@ -8,6 +8,7 @@ import Select from "./Select";
 import FormEntriesSkeleton from "./FormEntriesSkeleton";
 import * as Fields from "./fields";
 import TextArea from "./input/TextArea";
+import { CompatibilityChecker } from "./fields/ImportCsv/compatibility/components";
 
 interface FormEntriesRendererProps {
   formId: string;
@@ -627,6 +628,17 @@ export default function FormEntriesRenderer({
 
   return (
     <div className="w-full">
+      {/* Verificador de Compatibilidade para registros CSV Import */}
+      {isAdmin && entries.length > 0 && (
+        <div className="mb-4">
+          <CompatibilityChecker
+            entryIds={entries.map(entry => entry.id)}
+            formId={formId}
+            onCompatibilityFixed={loadFormData}
+          />
+        </div>
+      )}
+
       <FormEntriesTable
         entries={entries}
         fields={fields}

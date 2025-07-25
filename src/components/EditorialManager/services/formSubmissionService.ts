@@ -46,9 +46,17 @@ export class FormSubmissionService {
       );
 
       if (FormValidationService.hasValidationErrors(validationErrors)) {
+        console.error("❌ [FormSubmissionService] Erros de validação:", validationErrors);
+        
+        // Criar mensagem de erro mais específica
+        const errorMessages = Object.entries(validationErrors).map(([fieldId, error]) => {
+          const field = fields.find(f => f.id === fieldId);
+          return `${field?.label || fieldId}: ${error}`;
+        });
+        
         return { 
           success: false, 
-          error: "Validation errors found" 
+          error: `Erros de validação encontrados:\n${errorMessages.join('\n')}` 
         };
       }
 

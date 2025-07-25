@@ -46,6 +46,12 @@ export function applyCommissionToFormValues(
   console.log("📝 [DEBUG] formValues recebidos:", formValues);
   console.log("📋 [DEBUG] commissionFieldId:", commissionFieldId);
 
+  // Proteção contra valores nulos ou indefinidos
+  if (!formValues || typeof formValues !== 'object') {
+    console.log("⚠️ [DEBUG] formValues inválido, retornando objeto vazio");
+    return {};
+  }
+
   // Criar uma cópia dos valores para não modificar o original
   const updatedFormValues = { ...formValues };
 
@@ -85,6 +91,12 @@ export function applyCommissionToFormValues(
   // Atualizar price e promotional_price nos formValues quando necessário
   Object.entries(updatedFormValues).forEach(([fieldId, value]) => {
     console.log(`🔄 [DEBUG] Processando campo ${fieldId}:`, value);
+
+    // Pular campos com valores nulos ou indefinidos
+    if (value === null || value === undefined) {
+      console.log(`⚠️ [DEBUG] ${fieldId} - Valor nulo/indefinido, pulando`);
+      return;
+    }
 
     let obj = value;
 

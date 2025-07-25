@@ -147,6 +147,12 @@ const fieldGroups = [
         title: "Nichos e preços",
         description: "Adicionar os nichos e preços que o site aceita",
         icon: "FileIcon"
+      },
+      {
+        type: "import_csv",
+        title: "Importar CSV",
+        description: "importar sites via csv",
+        icon: "UploadIcon"
       }
     ]
   },

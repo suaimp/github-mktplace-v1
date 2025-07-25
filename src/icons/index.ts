@@ -14,6 +14,7 @@ import AudioIcon from "./audio.svg?react";
 import GridIcon from "./grid.svg?react";
 import FileIcon from "./file.svg?react";
 import DownloadIcon from "./download.svg?react";
+import UploadIcon from "./upload.svg?react";
 import ArrowRightIcon from "./arrow-right.svg?react";
 import GroupIcon from "./group.svg?react";
 import BoxIconLine from "./box-line.svg?react";
@@ -137,6 +138,7 @@ export {
   FilterIcon,
   ShoppingCartIcon,
   TicketIcon, // Niche Icons
+  UploadIcon,
   FinanceIcon,
   HeartIcon,
   CasinoIcon,

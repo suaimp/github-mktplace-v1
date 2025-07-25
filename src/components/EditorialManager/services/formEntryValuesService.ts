@@ -128,8 +128,11 @@ export class FormEntryValuesService {
         errors.push("field_id is required for all values");
       }
 
+      // Permitir campos vazios (ambos null) para campos opcionais
+      // Apenas exigir pelo menos um valor se for um campo que realmente deveria ter dados
       if (value.value === null && value.value_json === null) {
-        errors.push(`Either value or value_json must be provided for field ${value.field_id}`);
+        // Para campos vazios, apenas log de informação, sem erro
+        console.log(`ℹ️ [FormEntryValuesService] Campo ${value.field_id} vazio (value=null, value_json=null)`);
       }
 
       if (value.value !== null && value.value_json !== null) {
