@@ -13,6 +13,7 @@ interface ImportCsvFieldProps {
   formFields?: FormField[];
   formId?: string;
   userId?: string;
+  onSuccess?: () => void;
 }
 
 const INITIAL_MAPPING: Record<string, string> = {
@@ -26,7 +27,8 @@ export default function ImportCsvField({
   error,
   formFields,
   formId,
-  userId
+  userId,
+  onSuccess
 }: ImportCsvFieldProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [mapping, setMapping] = useState<Record<string, string>>(INITIAL_MAPPING);
@@ -65,6 +67,7 @@ export default function ImportCsvField({
         onSuccess={() => {
           setModalOpen(false);
           console.log("CSV importado com sucesso!");
+          if (onSuccess) onSuccess();
         }}
       />
       {csvError && <div className="text-red-500 text-sm mt-2">{csvError}</div>}

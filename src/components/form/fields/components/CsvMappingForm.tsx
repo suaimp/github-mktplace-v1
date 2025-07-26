@@ -4,6 +4,7 @@ import { useCsvMapping } from "../hooks/useCsvMapping";
 import { useCsvImport } from "../ImportCsv/hooks/useCsvImport";
 import { CsvData } from "../types/csvTypes";
 import { FormField, CsvImportRequest } from "../ImportCsv/types";
+import { showToast } from "../../../../utils/toast";
 
 const FIELD_LABELS = [
   { key: "url", label: "URL do Site" },
@@ -40,36 +41,48 @@ const CsvMappingForm: React.FC<CsvMappingFormProps> = ({
   };
 
   const handleSubmit = async () => {
-    const mappedData = mapCsvData(csvData, mapping);
-    console.log("🔍 Dados mapeados do CSV:", mappedData);
-    console.log("📋 FormFields recebidos:", formFields);
-    
-    // Se há campos do formulário, salvar no banco
-    if (formFields.length > 0 && formId) {
-      console.log("💾 Iniciando importação para o banco...");
+    try {
+      const mappedData = mapCsvData(csvData, mapping);
+      console.log("🔍 Dados mapeados do CSV:", mappedData);
+      console.log("📋 FormFields recebidos:", formFields);
       
-      const request: CsvImportRequest = {
-        csvData: mappedData,
-        formFields,
-        formId,
-        userId
-      };
-      
-      const entryIds = await importCsvData(request);
-      
-      if (entryIds) {
-        console.log("✅ Sites importados com sucesso! Entry IDs:", entryIds);
-        if (onSuccess) onSuccess();
-        return;
+      // Se há campos do formulário, salvar no banco
+      if (formFields.length > 0 && formId) {
+        console.log("💾 Iniciando importação para o banco...");
+        
+        const request: CsvImportRequest = {
+          csvData: mappedData,
+          formFields,
+          formId,
+          userId
+        };
+        
+        const entryIds = await importCsvData(request);
+        
+        if (entryIds) {
+          console.log("✅ Sites importados com sucesso! Entry IDs:", entryIds);
+          // Mostrar toast de sucesso e fechar modal
+          showToast("CSV importado com sucesso!", "success");
+          if (onSuccess) onSuccess();
+          return;
+        } else {
+          console.log("❌ Falha na importação para o banco");
+          showToast("Erro ao importar CSV. Tente novamente.", "error");
+          return;
+        }
       } else {
-        console.log("❌ Falha na importação para o banco");
+        console.log("⚠️ Nenhum formField ou formId fornecido, usando callback fallback");
+        // Para casos sem formFields, também mostrar sucesso e fechar
+        showToast("CSV importado com sucesso!", "success");
+        if (onSuccess) onSuccess();
       }
-    } else {
-      console.log("⚠️ Nenhum formField ou formId fornecido, usando callback fallback");
+      
+      // Fallback para callback anterior
+      if (onSubmit) onSubmit(mappedData);
+    } catch (error) {
+      console.error("❌ Erro inesperado no CSV Import:", error);
+      showToast("Erro inesperado ao processar CSV. Tente novamente.", "error");
     }
-    
-    // Fallback para callback anterior
-    if (onSubmit) onSubmit(mappedData);
   };
 
   const selectOptions = [

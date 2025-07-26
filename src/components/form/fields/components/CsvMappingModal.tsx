@@ -62,6 +62,7 @@ const CsvMappingModal: React.FC<CsvMappingModalProps> = ({
           formFields={formFields}
           formId={formId}
           userId={userId}
+          onSuccess={onSuccess}
           onSubmit={(mappedData) => {
             // Loga os dados mapeados, não fecha o modal
             console.log("Dados mapeados do CSV:", mappedData);

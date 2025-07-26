@@ -4,6 +4,59 @@ import { FormField, CsvImportData, FormEntryValue, CsvImportResult } from "../ty
 
 export class CsvImportService {
   /**
+   * Converte preço do formato brasileiro/CSV para número
+   */
+  private static processPriceValue(priceString: string): string {
+    console.log(`🔍 [processPriceValue] Input:`, { priceString, type: typeof priceString });
+    
+    if (!priceString) return "0,00";
+    
+    let cleanedPrice = String(priceString);
+    
+    // Remove símbolos de moeda, espaços, aspas (simples e duplas) e barras invertidas
+    cleanedPrice = cleanedPrice.replace(/[R$\s"'\\]/g, "");
+    
+    console.log(`🧹 [processPriceValue] Após limpeza:`, cleanedPrice);
+    
+    // Tratamento para diferentes formatos, preservando os centavos originais
+    if (cleanedPrice.includes(",") && cleanedPrice.includes(".")) {
+      // Formato brasileiro completo: 17.390,28 -> 17390,28
+      cleanedPrice = cleanedPrice.replace(/\./g, "");
+    } else if (cleanedPrice.includes(",")) {
+      // Apenas vírgula: 17390,28 -> 17390,28 (mantém como está)
+      // Não faz nada, já está no formato correto
+    } else if (cleanedPrice.includes(".")) {
+      // Formato americano ou decimal: 4.28 -> 4,28
+      const parts = cleanedPrice.split(".");
+      if (parts.length === 2 && parts[1].length <= 2) {
+        // É decimal: 4.28 -> 4,28
+        cleanedPrice = cleanedPrice.replace(".", ",");
+      } else {
+        // Separador de milhares: 1.000 -> 1000
+        cleanedPrice = cleanedPrice.replace(/\./g, "");
+      }
+    }
+    
+    // Se não tem vírgula (centavos), adiciona ,00
+    if (!cleanedPrice.includes(",")) {
+      cleanedPrice = cleanedPrice + ",00";
+    }
+    
+    console.log(`🔧 [processPriceValue] Após formatação:`, cleanedPrice);
+    
+    // Valida se é um número válido
+    const testValue = cleanedPrice.replace(",", ".");
+    const numericValue = parseFloat(testValue);
+    console.log(`🧮 [processPriceValue] Teste numérico:`, { testValue, numericValue, isValid: !isNaN(numericValue) });
+    
+    if (isNaN(numericValue)) return "0,00";
+    
+    // Retorna no formato brasileiro preservando os centavos originais
+    console.log(`✅ [processPriceValue] Resultado final:`, cleanedPrice);
+    return cleanedPrice;
+  }
+
+  /**
    * Converte dados do CSV para o formato da tabela form_entry_values
    */
   static async importCsvData(
@@ -94,16 +147,18 @@ export class CsvImportService {
 
         // Campo Preço (JSON complexo como na tabela)
         if (csvData.preco && csvData.preco[i]) {
-          const precoValue = csvData.preco[i];
+          const rawPrecoValue = csvData.preco[i];
+          const processedPrice = this.processPriceValue(rawPrecoValue);
+          
           formEntryValues.push({
             entry_id: entryId,
             field_id: fieldMap.get('preco')!,
             value: null,
             value_json: {
-              price: precoValue,
-              old_price: precoValue,
-              promotional_price: precoValue,
-              old_promotional_price: precoValue
+              price: processedPrice,
+              old_price: processedPrice,
+              promotional_price: processedPrice,
+              old_promotional_price: processedPrice
             }
           });
         }

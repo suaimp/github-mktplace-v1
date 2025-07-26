@@ -9,6 +9,7 @@ import EntryEditModal from "../../components/EditorialManager/EntryEditModal";
 import FormFilter from "../../components/EditorialManager/FormFilter";
 import EntriesTable from "../../components/EditorialManager/EntriesTable";
 import { processEntryValues } from "../../components/EditorialManager/actions/valuePriceProcessor";
+import ImportCsvField from "../../components/form/fields/ImportCsvField";
 
 interface FormEntry {
   id: string;
@@ -68,6 +69,8 @@ export default function EditorialManager() {
   const [forms, setForms] = useState<Form[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<string>("");
   const [fields, setFields] = useState<FormField[]>([]);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
     checkUserRole();
@@ -90,6 +93,9 @@ export default function EditorialManager() {
         data: { user }
       } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Set userId for CSV import
+      setUserId(user.id);
 
       const { data: adminData } = await supabase
         .from("admins")
@@ -304,6 +310,11 @@ export default function EditorialManager() {
     setIsEditModalOpen(false);
   };
 
+  const handleCsvImportSuccess = async () => {
+    setSuccess("CSV importado com sucesso!");
+    await loadEntries();
+  };
+
   return (
     <PermissionGuard
       permission="forms.entries.view"
@@ -338,6 +349,29 @@ export default function EditorialManager() {
           onSelectForm={setSelectedFormId}
         />
       </div>
+
+      {/* CSV Import Section */}
+      {selectedFormId && (
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+              Importar CSV
+            </h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Faça upload de um arquivo CSV para importar múltiplas entradas
+            </span>
+          </div>
+          <ImportCsvField
+            field={{ id: "csv-import", label: "Arquivo CSV" }}
+            value={csvFile}
+            onChange={setCsvFile}
+            formFields={fields}
+            formId={selectedFormId}
+            userId={userId}
+            onSuccess={handleCsvImportSuccess}
+          />
+        </div>
+      )}
 
       <EntriesTable
         entries={entries}

@@ -308,11 +308,9 @@ function parseBrazilianPrice(value: any): number {
   if (!value) return 0;
 
   let str = String(value);
-  
-  console.log("🔍 [parseBrazilianPrice] Input:", { value, str });
 
   // Remove símbolos de moeda e espaços
-  str = str.replace(/[R$\s]/g, "");
+  str = str.replace(/[R$\s"\\]/g, "");
 
   // Tratamento específico para diferentes formatos
   if (str.includes(",") && str.includes(".")) {
@@ -333,7 +331,6 @@ function parseBrazilianPrice(value: any): number {
   }
 
   const result = parseFloat(str);
-  console.log("🔍 [parseBrazilianPrice] Result:", { str, result });
   return isNaN(result) ? 0 : result;
 }
 
@@ -342,33 +339,22 @@ function parseBrazilianPrice(value: any): number {
  * Baseada na função original do priceCommissionSimulator
  */
 export function extractProductPrice(productData: any): ProductPrice | null {
-  console.log("🔍 [extractProductPrice] Debugging CSV Import price data:", {
-    productData,
-    typeOf: typeof productData,
-    isString: typeof productData === "string",
-    stringValue: typeof productData === "string" ? productData : "not a string"
-  });
-
   if (!productData) return null;
 
   // Se é string, tenta fazer parse
   if (typeof productData === "string") {
     try {
       const parsed = JSON.parse(productData);
-      console.log("✅ [extractProductPrice] Successfully parsed JSON from string:", parsed);
       return extractProductPrice(parsed);
     } catch {
       // Se não conseguiu fazer parse como JSON, pode ser um valor direto como "R$ 4"
-      console.log("❌ [extractProductPrice] Failed to parse as JSON, trying as direct price string:", productData);
       const directPrice = parseBrazilianPrice(productData);
       if (!isNaN(directPrice) && directPrice > 0) {
-        console.log("✅ [extractProductPrice] Successfully parsed direct price:", directPrice);
         return {
           price: directPrice,
           promotional_price: undefined
         };
       }
-      console.log("❌ [extractProductPrice] Failed to parse as direct price");
       return null;
     }
   }
@@ -379,22 +365,10 @@ export function extractProductPrice(productData: any): ProductPrice | null {
     const promotionalPriceValue =
       productData.old_promotional_price || productData.promotional_price;
 
-    console.log("🔍 [DEBUG] extractProductPrice - valores brutos:", {
-      priceValue,
-      promotionalPriceValue,
-      typeOfPriceValue: typeof priceValue,
-      typeOfPromotionalPriceValue: typeof promotionalPriceValue
-    });
-
     const price = parseBrazilianPrice(priceValue);
     const promotional_price = promotionalPriceValue
       ? parseBrazilianPrice(promotionalPriceValue)
       : undefined;
-
-    console.log("🔍 [DEBUG] extractProductPrice - valores parseados:", {
-      price,
-      promotional_price
-    });
 
     if (isNaN(price)) return null;
 

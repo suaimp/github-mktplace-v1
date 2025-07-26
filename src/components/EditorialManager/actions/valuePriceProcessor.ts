@@ -15,20 +15,15 @@ interface EntryValue {
 export async function processEntryValue(entryValue: EntryValue): Promise<any> {
   const { value, value_json } = entryValue;
 
-  console.log(`🔍 [processEntryValue] field_id: ${entryValue.field_id}`);
-  console.log(`   - value:`, value);
-  console.log(`   - value_json:`, value_json);
-
   // Se value_json não é null, usa ele diretamente
   if (value_json !== null) {
-    console.log(`✅ [processEntryValue] Usando value_json para field ${entryValue.field_id}`);
     // Se tem price no value_json, busca dados relacionados
     if (value_json && typeof value_json === "object") {
       if (value_json.price) {
-        console.log(`💰 [processEntryValue] Encontrou price em value_json:`, value_json.price);
+        // Price data found in value_json
       }
       if (value_json.promotional_price) {
-        console.log(`🏷️ [processEntryValue] Encontrou promotional_price em value_json:`, value_json.promotional_price);
+        // Promotional price data found in value_json
       }
     }
     return value_json;
@@ -43,8 +38,6 @@ export async function processEntryValue(entryValue: EntryValue): Promise<any> {
       typeof parsedValue === "object" &&
       parsedValue.promotional_price
     ) {
-      // Removido console.log("valuePriceProcessor.ts - Found promotional_price in parsed value:", parsedValue.promotional_price);
-
       // Se tem promotional_price e price, é provavelmente um campo de produto
       // Retorna o objeto completo para preservar ambos os valores
       if (parsedValue.price) {
