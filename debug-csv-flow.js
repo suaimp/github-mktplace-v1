@@ -99,8 +99,8 @@ function simulateImportService(csvData, formFields) {
         value_json: {
           price: precoValue,
           old_price: precoValue,
-          promotional_price: precoValue,
-          old_promotional_price: precoValue
+          promotional_price: "0",
+          old_promotional_price: "0"
         }
       });
     }

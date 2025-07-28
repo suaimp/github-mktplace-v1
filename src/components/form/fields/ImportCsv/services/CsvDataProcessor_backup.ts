@@ -101,10 +101,10 @@ export class CsvDataProcessor {
           valueJson = {
             price: precoValue,
             old_price: precoValue,
-            promotional_price: precoValue,
-            old_promotional_price: precoValue
+            promotional_price: "0",
+            old_promotional_price: "0"
           };
-          console.log(`💰 [CsvDataProcessor] Preço: ${precoValue}`);
+          console.log(`💰 [CsvDataProcessor] Preço: ${precoValue}, Preço promocional: 0`);
         }
         else {
           // Campos não mapeados - valores padrão para campos obrigatórios
