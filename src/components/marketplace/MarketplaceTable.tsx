@@ -16,6 +16,7 @@ import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
 import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 import { useSorting, sortEntries } from "./sorting";
+import { TabNavigation, useTabNavigation } from "../tables/TabNavigation";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -38,6 +39,16 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   // Estado para detectar modo escuro
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Definir tabs para filtros do marketplace
+  const tabs = [
+    { id: 'todos', label: 'Todos os Sites' },
+    { id: 'promocao', label: 'Promoção' },
+    { id: 'favoritos', label: 'Favoritos' }
+  ];
+
+  // Hook para gerenciar as tabs
+  const { activeTabId, handleTabChange } = useTabNavigation(tabs);
   
   // Hook personalizado para gerenciar ordenação
   const { sortState, handleSort } = useSorting();
@@ -91,6 +102,27 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   useEffect(() => {
     let result = [...entries];
 
+    // Apply tab filter first
+    if (activeTabId === 'promocao') {
+      // Filtar apenas sites com preço promocional
+      result = result.filter((entry) => {
+        const productField = fields.find(f => f.field_type === 'product');
+        if (productField) {
+          const productData = entry.values[productField.id];
+          if (productData && typeof productData === 'object') {
+            const promotionalPrice = productData.promotional_price || productData.price_promotional;
+            return promotionalPrice && parseFloat(promotionalPrice) > 0;
+          }
+        }
+        return false;
+      });
+    } else if (activeTabId === 'favoritos') {
+      // TODO: Implementar filtro de favoritos quando a funcionalidade estiver pronta
+      // Por enquanto, mostrar array vazio
+      result = [];
+    }
+    // 'todos' não precisa de filtro adicional
+
     // Apply search filter if search term exists
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
@@ -118,7 +150,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     }
 
     setFilteredEntries(result);
-  }, [entries, searchTerm, sortState.field, sortState.direction, fields]);
+  }, [entries, searchTerm, sortState.field, sortState.direction, fields, activeTabId]);
 
   async function loadMarketplaceData() {
     try {
@@ -433,6 +465,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* TabNavigation */}
+            <TabNavigation
+              tabs={tabs}
+              activeTabId={activeTabId}
+              onTabChange={handleTabChange}
+              compact
+              buttonMinWidth="120px"
+            />
+
             <div className="relative">
               <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
                 <svg
