@@ -52,6 +52,9 @@ export default function EntriesTable({
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // ESTADO DE FILTRO POR STATUS
+  const [statusFilter, setStatusFilter] = useState("todos");
+
   // PAGINAÇÃO
   const totalPages = Math.ceil(entries.length / entriesPerPage) || 1;
  
@@ -121,8 +124,22 @@ export default function EntriesTable({
     }
   });
 
+  // FILTRO POR STATUS
+  const statusFilteredEntries = searchResults.filter(entry => {
+    if (statusFilter === 'todos') return true;
+    
+    // Buscar o status no entry - pode estar em diferentes lugares
+    const status = entry.status || entry.values?.status || 'em_analise';
+    return status === statusFilter;
+  });
+
+  console.log(`🔍 [EntriesTable] Filtro de status aplicado:`);
+  console.log(`   Status selecionado: ${statusFilter}`);
+  console.log(`   Registros antes: ${searchResults.length}`);
+  console.log(`   Registros depois: ${statusFilteredEntries.length}`);
+
   // Ordenar os dados filtrados
-  const sortedEntries = [...searchResults].sort((a, b) => {
+  const sortedEntries = [...statusFilteredEntries].sort((a, b) => {
     let aValue: any = a[sortField];
     let bValue: any = b[sortField];
     // Para campos dinâmicos (displayFields)
@@ -175,34 +192,37 @@ export default function EntriesTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      {/* Barra de controles da tabela */}
-      <TableControls
-        entriesPerPage={entriesPerPage}
-        onEntriesPerPageChange={setEntriesPerPage}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onPageReset={() => setCurrentPage(1)}
-        formFields={fields}
-        formId={selectedFormId}
-        userId={userId}
-        onCsvImportSuccess={onCsvImportSuccess}
-        showCsvImport={!!selectedFormId}
-        entries={searchResults}
-        formTitle={formTitle}
-        showPdfExport={true}
-      />
-      
-      {/* Estatísticas de busca */}
-      <SearchStats 
-        total={searchStats.total}
-        filtered={searchStats.filtered}
-        hasFilter={searchStats.hasFilter}
-        searchTerm={searchTerm}
-      />
-      
-      {/* Tabela */}
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
+      {/* Container com overflow horizontal para todo o conteúdo */}
+      <div className="overflow-x-auto table-scrollbar">
         <div className="min-w-[1102px]">
+          {/* Barra de controles da tabela */}
+          <TableControls
+            entriesPerPage={entriesPerPage}
+            onEntriesPerPageChange={setEntriesPerPage}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onPageReset={() => setCurrentPage(1)}
+            formFields={fields}
+            formId={selectedFormId}
+            userId={userId}
+            onCsvImportSuccess={onCsvImportSuccess}
+            showCsvImport={!!selectedFormId}
+            entries={statusFilteredEntries}
+            formTitle={formTitle}
+            showPdfExport={true}
+            onStatusFilterChange={setStatusFilter}
+            statusFilter={statusFilter}
+          />
+          
+          {/* Estatísticas de busca */}
+          <SearchStats 
+            total={searchStats.total}
+            filtered={statusFilteredEntries.length}
+            hasFilter={searchStats.hasFilter || statusFilter !== 'todos'}
+            searchTerm={searchTerm}
+          />
+          
+          {/* Tabela */}
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
@@ -427,30 +447,31 @@ export default function EntriesTable({
               )}
             </TableBody>
           </Table>
+          
+          {/* Paginação simples (opcional) */}
+          {totalPagesFiltered > 1 && (
+            <div className="flex justify-end items-center gap-2 px-4 py-2">
+              <button
+                className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Página {currentPage} de {totalPagesFiltered}
+              </span>
+              <button
+                className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
+                onClick={() => setCurrentPage(p => Math.min(totalPagesFiltered, p + 1))}
+                disabled={currentPage === totalPagesFiltered}
+              >
+                Próxima
+              </button>
+            </div>
+          )}
         </div>
       </div>
-      {/* Paginação simples (opcional) */}
-      {totalPagesFiltered > 1 && (
-        <div className="flex justify-end items-center gap-2 px-4 py-2">
-          <button
-            className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Página {currentPage} de {totalPagesFiltered}
-          </span>
-          <button
-            className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
-            onClick={() => setCurrentPage(p => Math.min(totalPagesFiltered, p + 1))}
-            disabled={currentPage === totalPagesFiltered}
-          >
-            Próxima
-          </button>
-        </div>
-      )}
     </div>
   );
 }

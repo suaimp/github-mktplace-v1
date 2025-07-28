@@ -1,5 +1,6 @@
 import CsvImportButton from "./CsvImportButton";
 import { PdfExportButton } from "../export";
+import { TabNavigation, useTabNavigation } from "../../../tables/TabNavigation";
 
 interface TableControlsProps {
   entriesPerPage: number;
@@ -17,6 +18,9 @@ interface TableControlsProps {
   entries?: any[];
   formTitle?: string;
   showPdfExport?: boolean;
+  // Tab Navigation props
+  onStatusFilterChange?: (statusFilter: string) => void;
+  statusFilter?: string;
 }
 
 export default function TableControls({
@@ -32,7 +36,9 @@ export default function TableControls({
   showCsvImport = true,
   entries = [],
   formTitle = "Formulário",
-  showPdfExport = true
+  showPdfExport = true,
+  onStatusFilterChange,
+  statusFilter = 'todos'
 }: TableControlsProps) {
   const handleEntriesPerPageChange = (value: number) => {
     onEntriesPerPageChange(value);
@@ -42,6 +48,24 @@ export default function TableControls({
   const handleSearchChange = (value: string) => {
     onSearchChange(value);
     onPageReset();
+  };
+
+  // Definir tabs para filtro por status dos sites
+  const tabs = [
+    { id: 'todos', label: 'Todos os sites' },
+    { id: 'em_analise', label: 'Em Análise' },
+    { id: 'verificado', label: 'Verificado' },
+    { id: 'reprovado', label: 'Reprovado' }
+  ];
+
+  // Hook para gerenciar as tabs
+  const { activeTabId, handleTabChange } = useTabNavigation(tabs, statusFilter);
+
+  // Handler personalizado para mudança de tab que também notifica o componente pai
+  const handleTabChangeWithCallback = (tabId: string) => {
+    handleTabChange(tabId);
+    onStatusFilterChange?.(tabId);
+    onPageReset(); // Reset pagination when filter changes
   };
 
   return (
@@ -81,8 +105,17 @@ export default function TableControls({
         <span className="text-gray-500 dark:text-gray-400">registros</span>
       </div>
 
-      {/* Área direita: Input de pesquisa e botão CSV */}
-      <div className="flex items-center gap-3">
+      {/* Área direita: TabNavigation, Input de pesquisa e botões */}
+      <div className="flex items-center gap-4">
+        {/* TabNavigation */}
+        <TabNavigation
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabChange={handleTabChangeWithCallback}
+          compact
+          buttonMinWidth="120px"
+        />
+
         {/* Input de pesquisa */}
         <div className="relative">
           <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
