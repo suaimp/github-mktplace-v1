@@ -54,7 +54,7 @@ export default function SidebarNav({
                     : "menu-item-inactive"
                 } ${
                   !isExpanded && !isHovered
-                    ? "lg:justify-center"
+                    ? "lg:justify-center lg:px-2"
                     : "lg:justify-start"
                 }`}
               >
@@ -153,7 +153,7 @@ export default function SidebarNav({
                     : "menu-item-inactive"
                 } ${
                   !isExpanded && !isHovered
-                    ? "lg:justify-center"
+                    ? "lg:justify-center lg:px-2"
                     : "lg:justify-start"
                 }`}
               >

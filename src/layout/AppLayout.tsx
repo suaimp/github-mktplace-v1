@@ -24,7 +24,7 @@ const LayoutContent: React.FC = () => {
       </div>
       <div
         className={`w-full flex-1 transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded || isHovered ? "xl:ml-[240px]" : "xl:ml-[40px]"
+          isExpanded || isHovered ? "xl:ml-[240px]" : "xl:ml-[70px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader onToggle={toggleMobileSidebar} />

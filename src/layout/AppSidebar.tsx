@@ -380,13 +380,13 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col xl:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col xl:mt-0 top-0 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen
-            ? "w-[240px]"
+            ? "w-[240px] px-5"
             : isHovered
-            ? "w-[240px]"
-            : "w-[40px]"
+            ? "w-[240px] px-5"
+            : "w-[70px] px-2"
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         xl:translate-x-0`}
