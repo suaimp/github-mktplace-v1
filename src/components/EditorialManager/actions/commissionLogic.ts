@@ -4,6 +4,9 @@
 function parsePrice(value: any): number {
   let str = String(value);
 
+  // Remove símbolos de moeda e espaços
+  str = str.replace(/R\$|\$|R/g, '').trim();
+
   // Tratamento específico para diferentes formatos
   if (str.includes(",") && str.includes(".")) {
     // Formato brasileiro completo: 1.000,50 ou 10.000,25
@@ -77,10 +80,11 @@ export function applyCommissionToFormValues(
       "❌ [DEBUG] Não foi encontrado commissionFieldId ou valor está vazio"
     );
   }
-  // Se não há comissão, define como 0 e prossegue com o fluxo normal
+  
+  // Se não há comissão, retorna os valores originais sem processamento
   if (commissionPercent === 0) {
-    console.log("⚠️ [DEBUG] Comissão é 0, prosseguindo com fluxo normal");
-    commissionPercent = 0;
+    console.log("⚠️ [DEBUG] Comissão é 0, retornando valores originais sem processamento");
+    return updatedFormValues;
   }
 
   console.log(
