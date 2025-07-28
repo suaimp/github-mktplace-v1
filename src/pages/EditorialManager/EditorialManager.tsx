@@ -313,6 +313,9 @@ export default function EditorialManager() {
     await loadEntries();
   };
 
+  // Get selected form title
+  const selectedFormTitle = forms.find(form => form.id === selectedFormId)?.title || "Formulário";
+
   return (
     <PermissionGuard
       permission="forms.entries.view"
@@ -358,6 +361,7 @@ export default function EditorialManager() {
         onDelete={handleDelete}
         userId={userId}
         onCsvImportSuccess={handleCsvImportSuccess}
+        formTitle={selectedFormTitle}
       />
 
       {/* View Entry Modal */}

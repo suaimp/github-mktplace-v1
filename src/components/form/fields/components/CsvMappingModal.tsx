@@ -48,11 +48,11 @@ const CsvMappingModal: React.FC<CsvMappingModalProps> = ({
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Importar e Mapear CSV</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Importar e Mapear CSV</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
         </div>
         <div className="mb-4">
-          <label className="block mb-2 font-medium">Upload do arquivo CSV</label>
+          <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300">Upload do arquivo CSV</label>
           <FileInput onChange={handleFileChange} />
         </div>
         <CsvMappingForm

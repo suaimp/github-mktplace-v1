@@ -94,7 +94,7 @@ const CsvMappingForm: React.FC<CsvMappingFormProps> = ({
     <div className="space-y-3">
       {FIELD_LABELS.map(field => (
         <div key={field.key}>
-          <label className="block text-sm font-medium mb-1">{field.label}</label>
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{field.label}</label>
           <Select
             options={selectOptions}
             value={mapping[field.key] || ""}

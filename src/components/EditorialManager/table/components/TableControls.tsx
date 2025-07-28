@@ -1,4 +1,5 @@
 import CsvImportButton from "./CsvImportButton";
+import { PdfExportButton } from "../export";
 
 interface TableControlsProps {
   entriesPerPage: number;
@@ -12,6 +13,10 @@ interface TableControlsProps {
   userId: string | null;
   onCsvImportSuccess: () => void;
   showCsvImport?: boolean;
+  // PDF Export props
+  entries?: any[];
+  formTitle?: string;
+  showPdfExport?: boolean;
 }
 
 export default function TableControls({
@@ -24,7 +29,10 @@ export default function TableControls({
   formId,
   userId,
   onCsvImportSuccess,
-  showCsvImport = true
+  showCsvImport = true,
+  entries = [],
+  formTitle = "Formulário",
+  showPdfExport = true
 }: TableControlsProps) {
   const handleEntriesPerPageChange = (value: number) => {
     onEntriesPerPageChange(value);
@@ -103,15 +111,27 @@ export default function TableControls({
           />
         </div>
 
-        {/* Botão de importação CSV */}
-        {showCsvImport && formId && (
-          <CsvImportButton
-            formFields={formFields}
-            formId={formId}
-            userId={userId}
-            onSuccess={onCsvImportSuccess}
-          />
-        )}
+        {/* Botões de ação */}
+        <div className="flex items-center gap-2">
+          {/* Botão de importação CSV */}
+          {showCsvImport && formId && (
+            <CsvImportButton
+              formFields={formFields}
+              formId={formId}
+              userId={userId}
+              onSuccess={onCsvImportSuccess}
+            />
+          )}
+
+          {/* Botão de exportação PDF */}
+          {showPdfExport && (
+            <PdfExportButton
+              entries={entries}
+              fields={formFields}
+              formTitle={formTitle}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

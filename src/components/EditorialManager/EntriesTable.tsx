@@ -26,6 +26,8 @@ interface EntriesTableProps {
   // CSV Import props
   userId: string | null;
   onCsvImportSuccess: () => void;
+  // Form title for PDF export
+  formTitle?: string;
 }
 
 export default function EntriesTable({
@@ -39,6 +41,7 @@ export default function EntriesTable({
   show = true,
   userId,
   onCsvImportSuccess,
+  formTitle = "Formulário",
 }: EntriesTableProps) {
   if (!show) return null;
 
@@ -184,6 +187,9 @@ export default function EntriesTable({
         userId={userId}
         onCsvImportSuccess={onCsvImportSuccess}
         showCsvImport={!!selectedFormId}
+        entries={searchResults}
+        formTitle={formTitle}
+        showPdfExport={true}
       />
       
       {/* Estatísticas de busca */}
