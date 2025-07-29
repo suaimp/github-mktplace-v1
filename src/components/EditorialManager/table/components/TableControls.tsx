@@ -50,12 +50,22 @@ export default function TableControls({
     onPageReset();
   };
 
-  // Definir tabs para filtro por status dos sites
+  // Calcular contadores para cada status
+  const getStatusCount = (status: string) => {
+    if (status === 'todos') return entries.length;
+    
+    return entries.filter(entry => {
+      const entryStatus = entry.status || entry.values?.status || 'em_analise';
+      return entryStatus === status;
+    }).length;
+  };
+
+  // Definir tabs para filtro por status dos sites com contadores
   const tabs = [
-    { id: 'todos', label: 'Todos os sites' },
-    { id: 'em_analise', label: 'Em Análise' },
-    { id: 'verificado', label: 'Verificado' },
-    { id: 'reprovado', label: 'Reprovado' }
+    { id: 'todos', label: 'Todos os sites', count: getStatusCount('todos') },
+    { id: 'em_analise', label: 'Em Análise', count: getStatusCount('em_analise') },
+    { id: 'verificado', label: 'Verificado', count: getStatusCount('verificado') },
+    { id: 'reprovado', label: 'Reprovado', count: getStatusCount('reprovado') }
   ];
 
   // Hook para gerenciar as tabs

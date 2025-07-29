@@ -96,14 +96,14 @@ export class PdfExportService {
       
       // Título principal
       pdf.setFontSize(18);
-      pdf.setTextColor(0, 0, 0);
+      pdf.setTextColor(0, 0, 0); // PRETO - GARANTIR COR PRETA
       console.log('📝 [PDF Header] Adicionando título:', options.title);
       pdf.text(options.title, pageWidth / 2, 20, { align: 'center' });
 
       // Subtítulo
       if (options.subtitle) {
         pdf.setFontSize(12);
-        pdf.setTextColor(100, 100, 100);
+        pdf.setTextColor(100, 100, 100); // Cinza para subtítulo
         console.log('📝 [PDF Header] Adicionando subtítulo:', options.subtitle);
         pdf.text(options.subtitle, pageWidth / 2, 30, { align: 'center' });
       }
@@ -184,7 +184,7 @@ export class PdfExportService {
       currentY += rowHeight;
 
       // Desenhar linhas de dados
-      pdf.setTextColor(0, 0, 0); // Preto
+      pdf.setTextColor(0, 0, 0); // Preto - FORÇAR SEMPRE PRETO
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8);
 
@@ -204,6 +204,9 @@ export class PdfExportService {
           // Borda da célula
           pdf.setDrawColor(200, 200, 200);
           pdf.rect(currentX, currentY, colWidth, rowHeight);
+          
+          // GARANTIR COR PRETA PARA TODAS AS CÉLULAS
+          pdf.setTextColor(0, 0, 0); // Preto - FORÇAR SEMPRE PRETO
           
           // Texto da célula (truncado conforme largura da coluna)
           const maxChars = Math.floor(colWidth / 2.5); // Aproximadamente 2.5px por caractere
@@ -301,7 +304,7 @@ export class PdfExportService {
    */
   private static redrawTableHeader(pdf: jsPDF, headers: string[], columnWidths: number[], startX: number, startY: number): void {
     pdf.setFillColor(211, 0, 0); // #d30000
-    pdf.setTextColor(255, 255, 255);
+    pdf.setTextColor(255, 255, 255); // Branco para cabeçalhos
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
 
@@ -319,6 +322,9 @@ export class PdfExportService {
       // Borda
       pdf.setDrawColor(150, 150, 150);
       pdf.rect(currentX, startY, colWidth, 12);
+      
+      // GARANTIR COR BRANCA PARA CABEÇALHOS
+      pdf.setTextColor(255, 255, 255); // Branco
       
       // Texto
       const headerText = header.length > 12 ? header.substring(0, 10) + '..' : header;
@@ -350,7 +356,7 @@ export class PdfExportService {
 
       // Adicionar informações de exportação
       pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
+      pdf.setTextColor(0, 0, 0); // PRETO - GARANTIR COR PRETA PARA RODAPÉ
       
       const footerText = `Total de ${data.totalEntries} registros | Exportado em ${data.exportDate}`;
       pdf.text(footerText, 20, footerY);
@@ -408,6 +414,7 @@ export class PdfExportService {
 
   /**
    * Prepara dados das linhas da tabela (apenas URL, Preço e DA)
+   * IMPORTANTE: Processa TODOS os entries, não apenas os paginados
    */
   private static prepareTableRows(entries: ExportEntry[], fields: ExportField[]): string[][] {
     // Identificar campos específicos por tipo/nome
@@ -436,7 +443,9 @@ export class PdfExportService {
       da: daField?.label
     });
 
-    return entries.map(entry => {
+    console.log('📊 [PDF Rows] Processando TODOS os', entries.length, 'registros');
+
+    return entries.map((entry, index) => {
       const rowData: string[] = [];
 
       // URL
@@ -448,7 +457,7 @@ export class PdfExportService {
       // Preço
       if (precoField) {
         const precoValue = this.formatFieldValue(entry.values[precoField.id], precoField.field_type);
-        console.log('💰 [PDF Rows] Preço formatado:', {
+        console.log(`💰 [PDF Rows] Registro ${index + 1} - Preço formatado:`, {
           original: entry.values[precoField.id],
           formatted: precoValue,
           fieldType: precoField.field_type
@@ -462,13 +471,14 @@ export class PdfExportService {
         rowData.push(daValue);
       }
 
-      console.log('📊 [PDF Rows] Linha processada:', rowData);
+      console.log(`📊 [PDF Rows] Registro ${index + 1} processado:`, rowData);
       return rowData;
     });
   }
 
   /**
    * Formata valor do campo baseado no tipo
+   * IMPORTANTE: Todos os valores formatados aqui serão renderizados em PRETO
    */
   private static formatFieldValue(value: any, fieldType: string): string {
     if (!value && value !== 0) return '-';

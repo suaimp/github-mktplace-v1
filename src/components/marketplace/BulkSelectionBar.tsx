@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import Button from "../ui/button/Button";
 import { extractProductPrice } from "./actions/priceCalculator";
 import { showToast } from "../../utils/toast";
+import { PdfExportButton } from "../EditorialManager/table/export";
 
 interface BulkSelectionBarProps {
   selectedCount: number;
@@ -13,6 +14,8 @@ interface BulkSelectionBarProps {
   productPriceField: any;
   productUrlField: any;
   entries: any[];
+  fields: any[]; // Adicionado para exportação PDF
+  formTitle?: string; // Adicionado para exportação PDF
 }
 
 export default function BulkSelectionBar({
@@ -22,7 +25,9 @@ export default function BulkSelectionBar({
   productNameField,
   productPriceField,
   productUrlField,
-  entries
+  entries,
+  fields,
+  formTitle = "Marketplace"
 }: BulkSelectionBarProps) {
   const { addItem } = useCart();
   const [loading, setLoading] = useState(false);
@@ -119,8 +124,13 @@ export default function BulkSelectionBar({
     }
   };
 
+  // Preparar dados para exportação PDF
+  const selectedEntriesData = entries.filter((entry) =>
+    selectedEntries.includes(entry.id)
+  );
+
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-3xl">
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-4xl">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 flex items-center">
         <div className="text-gray-700 dark:text-gray-300">
           Selecionado <strong>{selectedCount}</strong> Produtos
@@ -142,6 +152,16 @@ export default function BulkSelectionBar({
         >
           <span>{addingToFavorites ? "Adicionando..." : "Favorito"}</span>
         </button>
+
+        {/* Botão de Exportação PDF */}
+        <div className="ml-2">
+          <PdfExportButton
+            entries={selectedEntriesData}
+            fields={fields}
+            formTitle={formTitle}
+            disabled={selectedCount === 0}
+          />
+        </div>
 
         <div className="flex-1"></div>
 

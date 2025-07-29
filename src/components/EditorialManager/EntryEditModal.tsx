@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "../../components/ui/modal";
 import Button from "../../components/ui/button/Button";
 import Select from "../../components/form/Select";
@@ -13,6 +13,7 @@ import { useFormValues } from "./hooks/useFormValues";
 import { FormFieldsService } from "./services/formFieldsService";
 import { FormSubmissionService } from "./services/formSubmissionService";
 import { FormValidationService } from "./services/formValidationService";
+import { useFormDataSync } from "./dataSync/hooks/useFormDataSync";
 
 export default function EntryEditModal({
   isOpen,
@@ -25,6 +26,18 @@ export default function EntryEditModal({
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Initialize data sync for this form
+  const formDataSync = useFormDataSync(entry?.form_id || '');
+
+  // Update status when entry changes
+  useEffect(() => {
+    if (entry && isOpen) {
+      setStatus(entry.status || "em_analise");
+      setNote("");
+      setError("");
+    }
+  }, [entry, isOpen]);
 
   const { syncPriceFromValue } = useShoppingCartToCheckoutResume();
   
@@ -63,8 +76,24 @@ export default function EntryEditModal({
       });
 
       if (result.success) {
-        onSave();
+        console.log(`✅ [EntryEditModal] Form submission successful, emitting data sync event`);
+        
+        // Emit data sync event to refresh all relevant tables
+        await formDataSync.emitEntrySubmitted(entry.id, true, {
+          status,
+          formValues,
+          note: note.trim()
+        });
+        
+        // Call onSave callback for additional actions
+        if (typeof onSave === 'function') {
+          await onSave();
+        }
+        
+        // Close modal after successful save and sync
         onClose();
+        
+        console.log(`✅ [EntryEditModal] Entry update process completed`);
       } else {
         setError(result.error || "Erro ao atualizar entrada");
       }

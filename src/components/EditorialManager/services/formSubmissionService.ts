@@ -142,6 +142,7 @@ export class FormSubmissionService {
         }
       }
 
+      console.log(`✅ [FormSubmissionService] Entry submission completed successfully for entry: ${entry.id}`);
       return { success: true };
     } catch (error) {
       console.error("FormSubmissionService - Unexpected error:", error);

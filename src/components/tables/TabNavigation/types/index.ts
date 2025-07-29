@@ -9,6 +9,8 @@ export interface Tab {
   label: string;
   /** Se a tab está desabilitada */
   disabled?: boolean;
+  /** Contador de itens para exibir no badge (opcional) */
+  count?: number;
 }
 
 export interface TabNavigationProps {

@@ -178,7 +178,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
 
       console.log(`📊 [MarketplaceTable] Loading entries for formId: ${formId}`);
 
-      // Load form entries - ONLY VERIFIED ENTRIES
+      // Load form entries - SHOWING ALL ENTRIES FOR DEBUG
       const { data: entriesData, error: entriesError } = await supabase
         .from("form_entries")
         .select(`
@@ -191,8 +191,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
             value_json
           )
         `)
-        .eq("form_id", formId)
-        .eq("status", "verificado"); // FILTER FOR VERIFIED ENTRIES ONLY
+        .eq("form_id", formId);
+        // .eq("status", "verificado"); // TEMPORARILY REMOVED FOR DEBUG
 
       if (entriesError) {
         console.error(`❌ [MarketplaceTable] Error loading entries:`, entriesError);
@@ -200,15 +200,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       }
 
       console.log(`✅ [MarketplaceTable] Raw entries data:`, entriesData);
-      console.log(`📊 [MarketplaceTable] Loaded ${entriesData?.length || 0} VERIFIED entries for formId: ${formId}`);
+      console.log(`📊 [MarketplaceTable] Loaded ${entriesData?.length || 0} entries (ALL STATUSES) for formId: ${formId}`);
 
-      // Show status distribution (should only show "verificado" now)
+      // Show status distribution
       if (entriesData && entriesData.length > 0) {
         const statusCounts = entriesData.reduce((acc: any, entry: any) => {
           acc[entry.status] = (acc[entry.status] || 0) + 1;
           return acc;
         }, {});
-        console.log(`📊 [MarketplaceTable] Status distribution (verified only):`, statusCounts);
+        console.log(`📊 [MarketplaceTable] Status distribution:`, statusCounts);
       }
 
       // Process entries to map values to fields
@@ -428,211 +428,37 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         checked={selectedEntries.length === filteredEntries.length && filteredEntries.length > 0}
                         onChange={handleSelectAll}
                       />
-                      <label htmlFor="selectAll" className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-[1.25px] hover:border-brand-500 dark:hover:border-brand-500 ${
-                        selectedEntries.length === filteredEntries.length && filteredEntries.length > 0
-                          ? "border-brand-500 bg-brand-500"
-                          : "bg-transparent border-gray-300 dark:border-gray-700"
-                      }`}>
-                        <span className={selectedEntries.length === filteredEntries.length && filteredEntries.length > 0 ? "" : "opacity-0"}>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="white" strokeWidth="1.94437" strokeLinecap="round" strokeLinejoin="round"></path>
-                          </svg>
-                        </span>
+                      <label htmlFor="selectAll" className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-[1.25px] hover:border-brand-500">
+                        <span>✓</span>
                       </label>
                     </div>
                   </div>
                 </th>
                 
-                {/* Cabeçalhos para mobile (menor que xl) - apenas colunas essenciais */}
-                <div className="xl:hidden contents">
-                  {mobileFields.map((field) => {
-                    if (!field) return null;
-                    const settings = field.form_field_settings || {};
-                    const displayName = settings.marketplace_label || field.label;
-                    
-                    return (
-                      <th key={field.id} scope="col" className="text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                        <span>{displayName}</span>
-                      </th>
-                    );
-                  })}
-                </div>
-
-                {/* Cabeçalhos para desktop (xl e acima) - todas as colunas */}
-                <div className="hidden xl:contents">
-                  {tableFields.map((field) => {
-                    const settings = field.form_field_settings || {};
-                    const displayName = settings.marketplace_label || field.label;
-                    const isSortable = isSortableField(field);
-
-                    // Definições de tooltip por campo
-                    let tooltipText = "";
-                    let showTooltip = true;
-                    
-                    const helptext = settings.helptext || settings.help_text || field.helptext || field.help_text;
-                    if (typeof helptext === 'string' && helptext.trim() !== '') {
-                      tooltipText = helptext;
-                    } else {
-                      switch (field.field_type) {
-                        case "brand":
-                          tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          break;
-                        case "country":
-                          tooltipText = "País: País de origem ou audiência.";
-                          break;
-                        case "moz_da":
-                          tooltipText = "DA: Pontuação de autoridade do domínio (Moz).";
-                          break;
-                        case "ahrefs_traffic":
-                        case "similarweb_traffic":
-                        case "google_traffic":
-                        case "semrush_as":
-                          tooltipText = "Tráfego: Número estimado de visitantes.";
-                          break;
-                        case "categories":
-                        case "category":
-                          tooltipText = "Categorias: Tópicos principais do site.";
-                          break;
-                        case "links":
-                          tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
-                          break;
-                        case "product":
-                          tooltipText = "Preço do Artigo: Custo para publicar um artigo.";
-                          break;
-                        case "site_url":
-                        case "url":
-                          showTooltip = false;
-                          break;
-                        case "toggle":
-                          tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          break;
-                        default:
-                          if (displayName && displayName.toLowerCase().includes("site")) {
-                            showTooltip = false;
-                          } else if (displayName && displayName.toLowerCase().includes("comprar")) {
-                            showTooltip = false;
-                          } else if (displayName && displayName.toLowerCase().includes("categoria")) {
-                            tooltipText = "Categorias: Tópicos principais do site.";
-                          } else if (displayName && displayName.toLowerCase().includes("marca")) {
-                            tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          } else if (displayName && displayName.toLowerCase().includes("link")) {
-                            tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
-                          }
-                          break;
-                      }
-                    }
-
-                    return (
-                      <th
-                        key={field.id}
-                        scope="col"
-                        className={`text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
-                          isSortable ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" : ""
-                        }`}
-                        onClick={isSortable ? () => handleSort(field.id) : undefined}
-                      >
-                        <div className="flex items-center justify-start gap-2">
-                          <div className="flex items-center justify-start">
-                            <div className="flex items-center gap-1">
-                              {field.field_type === "niche" ? (
-                                <div className="flex items-center gap-1">
-                                  <span>{displayName}</span>
-                                  <MarketplaceTableTooltip 
-                                    text={"O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna."} 
-                                    tableLoaded={tableLoaded}
-                                    entriesCount={entries.length}
-                                  />
-                                </div>
-                              ) : (
-                                <>
-                                  <span>{displayName}</span>
-                                  {showTooltip && (
-                                    <MarketplaceTableTooltip 
-                                      text={tooltipText} 
-                                      tableLoaded={tableLoaded}
-                                      entriesCount={entries.length}
-                                    />
-                                  )}
-                                </>
-                              )}
-                            </div>
-                            {isSortable && (
-                              <span className="flex flex-col gap-0.5 ml-1">
-                                <svg
-                                  className={`${
-                                    sortState.field === field.id && sortState.direction === 'asc' 
-                                      ? 'fill-brand-500 dark:fill-brand-400' 
-                                      : 'fill-gray-300 dark:fill-gray-700'
-                                  }`}
-                                  width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
-                                </svg>
-                                <svg
-                                  className={`${
-                                    sortState.field === field.id && sortState.direction === 'desc' 
-                                      ? 'fill-brand-500 dark:fill-brand-400' 
-                                      : 'fill-gray-300 dark:fill-gray-700'
-                                  }`}
-                                  width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
-                                </svg>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </th>
-                    );
-                  })}
-                </div>
-
-                {/* Botão de compra para mobile */}
-                <div className="xl:hidden contents">
-                  {buttonBuyField && (
-                    <th scope="col" className="text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                      <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
+                {/* Render field headers */}
+                {mobileFields.map((field) => {
+                  if (!field) return null;
+                  const settings = field.form_field_settings || {};
+                  const displayName = settings.marketplace_label || field.label;
+                  
+                  return (
+                    <th key={field.id} scope="col" className="text-left text-[13px] font-semibold text-gray-900 dark:text-white">
+                      <span>{displayName}</span>
                     </th>
-                  )}
-                </div>
-
-                {/* Botão de compra para desktop */}
-                <div className="hidden xl:contents">
-                  {buttonBuyField && (
-                    <th
-                      scope="col" 
-                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
-                      style={{ boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)' }}
-                    >
-                      <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
-                    </th>
-                  )}
-                </div>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
               {paginatedEntries.map((entry) => {
                 const productName = productNameField ? entry.values[productNameField.id] : "Product";
-                let productUrl = productUrlField ? entry.values[productUrlField.id] : "";
-                if (typeof productUrl !== 'string') productUrl = "";
+                const productUrl = productUrlField ? entry.values[productUrlField.id] : "";
                 const productPrice = extractProductPrice(entry, productPriceField);
                 const isInCart = items.some((item) => item.entry_id === entry.id);
                 const entryId = `checkbox-${entry.id}`;
 
                 return (
-                  <tr
-                    key={entry.id}
-                    className={`cursor-pointer xl:cursor-auto ${
-                      selectedEntries.includes(entry.id) ? "bg-brand-50 dark:bg-brand-900/10" : ""
-                    }`}
-                    onClick={(e) => {
-                      if (window.innerWidth < 1280) {
-                        if (!(e.target as HTMLElement).closest('input, label')) {
-                          openDetailsModal(entry);
-                        }
-                      }
-                    }}
-                  >
+                  <tr key={entry.id} className="cursor-pointer xl:cursor-auto">
                     <td className="whitespace-nowrap text-[13px]">
                       <div className="flex items-center justify-start">
                         <div className="relative">
@@ -643,133 +469,42 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                             checked={selectedEntries.includes(entry.id)}
                             onChange={(e) => handleSelectEntry(entry.id, e)}
                           />
-                          <label htmlFor={entryId} className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-[1.25px] hover:border-brand-500 dark:hover:border-brand-500 ${
-                            selectedEntries.includes(entry.id)
-                              ? "border-brand-500 bg-brand-500"
-                              : "bg-transparent border-gray-300 dark:border-gray-700"
-                          }`}>
-                            <span className={selectedEntries.includes(entry.id) ? "" : "opacity-0"}>
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="white" strokeWidth="1.94437" strokeLinecap="round" strokeLinejoin="round"></path>
-                              </svg>
-                            </span>
+                          <label htmlFor={entryId} className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-[1.25px]">
+                            <span>✓</span>
                           </label>
                         </div>
                       </div>
                     </td>
                     
-                    {/* Células para mobile (menor que xl) - apenas campos essenciais */}
-                    <div className="xl:hidden contents">
-                      {mobileFields.map((field) => {
-                        if (!field) return null;
-                        
-                        return (
-                          <td key={field.id} className="text-[13px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap">
-                            <div className="flex items-center justify-start">
-                              {(() => {
-                                const fieldValue = entry.values[field.id];
-                                if (field.field_type === "product") {
-                                  const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
-                                  return (
-                                    <PriceSimulationDisplay
-                                      commission={commissionValue}
-                                      productData={fieldValue}
-                                      layout="inline"
-                                      showMarginBelow={false}
-                                      showOriginalPrice={true}
-                                    />
-                                  );
-                                }
-                                return formatMarketplaceValue(fieldValue, field.field_type, true);
-                              })()}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </div>
-
-                    {/* Células para desktop (xl e acima) - todas as colunas */}
-                    <div className="hidden xl:contents">
-                      {tableFields.map((field) => {
-                        return (
-                          <td key={field.id} className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
-                            <div className="flex items-center justify-start">
-                              {(() => {
-                                const fieldValue = entry.values[field.id];
-                                
-                                if (field.field_type === "product") {
-                                  const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
-                                  return (
-                                    <PriceSimulationDisplay
-                                      commission={commissionValue}
-                                      productData={fieldValue}
-                                      layout="inline"
-                                      showMarginBelow={false}
-                                      showOriginalPrice={true}
-                                    />
-                                  );
-                                }
-                                
-                                // Para campos com métricas API, mostrar badge de score
-                                if (["moz_da", "semrush_as", "ahrefs_dr"].includes(field.field_type)) {
-                                  if (fieldValue === null || fieldValue === undefined) return "-";
-                                  const numValue = parseInt(fieldValue.toString().replace(/,/g, ""));
-                                  return (
-                                    <div className="flex items-center">
-                                      <span>{fieldValue}</span>
-                                      {!isNaN(numValue) && (
-                                        <ApiMetricBadge value={numValue} fieldType={field.field_type} />
-                                      )}
-                                    </div>
-                                  );
-                                }
-                                
-                                return formatMarketplaceValue(fieldValue, field.field_type, true);
-                              })()}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </div>
-
-                    {/* Botão de compra para mobile */}
-                    <div className="xl:hidden contents">
-                      {buttonBuyField && (
-                        <td className="text-[13px] xl:whitespace-nowrap">
+                    {/* Render field values */}
+                    {mobileFields.map((field) => {
+                      if (!field) return null;
+                      
+                      return (
+                        <td key={field.id} className="text-[13px] text-gray-700 dark:text-gray-300">
                           <div className="flex items-center justify-start">
-                            <AddToCartButton
-                              entryId={entry.id}
-                              productName={productName}
-                              price={productPrice}
-                              url={productUrl}
-                              isInCart={isInCart}
-                              buttonStyle="outline"
-                            />
+                            {(() => {
+                              const fieldValue = entry.values[field.id];
+                              if (field.field_type === "product") {
+                                const commissionValue = commissionField
+                                  ? parseFloat(entry.values[commissionField.id]) || 0
+                                  : 0;
+                                return (
+                                  <PriceSimulationDisplay
+                                    commission={commissionValue}
+                                    productData={fieldValue}
+                                    layout="inline"
+                                    showMarginBelow={false}
+                                    showOriginalPrice={true}
+                                  />
+                                );
+                              }
+                              return formatMarketplaceValue(fieldValue, field.field_type, true);
+                            })()}
                           </div>
                         </td>
-                      )}
-                    </div>
-
-                    {/* Botão de compra para desktop */}
-                    <div className="hidden xl:contents">
-                      {buttonBuyField && (
-                        <td 
-                          className="sticky right-0 z-10 whitespace-nowrap text-[13px]" 
-                          style={{ backgroundColor: isDarkMode ? 'rgb(17, 24, 39)' : 'rgb(249, 250, 251)', boxShadow: 'rgba(0, 0, 0, 0.1) -4px 0px 8px' }}
-                        >
-                          <div className="flex items-center justify-start">
-                            <AddToCartButton
-                              entryId={entry.id}
-                              productName={productName}
-                              price={productPrice}
-                              url={productUrl}
-                              isInCart={isInCart}
-                              buttonStyle="outline"
-                            />
-                          </div>
-                        </td>
-                      )}
-                    </div>
+                      );
+                    })}
                   </tr>
                 );
               })}

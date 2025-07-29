@@ -13,6 +13,7 @@ import { ArrowRightIcon } from "../../icons";
 import { formatCurrency } from "../../components/marketplace/utils";
 import { formatPhone } from "../../utils/phoneValidation";
 import { useOrderList } from "./actions/useOrderList";
+import { Pagination } from "../../components/EditorialManager/pagination/components";
 
 export default function OrderList() {
   const {
@@ -32,7 +33,6 @@ export default function OrderList() {
     handleOrdersPerPageChange,
     setCurrentPage,
     sortField,
- 
     handleSort
   } = useOrderList();
 
@@ -385,7 +385,7 @@ export default function OrderList() {
                               <span>{order.billing_email}</span>
                               <button
                                 onClick={() =>
-                                  copyToClipboard(order.billing_email, "Email")
+                                  copyToClipboard(order.billing_email, "email")
                                 }
                                 className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                                 title="Copiar email"
@@ -483,60 +483,16 @@ export default function OrderList() {
           </div>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
-            <div className="flex items-center">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Showing{" "}
-                <span className="font-medium">
-                  {(currentPage - 1) * ordersPerPage + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium">
-                  {Math.min(currentPage * ordersPerPage, filteredOrders.length)}
-                </span>{" "}
-                of <span className="font-medium">{filteredOrders.length}</span>{" "}
-                results
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Anterior
-              </button>
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                        currentPage === page
-                          ? "bg-brand-500 text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
-              </div>
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Próxima
-              </button>{" "}
-            </div>
-          </div>
-        )}
+        {/* Paginação com cache */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredOrders.length}
+          itemsPerPage={ordersPerPage}
+          onPageChange={setCurrentPage}
+          showInfo={true}
+          itemLabel="pedidos"
+        />
       </div>
     </>
   );

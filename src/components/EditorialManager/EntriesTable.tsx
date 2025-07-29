@@ -11,13 +11,12 @@ import { formatDate } from "../form/utils/formatters";
 import { renderFormattedValue } from "./EntryValueFormatter";
 import PriceSimulationDisplay from "./actions/PriceSimulationDisplay";
 import { TableControls, SearchStats } from "./table/components";
-import { useEnhancedSearch } from "./table/search";
-import { useState } from "react";
+import { useCachedPaginatedEntries } from "./pagination";
+import { Pagination } from "./pagination/components";
+import { useTableDataSync } from "./dataSync/hooks/useDataSync";
 
 interface EntriesTableProps {
-  entries: any[];
   fields: any[];
-  loading: boolean;
   selectedFormId: string;
   onView: (entry: any) => void;
   onEdit: (entry: any) => void;
@@ -31,9 +30,7 @@ interface EntriesTableProps {
 }
 
 export default function EntriesTable({
-  entries,
   fields,
-  loading,
   selectedFormId,
   onView,
   onEdit,
@@ -45,21 +42,39 @@ export default function EntriesTable({
 }: EntriesTableProps) {
   if (!show) return null;
 
-  // ESTADO DE PESQUISA
-  const [searchTerm, setSearchTerm] = useState("");
+  // Use the cached paginated entries hook
+  const {
+    entries,
+    loading,
+    currentPage,
+    entriesPerPage,
+    totalPages,
+    totalItems,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    setCurrentPage,
+    setEntriesPerPage,
+    handlePageChange,
+    refreshEntries
+  } = useCachedPaginatedEntries(selectedFormId);
 
-  // ESTADO DE PAGINAÇÃO
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Configura data sync para atualizações automáticas da tabela
+  useTableDataSync(
+    selectedFormId,
+    refreshEntries, // Função de refresh do hook de paginação
+    { 
+      listenerId: `entries-table-${selectedFormId}`,
+      priority: 1 
+    }
+  );
 
-  // ESTADO DE FILTRO POR STATUS
-  const [statusFilter, setStatusFilter] = useState("todos");
-
-  // PAGINAÇÃO
-  const totalPages = Math.ceil(entries.length / entriesPerPage) || 1;
- 
-
-  if (currentPage > totalPages) setCurrentPage(totalPages);
+  // Função para alternar ordenação (desabilitada por enquanto)
+  const handleSort = (field: string) => {
+    // Ordenação será implementada no backend futuramente
+    console.log('Sort by:', field);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -97,83 +112,6 @@ export default function EntriesTable({
     ...otherFields
   ];
 
-  // Estados para ordenação
-  const [sortField, setSortField] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-
-  // Função para alternar ordenação
-  const handleSort = (field: string) => {
-    // Não permite ordenar por 'acoes'
-    if (field === "acoes") return;
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // BUSCA APRIMORADA
-  const { filteredEntries: searchResults, searchStats } = useEnhancedSearch({
-    entries,
-    formFields: fields,
-    searchTerm,
-    options: {
-      caseSensitive: false,
-      exactMatch: false
-    }
-  });
-
-  // FILTRO POR STATUS
-  const statusFilteredEntries = searchResults.filter(entry => {
-    if (statusFilter === 'todos') return true;
-    
-    // Buscar o status no entry - pode estar em diferentes lugares
-    const status = entry.status || entry.values?.status || 'em_analise';
-    return status === statusFilter;
-  });
-
-  console.log(`🔍 [EntriesTable] Filtro de status aplicado:`);
-  console.log(`   Status selecionado: ${statusFilter}`);
-  console.log(`   Registros antes: ${searchResults.length}`);
-  console.log(`   Registros depois: ${statusFilteredEntries.length}`);
-
-  // Ordenar os dados filtrados
-  const sortedEntries = [...statusFilteredEntries].sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
-    // Para campos dinâmicos (displayFields)
-    if (displayFields.some(f => f.id === sortField)) {
-      aValue = a.values?.[sortField];
-      bValue = b.values?.[sortField];
-    }
-    // Para string
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    }
-    // Para número
-    if (typeof aValue === "number" && typeof bValue === "number") {
-      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-    }
-    // Para undefined/null
-    if (aValue == null) return 1;
-    if (bValue == null) return -1;
-    return 0;
-  });
-
-  // PAGINAÇÃO
-  const totalPagesFiltered = Math.ceil(sortedEntries.length / entriesPerPage) || 1;
-  const paginatedEntriesFiltered = sortedEntries.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage
-  );
-
-  if (currentPage > totalPagesFiltered) setCurrentPage(totalPagesFiltered);
-
   if (loading) {
     return (
       <div className="animate-pulse">
@@ -207,7 +145,7 @@ export default function EntriesTable({
             userId={userId}
             onCsvImportSuccess={onCsvImportSuccess}
             showCsvImport={!!selectedFormId}
-            entries={statusFilteredEntries}
+            entries={entries}
             formTitle={formTitle}
             showPdfExport={true}
             onStatusFilterChange={setStatusFilter}
@@ -216,9 +154,9 @@ export default function EntriesTable({
           
           {/* Estatísticas de busca */}
           <SearchStats 
-            total={searchStats.total}
-            filtered={statusFilteredEntries.length}
-            hasFilter={searchStats.hasFilter || statusFilter !== 'todos'}
+            total={totalItems}
+            filtered={entries.length}
+            hasFilter={searchTerm !== '' || statusFilter !== 'todos'}
             searchTerm={searchTerm}
           />
           
@@ -235,16 +173,6 @@ export default function EntriesTable({
                     onClick={() => handleSort("created_at")}
                   >
                     <span>Data</span>
-                    {sortField === "created_at" && (
-                      <span className="flex flex-col gap-0.5 ml-1">
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
-                        </svg>
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
-                        </svg>
-                      </span>
-                    )}
                   </div>
                 </TableCell>
 
@@ -260,16 +188,6 @@ export default function EntriesTable({
                       onClick={() => handleSort(field.id)}
                     >
                       <span>{field.label}</span>
-                      {sortField === field.id && (
-                        <span className="flex flex-col gap-0.5 ml-1">
-                          <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
-                          </svg>
-                          <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
-                          </svg>
-                        </span>
-                      )}
                     </div>
                   </TableCell>
                 ))}
@@ -283,16 +201,6 @@ export default function EntriesTable({
                     onClick={() => handleSort("publisher")}
                   >
                     <span>Publisher</span>
-                    {sortField === "publisher" && (
-                      <span className="flex flex-col gap-0.5 ml-1">
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
-                        </svg>
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
-                        </svg>
-                      </span>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell
@@ -304,16 +212,6 @@ export default function EntriesTable({
                     onClick={() => handleSort("status")}
                   >
                     <span>Status</span>
-                    {sortField === "status" && (
-                      <span className="flex flex-col gap-0.5 ml-1">
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
-                        </svg>
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
-                        </svg>
-                      </span>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell
@@ -324,23 +222,13 @@ export default function EntriesTable({
                     className="absolute inset-0 w-full h-full flex items-center gap-1 text-left select-none px-5 py-3"
                   >
                     <span>Ações</span>
-                    {sortField === "acoes" && (
-                      <span className="flex flex-col gap-0.5 ml-1">
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""/>
-                        </svg>
-                        <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""/>
-                        </svg>
-                      </span>
-                    )}
                   </div>
                 </TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedEntriesFiltered.map((entry) => (
+              {entries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="px-5 py-4 sm:px-6 text-start">
                     <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
@@ -448,28 +336,16 @@ export default function EntriesTable({
             </TableBody>
           </Table>
           
-          {/* Paginação simples (opcional) */}
-          {totalPagesFiltered > 1 && (
-            <div className="flex justify-end items-center gap-2 px-4 py-2">
-              <button
-                className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Página {currentPage} de {totalPagesFiltered}
-              </span>
-              <button
-                className="px-2 py-1 text-sm text-gray-500 disabled:opacity-50"
-                onClick={() => setCurrentPage(p => Math.min(totalPagesFiltered, p + 1))}
-                disabled={currentPage === totalPagesFiltered}
-              >
-                Próxima
-              </button>
-            </div>
-          )}
+          {/* Paginação com cache */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={entriesPerPage}
+            onPageChange={handlePageChange}
+            showInfo={true}
+            itemLabel="registros"
+          />
         </div>
       </div>
     </div>

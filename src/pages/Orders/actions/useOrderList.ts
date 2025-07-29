@@ -102,13 +102,13 @@ export function useOrderList() {
       }
 
       // Verificar se o usuário é administrador
-      const { data: adminData } = await supabase
-        .from("admins")
-        .select("id")
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
         .eq("id", user.id)
-        .maybeSingle();
+        .single();
 
-      const userIsAdmin = !!adminData;
+      const userIsAdmin = profile?.role === "admin";
       setIsAdmin(userIsAdmin);
 
       let query = supabase.from("orders").select("*");

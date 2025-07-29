@@ -9,7 +9,6 @@ import EntryEditModal from "../../components/EditorialManager/EntryEditModal";
 import FormFilter from "../../components/EditorialManager/FormFilter";
 import EntriesTable from "../../components/EditorialManager/EntriesTable";
 import { usePaginatedEntries } from "../../components/EditorialManager/pagination";
-import { DataSyncProvider } from "../../components/EditorialManager/dataSync";
 
 interface FormEntry {
   id: string;
@@ -123,7 +122,6 @@ export default function EditorialManager() {
       }
     } catch (err) {
       console.error("Error loading forms:", err);
-      // Error handling should be done at component level if needed
     }
   }
 
@@ -172,8 +170,6 @@ export default function EditorialManager() {
     }
 
     try {
-      setSuccess("");
-
       // First, update cart_checkout_resume records to remove the reference
       const { error: updateCartError } = await supabase
         .from("cart_checkout_resume")
@@ -194,97 +190,107 @@ export default function EditorialManager() {
       if (deleteError) throw deleteError;
 
       setSuccess("Entry deleted successfully");
-      refreshEntries();
+      refreshEntries(); // Use the new refresh function
     } catch (err) {
       console.error("Error deleting entry:", err);
-      setSuccess("Error deleting entry");
     }
   };
 
-  const handleEntryUpdated = async () => {
-    console.log(`🔄 [EditorialManager] Entry updated, refreshing entries and closing modal`);
+  const handleEditSave = () => {
     setSuccess("Entry updated successfully");
-    refreshEntries();
     setIsEditModalOpen(false);
-    console.log(`✅ [EditorialManager] Entry update process completed`);
+    refreshEntries(); // Use the new refresh function
   };
 
-  const handleCsvImportSuccess = async () => {
+  const handleCsvImportSuccess = () => {
     setSuccess("CSV importado com sucesso!");
-    refreshEntries();
+    refreshEntries(); // Use the new refresh function
   };
 
-  // Get selected form title
-  const selectedFormTitle = forms.find(form => form.id === selectedFormId)?.title || "Formulário";
+  // Get form title for the selected form
+  const selectedForm = forms.find((form) => form.id === selectedFormId);
+  const formTitle = selectedForm?.title || "Formulário";
 
   return (
-    <DataSyncProvider>
-      <PermissionGuard
-        permission="forms.entries.view"
-        fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-error-500">Acesso não autorizado</div>
-          </div>
-        }
-      >
-        <PageMeta
-          title="Gerenciador Editorial | Painel Admin"
-          description="Gerenciamento de entradas de formulários"
-        />
-        <PageBreadcrumb pageTitle="Gerenciador Editorial" />
+    <>
+      <PageMeta
+        title="Editorial Manager | Marketplace Admin"
+        description="Manage marketplace entries and content"
+      />
 
-        {error && (
-          <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
-            {error}
-          </div>
-        )}
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col gap-6">
+          <PageBreadcrumb pageTitle="Editorial Manager" />
 
-        {success && (
-          <div className="mb-6 p-4 text-sm text-success-600 bg-success-50 rounded-lg dark:bg-success-500/15 dark:text-success-500">
-            {success}
-          </div>
-        )}
+          {error && (
+            <div className="p-4 text-red-700 bg-red-100 rounded-lg">
+              {error}
+            </div>
+          )}
 
-        <div className="mb-6">
-          <FormFilter
-            forms={forms}
-            selectedFormId={selectedFormId}
-            onSelectForm={setSelectedFormId}
-          />
+          {success && (
+            <div className="p-4 text-green-700 bg-green-100 rounded-lg">
+              {success}
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow-sm dark:bg-gray-900">
+            <div className="p-6">
+              <FormFilter
+                forms={forms}
+                selectedFormId={selectedFormId}
+                onSelectForm={setSelectedFormId}
+              />
+
+              <div className="mt-6">
+                <PermissionGuard permission="admin">
+                  <EntriesTable
+                    fields={fields}
+                    selectedFormId={selectedFormId}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    userId={userId}
+                    onCsvImportSuccess={handleCsvImportSuccess}
+                    formTitle={formTitle}
+                  />
+                </PermissionGuard>
+
+                <PermissionGuard permission="publisher" fallback={null}>
+                  <EntriesTable
+                    fields={fields}
+                    selectedFormId={selectedFormId}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    show={!isAdmin}
+                    userId={userId}
+                    onCsvImportSuccess={handleCsvImportSuccess}
+                    formTitle={formTitle}
+                  />
+                </PermissionGuard>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <EntriesTable
-          fields={fields}
-          selectedFormId={selectedFormId}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          userId={userId}
-          onCsvImportSuccess={handleCsvImportSuccess}
-          formTitle={selectedFormTitle}
-        />
+      {/* View Modal */}
+      <EntryViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        entry={selectedEntry}
+        isAdmin={isAdmin}
+      />
 
-        {/* View Entry Modal */}
-        {selectedEntry && (
-          <EntryViewModal
-            isOpen={isViewModalOpen}
-            onClose={() => setIsViewModalOpen(false)}
-            entry={{ ...selectedEntry, form_id: selectedEntry.form_id }}
-            isAdmin={isAdmin}
-          />
-        )}
-
-        {/* Edit Entry Modal */}
-        {selectedEntry && (
-          <EntryEditModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            entry={{ ...selectedEntry, form_id: selectedEntry.form_id }}
-            onSave={handleEntryUpdated}
-            isAdmin={isAdmin}
-          />
-        )}
-      </PermissionGuard>
-    </DataSyncProvider>
+      {/* Edit Modal */}
+      <EntryEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        entry={selectedEntry}
+        onSave={handleEditSave}
+        isAdmin={isAdmin}
+      />
+    </>
   );
 }

@@ -20,6 +20,7 @@ export default function TabButton({
   const baseClasses = [
     'inline-flex',
     'items-center',
+    'gap-2', // Adicionado gap para espaçamento entre label e badge
     'justify-center',
     'rounded-md',
     compact ? 'px-2 py-1.5' : 'px-3 py-2',
@@ -28,7 +29,8 @@ export default function TabButton({
     'transition-colors',
     'duration-200',
     'ease-in-out',
-    'whitespace-nowrap'
+    'whitespace-nowrap',
+    'group' // Adicionado para hover effects no badge
   ];
 
   // Definir largura mínima
@@ -80,6 +82,19 @@ export default function TabButton({
       aria-disabled={tab.disabled}
     >
       {tab.label}
+      {typeof tab.count === 'number' && (
+        <span 
+          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium leading-normal transition-colors duration-200 ${
+            tab.disabled
+              ? 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+              : isActive
+              ? 'text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/15'
+              : 'bg-white dark:bg-white/[0.03] text-gray-500 dark:text-gray-400 group-hover:bg-brand-50 group-hover:text-brand-500 dark:group-hover:bg-brand-500/15 dark:group-hover:text-brand-400'
+          }`}
+        >
+          {tab.count}
+        </span>
+      )}
     </button>
   );
 }
