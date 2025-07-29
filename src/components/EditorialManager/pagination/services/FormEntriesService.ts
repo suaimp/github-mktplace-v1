@@ -1,5 +1,6 @@
 import { supabase } from "../../../../lib/supabase";
 import { PaginationParams, PaginatedResponse, FormEntry, StatusCounts } from "../types";
+import { matchEntry } from "../../table/utils";
 
 export class FormEntriesService {
   /**
@@ -70,25 +71,143 @@ export class FormEntriesService {
 
       console.log(`⚡ [FormEntriesService] Query executed in ${(performance.now() - startTime).toFixed(2)}ms`);
       
-      // OTIMIZAÇÃO 2: Buscar fields apenas uma vez se houver searchTerm
-      let fieldsData: any[] = [];
+      // Se há termo de busca, precisamos filtrar antes da paginação
+      let filteredData = data;
+      let filteredCount = count;
+      
       if (searchTerm && formId) {
-        const fieldsStartTime = performance.now();
+        const searchStartTime = performance.now();
+        
+        // Buscar fields para pesquisa
         const { data: fields } = await supabase
           .from("form_fields")
           .select("id, field_type, label")
           .eq("form_id", formId)
-          .in("field_type", ["text", "textarea", "email", "url"]); // Só campos searchable
+          .filter("field_type", "in", '("text","textarea","email","url")'); // Usar filter otimizado
 
-        fieldsData = fields || [];
-        console.log(`📋 [FormEntriesService] Fields loaded in ${(performance.now() - fieldsStartTime).toFixed(2)}ms`);
+        const fieldsData = fields || [];
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        
+        // Buscar TODOS os entries do form para aplicar filtro de busca
+        let searchQuery = supabase
+          .from("form_entries")
+          .select(
+            `
+            id,
+            form_id,
+            status,
+            created_at,
+            created_by,
+            forms!form_id(title),
+            form_entry_values(
+              field_id,
+              value,
+              value_json
+            ),
+            form_entry_notes(
+              id,
+              note,
+              created_at,
+              created_by
+            )
+          `,
+            { count: 'exact' }
+          );
+
+        if (formId) {
+          searchQuery = searchQuery.eq("form_id", formId);
+        }
+
+        if (statusFilter && statusFilter !== 'todos') {
+          searchQuery = searchQuery.eq("status", statusFilter);
+        }
+
+        const { data: allEntries, error: searchError } = await searchQuery;
+        
+        if (searchError) throw searchError;
+
+        // Processar todas as entries para busca
+        const processedEntries = (allEntries || []).map((entry: any) => {
+          const values: Record<string, any> = {};
+          
+          (entry.form_entry_values || []).forEach((entryValue: any) => {
+            const { field_id, value, value_json } = entryValue;
+            
+            if (value_json !== null) {
+              values[field_id] = value_json;
+            } else {
+              try {
+                const parsedValue = JSON.parse(value);
+                values[field_id] = parsedValue;
+              } catch {
+                values[field_id] = value;
+              }
+            }
+          });
+
+          return {
+            ...entry,
+            values
+          };
+        });
+
+        // Buscar publishers para poder incluir na busca
+        const createdByIds = [...new Set(processedEntries.map(entry => entry.created_by).filter(Boolean))];
+        let publishersMap: Map<string, any> = new Map();
+        
+        if (createdByIds.length > 0) {
+          // Buscar em platform_users
+          const { data: platformUsers } = await supabase
+            .from("platform_users")
+            .select("id, first_name, last_name, email")
+            .in("id", createdByIds);
+          
+          platformUsers?.forEach(user => {
+            publishersMap.set(user.id, { ...user, type: 'platform' });
+          });
+          
+          // Buscar os restantes em admins
+          const remainingIds = createdByIds.filter(id => !publishersMap.has(id));
+          if (remainingIds.length > 0) {
+            const { data: adminUsers } = await supabase
+              .from("admins")
+              .select("id, first_name, last_name, email")
+              .in("id", remainingIds);
+            
+            adminUsers?.forEach(user => {
+              publishersMap.set(user.id, { ...user, type: 'admin' });
+            });
+          }
+        }
+
+        // Filtrar entries com base no termo de busca (incluindo publisher)
+        const searchFilteredEntries = processedEntries.filter((entry) => {
+          const entryWithPublisher = {
+            ...entry,
+            publisher: publishersMap.get(entry.created_by) || undefined
+          };
+          
+          return matchEntry(entryWithPublisher, lowerSearchTerm, fieldsData);
+        });
+
+        // Aplicar paginação nos resultados filtrados
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        filteredData = searchFilteredEntries.slice(startIndex, endIndex);
+        filteredCount = searchFilteredEntries.length;
+        
+        console.log(`🔍 [FormEntriesService] Search filter applied in ${(performance.now() - searchStartTime).toFixed(2)}ms`);
+        console.log(`📊 [FormEntriesService] Found ${filteredCount} results for "${searchTerm}"`);
       }
 
       // OTIMIZAÇÃO 3: Processar entries e buscar publishers em lote
       const processStartTime = performance.now();
       
+      // Usar os dados filtrados se houve busca, senão usar os dados originais
+      const dataToProcess = searchTerm ? filteredData : data;
+      
       // Buscar todos os publishers de uma só vez
-      const createdByIds = [...new Set((data || []).map(entry => entry.created_by).filter(Boolean))];
+      const createdByIds = [...new Set((dataToProcess || []).map(entry => entry.created_by).filter(Boolean))];
       let publishersMap: Map<string, any> = new Map();
       
       if (createdByIds.length > 0) {
@@ -116,7 +235,7 @@ export class FormEntriesService {
         }
       }
       
-      const processedEntries = (data || []).map((entry: any) => {
+      const processedEntries = (dataToProcess || []).map((entry: any) => {
         // Processo otimizado de valores
         const values: Record<string, any> = {};
         
@@ -155,34 +274,19 @@ export class FormEntriesService {
 
       console.log(`🔧 [FormEntriesService] Entries processed in ${(performance.now() - processStartTime).toFixed(2)}ms`);
 
-      // OTIMIZAÇÃO 4: Filtro de busca otimizado
-      let filteredEntries = processedEntries;
-      if (searchTerm && fieldsData.length > 0) {
-        const searchStartTime = performance.now();
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        
-        filteredEntries = processedEntries.filter((entry) => {
-          return Object.entries(entry.values).some(([fieldId, value]) => {
-            const field = fieldsData.find((f) => f.id === fieldId);
-            if (!field) return false;
-            return String(value).toLowerCase().includes(lowerSearchTerm);
-          });
-        });
-        
-        console.log(`🔍 [FormEntriesService] Search filter applied in ${(performance.now() - searchStartTime).toFixed(2)}ms`);
-      }
-
-      const totalItems = count || 0;
-      const totalPages = Math.ceil(totalItems / limit);
+      // Para busca, já aplicamos a filtragem na query, então usar processedEntries diretamente
+      // Usar contagem filtrada se houve busca
+      const finalTotalItems = searchTerm ? (filteredCount || 0) : (count || 0);
+      const totalPages = Math.ceil(finalTotalItems / limit);
 
       console.log(`✅ [FormEntriesService] Total processing time: ${(performance.now() - startTime).toFixed(2)}ms`);
 
       return {
-        data: filteredEntries,
+        data: processedEntries,
         pagination: {
           currentPage: page,
           totalPages,
-          totalItems,
+          totalItems: finalTotalItems,
           itemsPerPage: limit,
           hasNextPage: page < totalPages,
           hasPreviousPage: page > 1
@@ -205,7 +309,7 @@ export class FormEntriesService {
       // OTIMIZAÇÃO: Query mais eficiente usando aggregate ao invés de fetch + filter
       let query = supabase
         .from("form_entries")
-        .select("status");
+        .select("status", { count: "exact" });
 
       if (formId) {
         query = query.eq("form_id", formId);

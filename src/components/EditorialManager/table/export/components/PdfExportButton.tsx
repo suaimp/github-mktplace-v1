@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { usePdfExport } from "../hooks/usePdfExport";
+import { useAllEntriesForExport } from "../../hooks";
 import { PdfExportData } from "../types/exportTypes";
 import { LogoService } from "../services/LogoService";
 
 interface PdfExportButtonProps {
-  entries: any[];
+  entries: any[]; // Entries da página atual (usado apenas para verificar se há dados)
   fields: any[];
   formTitle: string;
+  formId: string;
+  statusFilter: string;
+  searchTerm: string;
   disabled?: boolean;
 }
 
@@ -14,9 +18,20 @@ export default function PdfExportButton({
   entries,
   fields,
   formTitle,
+  formId,
+  statusFilter,
+  searchTerm,
   disabled = false
 }: PdfExportButtonProps) {
   const { exportToPdf, loading, error } = usePdfExport();
+  const { 
+    getAllEntries, 
+    getStatusDisplayName
+  } = useAllEntriesForExport({
+    formId,
+    statusFilter,
+    searchTerm
+  });
   const [showError, setShowError] = useState(false);
 
   const handleExport = async () => {
@@ -25,6 +40,8 @@ export default function PdfExportButton({
       entriesCount: entries.length,
       fieldsCount: fields.length,
       formTitle,
+      statusFilter,
+      searchTerm,
       disabled,
       loading
     });
@@ -35,15 +52,30 @@ export default function PdfExportButton({
       return;
     }
 
-    console.log('📦 [PdfExportButton] Preparando dados para exportação...');
+    console.log('📦 [PdfExportButton] Buscando TODOS os entries da aba para exportação...');
+
+    // Buscar todos os entries da aba atual
+    const allEntries = await getAllEntries();
+    
+    if (allEntries.length === 0) {
+      console.warn('⚠️ [PdfExportButton] Nenhum entry encontrado para a aba atual');
+      alert('Não há dados para exportar na aba selecionada');
+      return;
+    }
+
+    console.log('📊 [PdfExportButton] Dados carregados:', {
+      allEntriesCount: allEntries.length,	
+      statusFilter: getStatusDisplayName(statusFilter)
+    });
 
     // Carregar logo da plataforma
     console.log('🎨 [PdfExportButton] Carregando logo...');
     const logoBase64 = await LogoService.getLogoForPdf(false); // Logo claro
     console.log('🎨 [PdfExportButton] Logo carregado:', !!logoBase64);
 
+    // Preparar dados para exportação com informação da aba
     const exportData: PdfExportData = {
-      entries: entries.map(entry => ({
+      entries: allEntries.map(entry => ({
         id: entry.id,
         status: entry.status,
         created_at: entry.created_at,
@@ -58,8 +90,12 @@ export default function PdfExportButton({
       })),
       formTitle,
       exportDate: new Date().toLocaleDateString('pt-BR'),
-      totalEntries: entries.length,
-      logoBase64: logoBase64 || undefined
+      totalEntries: allEntries.length,
+      logoBase64: logoBase64 || undefined,
+      // Adicionar informações da aba exportada
+      statusFilter: statusFilter,
+      statusDisplayName: getStatusDisplayName(statusFilter),
+      searchTerm: searchTerm
     };
 
     console.log('📊 [PdfExportButton] Dados preparados:', {

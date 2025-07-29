@@ -9,6 +9,10 @@ export interface PdfExportData {
   exportDate: string;
   totalEntries: number;
   logoBase64?: string; // Logo em base64 para o PDF
+  // Informações sobre a aba/filtro exportado
+  statusFilter?: string;
+  statusDisplayName?: string;
+  searchTerm?: string;
 }
 
 export interface ExportEntry {

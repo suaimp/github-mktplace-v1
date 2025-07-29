@@ -150,11 +150,11 @@ export default function EntriesTable({
           refreshEntries();
         }}
         showCsvImport={!!selectedFormId}
-        entries={entries}
         formTitle={formTitle}
         showPdfExport={true}
         onStatusFilterChange={handleStatusFilter}
         statusFilter={statusFilter}
+        statusCounts={statusCounts}
       />
 
       {/* Search Stats */}

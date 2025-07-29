@@ -14,6 +14,7 @@ import { FormFieldsService } from "./services/formFieldsService";
 import { FormSubmissionService } from "./services/formSubmissionService";
 import { FormValidationService } from "./services/formValidationService";
 import { useFormDataSync } from "./dataSync/hooks/useFormDataSync";
+import FieldEditor from "./components/FieldEditor";
 
 export default function EntryEditModal({
   isOpen,
@@ -221,8 +222,19 @@ export default function EntryEditModal({
               </h5>
 
               <div className="grid grid-cols-1 gap-6">
-                {fields.map((field) => renderFieldEditor(field))}
-
+                {fields.map((field) => (
+                  <FieldEditor
+                    key={field.id}
+                    field={field}
+                    fieldSettings={fieldSettings}
+                    formValues={formValues}
+                    validationErrors={validationErrors}
+                    updateFormValue={updateFormValue}
+                    clearValidationError={clearValidationError}
+                    isAdmin={isAdmin}
+                    fields={fields}
+                  />
+                ))}
                 {fields.length === 0 && (
                   <div className="text-gray-500 dark:text-gray-400 text-center py-4">
                     Nenhum campo encontrado para este formulário

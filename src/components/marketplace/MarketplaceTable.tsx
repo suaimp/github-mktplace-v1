@@ -41,7 +41,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   
   // Definir tabs para filtros do marketplace
   const tabs = [
-    { id: 'todos', label: 'Todos os Sites' },
+    { id: 'todos', label: 'Todos' },
     { id: 'promocao', label: 'Promoção' },
     { id: 'favoritos', label: 'Favoritos' }
   ];

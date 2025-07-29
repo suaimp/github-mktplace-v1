@@ -55,7 +55,7 @@ export class PdfExportService {
       // Adicionar cabeçalho
       if (options.includeHeader) {
         console.log('📋 [PDF] Adicionando cabeçalho...');
-        this.addHeader(pdf, options);
+        this.addHeader(pdf, options, data);
         console.log('✅ [PDF] Cabeçalho adicionado');
       }
 
@@ -72,7 +72,7 @@ export class PdfExportService {
       }
 
       // Fazer download do arquivo
-      const fileName = this.generateFileName(data.formTitle);
+      const fileName = this.generateFileName(data.formTitle, data.statusDisplayName, data.searchTerm);
       console.log('💾 [PDF] Nome do arquivo:', fileName);
       
       pdf.save(fileName);
@@ -88,7 +88,7 @@ export class PdfExportService {
   /**
    * Adiciona cabeçalho ao PDF
    */
-  private static addHeader(pdf: jsPDF, options: PdfGenerationOptions): void {
+  private static addHeader(pdf: jsPDF, options: PdfGenerationOptions, data?: PdfExportData): void {
     try {
       console.log('🏷️ [PDF Header] Iniciando adição do cabeçalho');
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -100,7 +100,7 @@ export class PdfExportService {
       console.log('📝 [PDF Header] Adicionando título:', options.title);
       pdf.text(options.title, pageWidth / 2, 20, { align: 'center' });
 
-      // Subtítulo
+      // Subtítulo principal
       if (options.subtitle) {
         pdf.setFontSize(12);
         pdf.setTextColor(100, 100, 100); // Cinza para subtítulo
@@ -108,9 +108,23 @@ export class PdfExportService {
         pdf.text(options.subtitle, pageWidth / 2, 30, { align: 'center' });
       }
 
+      // Informações da aba exportada
+      if (data?.statusDisplayName) {
+        pdf.setFontSize(10);
+        pdf.setTextColor(50, 50, 50); // Cinza mais escuro
+        const filterInfo = `Filtro: ${data.statusDisplayName}`;
+        const searchInfo = data.searchTerm ? ` | Busca: "${data.searchTerm}"` : '';
+        const totalInfo = ` | Total de registros: ${data.totalEntries}`;
+        const statusLine = filterInfo + searchInfo + totalInfo;
+        
+        console.log('📝 [PDF Header] Adicionando informações da aba:', statusLine);
+        pdf.text(statusLine, pageWidth / 2, 40, { align: 'center' });
+      }
+
       // Linha separadora
       pdf.setDrawColor(200, 200, 200);
-      pdf.line(20, 35, pageWidth - 20, 35);
+      const lineY = data?.statusDisplayName ? 45 : 35;
+      pdf.line(20, lineY, pageWidth - 20, lineY);
       console.log('➖ [PDF Header] Linha separadora adicionada');
     } catch (error) {
       console.error('❌ [PDF Header] Erro ao adicionar cabeçalho:', error);
@@ -136,7 +150,9 @@ export class PdfExportService {
       console.log('📊 [PDF Table] Linhas preparadas:', rows.length, 'linhas');
 
       // Configurações da tabela com larguras fixas para evitar sobreposição
-      const startY = 50;
+      // Ajustar startY baseado se há informações de status ou não
+      const hasStatusInfo = data.statusDisplayName;
+      const startY = hasStatusInfo ? 55 : 45; // Mais espaço se há info da aba
       const startX = 10; // Margem menor para aproveitar mais espaço
       const rowHeight = 12; // Altura maior para melhor legibilidade
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -526,15 +542,20 @@ export class PdfExportService {
   /**
    * Gera nome do arquivo PDF
    */
-  private static generateFileName(formTitle: string): string {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+  private static generateFileName(formTitle: string, statusDisplayName?: string, searchTerm?: string): string {
+    // Usar o título do formulário como base
+    let fileName = formTitle;
     
-    const sanitizedTitle = formTitle
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .toLowerCase();
+    // Adicionar status se não for "Todos os Status"
+    if (statusDisplayName && statusDisplayName !== 'Todos os Status') {
+      fileName += ` (${statusDisplayName})`;
+    }
+    
+    // Adicionar busca se houver
+    if (searchTerm && searchTerm.trim()) {
+      fileName += ` - Busca: ${searchTerm.substring(0, 20)}`;
+    }
 
-    return `${sanitizedTitle}_${dateStr}_${timeStr}.pdf`;
+    return `${fileName}.pdf`;
   }
 }

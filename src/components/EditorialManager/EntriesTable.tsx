@@ -61,7 +61,8 @@ export default function EntriesTable({
     refreshEntries,
     sortField,
     sortDirection,
-    handleSort
+    handleSort,
+    statusCounts
   } = useCachedPaginatedEntries(selectedFormId);
 
   // Configura data sync para atualizações automáticas da tabela
@@ -131,11 +132,12 @@ export default function EntriesTable({
             userId={userId}
             onCsvImportSuccess={onCsvImportSuccess}
             showCsvImport={!!selectedFormId}
-            entries={entries}
             formTitle={formTitle}
             showPdfExport={true}
             onStatusFilterChange={setStatusFilter}
             statusFilter={statusFilter}
+            statusCounts={statusCounts}
+            entries={entries}
           />
           
           {/* Estatísticas de busca */}

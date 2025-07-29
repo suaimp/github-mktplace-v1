@@ -1,5 +1,8 @@
+
 import Input from '../input/InputField';
 import { useState, useEffect } from 'react';
+import { formatNumber } from './utils/formatNumber';
+import { ensureString } from './utils/ensureString';
 
 interface ApiFieldProps {
   field: any;
@@ -9,22 +12,7 @@ interface ApiFieldProps {
   onErrorClear?: () => void;
 }
 
-// Function to format number with commas
-const formatNumber = (value: string, maxValue?: number): string => {
-  if (!value) return '';
-  
-  // Remove any non-digits
-  const number = value.replace(/\D/g, '');
-  
-  // Convert to number and limit to max value if specified
-  let limitedNumber = parseInt(number);
-  if (!isNaN(limitedNumber) && maxValue !== undefined) {
-    limitedNumber = Math.min(limitedNumber, maxValue);
-  }
-  
-  // Convert back to string and add commas
-  return limitedNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
+// formatNumber agora está em ./utils/formatNumber
 
 // Function to get score letter based on value
 const getScoreInfo = (value: number): { letter: string, bgColor: string, textColor: string, hoverBgColor: string, hoverTextColor: string } => {
@@ -88,7 +76,8 @@ export default function ApiField({
   // Update score info when value changes
   useEffect(() => {
     if (shouldLimit100 && value) {
-      const numValue = parseInt(value.replace(/,/g, ''));
+      const safeValue = ensureString(value);
+      const numValue = parseInt(safeValue.replace(/,/g, ''));
       if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
         setScoreInfo(getScoreInfo(numValue));
         setShowScore(true);
@@ -107,6 +96,7 @@ export default function ApiField({
           type="text"
           value={value ? formatNumber(value, shouldLimit100 ? 100 : undefined) : ''}
           onChange={(e) => {
+            // Sempre garantir string
             const formattedValue = formatNumber(e.target.value, shouldLimit100 ? 100 : undefined);
             onChange(formattedValue);
             if (error && onErrorClear) {
