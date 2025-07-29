@@ -1,18 +1,18 @@
-import React from "react";
-import * as NicheIcons from "../../../icons/niche-icons";
+ 
+import * as NicheIcons from "../../icons/niche-icons";
 import {
   parseNicheData,
   type NicheOption
-} from "../../../services/db-services/form-services/formFieldNicheService";
-import { MarketplaceTableInfoTooltip } from "../Tooltip";
-import { useNiches } from "../hooks/useNiches";
+} from "../../services/db-services/form-services/formFieldNicheService";
+import { MarketplaceTableInfoTooltip } from "./Tooltip";
+import { useNichesWithRealTimeUpdates } from "./niche_rendering/hooks/useNichesWithRealTimeUpdates";
 
 interface NicheRendererProps {
   value: any;
 }
 
 export function NicheRenderer({ value }: NicheRendererProps) {
-  const { niches: allNiches, loading } = useNiches();
+  const { niches: allNiches, loading } = useNichesWithRealTimeUpdates();
 
   // Loading skeleton
   if (loading) {
@@ -21,7 +21,7 @@ export function NicheRenderer({ value }: NicheRendererProps) {
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"
+            className="w-[19px] h-[19px] bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"
           />
         ))}
       </div>
@@ -102,24 +102,22 @@ export function NicheRenderer({ value }: NicheRendererProps) {
           return (
             <MarketplaceTableInfoTooltip
               key={`${niche.text}-${index}`}
-              text={niche.text}
-              tableLoaded={true}
-              entriesCount={1}
+              text={
+                <span style={{ color: '#fff' }}>
+                  {isActive
+                    ? `Aceita conteúdos relacionados a ${niche.text}`
+                    : `Não aceita conteúdos relacionados a ${niche.text}`}
+                </span>
+              }
             >
               <div
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 ${
+                className={`inline-flex items-center justify-center w-[19px] h-[19px] rounded-full transition-all cursor-help ${
                   isActive
-                    ? "bg-blue-100 dark:bg-blue-900/30"
-                    : "bg-gray-100 dark:bg-gray-800"
+                    ? "bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
                 }`}
               >
-                <IconComponent
-                  className={`w-5 h-5 transition-colors duration-200 ${
-                    isActive
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-400 dark:text-gray-600"
-                  }`}
-                />
+                <IconComponent className="w-[11px] h-[11px]" />
               </div>
             </MarketplaceTableInfoTooltip>
           );
