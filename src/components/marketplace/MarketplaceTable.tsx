@@ -602,7 +602,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <th
                       scope="col" 
                       className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
-                      style={{ boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.1)' }}
+                      style={{ boxShadow: '-2px 0 4px rgba(0, 0, 0, 0.05)' }}
                     >
                       <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
                     </th>
@@ -755,7 +755,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       {buttonBuyField && (
                         <td 
                           className="sticky right-0 z-10 whitespace-nowrap text-[13px]" 
-                          style={{ backgroundColor: isDarkMode ? 'rgb(17, 24, 39)' : 'rgb(249, 250, 251)', boxShadow: 'rgba(0, 0, 0, 0.1) -4px 0px 8px' }}
+                          style={{ backgroundColor: isDarkMode ? 'rgb(30, 41, 59)' : 'rgb(248, 250, 252)', boxShadow: 'rgba(0, 0, 0, 0.05) -2px 0px 4px' }}
                         >
                           <div className="flex items-center justify-start">
                             <AddToCartButton
