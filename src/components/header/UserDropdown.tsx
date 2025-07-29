@@ -5,6 +5,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { signOut, supabase } from "../../lib/supabase";
 import UserAvatar from "../ui/avatar/UserAvatar";
 import { SettingsMinimalIcon } from "../../icons";
+import { DEFAULT_LOGIN_PATH } from "../marketplace/navigation";
 
 interface AdminProfile {
   id: string;
@@ -84,7 +85,7 @@ export default function UserDropdown() {
     try {
       setLoading(true);
       await signOut();
-      navigate("/", { replace: true });
+      navigate(DEFAULT_LOGIN_PATH, { replace: true });
     } catch (error) {
       console.error("Erro ao sair:", error);
     } finally {
@@ -102,7 +103,7 @@ export default function UserDropdown() {
         ? "/publisher/profile"
         : "/advertiser/profile";
     }
-    return "/";
+    return DEFAULT_LOGIN_PATH;
   };
 
   const getSettingsPath = () => {
@@ -115,7 +116,7 @@ export default function UserDropdown() {
         ? "/publisher/settings"
         : "/advertiser/settings";
     }
-    return "/";
+    return DEFAULT_LOGIN_PATH;
   };
 
   if (!profile) return null;

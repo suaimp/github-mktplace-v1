@@ -50,7 +50,7 @@ export default function ViewPage() {
       setPage(page);
     } catch (err) {
       console.error("Error loading page:", err);
-      setError("Error loading page");
+      setError("Erro ao carregar página");
       navigate("/404");
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ export default function ViewPage() {
   if (error || !page) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-error-500">{error || "Page not found"}</div>
+        <div className="text-error-500">{error || "Página não encontrada"}</div>
       </div>
     );
   }

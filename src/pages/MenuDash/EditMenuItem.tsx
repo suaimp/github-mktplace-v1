@@ -79,7 +79,7 @@ export default function EditMenuItem() {
         ]);
       } catch (err) {
         console.error("Error initializing data:", err);
-        setError("Error loading data");
+        setError("Erro ao carregar dados");
       } finally {
         setLoading(false);
       }
@@ -167,7 +167,7 @@ export default function EditMenuItem() {
     let isValid = true;
 
     if (!form.name.trim()) {
-      errors.name = "Name is required";
+      errors.name = "Nome é obrigatório";
       isValid = false;
     }
 
@@ -177,12 +177,12 @@ export default function EditMenuItem() {
       !form.path.startsWith("/") &&
       !form.path.startsWith("#")
     ) {
-      errors.path = "Path must start with / or #";
+      errors.path = "Caminho deve começar com / ou #";
       isValid = false;
     }
 
     if (form.position < 0) {
-      errors.position = "Position must be a positive number";
+      errors.position = "Posição deve ser um número positivo";
       isValid = false;
     }
 
@@ -214,7 +214,7 @@ export default function EditMenuItem() {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("Usuário não autenticado");
 
       const menuItemData = {
         name: form.name.trim(),
@@ -236,7 +236,7 @@ export default function EditMenuItem() {
           .eq("id", id);
 
         if (error) throw error;
-        setSuccess("Menu item updated successfully");
+        setSuccess("Item do menu atualizado com sucesso");
       } else {
         // Create new item
         const { error } = await supabase.from("menu_items").insert([
@@ -247,7 +247,7 @@ export default function EditMenuItem() {
         ]);
 
         if (error) throw error;
-        setSuccess("Menu item created successfully");
+        setSuccess("Item do menu criado com sucesso");
       }
 
       // Redirect after short delay
@@ -256,7 +256,7 @@ export default function EditMenuItem() {
       }, 1500);
     } catch (err) {
       console.error("Error saving menu item:", err);
-      setError("Error saving menu item");
+      setError("Erro ao salvar item do menu");
     } finally {
       setLoading(false);
     }
@@ -275,15 +275,15 @@ export default function EditMenuItem() {
       permission="menu.edit"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-error-500">Access not authorized</div>
+          <div className="text-error-500">Acesso não autorizado</div>
         </div>
       }
     >
       <PageMeta
-        title={`${id ? "Edit" : "New"} Menu Item | Admin Panel`}
-        description="Manage dashboard menu items"
+        title={`${id ? "Editar" : "Novo"} Item do Menu | Painel Admin`}
+        description="Gerenciar itens do menu do dashboard"
       />
-      <PageBreadcrumb pageTitle={`${id ? "Edit" : "New"} Menu Item`} />
+      <PageBreadcrumb pageTitle={`${id ? "Editar" : "Novo"} Item do Menu`} />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         {error && (
@@ -301,7 +301,7 @@ export default function EditMenuItem() {
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
           <div>
             <Label>
-              Name <span className="text-error-500">*</span>
+              Nome <span className="text-error-500">*</span>
             </Label>
             <Input
               type="text"
@@ -314,7 +314,7 @@ export default function EditMenuItem() {
           </div>
 
           <div>
-            <Label>Description</Label>
+            <Label>Descrição</Label>
             <TextArea
               value={form.description}
               onChange={(value) => setForm({ ...form, description: value })}
@@ -323,19 +323,19 @@ export default function EditMenuItem() {
           </div>
 
           <div>
-            <Label>Icon</Label>
+            <Label>Ícone</Label>
             <Select
-              options={[{ value: "", label: "None" }, ...availableIcons]}
+              options={[{ value: "", label: "Nenhum" }, ...availableIcons]}
               value={form.icon}
               onChange={(value) => setForm({ ...form, icon: value })}
             />
           </div>
 
           <div>
-            <Label>Link to Page</Label>
+            <Label>Link para Página</Label>
             <Select
               options={[
-                { value: "", label: "None (use custom path)" },
+                { value: "", label: "Nenhum (usar caminho personalizado)" },
                 ...pages.map((page) => ({
                   value: page.id,
                   label: page.title
@@ -351,33 +351,33 @@ export default function EditMenuItem() {
               }
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Select an existing page to link to, or leave empty to use a custom
-              path
+              Selecione uma página existente para vincular, ou deixe vazio para usar um
+              caminho personalizado
             </p>
           </div>
 
           {!form.selectedPage && (
             <div>
-              <Label>Path</Label>
+              <Label>Caminho</Label>
               <Input
                 type="text"
                 value={form.path}
                 onChange={(e) => setForm({ ...form, path: e.target.value })}
                 error={!!validationErrors.path}
                 hint={validationErrors.path}
-                placeholder="/example/path or #submenu"
+                placeholder="/exemplo/caminho ou #submenu"
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Use # to create a submenu group without a direct link
+                Use # para criar um grupo de submenu sem um link direto
               </p>
             </div>
           )}
 
           <div>
-            <Label>Parent Menu Item</Label>
+            <Label>Item de Menu Pai</Label>
             <Select
               options={[
-                { value: "", label: "None (root item)" },
+                { value: "", label: "Nenhum (item raiz)" },
                 ...parentMenuItems
                   .filter((item) => !id || item.id !== id)
                   .map((item) => ({
@@ -392,7 +392,7 @@ export default function EditMenuItem() {
 
           <div>
             <Label>
-              Position <span className="text-error-500">*</span>
+              Posição <span className="text-error-500">*</span>
             </Label>
             <Input
               type="number"
@@ -408,12 +408,12 @@ export default function EditMenuItem() {
           </div>
 
           <div>
-            <Label>Visibility</Label>
+            <Label>Visibilidade</Label>
             <Select
               options={[
-                { value: "all", label: "All Users" },
-                { value: "publisher", label: "Publishers Only" },
-                { value: "advertiser", label: "Advertisers Only" }
+                { value: "all", label: "Todos os Usuários" },
+                { value: "publisher", label: "Apenas Publishers" },
+                { value: "advertiser", label: "Apenas Anunciantes" }
               ]}
               value={form.visible_to ?? ""}
               onChange={(value) =>
@@ -424,7 +424,7 @@ export default function EditMenuItem() {
               }
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Control which type of users can see this menu item
+              Controle qual tipo de usuário pode ver este item do menu
             </p>
           </div>
 

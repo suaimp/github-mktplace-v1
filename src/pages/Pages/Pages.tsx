@@ -73,7 +73,7 @@ export default function Pages() {
   const handleDelete = async (pageId: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this page? This action cannot be undone."
+        "Tem certeza que deseja excluir esta página? Esta ação não pode ser desfeita."
       )
     ) {
       return;
@@ -88,18 +88,18 @@ export default function Pages() {
 
       if (error) throw error;
 
-      setSuccess("Page deleted successfully");
+      setSuccess("Página excluída com sucesso");
       await loadPages();
     } catch (err) {
       console.error("Error deleting page:", err);
-      setError("Error deleting page");
+      setError("Erro ao excluir página");
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString("en-US", {
+    return new Date(date).toLocaleString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -121,12 +121,12 @@ export default function Pages() {
       permission="pages.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-error-500">Access not authorized</div>
+          <div className="text-error-500">Acesso não autorizado</div>
         </div>
       }
     >
-      <PageMeta title="Pages | Admin Panel" description="Manage system pages" />
-      <PageBreadcrumb pageTitle="Pages" />
+      <PageMeta title="Páginas | Painel Admin" description="Gerenciar páginas do sistema" />
+      <PageBreadcrumb pageTitle="Páginas" />
 
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
@@ -151,7 +151,7 @@ export default function Pages() {
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Title
+                    Título
                   </th>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Slug
@@ -160,7 +160,7 @@ export default function Pages() {
                     Status
                   </th>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Visibility
+                    Visibilidade
                   </th>
                   <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Última Atualização
@@ -193,10 +193,10 @@ export default function Pages() {
                         }
                       >
                         {page.status === "published"
-                          ? "Published"
+                          ? "Publicado"
                           : page.status === "archived"
-                          ? "Archived"
-                          : "Draft"}
+                          ? "Arquivado"
+                          : "Rascunho"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -210,10 +210,10 @@ export default function Pages() {
                         }
                       >
                         {page.visible_to === "all"
-                          ? "All Users"
+                          ? "Todos os Usuários"
                           : page.visible_to === "publisher"
                           ? "Publishers"
-                          : "Advertisers"}
+                          : "Anunciantes"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -224,14 +224,14 @@ export default function Pages() {
                         <button
                           onClick={() => handleEdit(page)}
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          title="Edit"
+                          title="Editar"
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(page.id)}
                           className="p-2 text-error-500 hover:text-error-600 dark:text-error-400 dark:hover:text-error-300"
-                          title="Delete"
+                          title="Excluir"
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>

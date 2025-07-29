@@ -80,7 +80,7 @@ export default function FormSettings() {
       }
     } catch (err) {
       console.error("Error loading form settings:", err);
-      setError("Error loading form settings");
+      setError("Erro ao carregar configurações do formulário");
       navigate("/forms");
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export default function FormSettings() {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("Usuário não autenticado");
 
       const { error: updateError } = await supabase
         .from("forms")
@@ -125,7 +125,7 @@ export default function FormSettings() {
       }, 1500);
     } catch (err) {
       console.error("Error saving form settings:", err);
-      setError("Error saving form settings");
+      setError("Erro ao salvar configurações do formulário");
     } finally {
       setLoading(false);
     }
@@ -142,10 +142,10 @@ export default function FormSettings() {
   return (
     <>
       <PageMeta
-        title="Form Settings | Admin Panel"
-        description="Configure form settings"
+        title="Configurações do Formulário | Painel Admin"
+        description="Configurar configurações do formulário"
       />
-      <PageBreadcrumb pageTitle="Form Settings" />
+      <PageBreadcrumb pageTitle="Configurações do Formulário" />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         {error && (
@@ -174,7 +174,7 @@ export default function FormSettings() {
           </div>
 
           <div>
-            <Label>Description</Label>
+            <Label>Descrição</Label>
             <Input
               type="text"
               value={settings.description}
@@ -185,7 +185,7 @@ export default function FormSettings() {
           </div>
 
           <div>
-            <Label>Submit Button Text</Label>
+            <Label>Texto do Botão de Envio</Label>
             <Input
               type="text"
               value={settings.submit_button_text}
@@ -197,49 +197,49 @@ export default function FormSettings() {
           </div>
 
           <div>
-            <Label>Success Message</Label>
+            <Label>Mensagem de Sucesso</Label>
             <Input
               type="text"
               value={settings.success_message}
               onChange={(e) =>
                 setSettings({ ...settings, success_message: e.target.value })
               }
-              placeholder="Form submitted successfully!"
+              placeholder="Formulário enviado com sucesso!"
             />
           </div>
 
           <div>
-            <Label>Error Message</Label>
+            <Label>Mensagem de Erro</Label>
             <Input
               type="text"
               value={settings.failure_message}
               onChange={(e) =>
                 setSettings({ ...settings, failure_message: e.target.value })
               }
-              placeholder="Error submitting form. Please try again."
+              placeholder="Erro ao enviar formulário. Tente novamente."
             />
           </div>
 
           <div>
-            <Label>No Data Message</Label>
+            <Label>Mensagem de Nenhum Dado</Label>
             <Input
               type="text"
               value={settings.no_data_message}
               onChange={(e) =>
                 setSettings({ ...settings, no_data_message: e.target.value })
               }
-              placeholder="No entries found"
+              placeholder="Nenhuma entrada encontrada"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Message to display when there are no entries to show
+              Mensagem a ser exibida quando não há entradas para mostrar
             </p>
           </div>
 
           <div>
-            <Label>Redirect Page</Label>
+            <Label>Página de Redirecionamento</Label>
             <Select
               options={[
-                { value: "", label: "None (show success message)" },
+                { value: "", label: "Nenhuma (mostrar mensagem de sucesso)" },
                 ...pages.map((page) => ({
                   value: page.slug,
                   label: page.title
@@ -251,7 +251,7 @@ export default function FormSettings() {
               }
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Select a page to redirect to after successful form submission
+              Selecione uma página para redirecionar após o envio bem-sucedido do formulário
             </p>
           </div>
 

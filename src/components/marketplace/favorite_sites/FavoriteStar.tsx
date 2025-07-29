@@ -23,13 +23,14 @@ export function FavoriteStar({ entryId }: FavoriteStarProps) {
       style={{ boxShadow: "none" }}
     >
       <StarIcon
-        width={25}
-        height={25}
+        width={20}
+        height={20}
         filled={checked}
         className={
-          `${checked ? "text-brand-500" : "text-gray-300 dark:text-gray-700"} ` +
-          "transition-colors hover:text-brand-500"
+          `${checked ? "text-gray-300 dark:text-gray-700" : "text-gray-300 dark:text-gray-700"} ` +
+          "transition-colors hover:text-[#fdb022]"
         }
+        style={{ color: checked ? "#fdb022" : undefined }}
       />
     </button>
   );

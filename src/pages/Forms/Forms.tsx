@@ -103,7 +103,7 @@ export default function Forms() {
     try {
       // Validate title
       if (!newFormTitle.trim()) {
-        setValidationErrors({ title: "Title is required" });
+        setValidationErrors({ title: "Título é obrigatório" });
         return;
       }
 
@@ -114,7 +114,7 @@ export default function Forms() {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("Usuário não autenticado");
 
       // Create new form
       const { data: form, error: createError } = await supabase
@@ -150,7 +150,7 @@ export default function Forms() {
   const handleDelete = async (formId: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this form? This action cannot be undone."
+        "Tem certeza que deseja excluir este formulário? Esta ação não pode ser desfeita."
       )
     ) {
       return;
@@ -165,11 +165,11 @@ export default function Forms() {
 
       if (error) throw error;
 
-      setSuccess("Form deleted successfully");
+      setSuccess("Formulário excluído com sucesso");
       await loadForms();
     } catch (err) {
       console.error("Error deleting form:", err);
-      setError("Error deleting form");
+      setError("Erro ao excluir formulário");
     } finally {
       setLoading(false);
     }
@@ -203,12 +203,12 @@ export default function Forms() {
       permission="forms.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-error-500">Access not authorized</div>
+          <div className="text-error-500">Acesso não autorizado</div>
         </div>
       }
     >
-      <PageMeta title="Forms | Admin Panel" description="Manage system forms" />
-      <PageBreadcrumb pageTitle="Forms" />
+      <PageMeta title="Formulários | Painel Admin" description="Gerenciar formulários do sistema" />
+      <PageBreadcrumb pageTitle="Formulários" />
 
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
@@ -236,13 +236,13 @@ export default function Forms() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Title
+                    Título
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Fields
+                    Campos
                   </TableCell>
                   <TableCell
                     isHeader
@@ -298,10 +298,10 @@ export default function Forms() {
                         }
                       >
                         {form.status === "published"
-                          ? "Published"
+                          ? "Publicado"
                           : form.status === "archived"
-                          ? "Archived"
-                          : "Draft"}
+                          ? "Arquivado"
+                          : "Rascunho"}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -312,21 +312,21 @@ export default function Forms() {
                         <button
                           onClick={() => handleEdit(form)}
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          title="Edit"
+                          title="Editar"
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => navigate(`/forms/settings/${form.id}`)}
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          title="Settings"
+                          title="Configurações"
                         >
                           <SettingsIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(form.id)}
                           className="p-2 text-error-500 hover:text-error-600 dark:text-error-400 dark:hover:text-error-300"
-                          title="Delete"
+                          title="Excluir"
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>
@@ -360,17 +360,17 @@ export default function Forms() {
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
           <div className="mb-6">
             <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-              New Form
+              Novo Formulário
             </h4>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Enter a name for your new form
+              Digite um nome para seu novo formulário
             </p>
           </div>
 
           <form onSubmit={handleCreateSubmit}>
             <div className="mb-6">
               <Label>
-                Form Title <span className="text-error-500">*</span>
+                Título do Formulário <span className="text-error-500">*</span>
               </Label>
               <Input
                 type="text"
@@ -383,7 +383,7 @@ export default function Forms() {
                 }}
                 error={!!validationErrors.title}
                 hint={validationErrors.title}
-                placeholder="Enter form title"
+                placeholder="Digite o título do formulário"
                 required
               />
             </div>

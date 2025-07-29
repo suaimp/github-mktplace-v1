@@ -2,8 +2,11 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import Alert from "../../components/ui/alert/Alert";
 import PageMeta from "../../components/common/PageMeta";
+import { useUserNavigationPaths } from "../../components/marketplace/navigation";
 
 export default function Alerts() {
+  const { paths } = useUserNavigationPaths();
+  
   return (
     <>
       <PageMeta
@@ -18,7 +21,7 @@ export default function Alerts() {
             title="Success Message"
             message="Be cautious when performing this action."
             showLink={true}
-            linkHref="/"
+            linkHref={paths.home}
             linkText="Learn more"
           />
           <Alert
@@ -34,7 +37,7 @@ export default function Alerts() {
             title="Warning Message"
             message="Be cautious when performing this action."
             showLink={true}
-            linkHref="/"
+            linkHref={paths.home}
             linkText="Learn more"
           />
           <Alert
@@ -50,7 +53,7 @@ export default function Alerts() {
             title="Error Message"
             message="Be cautious when performing this action."
             showLink={true}
-            linkHref="/"
+            linkHref={paths.home}
             linkText="Learn more"
           />
           <Alert
@@ -66,7 +69,7 @@ export default function Alerts() {
             title="Info Message"
             message="Be cautious when performing this action."
             showLink={true}
-            linkHref="/"
+            linkHref={paths.home}
             linkText="Learn more"
           />
           <Alert

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { updatePassword } from "../services/passwordRecoveryService.ts";
 import { validatePasswordInput } from "../utils/passwordValidation.ts";
+import { DEFAULT_LOGIN_PATH } from "../../marketplace/navigation";
 
 /**
  * Hook para gerenciar estado e lógica do formulário de definir nova senha
@@ -219,7 +220,7 @@ export const usePasswordRecoveryForm = (): UsePasswordRecoveryFormReturn => {
       // Redirecionar para login após 3 segundos
       setTimeout(() => {
         console.log('🔄 [PasswordRecovery] Redirecionando para login...');
-        navigate("/", { replace: true });
+        navigate(DEFAULT_LOGIN_PATH, { replace: true });
       }, 3000);
       
     } catch (err: any) {

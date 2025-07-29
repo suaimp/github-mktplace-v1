@@ -72,7 +72,7 @@ export default function MenuDash() {
   const handleDelete = async (itemId: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this item? This action cannot be undone."
+        "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita."
       )
     ) {
       return;
@@ -90,18 +90,18 @@ export default function MenuDash() {
 
       if (error) throw error;
 
-      setSuccess("Item deleted successfully");
+      setSuccess("Item excluído com sucesso");
       await loadMenuItems();
     } catch (err) {
       console.error("Error deleting item:", err);
-      setError("Error deleting item");
+      setError("Erro ao excluir item");
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString("en-US", {
+    return new Date(date).toLocaleString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -123,15 +123,15 @@ export default function MenuDash() {
       permission="menu.view"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-error-500">Access not authorized</div>
+          <div className="text-error-500">Acesso não autorizado</div>
         </div>
       }
     >
       <PageMeta
-        title="Menu Dashboard | Admin Panel"
-        description="Manage dashboard menu"
+        title="Dashboard de Menu | Painel Admin"
+        description="Gerenciar menu do dashboard"
       />
-      <PageBreadcrumb pageTitle="Menu Dashboard" />
+      <PageBreadcrumb pageTitle="Dashboard de Menu" />
 
       {error && (
         <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
@@ -159,25 +159,25 @@ export default function MenuDash() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Name
+                    Nome
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Path
+                    Caminho
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Position
+                    Posição
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Visible
+                    Visível
                   </TableCell>
                   <TableCell
                     isHeader
@@ -215,7 +215,7 @@ export default function MenuDash() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge color={item.is_visible ? "success" : "error"}>
-                        {item.is_visible ? "Yes" : "No"}
+                        {item.is_visible ? "Sim" : "Não"}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -226,14 +226,14 @@ export default function MenuDash() {
                         <button
                           onClick={() => handleEdit(item)}
                           className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          title="Edit"
+                          title="Editar"
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
                           className="p-2 text-error-500 hover:text-error-600 dark:text-error-400 dark:hover:text-error-300"
-                          title="Delete"
+                          title="Excluir"
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>

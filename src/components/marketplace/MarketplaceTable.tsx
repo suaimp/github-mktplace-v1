@@ -788,9 +788,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
             <div className="flex items-center">
               <p className="text-[13px] text-gray-700 dark:text-gray-300">
-                Showing {(currentPage - 1) * ordersPerPage + 1} to{" "}
-                {Math.min(currentPage * ordersPerPage, filteredEntries.length)} of{" "}
-                {filteredEntries.length} results
+                Mostrando {(currentPage - 1) * ordersPerPage + 1} a{" "}
+                {Math.min(currentPage * ordersPerPage, filteredEntries.length)} de{" "}
+                {filteredEntries.length} resultados
               </p>
             </div>
             <div className="flex items-center space-x-2">

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useUserNavigationPaths } from "../marketplace/navigation";
 
 interface HeaderLogoProps {
   logos: {
@@ -9,8 +10,10 @@ interface HeaderLogoProps {
 }
 
 export default function HeaderLogo({ logos, loading }: HeaderLogoProps) {
+  const { paths } = useUserNavigationPaths();
+  
   return (
-    <Link to="/" className="lg:hidden">
+    <Link to={paths.home} className="lg:hidden">
       {loading ? (
         <div className="h-8 w-32 bg-gray-200 animate-pulse rounded dark:bg-gray-800"></div>
       ) : (

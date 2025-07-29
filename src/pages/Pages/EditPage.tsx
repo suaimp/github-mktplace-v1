@@ -89,7 +89,7 @@ export default function EditPage() {
       }
     } catch (err) {
       console.error("Error loading page:", err);
-      setError("Error loading page");
+      setError("Erro ao carregar página");
       navigate("/pages");
     } finally {
       setLoading(false);
@@ -101,21 +101,21 @@ export default function EditPage() {
     let isValid = true;
 
     if (!form.title.trim()) {
-      errors.title = "Title is required";
+      errors.title = "Título é obrigatório";
       isValid = false;
     }
 
     if (!form.slug.trim()) {
-      errors.slug = "Slug is required";
+      errors.slug = "Slug é obrigatório";
       isValid = false;
     } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
       errors.slug =
-        "Slug must contain only lowercase letters, numbers, and hyphens";
+        "Slug deve conter apenas letras minúsculas, números e hífens";
       isValid = false;
     }
 
     if (!form.content.trim()) {
-      errors.content = "Content is required";
+      errors.content = "Conteúdo é obrigatório";
       isValid = false;
     }
 
@@ -149,7 +149,7 @@ export default function EditPage() {
         if (slugExists) {
           setValidationErrors((prev) => ({
             ...prev,
-            slug: "This slug is already in use"
+            slug: "Este slug já está em uso"
           }));
           return;
         }
@@ -158,7 +158,7 @@ export default function EditPage() {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("Usuário não autenticado");
 
       const pageData = {
         title: form.title.trim(),
@@ -177,7 +177,7 @@ export default function EditPage() {
           .eq("id", id);
 
         if (error) throw error;
-        setSuccess("Page updated successfully");
+        setSuccess("Página atualizada com sucesso");
       } else {
         // Create new page
         const { error } = await supabase.from("pages").insert([
@@ -188,7 +188,7 @@ export default function EditPage() {
         ]);
 
         if (error) throw error;
-        setSuccess("Page created successfully");
+        setSuccess("Página criada com sucesso");
       }
 
       // Redirect after short delay
@@ -197,7 +197,7 @@ export default function EditPage() {
       }, 1500);
     } catch (err) {
       console.error("Error saving page:", err);
-      setError("Error saving page");
+      setError("Erro ao salvar página");
     } finally {
       setLoading(false);
     }
@@ -226,15 +226,15 @@ export default function EditPage() {
       permission="pages.edit"
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-error-500">Access not authorized</div>
+          <div className="text-error-500">Acesso não autorizado</div>
         </div>
       }
     >
       <PageMeta
-        title={`${id ? "Edit" : "New"} Page | Admin Panel`}
-        description="Manage system pages"
+        title={`${id ? "Editar" : "Nova"} Página | Painel Admin`}
+        description="Gerenciar páginas do sistema"
       />
-      <PageBreadcrumb pageTitle={`${id ? "Edit" : "New"} Page`} />
+      <PageBreadcrumb pageTitle={`${id ? "Editar" : "Nova"} Página`} />
 
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {error && (
@@ -253,7 +253,7 @@ export default function EditPage() {
           <div className="space-y-6">
             <div>
               <Label>
-                Title <span className="text-error-500">*</span>
+                Título <span className="text-error-500">*</span>
               </Label>
               <Input
                 type="text"
@@ -278,14 +278,14 @@ export default function EditPage() {
                 required
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                The URL-friendly version of the title. Will be auto-generated
-                from title if left empty.
+                A versão amigável da URL do título. Será gerada automaticamente
+                a partir do título se deixada em branco.
               </p>
             </div>
 
             <div>
               <Label>
-                Content <span className="text-error-500">*</span>
+                Conteúdo <span className="text-error-500">*</span>
               </Label>
               <TextArea
                 value={form.content}
@@ -301,9 +301,9 @@ export default function EditPage() {
               <Label>Status</Label>
               <Select
                 options={[
-                  { value: "draft", label: "Draft" },
-                  { value: "published", label: "Published" },
-                  { value: "archived", label: "Archived" }
+                  { value: "draft", label: "Rascunho" },
+                  { value: "published", label: "Publicado" },
+                  { value: "archived", label: "Arquivado" }
                 ]}
                 value={form.status}
                 onChange={(value) =>
@@ -316,12 +316,12 @@ export default function EditPage() {
             </div>
 
             <div>
-              <Label>Visibility</Label>
+              <Label>Visibilidade</Label>
               <Select
                 options={[
-                  { value: "all", label: "All Users" },
-                  { value: "publisher", label: "Publishers Only" },
-                  { value: "advertiser", label: "Advertisers Only" }
+                  { value: "all", label: "Todos os Usuários" },
+                  { value: "publisher", label: "Apenas Publishers" },
+                  { value: "advertiser", label: "Apenas Anunciantes" }
                 ]}
                 value={form.visible_to}
                 onChange={(value) =>
@@ -332,7 +332,7 @@ export default function EditPage() {
                 }
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Control which type of users can view this page
+                Controle qual tipo de usuário pode visualizar esta página
               </p>
             </div>
 

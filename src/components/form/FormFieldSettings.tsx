@@ -181,7 +181,7 @@ export default function FormFieldSettings({
       if (fieldSettings) {
         setSettings(fieldSettings);
       } else if (field.field_type === "button_buy") {
-        // Set default field identifier for button_buy field type
+        // Define identificador padrão do campo para o tipo button_buy
         setSettings((prev) => ({
           ...prev,
           field_identifier: "botao_comprar",
@@ -191,8 +191,8 @@ export default function FormFieldSettings({
       setOptions(field.options || []);
       console.log("[FormFieldSettings] Loaded field options:", field.options);
     } catch (err) {
-      console.error("Error loading field settings:", err);
-      setError("Error loading field settings");
+      console.error("Erro ao carregar configurações do campo:", err);
+      setError("Erro ao carregar configurações do campo");
     } finally {
       setLoading(false);
     }
@@ -338,8 +338,8 @@ export default function FormFieldSettings({
       onSave(updatedField);
       onClose();
     } catch (err) {
-      console.error("Error saving field settings:", err);
-      setError("Error saving field settings");
+      console.error("Erro ao salvar configurações do campo:", err);
+      setError("Erro ao salvar configurações do campo");
     } finally {
       setLoading(false);
     }
@@ -350,10 +350,10 @@ export default function FormFieldSettings({
       <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-8">
         <div className="mb-6">
           <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-            Field Settings
+            Configurações do Campo
           </h4>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure field properties
+            Configure as propriedades do campo
           </p>
         </div>
 
@@ -367,7 +367,7 @@ export default function FormFieldSettings({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>
-                Label Text <span className="text-error-500">*</span>
+                Texto do Rótulo <span className="text-error-500">*</span>
               </Label>
               <Input
                 type="text"
@@ -380,7 +380,7 @@ export default function FormFieldSettings({
             </div>
 
             <div>
-              <Label>Marketplace Label</Label>
+              <Label>Rótulo do Marketplace</Label>
               <Input
                 type="text"
                 value={settings.marketplace_label || ""}
@@ -399,7 +399,7 @@ export default function FormFieldSettings({
             </div>
 
             <div>
-              <Label>Field Identifier</Label>
+              <Label>Identificador do Campo</Label>
               <Input
                 type="text"
                 value={settings.field_identifier || ""}
@@ -418,11 +418,11 @@ export default function FormFieldSettings({
             </div>
 
             <div>
-              <Label>Label Visibility</Label>
+              <Label>Visibilidade do Rótulo</Label>
               <Select
                 options={[
-                  { value: "visible", label: "Visible" },
-                  { value: "hidden", label: "Hidden" },
+                  { value: "visible", label: "Visível" },
+                  { value: "hidden", label: "Oculto" },
                 ]}
                 value={settings.label_visibility}
                 onChange={(value) =>
@@ -435,7 +435,7 @@ export default function FormFieldSettings({
             </div>
 
             <div>
-              <Label>Columns</Label>
+              <Label>Colunas</Label>
               <Select
                 options={[
                   { value: "1", label: "1 Column (100% width)" },
@@ -460,7 +460,7 @@ export default function FormFieldSettings({
               field.field_type !== "button_buy" && (
                 <>
                   <div>
-                    <Label>Placeholder Text</Label>
+                    <Label>Texto de Marcação</Label>
                     <Input
                       type="text"
                       value={settings.placeholder_text || ""}
@@ -473,13 +473,13 @@ export default function FormFieldSettings({
                       placeholder={
                         field.field_type === "url"
                           ? "https://example.com"
-                          : "Enter placeholder text"
+                          : "Digite o texto de marcação"
                       }
                     />
                   </div>
 
                   <div>
-                    <Label>Help Text</Label>
+                    <Label>Texto de Ajuda</Label>
                     <Input
                       type="text"
                       value={settings.help_text || ""}
@@ -492,13 +492,13 @@ export default function FormFieldSettings({
               )}
 
             <div>
-              <Label>Visibility</Label>
+              <Label>Visibilidade</Label>
               <Select
                 options={[
-                  { value: "visible", label: "Visible" },
-                  { value: "hidden", label: "Hidden" },
-                  { value: "admin", label: "Admin Only" },
-                  { value: "marketplace", label: "Marketplace Only" },
+                  { value: "visible", label: "Visível" },
+                  { value: "hidden", label: "Oculto" },
+                  { value: "admin", label: "Apenas Admin" },
+                  { value: "marketplace", label: "Apenas Marketplace" },
                 ]}
                 value={settings.visibility}
                 onChange={(value) =>
@@ -516,11 +516,11 @@ export default function FormFieldSettings({
 
             {field.field_type === "url" && (
               <div>
-                <Label>URL Validation</Label>
+                <Label>Validação de URL</Label>
                 <Select
                   options={[
-                    { value: "url", label: "Require HTTPS" },
-                    { value: "any_url", label: "Allow any URL" },
+                    { value: "url", label: "Exigir HTTPS" },
+                    { value: "any_url", label: "Permitir qualquer URL" },
                   ]}
                   value={settings.validation_type}
                   onChange={(value) =>
@@ -533,7 +533,7 @@ export default function FormFieldSettings({
                   }
                 />
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Choose how URLs should be validated in this field
+                  Escolha como as URLs devem ser validadas neste campo
                 </p>
               </div>
             )}
@@ -548,7 +548,7 @@ export default function FormFieldSettings({
                 <div className="space-y-4 md:col-span-2">
                   <div className="flex items-center gap-2">
                     <Switch
-                      label="Required Field"
+                      label="Campo Obrigatório"
                       checked={settings.is_required}
                       onChange={(checked) =>
                         setSettings({ ...settings, is_required: checked })
@@ -558,7 +558,7 @@ export default function FormFieldSettings({
 
                   <div className="flex items-center gap-2">
                     <Switch
-                      label="No Duplicates"
+                      label="Não Permitir Duplicatas"
                       checked={settings.no_duplicates}
                       onChange={(checked) =>
                         setSettings({ ...settings, no_duplicates: checked })
@@ -644,7 +644,7 @@ export default function FormFieldSettings({
               Cancelar
             </Button>
             <Button disabled={loading}>
-              {loading ? "Saving..." : "Salvar Alteações"}
+              {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </form>

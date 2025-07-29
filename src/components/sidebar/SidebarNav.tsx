@@ -205,7 +205,7 @@ export default function SidebarNav({
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Administration"
+                  "Administração"
                 ) : (
                   <HorizontaLDots className="size-6" />
                 )}

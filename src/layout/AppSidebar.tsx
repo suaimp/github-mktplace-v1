@@ -6,6 +6,7 @@ import { useSidebar } from "../services/context/SidebarContext";
 import SidebarLogo from "../components/sidebar/SidebarLogo";
 import SidebarNav from "../components/sidebar/SidebarNav";
 import { supabase } from "../lib/supabase";
+import { DEFAULT_LOGIN_PATH } from "../components/marketplace/navigation";
 
 interface MenuItem {
   id: string;
@@ -230,7 +231,7 @@ export default function AppSidebar() {
   const navItems: NavItem[] = [
     {
       icon: <Icons.GridIcon />,
-      name: "Dashboard",
+      name: "Painel",
       path: isAdmin
         ? "/dashboard"
         : userRole === "publisher"
@@ -374,7 +375,7 @@ export default function AppSidebar() {
     } else if (userRole === "advertiser") {
       navigate("/advertiser/dashboard");
     } else {
-      navigate("/");
+      navigate(DEFAULT_LOGIN_PATH);
     }
   };
 
