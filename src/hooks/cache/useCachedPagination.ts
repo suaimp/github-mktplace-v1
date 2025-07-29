@@ -120,30 +120,23 @@ export function useCachedPagination<T>({
   // Handlers
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    // Invalidate cache for search changes
-    cacheRef.current.invalidate({ 
-      formId: dependencies[0],
-      searchTerm: undefined // Clear search-related cache
-    });
+    // OTIMIZAÇÃO: Não invalidar todo o cache, apenas recarregar
   };
 
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
-    // Invalidate cache for filter changes
-    cacheRef.current.invalidate({ 
-      formId: dependencies[0],
-      statusFilter: undefined // Clear filter-related cache
-    });
+    // OTIMIZAÇÃO: Não invalidar todo o cache, apenas recarregar
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
-    // Clear all cache when changing items per page
+    // Invalidar cache apenas quando mudamos items per page (layout change)
     cacheRef.current.clear();
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Não limpar cache ao mudar página - é o principal benefício do cache
   };
 
   const handleSort = (field: string) => {
@@ -153,8 +146,7 @@ export function useCachedPagination<T>({
       setSortField(field);
       setSortDirection("asc");
     }
-    // Invalidate cache for sort changes
-    cacheRef.current.clear();
+    // OTIMIZAÇÃO: Não limpar todo cache ao ordenar, deixar que expire naturalmente
   };
 
   const refreshData = () => {

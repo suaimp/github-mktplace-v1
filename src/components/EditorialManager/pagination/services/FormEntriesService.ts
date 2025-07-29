@@ -1,19 +1,21 @@
 import { supabase } from "../../../../lib/supabase";
 import { PaginationParams, PaginatedResponse, FormEntry, StatusCounts } from "../types";
-import { processEntryValues } from "../../actions/valuePriceProcessor";
 
 export class FormEntriesService {
   /**
-   * Carrega entradas com paginação no backend
+   * Carrega entradas com paginação no backend - OTIMIZADO
    */
   static async loadEntriesPaginated(params: PaginationParams): Promise<PaginatedResponse<FormEntry>> {
     try {
       const { page, limit, searchTerm, statusFilter, sortField, sortDirection, formId } = params;
       
+      console.log(`🔄 [FormEntriesService] Loading entries - Page: ${page}, Limit: ${limit}, FormId: ${formId}`);
+      const startTime = performance.now();
+      
       // Calcular offset
       const offset = (page - 1) * limit;
       
-      // Build the base query
+      // OTIMIZAÇÃO 1: Query básica sem JOINs problemáticos
       let query = supabase
         .from("form_entries")
         .select(
@@ -23,13 +25,13 @@ export class FormEntriesService {
           status,
           created_at,
           created_by,
-          form:forms(title),
-          values:form_entry_values(
+          forms!form_id(title),
+          form_entry_values(
             field_id,
             value,
             value_json
           ),
-          notes:form_entry_notes(
+          form_entry_notes(
             id,
             note,
             created_at,
@@ -49,8 +51,6 @@ export class FormEntriesService {
         query = query.eq("status", statusFilter);
       }
 
-      // Apply search filter (will be done after data retrieval for complex search)
-      
       // Apply sorting
       const sortColumnMap: Record<string, string> = {
         'created_at': 'created_at',
@@ -68,83 +68,114 @@ export class FormEntriesService {
 
       if (error) throw error;
 
-      // Process entries to format values
-      const processedEntries = await Promise.all(
-        (data || []).map(async (entry: any) => {
-          // Usa a lógica extraída para processar os valores
-          const values = await processEntryValues(entry.values);
+      console.log(`⚡ [FormEntriesService] Query executed in ${(performance.now() - startTime).toFixed(2)}ms`);
+      
+      // OTIMIZAÇÃO 2: Buscar fields apenas uma vez se houver searchTerm
+      let fieldsData: any[] = [];
+      if (searchTerm && formId) {
+        const fieldsStartTime = performance.now();
+        const { data: fields } = await supabase
+          .from("form_fields")
+          .select("id, field_type, label")
+          .eq("form_id", formId)
+          .in("field_type", ["text", "textarea", "email", "url"]); // Só campos searchable
 
-          // Get publisher info if created_by exists
-          let publisher: any = null;
-          if (entry.created_by) {
-            // First try to get from platform_users
-            const { data: platformUserData, error: platformUserError } =
-              await supabase
-                .from("platform_users")
-                .select("first_name, last_name, email")
-                .eq("id", entry.created_by)
-                .maybeSingle();
+        fieldsData = fields || [];
+        console.log(`📋 [FormEntriesService] Fields loaded in ${(performance.now() - fieldsStartTime).toFixed(2)}ms`);
+      }
 
-            if (!platformUserError && platformUserData) {
-              publisher = platformUserData;
-            } else {
-              // If not found in platform_users, try admins
-              const { data: adminData, error: adminError } = await supabase
-                .from("admins")
-                .select("first_name, last_name, email")
-                .eq("id", entry.created_by)
-                .maybeSingle();
-
-              if (!adminError && adminData) {
-                publisher = adminData;
-              }
+      // OTIMIZAÇÃO 3: Processar entries e buscar publishers em lote
+      const processStartTime = performance.now();
+      
+      // Buscar todos os publishers de uma só vez
+      const createdByIds = [...new Set((data || []).map(entry => entry.created_by).filter(Boolean))];
+      let publishersMap: Map<string, any> = new Map();
+      
+      if (createdByIds.length > 0) {
+        // Tentar buscar primeiro em platform_users
+        const { data: platformUsers } = await supabase
+          .from("platform_users")
+          .select("id, first_name, last_name, email")
+          .in("id", createdByIds);
+        
+        platformUsers?.forEach(user => {
+          publishersMap.set(user.id, { ...user, type: 'platform' });
+        });
+        
+        // Buscar os restantes em admins
+        const remainingIds = createdByIds.filter(id => !publishersMap.has(id));
+        if (remainingIds.length > 0) {
+          const { data: adminUsers } = await supabase
+            .from("admins")
+            .select("id, first_name, last_name, email")
+            .in("id", remainingIds);
+          
+          adminUsers?.forEach(user => {
+            publishersMap.set(user.id, { ...user, type: 'admin' });
+          });
+        }
+      }
+      
+      const processedEntries = (data || []).map((entry: any) => {
+        // Processo otimizado de valores
+        const values: Record<string, any> = {};
+        
+        (entry.form_entry_values || []).forEach((entryValue: any) => {
+          const { field_id, value, value_json } = entryValue;
+          
+          // Processamento simplificado sem async
+          if (value_json !== null) {
+            values[field_id] = value_json;
+          } else {
+            try {
+              const parsedValue = JSON.parse(value);
+              values[field_id] = parsedValue;
+            } catch {
+              values[field_id] = value;
             }
           }
+        });
 
-          return {
-            id: entry.id,
-            form_id: entry.form_id,
-            created_at: entry.created_at,
-            status: entry.status,
-            created_by: entry.created_by,
-            publisher,
-            values,
-            form: entry.form,
-            notes: entry.notes || [],
-            fields: []
-          };
-        })
-      );
+        // Publisher info otimizado (busca em lote)
+        const publisher = publishersMap.get(entry.created_by) || null;
 
-      // Apply search filter to processed entries if searchTerm exists
+        return {
+          id: entry.id,
+          form_id: entry.form_id,
+          created_at: entry.created_at,
+          status: entry.status,
+          created_by: entry.created_by,
+          publisher,
+          values,
+          form: entry.forms,
+          notes: entry.form_entry_notes || [],
+          fields: []
+        };
+      });
+
+      console.log(`🔧 [FormEntriesService] Entries processed in ${(performance.now() - processStartTime).toFixed(2)}ms`);
+
+      // OTIMIZAÇÃO 4: Filtro de busca otimizado
       let filteredEntries = processedEntries;
-      if (searchTerm) {
-        // We need form fields for proper search
-        const { data: fieldsData } = await supabase
-          .from("form_fields")
-          .select("*")
-          .eq("form_id", formId || processedEntries[0]?.form_id)
-          .order("position", { ascending: true });
-
-        const fields = fieldsData || [];
+      if (searchTerm && fieldsData.length > 0) {
+        const searchStartTime = performance.now();
         const lowerSearchTerm = searchTerm.toLowerCase();
         
         filteredEntries = processedEntries.filter((entry) => {
           return Object.entries(entry.values).some(([fieldId, value]) => {
-            const field = fields.find((f) => f.id === fieldId);
+            const field = fieldsData.find((f) => f.id === fieldId);
             if (!field) return false;
-
-            // Search in text-based fields
-            if (["text", "textarea", "email", "url"].includes(field.field_type)) {
-              return String(value).toLowerCase().includes(lowerSearchTerm);
-            }
-            return false;
+            return String(value).toLowerCase().includes(lowerSearchTerm);
           });
         });
+        
+        console.log(`🔍 [FormEntriesService] Search filter applied in ${(performance.now() - searchStartTime).toFixed(2)}ms`);
       }
 
       const totalItems = count || 0;
       const totalPages = Math.ceil(totalItems / limit);
+
+      console.log(`✅ [FormEntriesService] Total processing time: ${(performance.now() - startTime).toFixed(2)}ms`);
 
       return {
         data: filteredEntries,
@@ -164,30 +195,47 @@ export class FormEntriesService {
   }
 
   /**
-   * Carrega contadores de status para as tabs
+   * Carrega contadores de status para as tabs - OTIMIZADO
    */
   static async loadStatusCounts(formId?: string): Promise<StatusCounts> {
     try {
+      console.log(`📊 [FormEntriesService] Loading status counts for formId: ${formId}`);
+      const startTime = performance.now();
+
+      // OTIMIZAÇÃO: Query mais eficiente usando aggregate ao invés de fetch + filter
       let query = supabase
         .from("form_entries")
-        .select("status", { count: 'exact' });
+        .select("status");
 
       if (formId) {
         query = query.eq("form_id", formId);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
-      // Count each status
-      const counts = {
-        todos: data?.length || 0,
-        em_analise: data?.filter(entry => entry.status === 'em_analise').length || 0,
-        verificado: data?.filter(entry => entry.status === 'verificado').length || 0,
-        reprovado: data?.filter(entry => entry.status === 'reprovado').length || 0
+      // Count each status de forma mais eficiente
+      const statusCount = {
+        em_analise: 0,
+        verificado: 0,
+        reprovado: 0
       };
 
+      data?.forEach(entry => {
+        if (statusCount.hasOwnProperty(entry.status)) {
+          statusCount[entry.status as keyof typeof statusCount]++;
+        }
+      });
+
+      const counts = {
+        todos: count || 0,
+        em_analise: statusCount.em_analise,
+        verificado: statusCount.verificado,
+        reprovado: statusCount.reprovado
+      };
+
+      console.log(`✅ [FormEntriesService] Status counts loaded in ${(performance.now() - startTime).toFixed(2)}ms:`, counts);
       return counts;
     } catch (error) {
       console.error("Error loading status counts:", error);

@@ -14,6 +14,7 @@ import { TableControls, SearchStats } from "./table/components";
 import { useCachedPaginatedEntries } from "./pagination";
 import { Pagination } from "./pagination/components";
 import { useTableDataSync } from "./dataSync/hooks/useDataSync";
+import EntriesTableSkeleton from "./table/EntriesTableSkeleton";
 
 interface EntriesTableProps {
   fields: any[];
@@ -113,19 +114,7 @@ export default function EntriesTable({
   ];
 
   if (loading) {
-    return (
-      <div className="animate-pulse">
-        <div className="h-12 bg-gray-200 rounded-lg w-full mb-4 dark:bg-gray-800"></div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-20 bg-gray-200 rounded-lg dark:bg-gray-800"
-            ></div>
-          ))}
-        </div>
-      </div>
-    );
+    return <EntriesTableSkeleton rows={entriesPerPage} columns={displayFields.length + 3} />;
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useCachedPagination } from "../../../../hooks/cache";
 import { FormEntriesService } from "../services/FormEntriesService";
 import { PaginationParams, PaginatedResponse, FormEntry, StatusCounts } from "../types";
@@ -12,29 +12,36 @@ export function useCachedPaginatedEntries(formId?: string) {
     reprovado: 0
   });
 
-  // Create the fetch function for cached pagination
+  // OTIMIZAÇÃO: Memoizar a função de fetch para evitar recriações
   const fetchEntries = useCallback(async (params: PaginationParams) => {
+    console.log(`🔄 [useCachedPaginatedEntries] Fetching entries for formId: ${formId}`);
     const response: PaginatedResponse<FormEntry> = await FormEntriesService.loadEntriesPaginated(params);
+    console.log(`✅ [useCachedPaginatedEntries] Fetched ${response.data.length} entries`);
     return response;
-  }, []);
+  }, [formId]);
+
+  // OTIMIZAÇÃO: Configuração de cache otimizada
+  const cacheConfig = useMemo(() => ({
+    maxAge: 3 * 60 * 1000, // Reduzido para 3 minutos (dados mais atualizados)
+    maxEntries: 50 // Reduzido para economizar memória
+  }), []);
 
   // Use cached pagination hook
   const paginationResult = useCachedPagination<FormEntry>({
     fetchFunction: fetchEntries,
     dependencies: [formId],
-    cacheConfig: {
-      maxAge: 5 * 60 * 1000, // 5 minutes
-      maxEntries: 100 // Allow more entries for forms with many pages
-    }
+    cacheConfig
   });
 
-  // Load status counts separately (not cached as it's less expensive)
+  // OTIMIZAÇÃO: Load status counts apenas quando necessário
   const loadStatusCounts = useCallback(async () => {
     if (!formId) return;
 
     try {
+      console.log(`📊 [useCachedPaginatedEntries] Loading status counts for formId: ${formId}`);
       const counts = await FormEntriesService.loadStatusCounts(formId);
       setStatusCounts(counts);
+      console.log(`✅ [useCachedPaginatedEntries] Status counts loaded:`, counts);
     } catch (err) {
       console.error("Error loading status counts:", err);
     }
@@ -46,12 +53,14 @@ export function useCachedPaginatedEntries(formId?: string) {
   }, [loadStatusCounts]);
 
   // Enhanced refresh function that also refreshes status counts
-  const refreshEntries = () => {
+  const refreshEntries = useCallback(() => {
+    console.log(`🔄 [useCachedPaginatedEntries] Refreshing entries and status counts`);
     paginationResult.refreshData();
     loadStatusCounts();
-  };
+  }, [paginationResult.refreshData, loadStatusCounts]);
 
-  return {
+  // OTIMIZAÇÃO: Memoizar o objeto de retorno para evitar re-renders
+  return useMemo(() => ({
     // Data
     entries: paginationResult.data,
     loading: paginationResult.loading,
@@ -89,5 +98,30 @@ export function useCachedPaginatedEntries(formId?: string) {
     // Cache utilities
     clearCache: paginationResult.clearCache,
     cacheSize: paginationResult.cacheSize
-  };
+  }), [
+    paginationResult.data,
+    paginationResult.loading,
+    paginationResult.error,
+    statusCounts,
+    paginationResult.currentPage,
+    paginationResult.itemsPerPage,
+    paginationResult.totalPages,
+    paginationResult.totalItems,
+    paginationResult.searchTerm,
+    paginationResult.statusFilter,
+    paginationResult.sortField,
+    paginationResult.sortDirection,
+    paginationResult.handleSearch,
+    paginationResult.handleStatusFilter,
+    paginationResult.handleItemsPerPageChange,
+    paginationResult.handlePageChange,
+    paginationResult.handleSort,
+    refreshEntries,
+    paginationResult.setCurrentPage,
+    paginationResult.setItemsPerPage,
+    paginationResult.setSearchTerm,
+    paginationResult.setStatusFilter,
+    paginationResult.clearCache,
+    paginationResult.cacheSize
+  ]);
 }
