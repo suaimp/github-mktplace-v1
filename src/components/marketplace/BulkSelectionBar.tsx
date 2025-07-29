@@ -159,6 +159,9 @@ export default function BulkSelectionBar({
             entries={selectedEntriesData}
             fields={fields}
             formTitle={formTitle}
+            formId=""
+            statusFilter="todos"
+            searchTerm=""
             disabled={selectedCount === 0}
           />
         </div>

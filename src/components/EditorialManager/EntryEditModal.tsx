@@ -3,16 +3,16 @@ import { Modal } from "../../components/ui/modal";
 import Button from "../../components/ui/button/Button";
 import Select from "../../components/form/Select";
 import TextArea from "../../components/form/input/TextArea";
-import * as Fields from "../../components/form/fields";
+ 
 import { useShoppingCartToCheckoutResume } from "../marketplace/actions/ShoppingCartToCheckoutResume";
 
 // Import types and services
 import { EntryEditModalProps } from "./types/entryTypes";
 import { useFormFields } from "./hooks/useFormFields";
 import { useFormValues } from "./hooks/useFormValues";
-import { FormFieldsService } from "./services/formFieldsService";
+ 
 import { FormSubmissionService } from "./services/formSubmissionService";
-import { FormValidationService } from "./services/formValidationService";
+ 
 import { useFormDataSync } from "./dataSync/hooks/useFormDataSync";
 import FieldEditor from "./components/FieldEditor";
 
@@ -106,87 +106,7 @@ export default function EntryEditModal({
     }
   };
 
-  // Render field editor based on field type
-  const renderFieldEditor = (field: any) => {
-    const settings = fieldSettings[field.id] || {};
-    const value = formValues[field.id];
-    const error = validationErrors[field.id];
-
-    // Check field visibility based on user permissions
-    if (!FormFieldsService.shouldFieldBeVisible(settings, isAdmin)) {
-      return null;
-    }
-
-    // Skip button_buy fields in the edit modal
-    if (field.field_type === "button_buy") {
-      return null;
-    }
-
-    const handleChange = (newValue: any) => {
-      updateFormValue(field.id, newValue);
-    };
-
-    const handleErrorClear = () => {
-      clearValidationError(field.id);
-    };
-
-    // Função para extrair dados do produto dos formValues
-    const extractProductDataFromForm = () => {
-      // Procura por campo de produto nos formValues
-      const productField = fields.find((f) => f.field_type === "product");
-      if (productField && formValues[productField.id]) {
-        return formValues[productField.id];
-      }
-      return null;
-    };
-
-    const fieldProps = {
-      field,
-      settings,
-      value,
-      onChange: handleChange,
-      error,
-      onErrorClear: handleErrorClear,
-      // Parâmetros adicionais para CommissionField (simulador de preço)
-      productData: extractProductDataFromForm()
-    };
-
-    // Get the appropriate field component based on field type
-    const fieldTypeMapped = FormFieldsService.mapFieldType(field.field_type);
-    const FieldComponent = (Fields as any)[
-      `${
-        fieldTypeMapped.charAt(0).toUpperCase() + fieldTypeMapped.slice(1)
-      }Field`
-    ];
-
-    if (!FieldComponent) {
-      return (
-        <div className="text-error-500">
-          Unknown field type: {field.field_type} (mapped to {fieldTypeMapped})
-        </div>
-      );
-    }
-
-    return (
-      <div className="mb-4">
-        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-400">
-          {field.label}
-          {FormValidationService.isFieldRequired(field) && <span className="text-error-500 ml-1">*</span>}
-          {settings.visibility === "admin" && (
-            <span className="ml-2 text-xs text-brand-500 dark:text-brand-400">
-              (Admin Only)
-            </span>
-          )}
-          {settings.visibility === "marketplace" && (
-            <span className="ml-2 text-xs text-warning-500 dark:text-warning-400">
-              (Marketplace Only)
-            </span>
-          )}
-        </label>
-        <FieldComponent {...fieldProps} />
-      </div>
-    );
-  };
+ 
 
   if (!entry) return null;
 
