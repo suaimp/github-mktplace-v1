@@ -17,6 +17,7 @@ import { useCustomSticky } from "../../hooks/useCustomSticky";
 export default function Checkout() {
   const navigate = useNavigate();
   const { items } = useCart();
+  //@ts-ignore
   const [orderCompleted, setOrderCompleted] = useState(false);
   const { paths } = useUserNavigationPaths();
 
