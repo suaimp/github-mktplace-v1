@@ -9,6 +9,8 @@ import MarketplaceTableSkeleton from "./MarketplaceTableSkeleton";
 import MarketplaceTableEmpty from "./MarketplaceTableEmpty";
 import { formatMarketplaceValue } from "./MarketplaceValueFormatter";
 import BulkSelectionBar from "./BulkSelectionBar";
+import { FavoriteStar } from "./favorite_sites/FavoriteStar";
+import { useFavorites } from "./favorite_sites/context/FavoritesContext";
 import ApiMetricBadge from "./ApiMetricBadge";
 import { extractProductPrice } from "./actions/priceCalculator";
 import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
@@ -23,6 +25,7 @@ interface MarketplaceTableProps {
 }
 
 export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
+  const { favoriteEntryIds } = useFavorites();
   console.log(`🛒 [MarketplaceTable] === COMPONENT START === formId: "${formId}"`);
   
   const { items } = useCart();
@@ -112,7 +115,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         return false;
       });
     } else if (activeTabId === 'favoritos') {
-      result = [];
+      // Filtrar apenas os entries que estão nos favoritos do usuário logado
+      result = result.filter((entry) => favoriteEntryIds.includes(entry.id));
     }
 
     // Apply search filter if search term exists
@@ -419,7 +423,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th scope="col" className="w-10 text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                  <div className="flex items-center justify-start">
+                  <div className="flex items-center justify-start gap-1">
                     <div className="relative">
                       <input
                         type="checkbox"
@@ -440,6 +444,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         </span>
                       </label>
                     </div>
+                    {/* StarIcon removido do cabeçalho */}
                   </div>
                 </th>
                 
@@ -634,7 +639,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     }}
                   >
                     <td className="whitespace-nowrap text-[13px]">
-                      <div className="flex items-center justify-start">
+                      <div className="flex items-center justify-start gap-1">
                         <div className="relative">
                           <input
                             type="checkbox"
@@ -655,6 +660,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                             </span>
                           </label>
                         </div>
+                        <FavoriteStar entryId={entry.id} />
                       </div>
                     </td>
                     

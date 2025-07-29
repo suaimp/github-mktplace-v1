@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import MarketplaceTable from '../marketplace/MarketplaceTable';
+import { FavoritesProvider } from '../marketplace/favorite_sites/context/FavoritesContext';
 
 interface MarketplaceRendererProps {
   formId: string;
@@ -63,7 +64,9 @@ export default function MarketplaceRenderer({ formId }: MarketplaceRendererProps
   return (
     <div className="w-full xl:-mx-6">
       <div className="w-full xl:overflow-x-auto xl:px-6">
-        <MarketplaceTable formId={formId} />
+        <FavoritesProvider>
+          <MarketplaceTable formId={formId} />
+        </FavoritesProvider>
       </div>
     </div>
   );

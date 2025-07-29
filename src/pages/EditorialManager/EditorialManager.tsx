@@ -8,6 +8,7 @@ import EntryViewModal from "../../components/EditorialManager/EntryViewModal";
 import EntryEditModal from "../../components/EditorialManager/EntryEditModal";
 import FormFilter from "../../components/EditorialManager/FormFilter";
 import EntriesTable from "../../components/EditorialManager/EntriesTable";
+import { showToast } from "../../utils/toast";
 import { usePaginatedEntries } from "../../components/EditorialManager/pagination";
 import { DataSyncProvider } from "../../components/EditorialManager/dataSync";
 
@@ -66,7 +67,6 @@ export default function EditorialManager() {
   const [selectedFormId, setSelectedFormId] = useState<string>("");
   const [fields, setFields] = useState<FormField[]>([]);
   const [userId, setUserId] = useState<string>("");
-  const [success, setSuccess] = useState("");
 
   // Use the new paginated entries hook
   const {
@@ -172,7 +172,7 @@ export default function EditorialManager() {
     }
 
     try {
-      setSuccess("");
+      // Remove success message clearing - not needed anymore
 
       // First, update cart_checkout_resume records to remove the reference
       const { error: updateCartError } = await supabase
@@ -193,24 +193,24 @@ export default function EditorialManager() {
 
       if (deleteError) throw deleteError;
 
-      setSuccess("Entry deleted successfully");
+      showToast("Entrada deletada com sucesso!", "success");
       refreshEntries();
     } catch (err) {
       console.error("Error deleting entry:", err);
-      setSuccess("Error deleting entry");
+      showToast("Erro ao deletar entrada", "error");
     }
   };
 
   const handleEntryUpdated = async () => {
     console.log(`🔄 [EditorialManager] Entry updated, refreshing entries and closing modal`);
-    setSuccess("Entry updated successfully");
+    // Toast will be handled by EntryEditModal itself
     refreshEntries();
     setIsEditModalOpen(false);
     console.log(`✅ [EditorialManager] Entry update process completed`);
   };
 
   const handleCsvImportSuccess = async () => {
-    setSuccess("CSV importado com sucesso!");
+    showToast("CSV importado com sucesso!", "success");
     refreshEntries();
   };
 
@@ -236,12 +236,6 @@ export default function EditorialManager() {
         {error && (
           <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
             {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 p-4 text-sm text-success-600 bg-success-50 rounded-lg dark:bg-success-500/15 dark:text-success-500">
-            {success}
           </div>
         )}
 

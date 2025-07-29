@@ -8,6 +8,7 @@ import EntryViewModal from "../../components/EditorialManager/EntryViewModal";
 import EntryEditModal from "../../components/EditorialManager/EntryEditModal";
 import FormFilter from "../../components/EditorialManager/FormFilter";
 import EntriesTable from "../../components/EditorialManager/EntriesTable";
+import { showToast } from "../../utils/toast";
 import { usePaginatedEntries } from "../../components/EditorialManager/pagination";
 
 interface FormEntry {
@@ -65,7 +66,6 @@ export default function EditorialManager() {
   const [selectedFormId, setSelectedFormId] = useState<string>("");
   const [fields, setFields] = useState<FormField[]>([]);
   const [userId, setUserId] = useState<string>("");
-  const [success, setSuccess] = useState("");
 
   // Use the new paginated entries hook
   const {
@@ -189,7 +189,7 @@ export default function EditorialManager() {
 
       if (deleteError) throw deleteError;
 
-      setSuccess("Entry deleted successfully");
+      showToast("Entrada deletada com sucesso!", "success");
       refreshEntries(); // Use the new refresh function
     } catch (err) {
       console.error("Error deleting entry:", err);
@@ -197,13 +197,13 @@ export default function EditorialManager() {
   };
 
   const handleEditSave = () => {
-    setSuccess("Entry updated successfully");
+    // Toast will be handled by EntryEditModal itself
     setIsEditModalOpen(false);
     refreshEntries(); // Use the new refresh function
   };
 
   const handleCsvImportSuccess = () => {
-    setSuccess("CSV importado com sucesso!");
+    showToast("CSV importado com sucesso!", "success");
     refreshEntries(); // Use the new refresh function
   };
 
@@ -225,12 +225,6 @@ export default function EditorialManager() {
           {error && (
             <div className="p-4 text-red-700 bg-red-100 rounded-lg">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-4 text-green-700 bg-green-100 rounded-lg">
-              {success}
             </div>
           )}
 
