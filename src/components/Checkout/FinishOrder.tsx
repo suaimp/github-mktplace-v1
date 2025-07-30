@@ -321,7 +321,7 @@ export default function FinishOrder() {
                 </svg>
                 <div>
                   <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Confirme o tipo de conteúdo
+                    Confirme o nicho
                   </p>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                     Selecione o tipo de conteúdo para todos os itens antes de prosseguir para o pagamento.
