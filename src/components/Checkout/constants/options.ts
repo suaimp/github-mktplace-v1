@@ -8,7 +8,8 @@ export const SERVICE_OPTIONS = {
 
 export const NICHE_OPTIONS = {
   PLACEHOLDER: "Confirme o tipo de conteúdo",
-  DEFAULT: "Artigo Padrão"
+  DEFAULT: "Artigo Padrão",
+  NO_SELECTION: "__NO_NICHE_SELECTION__" // Valor interno para indicar ausência de seleção de nicho
 } as const;
 
 // Types para TypeScript
