@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 /* components */
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useCart } from "../../components/marketplace/ShoppingCartContext";
 import { CouponProvider } from "../../components/Checkout/providers/CouponProvider";
-import { useUserNavigationPaths } from "../../components/marketplace/navigation";
+import { useShopNavigation } from "./hooks/useShopNavigation";
 
 import Button from "../../components/ui/button/Button";
 
@@ -15,11 +14,10 @@ import FinishOrder from "../../components/Checkout/FinishOrder";
 import { useCustomSticky } from "../../hooks/useCustomSticky";
 
 export default function Checkout() {
-  const navigate = useNavigate();
   const { items } = useCart();
   //@ts-ignore
   const [orderCompleted, setOrderCompleted] = useState(false);
-  const { paths } = useUserNavigationPaths();
+  const { goToShop } = useShopNavigation();
 
   // Hook para sticky positioning personalizado
   const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
@@ -60,7 +58,7 @@ export default function Checkout() {
               Seu pedido foi processado com sucesso. Você receberá um email com
               os detalhes do pedido em breve.
             </p>
-            <Button onClick={() => navigate(paths.home)}>Voltar para a Loja</Button>
+            <Button onClick={goToShop}>Voltar para a Loja</Button>
           </div>
         </div>
       </>
@@ -101,7 +99,7 @@ export default function Checkout() {
               Adicione alguns produtos ao seu carrinho antes de finalizar a
               compra.
             </p>
-            <Button onClick={() => navigate(paths.home)}>Voltar para a Loja</Button>
+            <Button onClick={goToShop}>Voltar para a Loja</Button>
           </div>
         </div>
       </>
