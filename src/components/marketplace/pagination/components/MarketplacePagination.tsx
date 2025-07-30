@@ -7,7 +7,6 @@ export const MarketplacePagination: React.FC<MarketplacePaginationProps> = ({
   startIndex,
   endIndex,
   totalItems,
-  onPageChange,
   onPreviousPage,
   onNextPage
 }) => {

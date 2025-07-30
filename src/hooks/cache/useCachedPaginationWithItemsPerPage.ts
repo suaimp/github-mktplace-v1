@@ -20,7 +20,6 @@ export function useCachedPaginationWithItemsPerPage<T>({
   fetchFunction,
   dependencies,
   cacheConfig,
-  initialPage = 1,
   initialItemsPerPage = 10
 }: UseCachedPaginationWithItemsPerPageParams<T>) {
   const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
