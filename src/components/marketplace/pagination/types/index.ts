@@ -8,6 +8,41 @@ export interface MarketplacePaginationParams {
   formId: string;
 }
 
+// Interfaces específicas para paginação do marketplace
+export interface MarketplacePaginationProps {
+  currentPage: number;
+  totalPages: number;
+  startIndex: number;
+  endIndex: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
+}
+
+// Props para o componente de controles da tabela marketplace
+export interface MarketplaceTableControlsProps {
+  // Pagination props
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
+  
+  // Search props
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  
+  // Tab navigation props
+  tabs: Array<{ id: string; label: string }>;
+  activeTabId: string;
+  onTabChange: (tabId: string) => void;
+}
+
+// Props para o seletor de itens por página específico do marketplace
+export interface MarketplaceItemsPerPageProps {
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
+  options?: number[];
+}
+
 export interface MarketplacePaginatedResponse<T> {
   data: T[];
   pagination: {

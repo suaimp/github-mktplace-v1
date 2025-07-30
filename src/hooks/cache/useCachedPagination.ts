@@ -43,12 +43,13 @@ export function useCachedPagination<T>({
   // Build cache key from current state
   const buildCacheKey = useCallback((): CacheKey => ({
     page: currentPage,
+    itemsPerPage, // CORREÇÃO: Incluir itemsPerPage na chave do cache
     searchTerm: searchTerm || undefined,
     statusFilter: statusFilter !== 'todos' ? statusFilter : undefined,
     sortField,
     sortDirection,
     formId: dependencies[0] // Assume first dependency is formId/entityId
-  }), [currentPage, searchTerm, statusFilter, sortField, sortDirection, dependencies]);
+  }), [currentPage, itemsPerPage, searchTerm, statusFilter, sortField, sortDirection, dependencies]);
 
   // Load data with cache check
   const loadData = useCallback(async () => {

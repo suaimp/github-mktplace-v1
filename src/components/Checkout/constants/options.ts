@@ -1,7 +1,9 @@
 // Constantes compartilhadas para padronizar strings em todo o sistema
 export const SERVICE_OPTIONS = {
   NONE: "Nenhum - eu vou fornecer o conteúdo",
-  LEGACY_NONE: "nenhum - eu vou enviar o conteudo" // Para compatibilidade com dados antigos
+  LEGACY_NONE: "nenhum - eu vou enviar o conteudo", // Para compatibilidade com dados antigos
+  PLACEHOLDER: "Escolher...",
+  NO_SELECTION: "__NO_SELECTION__" // Valor interno para indicar ausência de seleção
 } as const;
 
 export const NICHE_OPTIONS = {

@@ -19,6 +19,7 @@ import Label from "../../components/form/Label";
 import { PencilIcon, TrashBinIcon } from "../../icons";
 import { useNavigate } from "react-router-dom";
 import { deleteUserFromAuth } from '../../services/deleteUserFromAuth';
+import { ItemsPerPageSelector } from "../../components/common/pagination";
 
 interface PlatformUser {
   id: string;
@@ -314,27 +315,11 @@ export default function PlatformUsers() {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         {/* Barra de pesquisa e seletor Mostrar registros */}
         <div className="flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400">Mostrar</span>
-            <div className="relative z-20 bg-transparent">
-              <select
-                className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                value={entriesPerPage}
-                onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span className="absolute z-30 text-gray-500 -translate-y-1/2 right-2 top-1/2 dark:text-gray-400">
-                <svg className="stroke-current" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3.8335 5.9165L8.00016 10.0832L12.1668 5.9165" stroke="" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"></path>
-                </svg>
-              </span>
-            </div>
-            <span className="text-gray-500 dark:text-gray-400">registros</span>
-          </div>
+          <ItemsPerPageSelector
+            itemsPerPage={entriesPerPage}
+            onItemsPerPageChange={(value) => { setEntriesPerPage(value); setCurrentPage(1); }}
+            itemLabel="registros"
+          />
           {/* Input de pesquisa */}
           <div className="relative">
             <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">

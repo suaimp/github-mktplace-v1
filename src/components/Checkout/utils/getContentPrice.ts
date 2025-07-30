@@ -19,9 +19,11 @@ export function getContentPrice({
     serviceCardsByActiveService ?? []
   );
 
-  if (selected.length === 0) {
+  // Se não há seleção válida, retorna 0
+  if (!selected || selected.length === 0) {
     return 0;
   }
+  
   const isFree = selected[0].is_free;
   const word_count = selected[0].word_count;
   const pricePerWord = selected[0].price_per_word;

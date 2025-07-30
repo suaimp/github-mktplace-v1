@@ -18,7 +18,13 @@ import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
 import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 import { useSorting, sortEntries } from "./sorting";
-import { TabNavigation, useTabNavigation } from "../tables/TabNavigation";
+import { useTabNavigation } from "../tables/TabNavigation";
+// Importar componentes de paginação específicos do marketplace
+import { 
+  useMarketplacePagination, 
+  MarketplaceTableControls, 
+  MarketplacePagination 
+} from "./pagination";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -36,10 +42,24 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [fields, setFields] = useState<any[]>([]);
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [ordersPerPage, setOrdersPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
+
+  // Hook de paginação específico para marketplace
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    handleItemsPerPageChange,
+    goToNextPage,
+    goToPreviousPage,
+    setCurrentPage
+  } = useMarketplacePagination({
+    totalItems: filteredEntries.length,
+    initialItemsPerPage: 10
+  });
    
   // Definir tabs para filtros do marketplace
   const tabs = [
@@ -56,14 +76,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   
   // Hook para gerenciar o estado da tabela e tooltips
   const { tableLoaded } = useTableState({ entriesCount: entries.length });
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredEntries.length / ordersPerPage);
-
-  // Ensure current page is valid
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(totalPages);
-  }
 
   // Funções para o modal de detalhes
   const openDetailsModal = (entry: any) => {
@@ -265,15 +277,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     setSelectedEntries([]);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleOrdersPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setOrdersPerPage(parseInt(e.target.value));
-    setCurrentPage(1);
-  };
-
   // Find product name and price fields
   const productNameField = fields.find(
     (field) => field.form_field_settings?.is_product_name === true
@@ -340,8 +343,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
 
   // Pagination
   const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * ordersPerPage,
-    currentPage * ordersPerPage
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   console.log(`📄 [MarketplaceTable] Rendering with ${paginatedEntries.length} paginated entries`);
@@ -362,70 +365,16 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       )}
 
       <div className="w-full bg-white dark:bg-white/[0.03] overflow-hidden">
-        {/* Table Controls */}
-        <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400 text-[13px]">Mostrar</span>
-            <div className="relative z-20 bg-transparent">
-              <select
-                className="w-full py-2 pl-3 pr-8 text-[13px] text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                value={ordersPerPage}
-                onChange={handleOrdersPerPageChange}
-              >
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
-            <span className="text-gray-500 dark:text-gray-400 text-[13px]">entradas</span>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {/* TabNavigation */}
-            <TabNavigation
-              tabs={tabs}
-              activeTabId={activeTabId}
-              onTabChange={handleTabChange}
-              compact
-              buttonMinWidth="120px"
-            />
-
-            <div className="relative">
-              <button
-                type="button"
-                className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400 transition-colors hover:text-black focus:text-black"
-                tabIndex={0}
-                aria-label="Buscar"
-                onClick={() => {}}
-                disabled
-              >
-                <svg
-                  className="fill-current"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M3.04199 9.37363C3.04199 5.87693 5.87735 3.04199 9.37533 3.04199C12.8733 3.04199 15.7087 5.87693 15.7087 9.37363C15.7087 12.8703 12.8733 15.7053 9.37533 15.7053C5.87735 15.7053 3.04199 12.8703 3.04199 9.37363ZM9.37533 1.54199C5.04926 1.54199 1.54199 5.04817 1.54199 9.37363C1.54199 13.6991 5.04926 17.2053 9.37533 17.2053C11.2676 17.2053 13.0032 16.5344 14.3572 15.4176L17.1773 18.238C17.4702 18.5309 17.945 18.5309 18.2379 18.238C18.5308 17.9451 18.5309 17.4703 18.238 17.1773L15.4182 14.3573C16.5367 13.0033 17.2087 11.2669 17.2087 9.37363C17.2087 5.04817 13.7014 1.54199 9.37533 1.54199Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-              <input
-                placeholder="Pesquisar..."
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-12 pr-4 text-[13px] text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px] pl-12"
-                type="text"
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Table Controls - Usando componentes modulares */}
+        <MarketplaceTableControls
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabChange={handleTabChange}
+        />
 
         <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar">            
           <table className="marketplace-table w-full divide-y divide-gray-200 dark:divide-gray-800">
@@ -792,37 +741,17 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
-            <div className="flex items-center">
-              <p className="text-[13px] text-gray-700 dark:text-gray-300">
-                Mostrando {(currentPage - 1) * ordersPerPage + 1} a{" "}
-                {Math.min(currentPage * ordersPerPage, filteredEntries.length)} de{" "}
-                {filteredEntries.length} resultados
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-700">
-                Página {currentPage} de {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-              >
-                Próxima
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Pagination - Usando componente modular */}
+        <MarketplacePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredEntries.length}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onPreviousPage={goToPreviousPage}
+          onNextPage={goToNextPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal de detalhes para mobile */}

@@ -7,6 +7,7 @@ export interface CacheEntry<T> {
 
 export interface CacheKey {
   page: number;
+  itemsPerPage?: number; // CORREÇÃO: Adicionar itemsPerPage na chave do cache
   searchTerm?: string;
   statusFilter?: string;
   sortField?: string;

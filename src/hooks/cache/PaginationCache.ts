@@ -14,6 +14,7 @@ export class PaginationCache<T> {
   private generateCacheKey(key: CacheKey): string {
     return JSON.stringify({
       page: key.page,
+      itemsPerPage: key.itemsPerPage || 10, // CORREÇÃO: Incluir itemsPerPage na chave
       searchTerm: key.searchTerm || '',
       statusFilter: key.statusFilter || '',
       sortField: key.sortField || '',

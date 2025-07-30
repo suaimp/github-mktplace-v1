@@ -1,3 +1,6 @@
+import { SERVICE_OPTIONS } from "../constants/options";
+import { hasValidServiceSelection } from "./validation/hasValidServiceSelection";
+
 // Funções utilitárias para lidar com o pacote de conteúdo selecionado e seus parâmetros
 
 export function getSelectedServicePackage(
@@ -93,18 +96,24 @@ export function getServicePackageArray(
   selectedService: { [id: string]: string | null },
   serviceCards: any[]
 ): any[] {
+  // Primeiro verifica se há uma seleção válida
+  // Converte selectedService para o tipo esperado pela função de validação
+  const selectedServiceForValidation: { [id: string]: string } = {};
+  Object.keys(selectedService).forEach(key => {
+    if (selectedService[key] !== null) {
+      selectedServiceForValidation[key] = selectedService[key];
+    }
+  });
+  
+  if (!hasValidServiceSelection(item, selectedServiceForValidation)) {
+    return []; // Retorna array vazio em vez de valor padrão
+  }
+
   const pkg = getSelectedServicePackage(item, selectedService, serviceCards);
-  if (!pkg)
-    return [
-      {
-        title: "Nenhum",
-        price: 0,
-        price_per_word: 0,
-        word_count: 0,
-        is_free: false,
-        benefits: []
-      }
-    ];
+  if (!pkg) {
+    return []; // Retorna array vazio em vez de valor padrão
+  }
+  
   return [pkg];
 }
 
@@ -113,27 +122,60 @@ export function getSelectedServiceTitle(
   item: any,
   selectedService: { [id: string]: string }
 ) {
-  let preset = selectedService[item.id] ?? item.service_selected ?? "";
-  // Se já for string simples (title)
-  if (typeof preset === "string" && preset && preset !== "[object Object]") {
+  console.log(`🔍 getSelectedServiceTitle DEBUG [${item.id}]:`, {
+    localSelection: selectedService[item.id],
+    itemServiceSelected: item.service_selected,
+    typeof_serviceSelected: typeof item.service_selected
+  });
+
+  // Primeiro verifica se há seleção no estado local (mais recente)
+  const localSelection = selectedService[item.id];
+  if (localSelection !== undefined && localSelection !== null) {
+    // IMPORTANTE: Se há seleção local, SEMPRE respeita (incluindo "Nenhum" selecionado pelo usuário)
+    console.log(`✅ Returning local selection (user choice): ${localSelection}`);
+    return localSelection;
+  }
+
+  // Se não há seleção local, verifica o valor do banco
+  let preset = item.service_selected;
+  
+  // Se é null, undefined ou string vazia, retorna NO_SELECTION para forçar placeholder
+  if (preset === null || preset === undefined || preset === "") {
+    console.log(`❌ Preset is null/undefined/empty, returning NO_SELECTION`);
+    return SERVICE_OPTIONS.NO_SELECTION;
+  }
+  
+  // MUDANÇA IMPORTANTE: Se há valor no banco (incluindo "Nenhum"), é uma seleção válida
+  if (typeof preset === "string" && preset !== "[object Object]") {
+    console.log(`✅ Preset string from database (valid selection): ${preset}`);
+    return preset;
+    
     // Pode ser string serializada de objeto
     try {
       const parsed = JSON.parse(preset);
-      if (parsed && typeof parsed === "object" && "title" in parsed)
+      if (parsed && typeof parsed === "object" && "title" in parsed) {
+        console.log(`✅ Returning parsed title from database: ${parsed.title}`);
         return parsed.title;
+      }
       return preset;
     } catch {
       return preset;
     }
   }
+  
   // Se for array
   if (Array.isArray(preset) && preset.length > 0) {
     const first = preset[0];
     if (typeof first === "string") {
+      console.log(`✅ Array first element from database (valid selection): ${first}`);
+      return first;
+      
       try {
         const parsed = JSON.parse(first);
-        if (parsed && typeof parsed === "object" && "title" in parsed)
+        if (parsed && typeof parsed === "object" && "title" in parsed) {
+          console.log(`✅ Returning array parsed title from database: ${parsed.title}`);
           return parsed.title;
+        }
         return first;
       } catch {
         return first;
@@ -143,12 +185,18 @@ export function getSelectedServiceTitle(
       first !== null &&
       "title" in first
     ) {
+      console.log(`✅ Returning array object title from database: ${first.title}`);
       return first.title;
     }
   }
+  
   // Se for objeto
   if (typeof preset === "object" && preset !== null && "title" in preset) {
+    console.log(`✅ Returning object title from database: ${(preset as any).title}`);
     return (preset as any).title;
   }
-  return "";
+  
+  // Retorna NO_SELECTION apenas quando realmente não há nada no banco
+  console.log(`❌ No valid title found, returning NO_SELECTION`);
+  return SERVICE_OPTIONS.NO_SELECTION;
 }

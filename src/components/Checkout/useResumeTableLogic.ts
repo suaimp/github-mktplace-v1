@@ -57,36 +57,49 @@ export function useResumeTableLogic() {
         
         // Verifica e corrige dados malformados
         const sanitizedData = (data || []).map((item: any) => {
-          // Corrige service_selected se estiver malformado
-          if (item.service_selected && typeof item.service_selected === "string") {
+          console.log(`🔍 SANITIZING ITEM [${item.id}]:`, {
+            originalServiceSelected: item.service_selected,
+            type: typeof item.service_selected,
+            isArray: Array.isArray(item.service_selected)
+          });
+          
+          // Se service_selected é null ou undefined, deixa como null (não força valor padrão)
+          if (item.service_selected === null || item.service_selected === undefined) {
+            console.log(`✅ Item [${item.id}] has null/undefined service_selected, keeping as null`);
+            item.service_selected = null;
+            return item;
+          }
+          
+          // Se é string, tenta fazer parse
+          if (typeof item.service_selected === "string") {
             try {
               const parsed = JSON.parse(item.service_selected);
               item.service_selected = Array.isArray(parsed) ? parsed : [parsed];
+              console.log(`✅ Item [${item.id}] parsed string to array:`, item.service_selected);
             } catch {
-              console.warn("⚠️ service_selected malformado, criando array padrão:", item.service_selected);
-              item.service_selected = [{
-                title: "Nenhum",
-                price: 0,
-                price_per_word: 0,
-                word_count: 0,
-                is_free: true,
-                benefits: []
-              }];
+              console.warn(`⚠️ Item [${item.id}] has malformed service_selected string, setting to null:`, item.service_selected);
+              // NÃO criar valor padrão, deixar como null para forçar seleção
+              item.service_selected = null;
             }
+            return item;
           }
           
-          // Garante que service_selected seja sempre um array
-          if (!Array.isArray(item.service_selected)) {
-            item.service_selected = [{
-              title: "Nenhum",
-              price: 0,
-              price_per_word: 0,
-              word_count: 0,
-              is_free: true,
-              benefits: []
-            }];
+          // Se não é array, mas é objeto válido, transforma em array
+          if (typeof item.service_selected === "object" && !Array.isArray(item.service_selected)) {
+            console.log(`✅ Item [${item.id}] converting object to array:`, item.service_selected);
+            item.service_selected = [item.service_selected];
+            return item;
           }
           
+          // Se já é array, mantém como está
+          if (Array.isArray(item.service_selected)) {
+            console.log(`✅ Item [${item.id}] already array, keeping:`, item.service_selected);
+            return item;
+          }
+          
+          // Para qualquer outro caso inesperado, deixa null
+          console.warn(`⚠️ Item [${item.id}] unexpected service_selected type, setting to null:`, item.service_selected);
+          item.service_selected = null;
           return item;
         });
         
@@ -145,7 +158,27 @@ export function useResumeTableLogic() {
     setSelectedService(() => {
       const updated: { [id: string]: string } = {};
       resumeData.forEach((item: any) => {
+        // Debug: log do que está vindo do banco
+        console.log('🔍 [DEBUG] Item do banco:', {
+          id: item.id,
+          product_url: item.product_url,
+          service_selected: item.service_selected,
+          service_selected_type: typeof item.service_selected,
+          service_selected_value: JSON.stringify(item.service_selected)
+        });
+        
         let preset = item.service_selected || "";
+        
+        // Só inicializar se realmente existe um valor válido no banco
+        if (!preset || 
+            preset === "" || 
+            preset === null || 
+            preset === undefined ||
+            (Array.isArray(preset) && preset.length === 0)) {
+          console.log('🚫 [DEBUG] Item sem service_selected válido, não inicializando:', item.id);
+          return; // Não setar nada, deixar o placeholder aparecer
+        }
+        
         if (Array.isArray(preset) && preset.length > 0) {
           try {
             const first = preset[0];
@@ -157,6 +190,8 @@ export function useResumeTableLogic() {
                   parsed.title === SERVICE_OPTIONS.LEGACY_NONE ||
                   parsed.title === SERVICE_OPTIONS.NONE
                 ) {
+                  // SEMPRE inicializar com SERVICE_OPTIONS.NONE se existe no banco
+                  // Isso permite que seleções anteriores sejam mantidas após reload
                   updated[item.id] = SERVICE_OPTIONS.NONE;
                 } else {
                   updated[item.id] = parsed.title;
@@ -174,17 +209,16 @@ export function useResumeTableLogic() {
                 first.title === SERVICE_OPTIONS.LEGACY_NONE ||
                 first.title === SERVICE_OPTIONS.NONE
               ) {
+                // SEMPRE inicializar com SERVICE_OPTIONS.NONE se existe no banco
+                // Isso permite que seleções anteriores sejam mantidas após reload
                 updated[item.id] = SERVICE_OPTIONS.NONE;
               } else {
                 updated[item.id] = first.title;
               }
-            } else {
-              // Valor padrão quando o array existe mas não tem dados válidos
-              updated[item.id] = SERVICE_OPTIONS.NONE;
             }
+            // Removido: não definir valor padrão quando array existe mas não tem dados válidos
           } catch {
-            // Valor padrão em caso de erro no parse
-            updated[item.id] = SERVICE_OPTIONS.NONE;
+            // Removido: não definir valor padrão em caso de erro no parse
           }
         } else if (
           typeof preset === "object" &&
@@ -196,6 +230,8 @@ export function useResumeTableLogic() {
             preset.title === SERVICE_OPTIONS.LEGACY_NONE ||
             preset.title === SERVICE_OPTIONS.NONE
           ) {
+            // SEMPRE inicializar com SERVICE_OPTIONS.NONE se existe no banco
+            // Isso permite que seleções anteriores sejam mantidas após reload
             updated[item.id] = SERVICE_OPTIONS.NONE;
           } else {
             updated[item.id] = preset.title;
@@ -209,20 +245,32 @@ export function useResumeTableLogic() {
                 parsed.title === SERVICE_OPTIONS.LEGACY_NONE ||
                 parsed.title === SERVICE_OPTIONS.NONE
               ) {
+                // SEMPRE inicializar com SERVICE_OPTIONS.NONE se existe no banco
+                // Isso permite que seleções anteriores sejam mantidas após reload
                 updated[item.id] = SERVICE_OPTIONS.NONE;
               } else {
                 updated[item.id] = parsed.title;
               }
             } else {
-              updated[item.id] = preset;
+              // Se preset é diretamente SERVICE_OPTIONS.NONE ou LEGACY_NONE, setar
+              if (preset === SERVICE_OPTIONS.NONE || preset === SERVICE_OPTIONS.LEGACY_NONE) {
+                updated[item.id] = SERVICE_OPTIONS.NONE;
+              } else {
+                updated[item.id] = preset;
+              }
             }
           } catch {
-            updated[item.id] = preset;
+            // Se preset é diretamente SERVICE_OPTIONS.NONE ou LEGACY_NONE, setar
+            if (preset === SERVICE_OPTIONS.NONE || preset === SERVICE_OPTIONS.LEGACY_NONE) {
+              updated[item.id] = SERVICE_OPTIONS.NONE;
+            } else {
+              updated[item.id] = preset;
+            }
           }
-        } else {
-          // Valor padrão quando não há service_selected ou está vazio
-          updated[item.id] = SERVICE_OPTIONS.NONE;
         }
+        // Removido: não definir valor padrão quando não há service_selected ou está vazio
+        // Isso fará com que itens sem service_selected não tenham valor definido,
+        // forçando o uso do placeholder
       });
       return updated;
     });
@@ -323,26 +371,27 @@ export function useResumeTableLogic() {
         let needsUpdate = false;
         const updates: any = {};
 
-        // Verificar se precisa salvar serviço padrão
-        if (
-          !item.service_selected ||
-          (typeof item.service_selected === "string" &&
-            item.service_selected.trim() === "") ||
-          (Array.isArray(item.service_selected) &&
-            item.service_selected.length === 0)
-        ) {
-          updates.service_selected = [
-            {
-              title: SERVICE_OPTIONS.NONE,
-              price_per_word: 0,
-              word_count: 0,
-              is_free: true,
-              price: 0,
-              benefits: []
-            }
-          ];
-          needsUpdate = true;
-        }
+        // REMOVIDO: Não inicializar automaticamente com SERVICE_OPTIONS.NONE
+        // Deixar o campo vazio para forçar o usuário a selecionar
+        // if (
+        //   !item.service_selected ||
+        //   (typeof item.service_selected === "string" &&
+        //     item.service_selected.trim() === "") ||
+        //   (Array.isArray(item.service_selected) &&
+        //     item.service_selected.length === 0)
+        // ) {
+        //   updates.service_selected = [
+        //     {
+        //       title: SERVICE_OPTIONS.NONE,
+        //       price_per_word: 0,
+        //       word_count: 0,
+        //       is_free: true,
+        //       price: 0,
+        //       benefits: []
+        //     }
+        //   ];
+        //   needsUpdate = true;
+        // }
 
         // Salvar no banco se necessário
         if (needsUpdate) {

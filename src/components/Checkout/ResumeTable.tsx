@@ -13,6 +13,7 @@ import { getContentPrice } from "./utils/getContentPrice";
 import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
 import { syncItemTotalsToDb } from "./utils/syncItemTotalsToDb";
+import { shouldShowWordCountInput } from "./utils/display/shouldShowWordCountInput";
  
 
 interface ResumeTableProps {
@@ -268,6 +269,11 @@ export default function ResumeTable(props: ResumeTableProps) {
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
         Revisão de pedido
       </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400" style={{
+        marginBottom: '20px'
+      }}>
+        Por favor, confirme o tipo de nicho e conteúdo de cada produto. Alguns sites cobram valores maiores para conteúdos sensíveis ou de nicho, como cassino, conteúdo adulto ou criptomoedas. A seleção correta evita erros no valor final e atrasos na publicação.
+      </p>
       {/* Removido input de cupom de desconto para responsabilidade única */}
       <div className="max-w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
@@ -561,14 +567,52 @@ export default function ResumeTable(props: ResumeTableProps) {
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 dark:text-gray-300 text-center">
                       <div className="relative">
                         <select
-                          className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
-                            getSelectedServiceTitle(item, selectedService)
-                              ? "text-gray-800 dark:text-white/90"
-                              : "text-gray-400 dark:text-gray-400"
+                          className={`h-11 w-full appearance-none rounded-lg border bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:bg-gray-900 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
+                            (() => {
+                              const selectedTitle = getSelectedServiceTitle(item, selectedService);
+                              const hasValidSelection = selectedTitle && 
+                                selectedTitle !== SERVICE_OPTIONS.PLACEHOLDER && 
+                                selectedTitle !== SERVICE_OPTIONS.NO_SELECTION;
+                              return hasValidSelection
+                                ? "text-gray-800 dark:text-white/90 border-gray-300 dark:border-gray-700"
+                                : "text-gray-400 dark:text-gray-400 border-red-300 dark:border-red-600";
+                            })()
                           } pl-4`}
-                          value={getSelectedServiceTitle(item, selectedService)}
+                          value={(() => {
+                            const selectedTitle = getSelectedServiceTitle(item, selectedService);
+                            console.log(`🔍 SERVICE SELECT VALUE DEBUG [${item.id}]:`, {
+                              selectedTitle,
+                              itemServiceSelected: item.service_selected,
+                              localSelected: selectedService[item.id],
+                              willUsePlaceholder: selectedTitle === SERVICE_OPTIONS.NO_SELECTION,
+                              finalValue: selectedTitle === SERVICE_OPTIONS.NO_SELECTION ? SERVICE_OPTIONS.PLACEHOLDER : selectedTitle,
+                              isSelectedTitleNone: selectedTitle === SERVICE_OPTIONS.NONE,
+                              isSelectedTitlePlaceholder: selectedTitle === SERVICE_OPTIONS.PLACEHOLDER,
+                              isSelectedTitleNoSelection: selectedTitle === SERVICE_OPTIONS.NO_SELECTION,
+                              isSelectedTitleNull: selectedTitle === null,
+                              isSelectedTitleUndefined: selectedTitle === undefined
+                            });
+                            // Se retornou NO_SELECTION, usa PLACEHOLDER no select
+                            return selectedTitle === SERVICE_OPTIONS.NO_SELECTION ? SERVICE_OPTIONS.PLACEHOLDER : selectedTitle;
+                          })()}
                           onChange={async (e) => {
                             const value = e.target.value;
+                            
+                            console.log(`🎯 SELECT ONCHANGE DEBUG [${item.id}]:`, {
+                              selectedValue: value,
+                              isPlaceholder: value === SERVICE_OPTIONS.PLACEHOLDER,
+                              isNone: value === SERVICE_OPTIONS.NONE,
+                              valueType: typeof value,
+                              SERVICE_OPTIONS_PLACEHOLDER: SERVICE_OPTIONS.PLACEHOLDER,
+                              SERVICE_OPTIONS_NONE: SERVICE_OPTIONS.NONE
+                            });
+                            
+                            // Se selecionou o placeholder, não faz nada
+                            if (value === SERVICE_OPTIONS.PLACEHOLDER) {
+                              console.log(`❌ Placeholder selected, doing nothing`);
+                              return;
+                            }
+                            
                             setSelectedService((prev: { [id: string]: string }) => ({
                               ...prev,
                               [item.id]: value
@@ -589,10 +633,14 @@ export default function ResumeTable(props: ResumeTableProps) {
                                 "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService"
                               );
                               let serviceArray;
-                              if (!value || value === SERVICE_OPTIONS.NONE || value === "") {
+                              if (!value || value === SERVICE_OPTIONS.PLACEHOLDER || value === "") {
+                                // Não salvar nada quando placeholder está selecionado ou valor vazio
+                                // Isso força o usuário a fazer uma seleção válida
+                                return;
+                              } else if (value === SERVICE_OPTIONS.NONE) {
                                 serviceArray = [
                                   {
-                                    title: value || SERVICE_OPTIONS.NONE,
+                                    title: SERVICE_OPTIONS.NONE,
                                     price_per_word: 0,
                                     word_count: 0,
                                     is_free: true,
@@ -615,9 +663,19 @@ export default function ResumeTable(props: ResumeTableProps) {
                               await updateCartCheckoutResume(item.id, {
                                 service_selected: serviceArray
                               });
+                              
+                              // Disparar evento para revalidar os campos
+                              window.dispatchEvent(new CustomEvent('service-selection-changed'));
                             }
                           }}
                         >
+                          <option
+                            value={SERVICE_OPTIONS.PLACEHOLDER}
+                            className="text-gray-400 dark:bg-gray-900 dark:text-gray-500"
+                            disabled
+                          >
+                            {SERVICE_OPTIONS.PLACEHOLDER}
+                          </option>
                           <option
                             value={SERVICE_OPTIONS.NONE}
                             className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
@@ -664,11 +722,13 @@ export default function ResumeTable(props: ResumeTableProps) {
                           selectedService[item.id] ??
                           getSelectedServiceTitle(item, selectedService);
                         
-                        if (
-                          !selected ||
-                          selected.trim().toLowerCase().startsWith("nenhum") ||
-                          selected === SERVICE_OPTIONS.NONE
-                        ) {
+                        const servicePackageArray = getServicePackageArray(
+                          item,
+                          selectedService,
+                          serviceCardsByActiveService ?? []
+                        );
+                        
+                        if (!shouldShowWordCountInput(selected, servicePackageArray)) {
                           return null;
                         }
                         
