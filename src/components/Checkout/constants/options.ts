@@ -5,6 +5,7 @@ export const SERVICE_OPTIONS = {
 } as const;
 
 export const NICHE_OPTIONS = {
+  PLACEHOLDER: "Confirme o tipo de conteúdo",
   DEFAULT: "Artigo Padrão"
 } as const;
 

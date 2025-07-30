@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabase";
 import Button from "../ui/button/Button";
 import { extractProductPrice } from "./actions/priceCalculator";
 import { showToast } from "../../utils/toast";
-import { PdfExportButton } from "../EditorialManager/table/export";
+ 
 
 interface BulkSelectionBarProps {
   selectedCount: number;
@@ -26,8 +26,8 @@ export default function BulkSelectionBar({
   productPriceField,
   productUrlField,
   entries,
-  fields,
-  formTitle = "Marketplace"
+ 
+ 
 }: BulkSelectionBarProps) {
   const { addItem } = useCart();
   const [loading, setLoading] = useState(false);
@@ -124,10 +124,7 @@ export default function BulkSelectionBar({
     }
   };
 
-  // Preparar dados para exportação PDF
-  const selectedEntriesData = entries.filter((entry) =>
-    selectedEntries.includes(entry.id)
-  );
+ 
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-4xl">
@@ -153,18 +150,7 @@ export default function BulkSelectionBar({
           <span>{addingToFavorites ? "Adicionando..." : "Favorito"}</span>
         </button>
 
-        {/* Botão de Exportação PDF */}
-        <div className="ml-2">
-          <PdfExportButton
-            entries={selectedEntriesData}
-            fields={fields}
-            formTitle={formTitle}
-            formId=""
-            statusFilter="todos"
-            searchTerm=""
-            disabled={selectedCount === 0}
-          />
-        </div>
+
 
         <div className="flex-1"></div>
 

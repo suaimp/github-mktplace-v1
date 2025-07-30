@@ -1,3 +1,5 @@
+import { NICHE_OPTIONS } from "../constants/options";
+
 // Funções utilitárias para lidar com o valor selecionado de nicho e preço
 
 interface NicheItem {
@@ -55,7 +57,7 @@ export function getNichePrice(
     niches = [];
   }
   const selectedNicheName = getSelectedNicheName(item, selectedNiches);
-  if (!selectedNicheName || selectedNicheName === "Nenhum") return 0;
+  if (!selectedNicheName || selectedNicheName === "Nenhum" || selectedNicheName === NICHE_OPTIONS.PLACEHOLDER) return 0;
   const found = niches.find((n: NicheItem) => n.niche === selectedNicheName);
   if (found && found.price) {
     const nichePrice = Number(

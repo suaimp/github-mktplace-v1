@@ -23,14 +23,15 @@ export default function TabButton({
     'gap-2', // Adicionado gap para espaçamento entre label e badge
     'justify-center',
     'rounded-md',
-    compact ? 'px-2 py-1.5' : 'px-3 py-2',
+    'h-full', // Garante altura 100% do container
     'text-sm',
     'font-medium',
     'transition-colors',
     'duration-200',
     'ease-in-out',
     'whitespace-nowrap',
-    'group' // Adicionado para hover effects no badge
+    'group', // Adicionado para hover effects no badge
+    compact ? 'px-2 py-1.5' : 'px-3 py-2',
   ];
 
   // Definir largura mínima

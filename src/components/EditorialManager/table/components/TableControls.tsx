@@ -125,6 +125,7 @@ export default function TableControls({
           onTabChange={handleTabChangeWithCallback}
           compact
           buttonMinWidth="120px"
+          className="h-11 items-center"
         />
 
 

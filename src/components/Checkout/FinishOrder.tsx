@@ -6,6 +6,7 @@ import { getCartCheckoutResumeByUser, CartCheckoutResume } from "../../services/
 import { useCouponInput } from "./utils/coupon/useCouponInput";
 import { useCouponDiscount } from "./utils/coupon/useCouponDiscount";
 import { formatCurrency } from "../../utils/currency";
+import { useNicheValidation } from "./hooks/useNicheValidation";
  
 import { useCheckoutTotal } from "./hooks/useCheckoutTotal";
 
@@ -34,6 +35,15 @@ export default function FinishOrder() {
   // Estado para lista de itens do banco (cart_checkout_resume)
   const [checkoutItems, setCheckoutItems] = useState<CartCheckoutResume[]>([]);
   const [loadingCheckoutItems, setLoadingCheckoutItems] = useState(true);
+
+  const { areAllNichesSelected, loading: loadingNicheValidation } = useNicheValidation();
+
+  // Log para debug do estado do botão
+  console.log('[FinishOrder] Estado do botão:', {
+    areAllNichesSelected,
+    loadingNicheValidation,
+    shouldBeDisabled: !areAllNichesSelected || loadingNicheValidation
+  });
 
   // Detectar se está na página de pagamento
   const isPaymentPage = location.pathname === "/checkout/payment";
@@ -140,6 +150,12 @@ export default function FinishOrder() {
  
 
   const handleGoToPayment = async () => {
+    // Verificar se todos os nichos estão selecionados antes de prosseguir
+    if (!areAllNichesSelected) {
+      setError("Selecione o tipo de conteúdo para todos os itens antes de prosseguir");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -296,13 +312,38 @@ export default function FinishOrder() {
       </div>
       {/* Botão só aparece se não estiver na rota de pagamento */}
       {window.location.pathname !== "/checkout/payment" && (
-        <button
-          className="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors"
-          type="button"
-          onClick={handleGoToPayment}
-        >
-          Ir para pagamento
-        </button>
+        <div>
+          {!areAllNichesSelected && !loadingNicheValidation && (
+            <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Confirme o tipo de conteúdo
+                  </p>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                    Selecione o tipo de conteúdo para todos os itens antes de prosseguir para o pagamento.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          <button
+            className={`w-full mt-2 font-medium py-2 px-4 rounded transition-colors ${
+              areAllNichesSelected && !loadingNicheValidation
+                ? "bg-brand-500 hover:bg-brand-600 text-white"
+                : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+            }`}
+            type="button"
+            onClick={handleGoToPayment}
+            disabled={!areAllNichesSelected || loadingNicheValidation}
+            title={!areAllNichesSelected ? "Selecione o tipo de conteúdo para todos os itens antes de prosseguir" : ""}
+          >
+            {loadingNicheValidation ? "Verificando..." : "Ir para pagamento"}
+          </button>
+        </div>
       )}
     </div>
   );

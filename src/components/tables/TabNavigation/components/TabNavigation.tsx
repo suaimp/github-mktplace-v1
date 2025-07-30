@@ -19,6 +19,8 @@ export default function TabNavigation({
     'rounded-lg',
     'bg-gray-100',
     'dark:bg-gray-900',
+    'h-11', // altura padrão igual ao input
+    'items-center', // alinhamento vertical
     compact ? 'p-0.5' : 'p-1',
     'gap-1',
     // Garantir que não quebre em telas pequenas

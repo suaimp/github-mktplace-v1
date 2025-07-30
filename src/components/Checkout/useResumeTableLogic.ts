@@ -9,16 +9,19 @@ import {
   getSelectedNicheName,
   getNichePrice
 } from "./utils/nicheSelectedUtils";
-import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
+import { SERVICE_OPTIONS } from "./constants/options";
+import { useNicheState } from "./hooks/useNicheState";
+import { NicheDbService } from "./services/NicheDbService";
 
 export function useResumeTableLogic() {
   const [resumeData, setResumeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
-  const [selectedNiches, setSelectedNiches] = useState<{
-    [id: string]: string;
-  }>({});
+  
+  // Usar o novo hook para gerenciar nichos
+  const { selectedNiches, initializeNiches, setSelectedNiches } = useNicheState();
+  
   const [selectedService, setSelectedService] = useState<{
     [id: string]: string;
   }>({});
@@ -126,7 +129,7 @@ export function useResumeTableLogic() {
   }, []);
 
   useEffect(() => {
-    // Sempre sobrescreve os states ao recarregar resumeData
+    // Recarregando estados com resumeData
     console.log("🔄 Recarregando estados com resumeData:", resumeData);
     
     setQuantities(() => {
@@ -136,36 +139,9 @@ export function useResumeTableLogic() {
       });
       return updated;
     });
-    setSelectedNiches(() => {
-      const updated: { [id: string]: string } = {};
-      resumeData.forEach((item: any) => {
-        let preset = item.niche_selected || "";
-        if (Array.isArray(preset) && preset.length > 0 && preset[0].niche) {
-          updated[item.id] = preset[0].niche;
-        } else if (
-          typeof preset === "object" &&
-          preset !== null &&
-          preset.niche
-        ) {
-          updated[item.id] = preset.niche;
-        } else if (typeof preset === "string" && preset.trim() !== "") {
-          try {
-            const parsed = JSON.parse(preset);
-            if (parsed && parsed.niche) {
-              updated[item.id] = parsed.niche;
-            } else {
-              updated[item.id] = preset;
-            }
-          } catch {
-            updated[item.id] = preset;
-          }
-        } else {
-          // Valor padrão para nicho quando não há seleção prévia ou está vazio
-          updated[item.id] = NICHE_OPTIONS.DEFAULT;
-        }
-      });
-      return updated;
-    });
+
+    // Usar o novo serviço para inicializar nichos corretamente
+    initializeNiches(resumeData);
     setSelectedService(() => {
       const updated: { [id: string]: string } = {};
       resumeData.forEach((item: any) => {
@@ -334,26 +310,18 @@ export function useResumeTableLogic() {
     });
   }
 
-  // Effect adicional para salvar valores padrão no banco quando necessário
+  // Effect para inicializar valores padrão no banco quando necessário
   useEffect(() => {
     if (resumeData.length > 0) {
+      // Usar o novo serviço para inicializar nichos faltantes no banco
+      NicheDbService.initializeMissingNiches(resumeData).catch(error => {
+        console.warn("Erro ao inicializar nichos no banco:", error);
+      });
+
+      // Manter lógica original para serviços
       resumeData.forEach(async (item: any) => {
         let needsUpdate = false;
         const updates: any = {};
-
-        // Verificar se precisa salvar nicho padrão
-        if (
-          !item.niche_selected ||
-          (typeof item.niche_selected === "string" &&
-            item.niche_selected.trim() === "") ||
-          (Array.isArray(item.niche_selected) &&
-            item.niche_selected.length === 0)
-        ) {
-          updates.niche_selected = [
-            { niche: NICHE_OPTIONS.DEFAULT, price: "0" }
-          ];
-          needsUpdate = true;
-        }
 
         // Verificar se precisa salvar serviço padrão
         if (
