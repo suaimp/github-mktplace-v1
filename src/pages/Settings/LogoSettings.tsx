@@ -1,84 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button from "../../components/ui/button/Button";
 import Label from "../../components/form/Label";
-import { supabase } from "../../lib/supabase";
-
-interface Settings {
-  id: string;
-  light_logo: string | null;
-  dark_logo: string | null;
-  platform_icon: string | null;
-}
+import SiteMetaContainer from "./components/SiteMetaContainer";
+import { SiteSettingsService } from "../../services/db-services/settings-services/siteSettingsService";
+import { LogoService, LogoFile } from "../../services/db-services/settings-services/logoService";
+import { SiteMetaFormData } from "./types";
+import { useSettingsToast } from "./hooks/useSettingsToast";
+import { useLogoSettings } from "./hooks/useLogoSettings";
 
 export default function LogoSettings() {
   const [lightLogo, setLightLogo] = useState<File | null>(null);
   const [darkLogo, setDarkLogo] = useState<File | null>(null);
   const [platformIcon, setPlatformIcon] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [currentLogos, setCurrentLogos] = useState({
-    light: "/images/logo/logo.svg",
-    dark: "/images/logo/logo-dark.svg",
-    icon: "/images/logo/logo-icon.svg"
+  const [siteMetaData, setSiteMetaData] = useState<SiteMetaFormData>({
+    site_title: '',
+    site_description: ''
   });
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  async function loadSettings() {
-    try {
-      // First check if settings table has any row
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('*')
-        .single();
-
-      if (settingsError) {
-        // If no settings exist, create initial row
-        if (settingsError.code === 'PGRST116') {
-          const { data: newSettings, error: createError } = await supabase
-            .from('settings')
-            .insert([{}])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          setSettings(newSettings);
-        } else {
-          throw settingsError;
-        }
-      } else {
-        setSettings(settingsData);
-        
-        // Get public URLs for stored logos if they exist
-        if (settingsData.light_logo) {
-          const { data: lightUrl } = supabase.storage
-            .from('logos')
-            .getPublicUrl(settingsData.light_logo);
-          if (lightUrl) setCurrentLogos(prev => ({ ...prev, light: lightUrl.publicUrl }));
-        }
-        
-        if (settingsData.dark_logo) {
-          const { data: darkUrl } = supabase.storage
-            .from('logos')
-            .getPublicUrl(settingsData.dark_logo);
-          if (darkUrl) setCurrentLogos(prev => ({ ...prev, dark: darkUrl.publicUrl }));
-        }
-        
-        if (settingsData.platform_icon) {
-          const { data: iconUrl } = supabase.storage
-            .from('logos')
-            .getPublicUrl(settingsData.platform_icon);
-          if (iconUrl) setCurrentLogos(prev => ({ ...prev, icon: iconUrl.publicUrl }));
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-      setError('Erro ao carregar configurações');
-    }
-  }
+  const { showSuccessToast, showErrorToast } = useSettingsToast();
+  const { settings, currentLogos, loadSettings } = useLogoSettings();
 
   const handleLightLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,78 +36,93 @@ export default function LogoSettings() {
     if (file) setPlatformIcon(file);
   };
 
+  const handleSiteMetaChange = (data: SiteMetaFormData) => {
+    setSiteMetaData(data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings?.id) return;
     
     setLoading(true);
-    setError(null);
     
     try {
-      const updates: Partial<Settings> = {};
+      // Atualizar metadados do site se houver alterações
+      if (siteMetaData.site_title || siteMetaData.site_description) {
+        await SiteSettingsService.updateSiteMetaData(siteMetaData);
+      }
 
-      // Upload light logo if selected
+      // Preparar arquivos de logo para upload
+      const logoFiles: LogoFile[] = [];
+      
       if (lightLogo) {
-        const fileName = `light-logo-${Date.now()}${lightLogo.name.substring(lightLogo.name.lastIndexOf('.'))}`;
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(fileName, lightLogo);
-
-        if (uploadError) throw uploadError;
-        updates.light_logo = fileName;
+        logoFiles.push({ file: lightLogo, type: 'light' });
       }
-
-      // Upload dark logo if selected
+      
       if (darkLogo) {
-        const fileName = `dark-logo-${Date.now()}${darkLogo.name.substring(darkLogo.name.lastIndexOf('.'))}`;
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(fileName, darkLogo);
-
-        if (uploadError) throw uploadError;
-        updates.dark_logo = fileName;
+        logoFiles.push({ file: darkLogo, type: 'dark' });
       }
-
-      // Upload platform icon if selected
+      
       if (platformIcon) {
-        const fileName = `platform-icon-${Date.now()}${platformIcon.name.substring(platformIcon.name.lastIndexOf('.'))}`;
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(fileName, platformIcon);
-
-        if (uploadError) throw uploadError;
-        updates.platform_icon = fileName;
+        logoFiles.push({ file: platformIcon, type: 'icon' });
       }
 
-      // Update settings if any files were uploaded
-      if (Object.keys(updates).length > 0) {
-        const { error: updateError } = await supabase
-          .from('settings')
-          .update(updates)
-          .eq('id', settings.id);
+      // Validar arquivos de logo
+      if (logoFiles.length > 0) {
+        const validationErrors = LogoService.validateMultipleLogos(logoFiles);
+        if (validationErrors.length > 0) {
+          showErrorToast(validationErrors.join(', '));
+          return;
+        }
 
-        if (updateError) throw updateError;
-
-        // Reload settings to update the UI
+        // Fazer upload dos logos
+        const logoUpdates = await LogoService.uploadMultipleLogos(logoFiles);
+        
+        // Atualizar no banco de dados
+        await LogoService.updateLogosInDatabase(settings.id, logoUpdates);
+        
+        // Recarregar configurações para atualizar a UI
         await loadSettings();
       }
+
+      // Show success toast
+      showSuccessToast();
+      
+      // Reset form files
+      setLightLogo(null);
+      setDarkLogo(null);
+      setPlatformIcon(null);
+      
     } catch (error: any) {
-      console.error("Erro ao salvar logos:", error);
-      setError(error.message || 'Erro ao salvar logos');
+      console.error("Erro ao salvar configurações:", error);
+      showErrorToast(error.message || 'Erro ao salvar configurações');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl">
-      {error && (
-        <div className="mb-6 p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
-          {error}
-        </div>
-      )}
+    <div className="max-w-xl space-y-8">
+      {/* Seção de Metadados do Site */}
+      <SiteMetaContainer 
+        onDataChange={handleSiteMetaChange}
+        hideSubmitButton={true}
+        externalLoading={loading}
+      />
 
-      <div className="space-y-6">
+      {/* Separador visual */}
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white/90 mb-2">
+            Configurações de Logo
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Configure os logos e ícones da plataforma para diferentes temas.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
         <div>
           <Label>Logo (Tema Claro)</Label>
           <div className="mt-2 flex items-center gap-4">
@@ -235,10 +191,12 @@ export default function LogoSettings() {
 
         <div className="flex justify-end pt-6">
           <Button disabled={loading}>
-            {loading ? "Salvando..." : "Salvar Alterações"}
+            {loading ? "Salvando..." : "Salvar Todas as Configurações"}
           </Button>
         </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

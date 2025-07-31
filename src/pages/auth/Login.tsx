@@ -66,7 +66,7 @@ export default function Login() {
     <>
       <TawkChat />
       <PageMeta
-        title={isAdminLogin ? "Login Administrativo | Admin Panel" : "Login | Platform"}
+        pageTitle={isAdminLogin ? "Login Administrativo" : "Login"}
         description={isAdminLogin ? "Acesse o painel administrativo" : "Acesse sua conta na plataforma"}
       />
       <AuthLayout>

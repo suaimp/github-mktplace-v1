@@ -8,7 +8,7 @@ export default function PasswordRecovery() {
     <>
       <TawkChat />
       <PageMeta
-        title="Definir Nova Senha | Platform"
+        pageTitle="Definir Nova Senha"
         description="Defina sua nova senha de acesso"
       />
       <AuthLayout>

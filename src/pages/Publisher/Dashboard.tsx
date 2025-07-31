@@ -67,7 +67,7 @@ export default function PublisherDashboard() {
   return (
     <>
       <PageMeta
-        title="Dashboard do Publisher | Platform"
+        pageTitle="Dashboard"
         description="Painel de controle para publishers"
       />
 

@@ -67,7 +67,7 @@ export default function AdvertiserDashboard() {
   return (
     <>
       <PageMeta
-        title="Dashboard do Anunciante | Platform"
+        pageTitle="Dashboard"
         description="Painel de controle para anunciantes"
       />
 

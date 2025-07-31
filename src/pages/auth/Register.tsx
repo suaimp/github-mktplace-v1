@@ -212,7 +212,7 @@ export default function Register() {
     <>
       <TawkChat />
       <PageMeta
-        title="Criar Conta | Platform"
+        pageTitle="Criar Conta"
         description="Crie sua conta na plataforma"
       />
       <AuthLayout>

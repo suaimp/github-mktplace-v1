@@ -128,7 +128,7 @@ export default function MenuDash() {
       }
     >
       <PageMeta
-        title="Dashboard de Menu | Painel Admin"
+        pageTitle="Dashboard de Menu"
         description="Gerenciar menu do dashboard"
       />
       <PageBreadcrumb pageTitle="Dashboard de Menu" />

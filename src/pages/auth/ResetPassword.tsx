@@ -8,7 +8,7 @@ export default function ResetPassword() {
     <>
       <TawkChat />
       <PageMeta
-        title="Recuperar Senha | Admin Panel"
+        pageTitle="Recuperar Senha"
         description="Recupere sua senha de acesso ao sistema"
       />
       <AuthLayout>

@@ -90,7 +90,7 @@ export default function UserProfiles() {
   return (
     <>
       <PageMeta
-        title="Minha Conta | Admin Panel"
+        pageTitle="Minha Conta"
         description="Gerencie suas informações de conta"
       />
       <PageBreadcrumb pageTitle="Minha Conta" />

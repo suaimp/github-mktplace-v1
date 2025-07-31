@@ -14,7 +14,7 @@ export default function Settings() {
   return (
     <>
       <PageMeta
-        title="Configurações | Admin Panel"
+        pageTitle="Configurações"
         description="Configurações do sistema"
       />
       <PageBreadcrumb pageTitle="Configurações" />

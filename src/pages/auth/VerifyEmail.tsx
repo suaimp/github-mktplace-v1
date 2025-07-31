@@ -8,7 +8,7 @@ export default function VerifyEmail() {
     <>
       <TawkChat />
       <PageMeta
-        title="Verifique seu Email | Platform"
+        pageTitle="Verifique seu Email"
         description="Verifique seu email para continuar"
       />
       <AuthLayout>

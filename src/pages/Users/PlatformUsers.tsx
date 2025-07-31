@@ -284,7 +284,7 @@ export default function PlatformUsers() {
       }
     >
       <PageMeta
-        title="Usuários da Plataforma | Admin Panel"
+        pageTitle="Usuários da Plataforma"
         description="Gerenciamento de usuários da plataforma"
       />
       <PageBreadcrumb pageTitle="Usuários" />

@@ -34,7 +34,7 @@ export default function AdminRegister() {
 
   return (
     <AdminRoleGuard fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-error-500">Acesso não autorizado</div></div>}>
-      <PageMeta title="Cadastrar Administrador | Admin Panel" description="Cadastro de novo administrador" />
+      <PageMeta pageTitle="Cadastrar Administrador" description="Cadastro de novo administrador" />
       <PageBreadcrumb pageTitle="Cadastrar Administrador" />
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] w-full flex justify-center">
         <div className="p-5 lg:p-6 w-full">
