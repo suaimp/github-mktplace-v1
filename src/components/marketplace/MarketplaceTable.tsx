@@ -58,7 +58,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     setCurrentPage
   } = useMarketplacePagination({
     totalItems: filteredEntries.length,
-    initialItemsPerPage: 10
+    initialItemsPerPage: 100
   });
    
   // Definir tabs para filtros do marketplace

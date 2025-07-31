@@ -1,6 +1,7 @@
 import { supabase } from "../../../../lib/supabase";
 import { PaginationParams, PaginatedResponse, FormEntry, StatusCounts } from "../types";
 import { matchEntry } from "../../table/utils";
+import { SortingConfigService } from "../../sorting/services/SortingConfigService";
 
 export class FormEntriesService {
   /**
@@ -54,14 +55,16 @@ export class FormEntriesService {
       }
 
       // Apply sorting
-      const sortColumnMap: Record<string, string> = {
-        'created_at': 'created_at',
-        'status': 'status',
-        'form_id': 'form_id'
-      };
+      const databaseSortColumns = SortingConfigService.getDatabaseSortColumns();
       
-      const sortColumn = sortColumnMap[sortField || 'created_at'] || 'created_at';
-      query = query.order(sortColumn, { ascending: sortDirection === 'asc' });
+      // Verificar se o campo de ordenação deve ser feito no banco de dados
+      if (sortField && databaseSortColumns[sortField]) {
+        const sortColumn = databaseSortColumns[sortField];
+        query = query.order(sortColumn, { ascending: sortDirection === 'asc' });
+      } else {
+        // Fallback para ordenação padrão se campo não for suportado no DB
+        query = query.order('created_at', { ascending: sortDirection === 'asc' });
+      }
 
       // Apply pagination
       query = query.range(offset, offset + limit - 1);
@@ -279,7 +282,33 @@ export class FormEntriesService {
 
       console.log(`🔧 [FormEntriesService] Entries processed in ${(performance.now() - processStartTime).toFixed(2)}ms`);
 
-      // Para busca, já aplicamos a filtragem na query, então usar processedEntries diretamente
+      // Aplicar ordenação no lado do cliente para campos que não podem ser ordenados no DB
+      let finalProcessedEntries = processedEntries;
+      if (sortField && !SortingConfigService.isDatabaseSortField(sortField)) {
+        console.log(`🔄 [FormEntriesService] Applying client-side sorting for field: ${sortField}`);
+        const clientSortStartTime = performance.now();
+        
+        // Buscar campos do formulário para configuração de ordenação
+        let formFields: any[] = [];
+        if (formId) {
+          const { data: fieldsData } = await supabase
+            .from("form_fields")
+            .select("id, field_type, label, name")
+            .eq("form_id", formId);
+          formFields = fieldsData || [];
+        }
+        
+        finalProcessedEntries = SortingConfigService.applyClientSort(
+          processedEntries, 
+          sortField, 
+          sortDirection || 'desc', 
+          formFields
+        );
+        
+        console.log(`⚡ [FormEntriesService] Client-side sorting applied in ${(performance.now() - clientSortStartTime).toFixed(2)}ms`);
+      }
+
+      // Para busca, já aplicamos a filtragem na query, então usar finalProcessedEntries diretamente
       // Usar contagem filtrada se houve busca
       const finalTotalItems = searchTerm ? (filteredCount || 0) : (count || 0);
       const totalPages = Math.ceil(finalTotalItems / limit);
@@ -287,7 +316,7 @@ export class FormEntriesService {
       console.log(`✅ [FormEntriesService] Total processing time: ${(performance.now() - startTime).toFixed(2)}ms`);
 
       return {
-        data: processedEntries,
+        data: finalProcessedEntries,
         pagination: {
           currentPage: page,
           totalPages,
