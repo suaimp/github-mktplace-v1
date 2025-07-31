@@ -33,15 +33,6 @@ export default function SiteMetaContainer({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white/90 mb-2">
-          Metadados do Site
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Configure o título e descrição que aparecerão nos resultados de busca e redes sociais.
-        </p>
-      </div>
-
       {displayError && (
         <div className="p-4 text-sm text-error-600 bg-error-50 rounded-lg dark:bg-error-500/15 dark:text-error-500">
           {displayError}

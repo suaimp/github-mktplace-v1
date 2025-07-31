@@ -112,15 +112,6 @@ export default function LogoSettings() {
 
       {/* Separador visual */}
       <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-        <div className="mb-6">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white/90 mb-2">
-            Configurações de Logo
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Configure os logos e ícones da plataforma para diferentes temas.
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
         <div>
@@ -140,9 +131,6 @@ export default function LogoSettings() {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:text-gray-400"
             />
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Recomendado: SVG ou PNG em cores escuras para melhor visibilidade no tema claro
-          </p>
         </div>
 
         <div>
@@ -162,9 +150,6 @@ export default function LogoSettings() {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:text-gray-400"
             />
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Recomendado: SVG ou PNG em cores claras para melhor visibilidade no tema escuro
-          </p>
         </div>
 
         <div>
@@ -184,9 +169,6 @@ export default function LogoSettings() {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:text-gray-400"
             />
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Recomendado: PNG 512x512px para melhor qualidade em todos os dispositivos
-          </p>
         </div>
 
         <div className="flex justify-end pt-6">
