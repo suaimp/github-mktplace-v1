@@ -47,10 +47,18 @@ export function useSorting(initialField?: string, initialDirection: SortDirectio
     setSortState({ field: null, direction: "desc" });
   }, []);
 
+  /**
+   * Verifica se há ordenação ativa
+   */
+  const hasActiveSorting = useCallback(() => {
+    return sortState.field !== null;
+  }, [sortState.field]);
+
   return {
     sortState,
     handleSort,
     setSorting,
     clearSorting,
+    hasActiveSorting,
   };
 }

@@ -1,5 +1,4 @@
-import React from "react";
-import Badge from "../../ui/badge/Badge";
+ import Badge from "../../ui/badge/Badge";
 
 export function getStatusBadge(status: string) {
   switch (status) {

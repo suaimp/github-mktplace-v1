@@ -27,7 +27,7 @@ export function useCachedPagination<T>({
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState("");

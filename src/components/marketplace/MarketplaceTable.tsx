@@ -17,7 +17,7 @@ import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationD
 import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
 import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
-import { useSorting, sortEntries } from "./sorting";
+import { useMarketplaceSorting, sortEntries } from "./sorting";
 import { useTabNavigation } from "../tables/TabNavigation";
 // Importar componentes de paginação específicos do marketplace
 import { 
@@ -71,8 +71,14 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   // Hook para gerenciar as tabs
   const { activeTabId, handleTabChange } = useTabNavigation(tabs);
   
-  // Hook personalizado para gerenciar ordenação
-  const { sortState, handleSort } = useSorting();
+  // Hook personalizado para gerenciar ordenação com ordenação padrão por DA
+  const { sortState, handleSort } = useMarketplaceSorting({
+    fields: fields.map(field => ({
+      id: field.id,
+      field_type: field.field_type,
+      label: field.label
+    }))
+  });
   
   // Hook para gerenciar o estado da tabela e tooltips
   const { tableLoaded } = useTableState({ entriesCount: entries.length });

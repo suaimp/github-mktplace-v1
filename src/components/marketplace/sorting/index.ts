@@ -4,7 +4,10 @@
  */
 
 export { useSorting } from "./useSorting";
+export { useDefaultSorting } from "./hooks/useDefaultSorting";
+export { useMarketplaceSorting } from "./hooks/useMarketplaceSorting";
 export { sortEntries, extractSortValue, compareValues } from "./sortUtils";
+export { FieldDetectionService } from "./services/FieldDetectionService";
 export type { 
   SortDirection, 
   SortState, 
