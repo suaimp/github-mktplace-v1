@@ -25,6 +25,7 @@ export class FormEntriesService {
           form_id,
           status,
           created_at,
+          updated_at,
           created_by,
           forms!form_id(title),
           form_entry_values(
@@ -97,6 +98,7 @@ export class FormEntriesService {
             form_id,
             status,
             created_at,
+            updated_at,
             created_by,
             forms!form_id(title),
             form_entry_values(
@@ -235,14 +237,16 @@ export class FormEntriesService {
         }
       }
       
+
       const processedEntries = (dataToProcess || []).map((entry: any) => {
+        // Log para depuração do objeto bruto recebido do banco
+        // eslint-disable-next-line no-console
+        console.log('[FormEntriesService] entry from DB:', entry);
+
         // Processo otimizado de valores
         const values: Record<string, any> = {};
-        
         (entry.form_entry_values || []).forEach((entryValue: any) => {
           const { field_id, value, value_json } = entryValue;
-          
-          // Processamento simplificado sem async
           if (value_json !== null) {
             values[field_id] = value_json;
           } else {
@@ -262,6 +266,7 @@ export class FormEntriesService {
           id: entry.id,
           form_id: entry.form_id,
           created_at: entry.created_at,
+          updated_at: entry.updated_at,
           status: entry.status,
           created_by: entry.created_by,
           publisher,

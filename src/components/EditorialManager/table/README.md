@@ -1,4 +1,76 @@
-# EntriesTable - Sistema de Busca Independente da Paginação
+# Table Module - Sistema de Sincronização e Busca
+
+## Responsabilidade Única
+- Sincronização de dados em tempo real
+- Gerenciamento de estado de tabelas  
+- Sistema de busca independente da paginação
+- Integração com o sistema de data sync
+
+## Estrutura
+```
+table/
+├── README.md                          # Documentação do módulo
+├── hooks/
+│   ├── useEnhancedTableSync.ts       # Hook avançado para sync de tabelas
+│   └── index.ts                      # Exportações dos hooks
+├── types/
+│   ├── tableSyncTypes.ts             # Tipos para sincronização de tabelas
+│   └── index.ts                      # Exportações dos tipos
+├── components/                       # Componentes da tabela
+├── EntriesTableSkeleton.tsx         # Skeleton loading
+└── index.ts                         # Exportações principais
+```
+
+## Como usar o useTableDataSync
+
+### Implementação básica:
+```tsx
+import { useTableDataSync } from "./dataSync/hooks/useDataSync";
+
+const { refreshEntries } = useCachedPaginatedEntries(formId);
+
+useTableDataSync(
+  formId,           // ID do formulário para escutar
+  refreshEntries,   // Função para executar quando dados mudarem
+  {
+    listenerId: `entries-table-${formId}`,  // ID único do listener
+    priority: 1     // Prioridade de execução (maior = primeiro)
+  }
+);
+```
+
+### Implementação avançada:
+```tsx
+import { useEnhancedTableSync } from "./table";
+
+const { isListening, lastRefresh, refreshCount } = useEnhancedTableSync(
+  formId,
+  refreshEntries,
+  { 
+    listenerId: `enhanced-table-${formId}`,
+    priority: 1,
+    autoRefresh: true 
+  }
+);
+```
+
+## Fluxo de sincronização
+1. **Evento**: Ação em outro componente (criar/editar/deletar)
+2. **Emissão**: `emitFormEntryUpdate()` no data sync
+3. **Escuta**: Hook `useTableDataSync` detecta o evento
+4. **Refresh**: Executa `refreshEntries()` automaticamente
+5. **Atualização**: Tabela recarrega dados do backend
+
+## Vantagens da Sincronização
+- ✅ Dados sempre atualizados em tempo real
+- ✅ Múltiplas tabelas sincronizadas automaticamente
+- ✅ Sistema de prioridades para ordem de execução
+- ✅ Logs detalhados para debugging
+- ✅ Modular e seguindo responsabilidade única
+
+---
+
+# Sistema de Busca Independente da Paginação
 
 ## Problema Resolvido
 

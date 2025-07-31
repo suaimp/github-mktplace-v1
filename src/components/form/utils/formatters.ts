@@ -1,5 +1,20 @@
 export function formatDate(date: string) {
-  return new Date(date).toLocaleString('pt-BR', {
+  if (!date) return '-';
+  // Corrige formato do banco: '2025-07-28 18:00:15.231841+00' => '2025-07-28T18:00:15.231841+00:00'
+  let fixed = date.trim();
+  // Se vier com espaço, troca por T
+  if (/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(fixed)) {
+    fixed = fixed.replace(' ', 'T');
+  }
+  // Se termina com +00 ou +0000, normaliza para +00:00
+  fixed = fixed.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  // Se termina só com +00, adiciona :00
+  if (/([+-]\d{2})$/.test(fixed)) {
+    fixed = fixed + ':00';
+  }
+  const d = new Date(fixed);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

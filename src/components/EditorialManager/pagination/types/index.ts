@@ -25,6 +25,7 @@ export interface FormEntry {
   form_id: string;
   status: string;
   created_at: string;
+  updated_at: string; // Nova coluna para data/hora da última atualização
   created_by: string | null;
   form: {
     title: string;

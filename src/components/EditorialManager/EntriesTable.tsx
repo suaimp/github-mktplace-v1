@@ -5,7 +5,6 @@ import {
   TableHeader,
   TableRow
 } from "../ui/table";
-import Badge from "../ui/badge/Badge";
 import { PencilIcon, TrashBinIcon, EyeIcon } from "../../icons";
 import { formatDate } from "../form/utils/formatters";
 import { renderFormattedValue } from "./EntryValueFormatter";
@@ -15,6 +14,8 @@ import { useCachedPaginatedEntries } from "./pagination";
 import { Pagination } from "./pagination/components";
 import { useTableDataSync } from "./dataSync/hooks/useDataSync";
 import EntriesTableSkeleton from "./table/EntriesTableSkeleton";
+
+import { getStatusBadge } from "./utils/getStatusBadge";
 
 interface EntriesTableProps {
   fields: any[];
@@ -30,70 +31,51 @@ interface EntriesTableProps {
   formTitle?: string;
 }
 
-export default function EntriesTable({
+const EntriesTable = ({
   fields,
   selectedFormId,
   onView,
   onEdit,
   onDelete,
-  show = true,
   userId,
   onCsvImportSuccess,
-  formTitle = "Formulário",
-}: EntriesTableProps) {
-  if (!show) return null;
-
-  // Use the cached paginated entries hook
+  formTitle
+}: EntriesTableProps) => {
   const {
     entries,
     loading,
     currentPage,
-    entriesPerPage,
+    setCurrentPage,
     totalPages,
     totalItems,
+    entriesPerPage,
+    setEntriesPerPage,
     searchTerm,
     setSearchTerm,
     statusFilter,
     setStatusFilter,
-    setCurrentPage,
-    setEntriesPerPage,
-    handlePageChange,
-    refreshEntries,
+    statusCounts,
     sortField,
     sortDirection,
     handleSort,
-    statusCounts
+    handlePageChange,
+    refreshEntries
   } = useCachedPaginatedEntries(selectedFormId);
 
-  // Configura data sync para atualizações automáticas da tabela
+  // Implementar sincronização de dados em tempo real
   useTableDataSync(
     selectedFormId,
-    refreshEntries, // Função de refresh do hook de paginação
-    { 
+    refreshEntries,
+    {
       listenerId: `entries-table-${selectedFormId}`,
-      priority: 1 
+      priority: 1
     }
   );
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "verificado":
-        return <Badge color="success">Verificado</Badge>;
-      case "reprovado":
-        return <Badge color="error">Reprovado</Badge>;
-      case "em_analise":
-      default:
-        return <Badge color="warning">Em Análise</Badge>;
-    }
-  };
 
   // Display fields: prioritize price and commission fields, then first two other fields
   // Filter out admin-only and button_buy fields
   const priceField = fields.find((field) => field.field_type === "product");
-  const commissionField = fields.find(
-    (field) => field.field_type === "commission"
-  );
-
+  const commissionField = fields.find((field) => field.field_type === "commission");
   const otherFields = fields
     .filter((field) => {
       return (
@@ -103,7 +85,6 @@ export default function EntriesTable({
       );
     })
     .slice(0, 2);
-
   // Combine priority fields with other fields
   const displayFields = [
     ...(priceField ? [priceField] : []),
@@ -112,7 +93,7 @@ export default function EntriesTable({
   ];
 
   if (loading) {
-    return <EntriesTableSkeleton rows={entriesPerPage} columns={displayFields.length + 3} />;
+    return <EntriesTableSkeleton rows={entriesPerPage} columns={displayFields.length + 5} />;
   }
 
   return (
@@ -139,7 +120,6 @@ export default function EntriesTable({
             statusCounts={statusCounts}
             entries={entries}
           />
-          
           {/* Estatísticas de busca */}
           <SearchStats 
             total={totalItems}
@@ -147,7 +127,6 @@ export default function EntriesTable({
             hasFilter={searchTerm !== '' || statusFilter !== 'todos'}
             searchTerm={searchTerm}
           />
-          
           {/* Tabela */}
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -185,178 +164,98 @@ export default function EntriesTable({
                     </span>
                   </div>
                 </TableCell>
-
-                {/* Show first two fields from the selected form */}
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  <div
+                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
+                    onClick={() => handleSort("updated_at")}
+                  >
+                    <span>Atualização</span>
+                  </div>
+                </TableCell>
                 {displayFields.map((field) => (
                   <TableCell
                     key={field.id}
                     isHeader
-                    className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                   >
-                    <div
-                      className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
-                      onClick={() => handleSort(field.id)}
-                    >
-                      <span>{field.label}</span>
-                      <span className="flex flex-col gap-0.5 ml-1">
-                        <svg
-                          className={`${
-                            sortField === field.id && sortDirection === 'asc' 
-                              ? 'fill-brand-500 dark:fill-brand-400' 
-                              : 'fill-gray-300 dark:fill-gray-700'
-                          }`}
-                          width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
-                        </svg>
-                        <svg
-                          className={`${
-                            sortField === field.id && sortDirection === 'desc' 
-                              ? 'fill-brand-500 dark:fill-brand-400' 
-                              : 'fill-gray-300 dark:fill-gray-700'
-                          }`}
-                          width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
-                        </svg>
-                      </span>
-                    </div>
+                    {field.label || field.name}
                   </TableCell>
                 ))}
-
                 <TableCell
                   isHeader
-                  className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
-                  <div
-                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
-                    onClick={() => handleSort("publisher")}
-                  >
-                    <span>Publisher</span>
-                    <span className="flex flex-col gap-0.5 ml-1">
-                      <svg
-                        className={`${
-                          sortField === 'publisher' && sortDirection === 'asc' 
-                            ? 'fill-brand-500 dark:fill-brand-400' 
-                            : 'fill-gray-300 dark:fill-gray-700'
-                        }`}
-                        width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
-                      </svg>
-                      <svg
-                        className={`${
-                          sortField === 'publisher' && sortDirection === 'desc' 
-                            ? 'fill-brand-500 dark:fill-brand-400' 
-                            : 'fill-gray-300 dark:fill-gray-700'
-                        }`}
-                        width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
-                      </svg>
-                    </span>
-                  </div>
+                  Publisher
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
-                  <div
-                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 outline-none px-5 py-3"
-                    onClick={() => handleSort("status")}
-                  >
-                    <span>Status</span>
-                    <span className="flex flex-col gap-0.5 ml-1">
-                      <svg
-                        className={`${
-                          sortField === 'status' && sortDirection === 'asc' 
-                            ? 'fill-brand-500 dark:fill-brand-400' 
-                            : 'fill-gray-300 dark:fill-gray-700'
-                        }`}
-                        width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
-                      </svg>
-                      <svg
-                        className={`${
-                          sortField === 'status' && sortDirection === 'desc' 
-                            ? 'fill-brand-500 dark:fill-brand-400' 
-                            : 'fill-gray-300 dark:fill-gray-700'
-                        }`}
-                        width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
-                      </svg>
-                    </span>
-                  </div>
+                  Status
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 h-12 relative font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
-                  <div
-                    className="absolute inset-0 w-full h-full flex items-center gap-1 text-left select-none px-5 py-3"
-                  >
-                    <span>Ações</span>
-                  </div>
+                  Ações
                 </TableCell>
               </TableRow>
             </TableHeader>
-
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
+                  {/* Coluna Data */}
                   <TableCell className="px-5 py-4 sm:px-6 text-start">
                     <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {formatDate(entry.created_at)}
                     </span>
                   </TableCell>
-
+                  {/* Coluna Atualização */}
+                  <TableCell className="px-5 py-4 sm:px-6 text-start">
+                    <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {formatDate(entry.updated_at)}
+                    </span>
+                  </TableCell>
                   {/* Display fields from the selected form */}
                   {displayFields.map((field) => {
+                    const fieldValue = entry.values[field.id];
+                    if (field.field_type === "product") {
+                      const commissionValue = commissionField
+                        ? parseFloat(entry.values[commissionField.id]) || 0
+                        : 0;
+                      return (
+                        <TableCell
+                          key={field.id}
+                          className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
+                        >
+                          <PriceSimulationDisplay
+                            commission={commissionValue}
+                            productData={fieldValue}
+                            layout="inline"
+                            showMarginBelow={false}
+                            showOriginalPrice={true}
+                          />
+                        </TableCell>
+                      );
+                    }
                     return (
                       <TableCell
                         key={field.id}
                         className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap"
                       >
-                        {(() => {
-                          const fieldValue = entry.values[field.id];
-
-                          // Use PriceSimulationDisplay for product fields
-                          if (field.field_type === "product") {
-                            const commissionValue = commissionField
-                              ? parseFloat(entry.values[commissionField.id]) ||
-                                0
-                              : 0;
-
-                            return (
-                              <PriceSimulationDisplay
-                                commission={commissionValue}
-                                productData={fieldValue}
-                                layout="inline"
-                                showMarginBelow={false}
-                                showOriginalPrice={true}
-                              />
-                            );
-                          }
-
-                          return renderFormattedValue(
-                            fieldValue,
-                            field.field_type,
-                            field
-                          );
-                        })()}
+                        {renderFormattedValue(fieldValue, field.field_type, field)}
                       </TableCell>
                     );
                   })}
-
                   {/* Publisher */}
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap">
                     {entry.publisher ? (
                       <div>
                         <div className="font-medium">
-                          {entry.publisher.first_name}{" "}
-                          {entry.publisher.last_name}
+                          {entry.publisher.first_name} {entry.publisher.last_name}
                         </div>
                         <div className="text-xs">{entry.publisher.email}</div>
                       </div>
@@ -364,7 +263,6 @@ export default function EntriesTable({
                       "-"
                     )}
                   </TableCell>
-
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 whitespace-nowrap">
                     {getStatusBadge(entry.status || "em_analise")}
                   </TableCell>
@@ -395,12 +293,11 @@ export default function EntriesTable({
                   </TableCell>
                 </TableRow>
               ))}
-
               {/* Corrigir uso de colSpan: usar <td colSpan={...}> diretamente para linha de vazio */}
               {entries.length === 0 && (
                 <TableRow>
                   <td
-                    colSpan={3 + displayFields.length}
+                    colSpan={5 + displayFields.length}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     {selectedFormId
@@ -411,7 +308,6 @@ export default function EntriesTable({
               )}
             </TableBody>
           </Table>
-          
           {/* Paginação com cache */}
           <Pagination
             currentPage={currentPage}
@@ -426,4 +322,6 @@ export default function EntriesTable({
       </div>
     </div>
   );
-}
+};
+
+export default EntriesTable;
