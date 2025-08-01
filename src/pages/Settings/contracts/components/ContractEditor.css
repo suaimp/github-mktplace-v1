@@ -1,0 +1,127 @@
+/* Estilos para o editor contentEditable */
+.contract-editor {
+  min-height: 500px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #1f2937;
+  font-weight: 400; /* Peso padrão normal */
+}
+
+.contract-editor:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
+}
+
+.contract-editor[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  display: block;
+  font-weight: 400;
+}
+
+/* Dark mode styles */
+.dark .contract-editor {
+  background: #1f2937;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .contract-editor:focus {
+  outline-color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+.dark .contract-editor[contenteditable]:empty:before {
+  color: #6b7280;
+}
+
+/* Garantir que o conteúdo HTML seja renderizado corretamente */
+.contract-editor h1,
+.contract-editor h2,
+.contract-editor h3,
+.contract-editor h4,
+.contract-editor h5,
+.contract-editor h6 {
+  margin: 16px 0 8px 0;
+  font-weight: 700 !important; /* Font weight mais forte para títulos */
+}
+
+.contract-editor h1 { font-size: 1.5rem; }
+.contract-editor h2 { font-size: 1.25rem; }
+.contract-editor h3 { font-size: 1.125rem; }
+.contract-editor h4 { font-size: 1rem; }
+.contract-editor h5 { font-size: 0.875rem; }
+.contract-editor h6 { font-size: 0.75rem; }
+
+/* Garantir peso normal para todos os elementos por padrão */
+.contract-editor * {
+  font-weight: inherit;
+}
+
+.contract-editor p {
+  margin: 8px 0;
+  line-height: 1.6;
+  font-weight: 400 !important; /* Peso normal para parágrafos */
+}
+
+.contract-editor ul,
+.contract-editor ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.contract-editor li {
+  margin: 4px 0;
+  font-weight: 400 !important; /* Peso normal para itens de lista */
+}
+
+/* Formatação de texto - APENAS elementos específicos devem ser negrito */
+.contract-editor strong,
+.contract-editor b {
+  font-weight: 700 !important;
+}
+
+/* Garantir que classes Tailwind não interfiram */
+.contract-editor .font-bold {
+  font-weight: 700 !important;
+}
+
+/* Garantir que outros elementos NÃO sejam negrito */
+.contract-editor span,
+.contract-editor div {
+  font-weight: 400 !important;
+}
+
+.contract-editor em,
+.contract-editor i,
+.contract-editor .italic {
+  font-style: italic !important;
+  font-weight: inherit; /* Herdar o peso da fonte do pai */
+}
+
+.contract-editor u,
+.contract-editor .underline {
+  text-decoration: underline !important;
+  font-weight: inherit; /* Herdar o peso da fonte do pai */
+}
+
+.contract-editor code {
+  background: #f3f4f6;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 400 !important;
+}
+
+.dark .contract-editor code {
+  background: #374151;
+}

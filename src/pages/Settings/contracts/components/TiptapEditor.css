@@ -1,0 +1,111 @@
+/* Estilos customizados para o Tiptap Editor */
+.tiptap-wrapper .tiptap-editor {
+  outline: none !important;
+}
+
+.tiptap-wrapper .tiptap-editor:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Garantir formatação correta */
+.tiptap-wrapper .tiptap-editor strong {
+  font-weight: 700 !important;
+}
+
+.tiptap-wrapper .tiptap-editor b {
+  font-weight: 700 !important;
+}
+
+.tiptap-wrapper .tiptap-editor em {
+  font-style: italic !important;
+}
+
+.tiptap-wrapper .tiptap-editor i {
+  font-style: italic !important;
+}
+
+/* Estilos para títulos */
+.tiptap-wrapper .tiptap-editor h1 {
+  font-size: 2em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+.tiptap-wrapper .tiptap-editor h2 {
+  font-size: 1.5em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+.tiptap-wrapper .tiptap-editor h3 {
+  font-size: 1.25em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+.tiptap-wrapper .tiptap-editor h4 {
+  font-size: 1.1em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+.tiptap-wrapper .tiptap-editor h5 {
+  font-size: 1em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+.tiptap-wrapper .tiptap-editor h6 {
+  font-size: 0.9em !important;
+  font-weight: 700 !important;
+  margin: 1em 0 0.5em 0 !important;
+}
+
+/* Estilos para parágrafos */
+.tiptap-wrapper .tiptap-editor p {
+  margin: 0.5em 0 !important;
+  line-height: 1.6 !important;
+}
+
+/* Estilos para listas */
+.tiptap-wrapper .tiptap-editor ul {
+  list-style-type: disc !important;
+  margin: 1em 0 !important;
+  padding-left: 1.5em !important;
+}
+
+.tiptap-wrapper .tiptap-editor ol {
+  list-style-type: decimal !important;
+  margin: 1em 0 !important;
+  padding-left: 1.5em !important;
+}
+
+.tiptap-wrapper .tiptap-editor li {
+  margin: 0.25em 0 !important;
+}
+
+/* Dark mode */
+.dark .tiptap-wrapper .tiptap-editor {
+  color: #f9fafb !important;
+  background-color: #1f2937 !important;
+}
+
+.dark .tiptap-wrapper .tiptap-editor:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* Placeholder quando vazio */
+.tiptap-wrapper .tiptap-editor.ProseMirror-focused .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.dark .tiptap-wrapper .tiptap-editor.ProseMirror-focused .is-empty::before {
+  color: #6b7280;
+}

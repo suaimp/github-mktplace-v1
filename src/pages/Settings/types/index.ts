@@ -19,3 +19,27 @@ export interface UseSiteMetaReturn {
   updateMetaData: (data: SiteMetaFormData) => Promise<void>;
   resetStatus: () => void;
 }
+
+// Tipos para Contratos
+export interface ContractData {
+  id?: string;
+  title: string;
+  content: string;
+  type: 'terms' | 'contract_pf' | 'contract_cnpj';
+  is_active: boolean;
+  version: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+}
+
+export interface ContractFormData {
+  title: string;
+  content: string;
+  is_active: boolean;
+  version: string;
+}
+
+export interface ContractTabContentProps {
+  contractType: ContractData['type'];
+}

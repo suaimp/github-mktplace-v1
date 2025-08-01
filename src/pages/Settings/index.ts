@@ -1,4 +1,5 @@
 // Exportações centralizadas dos componentes de Settings
+export { default as Settings } from './Settings';
 export { default as LogoSettings } from './LogoSettings';
 export { default as SiteMetaContainer } from './components/SiteMetaContainer';
 export { default as SiteMetaForm } from './components/SiteMetaForm';

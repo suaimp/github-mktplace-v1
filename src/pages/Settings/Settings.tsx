@@ -5,8 +5,9 @@ import LogoSettings from "./LogoSettings";
 import SmtpSettings from "./SmtpSettings";
 // import StripeSettings from "./StripeSettings";
 import PagarmeSettings from "./PagarmeSettings";
+import ContractSettings from "./ContractSettings";
 
-type TabType = "logo" | "smtp" | "pagarme";
+type TabType = "logo" | "smtp" | "pagarme" | "contratos";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabType>("logo");
@@ -63,6 +64,16 @@ export default function Settings() {
             >
               Pagamento Marketplace
             </button>
+            <button
+              onClick={() => setActiveTab("contratos")}
+              className={`inline-flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium hover:text-gray-700 dark:hover:text-gray-300 ${
+                activeTab === "contratos"
+                  ? "border-brand-500 text-brand-500 dark:text-brand-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400"
+              }`}
+            >
+              Contratos
+            </button>
           </div>
         </div>
 
@@ -72,6 +83,7 @@ export default function Settings() {
           {activeTab === "smtp" && <SmtpSettings />}
           {/* {activeTab === "stripe" && <StripeSettings />} */}
           {activeTab === "pagarme" && <PagarmeSettings />}
+          {activeTab === "contratos" && <ContractSettings />}
         </div>
       </div>
     </>
