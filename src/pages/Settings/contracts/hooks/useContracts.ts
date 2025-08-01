@@ -26,6 +26,7 @@ interface UseContractsActions {
   getContracts: (filters?: ContractFilters) => Promise<Contract[]>;
   getContractById: (id: string) => Promise<Contract | null>;
   getContractByAdminAndType: (adminId: string, type: ContractType) => Promise<Contract | null>;
+  getContractByType: (type: ContractType) => Promise<Contract | null>;
   updateContract: (id: string, data: UpdateContractData) => Promise<Contract | null>;
   upsertContract: (adminId: string, type: ContractType, content: string) => Promise<Contract | null>;
   deleteContract: (id: string) => Promise<boolean>;
@@ -180,6 +181,37 @@ export function useContracts(): UseContractsState & UseContractsActions {
       return response.data;
     } catch (error) {
       console.error('Error in getContractByAdminAndType:', error);
+      setError('Erro inesperado ao buscar contrato');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, clearError, setError]);
+
+  const getContractByType = useCallback(async (
+    type: ContractType
+  ): Promise<Contract | null> => {
+    setLoading(true);
+    clearError();
+
+    try {
+      const response = await ContractDbService.getContractByType(type);
+      
+      if (!response.success) {
+        if (response.error) {
+          setError(response.error);
+        }
+        return null;
+      }
+
+      setState(prev => ({
+        ...prev,
+        currentContract: response.data
+      }));
+
+      return response.data;
+    } catch (error) {
+      console.error('Error in getContractByType:', error);
       setError('Erro inesperado ao buscar contrato');
       return null;
     } finally {
@@ -355,6 +387,7 @@ export function useContracts(): UseContractsState & UseContractsActions {
     getContracts,
     getContractById,
     getContractByAdminAndType,
+    getContractByType,
     updateContract,
     upsertContract,
     deleteContract,

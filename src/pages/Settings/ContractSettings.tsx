@@ -5,7 +5,7 @@ import { LegacyContractType } from './contracts/types';
 import { Tab } from '../../components/tables/TabNavigation/types';
 
 /**
- * Configurações de contratos com 3 abas: Termos e Condições, Contrato PF, Contrato CNPJ
+ * Configurações de contratos com 4 abas: Termos e Condições, Contrato PF, Contrato CNPJ, Política de Privacidade
  * Atualizado para usar EnhancedContractEditor com integração ao banco de dados
  */
 export default function ContractSettings() {
@@ -24,6 +24,10 @@ export default function ContractSettings() {
     {
       id: 'contract_cnpj',
       label: 'Contrato CNPJ'
+    },
+    {
+      id: 'privacy_policy',
+      label: 'Política de Privacidade'
     }
   ];
 
@@ -31,7 +35,8 @@ export default function ContractSettings() {
   const tabTitles: Record<LegacyContractType, string> = {
     terms: 'Termos e Condições',
     contract_pf: 'Contrato para Pessoa Física',
-    contract_cnpj: 'Contrato para Pessoa Jurídica (CNPJ)'
+    contract_cnpj: 'Contrato para Pessoa Jurídica (CNPJ)',
+    privacy_policy: 'Política de Privacidade'
   };
 
   const handleTabChange = (tabId: string) => {

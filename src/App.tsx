@@ -28,6 +28,8 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { supabase } from "./lib/supabase";
 import Settings from "./pages/Settings/Settings";
+import { Terms } from "./pages/Terms";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyEmail from "./pages/auth/VerifyEmail";
@@ -124,6 +126,8 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password-recovery" element={<PasswordRecovery />} />
         <Route path="/forms/preview/:id" element={<FormPreview />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         {/* Admin Routes */}
         <Route path="/adm" element={<Login />} />

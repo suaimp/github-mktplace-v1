@@ -143,7 +143,7 @@ export default function Register() {
     }
 
     if (!termsAccepted) {
-      errors.terms = "Você precisa aceitar os termos de uso";
+      errors.terms = "Você precisa aceitar os termos e condições";
       isValid = false;
     }
 
@@ -408,7 +408,7 @@ export default function Register() {
                         to="/terms"
                         className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                       >
-                        Termos de Uso
+                        Termos e Condições
                       </Link>{" "}
                       e a{" "}
                       <Link

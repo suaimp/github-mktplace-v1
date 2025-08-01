@@ -132,6 +132,60 @@ export class ContractDbService {
   }
 
   /**
+   * Gets the latest contract by type (company-wide, not admin-specific)
+   * Para contratos da empresa que devem ser compartilhados entre todos os admins
+   */
+  static async getContractByType(contractType: ContractType): Promise<ContractResponse> {
+    try {
+      console.log('🏢 [ContractDbService] Buscando contrato da empresa por tipo:', {
+        contractType
+      });
+
+      const { data: contract, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('type_of_contract', contractType)
+        .order('created_at', { ascending: false }) // Pegar o mais recente
+        .limit(1)
+        .maybeSingle();
+
+      console.log('📥 [ContractDbService] Resultado da busca por tipo:', {
+        found: !!contract,
+        contract: contract ? {
+          id: contract.id,
+          adminId: contract.admin_id,
+          type: contract.type_of_contract,
+          contentLength: contract.contract_content?.length || 0,
+          createdAt: contract.created_at
+        } : null,
+        error: error?.message
+      });
+
+      if (error) {
+        console.error('❌ [ContractDbService] Erro ao buscar contrato por tipo:', error);
+        return {
+          data: null,
+          error: error.message,
+          success: false
+        };
+      }
+
+      return {
+        data: contract,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      console.error('💥 [ContractDbService] Erro inesperado ao buscar contrato por tipo:', error);
+      return {
+        data: null,
+        error: 'Erro inesperado ao buscar contrato',
+        success: false
+      };
+    }
+  }
+
+  /**
    * Gets a contract by admin ID and type (since there's a unique constraint)
    */
   static async getContractByAdminAndType(
@@ -141,7 +195,8 @@ export class ContractDbService {
     try {
       console.log('🔍 [ContractDbService] Buscando contrato por admin e tipo:', {
         adminId,
-        contractType
+        contractType,
+        query: 'SELECT * FROM contracts WHERE admin_id = ? AND type_of_contract = ?'
       });
 
       const { data: contract, error } = await supabase
@@ -153,8 +208,15 @@ export class ContractDbService {
 
       console.log('📥 [ContractDbService] Resultado da busca:', {
         found: !!contract,
-        contract: contract,
-        error: error?.message
+        contract: contract ? {
+          id: contract.id,
+          adminId: contract.admin_id,
+          type: contract.type_of_contract,
+          contentLength: contract.contract_content?.length || 0,
+          createdAt: contract.created_at
+        } : null,
+        error: error?.message,
+        searchParams: { adminId, contractType }
       });
 
       if (error) {

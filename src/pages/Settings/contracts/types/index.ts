@@ -15,7 +15,7 @@ export type {
 } from './contract.types';
 
 // Legacy types for backward compatibility
-export type LegacyContractType = 'terms' | 'contract_pf' | 'contract_cnpj';
+export type LegacyContractType = 'terms' | 'contract_pf' | 'contract_cnpj' | 'privacy_policy';
 
 export interface ContractContent {
   id?: string;

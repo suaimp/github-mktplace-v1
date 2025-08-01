@@ -2,7 +2,7 @@
  * Types and interfaces for contract management
  */
 
-export type ContractType = 'termos_condicoes' | 'contrato_pf' | 'contrato_cnpj';
+export type ContractType = 'termos_condicoes' | 'contrato_pf' | 'contrato_cnpj' | 'politica_privacidade';
 
 export interface Contract {
   id: string;

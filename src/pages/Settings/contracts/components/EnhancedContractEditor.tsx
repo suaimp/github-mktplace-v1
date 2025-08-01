@@ -9,6 +9,7 @@ import { ContractType } from '../types/contract.types';
 import { useContracts } from '../hooks/useContracts';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePreview, PreviewModal } from '../features/preview';
+import { useSettingsToast } from '../../hooks/useSettingsToast';
 import Button from '../../../../components/ui/button/Button';
 import TiptapEditor from './TiptapEditor';
 
@@ -21,6 +22,8 @@ const mapLegacyTypeToDbType = (legacyType: string): ContractType => {
       return 'contrato_pf';
     case 'contract_cnpj':
       return 'contrato_cnpj';
+    case 'privacy_policy':
+      return 'politica_privacidade';
     default:
       return 'termos_condicoes';
   }
@@ -60,53 +63,62 @@ export default function EnhancedContractEditor({
     saving,
     error,
     upsertContract,
-    getContractByAdminAndType,
+    getContractByType,
     clearError
   } = useContracts();
 
   const { isPreviewOpen, openPreview, closePreview } = usePreview();
+  const { showSuccessToast, showErrorToast } = useSettingsToast();
 
   console.log('🔗 [EnhancedContractEditor] Hook useContracts:', {
     saving,
     error,
     hasUpsertContract: !!upsertContract,
     upsertContractType: typeof upsertContract,
-    hasGetContract: !!getContractByAdminAndType,
+    hasGetContract: !!getContractByType,
     hasClearError: !!clearError
   });
 
   const contractType = mapLegacyTypeToDbType(legacyType);
 
-  // Load existing contract on mount
+  // Load existing contract on mount and when contract type changes
   useEffect(() => {
     const loadExistingContract = async () => {
-      if (user?.id && isAdmin) {
-        console.log('🔍 [EnhancedContractEditor] Carregando contrato existente para admin:', user.id);
+      if (user?.id && isAdmin && !loadingAuth) {
+        console.log('🔍 [EnhancedContractEditor] Carregando contrato da empresa:', {
+          contractType,
+          legacyType,
+          note: 'Buscando contrato compartilhado da empresa (não específico por admin)'
+        });
+        
         try {
-          const existingContract = await getContractByAdminAndType(user.id, contractType);
+          const existingContract = await getContractByType(contractType);
+          
           if (existingContract?.contract_content) {
-            console.log('📄 [EnhancedContractEditor] Contrato existente encontrado');
+            console.log('📄 [EnhancedContractEditor] Contrato da empresa encontrado:', {
+              contractId: existingContract.id,
+              originalAdminId: existingContract.admin_id,
+              contentLength: existingContract.contract_content.length,
+              createdAt: existingContract.created_at,
+              note: 'Este contrato é compartilhado entre todos os admins'
+            });
             setContent(existingContract.contract_content);
           } else {
-            console.log('📭 [EnhancedContractEditor] Nenhum contrato existente encontrado');
+            console.log('📭 [EnhancedContractEditor] Nenhum contrato da empresa encontrado - campo vazio');
+            // Se não há contrato salvo, limpar o campo para esta aba
+            setContent('');
           }
         } catch (error) {
-          console.error('💥 [EnhancedContractEditor] Erro ao carregar contrato:', error);
+          console.error('💥 [EnhancedContractEditor] Erro ao carregar contrato da empresa:', error);
+          // Em caso de erro, limpar o campo
+          setContent('');
         }
       }
     };
 
-    if (!initialContent && !loadingAuth) {
-      loadExistingContract();
-    }
-  }, [user?.id, isAdmin, contractType, getContractByAdminAndType, initialContent, loadingAuth]);
-
-  // Update content when initialContent changes
-  useEffect(() => {
-    if (initialContent) {
-      setContent(initialContent);
-    }
-  }, [initialContent]);
+    // Sempre carregar o contrato quando mudar de aba ou quando o componente montar
+    loadExistingContract();
+  }, [user?.id, isAdmin, contractType, getContractByType, loadingAuth, legacyType]);
 
   // Event listener for preview button clicks
   useEffect(() => {
@@ -139,19 +151,19 @@ export default function EnhancedContractEditor({
 
     if (!content.trim() || content === '<p></p>') {
       console.warn('⚠️ [EnhancedContractEditor] Conteúdo vazio, cancelando save');
-      alert('Por favor, insira algum conteúdo antes de salvar.');
+      showErrorToast('Por favor, insira algum conteúdo antes de salvar.');
       return;
     }
 
     if (!user?.id) {
       console.error('❌ [EnhancedContractEditor] Usuário não autenticado');
-      alert('Usuário não autenticado. Faça login para salvar o contrato.');
+      showErrorToast('Usuário não autenticado. Faça login para salvar o contrato.');
       return;
     }
 
     if (!isAdmin) {
       console.error('❌ [EnhancedContractEditor] Usuário não é admin');
-      alert('Apenas administradores podem salvar contratos.');
+      showErrorToast('Apenas administradores podem salvar contratos.');
       return;
     }
 
@@ -179,8 +191,19 @@ export default function EnhancedContractEditor({
       });
 
       if (savedContract) {
-        console.log('✅ [EnhancedContractEditor] Contrato salvo com sucesso!');
-        alert('Contrato salvo com sucesso!');
+        // Verificar se foi criação ou atualização
+        const isUpdate = savedContract.created_at !== savedContract.updated_at;
+        const successMessage = isUpdate 
+          ? `Contrato atualizado com sucesso!` 
+          : `Contrato criado com sucesso!`;
+        
+        console.log('✅ [EnhancedContractEditor] Contrato salvo:', {
+          isUpdate,
+          contractId: savedContract.id,
+          message: successMessage
+        });
+        
+        showSuccessToast(successMessage);
         
         // Call legacy onSave callback if provided (for backward compatibility)
         if (onSave) {
@@ -189,11 +212,11 @@ export default function EnhancedContractEditor({
         }
       } else {
         console.error('❌ [EnhancedContractEditor] upsertContract retornou null');
-        alert('Erro ao salvar contrato. Tente novamente.');
+        showErrorToast('Erro ao salvar contrato. Tente novamente.');
       }
     } catch (error) {
       console.error('💥 [EnhancedContractEditor] Erro inesperado no save:', error);
-      alert('Erro inesperado ao salvar contrato. Tente novamente.');
+      showErrorToast('Erro inesperado ao salvar contrato. Tente novamente.');
     }
   };
 
@@ -242,10 +265,12 @@ export default function EnhancedContractEditor({
   return (
     <div className="max-w-4xl space-y-6">
       {/* Cabeçalho */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          {title}
-        </h3>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            {title}
+          </h3>
+        </div>
       </div>
 
       {/* Error Display */}
@@ -351,7 +376,7 @@ export default function EnhancedContractEditor({
               } else {
                 console.error('❌ [EnhancedContractEditor] upsertContract NÃO é uma função!');
                 console.error('❌ [EnhancedContractEditor] Valor atual:', upsertContract);
-                alert('ERRO: Função upsertContract não está definida!');
+                showErrorToast('ERRO: Função upsertContract não está definida!');
               }
               
               console.log('🔥🔥🔥 [BOTÃO] CLIQUE PROCESSADO - FIM');
