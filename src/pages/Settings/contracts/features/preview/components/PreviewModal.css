@@ -1,0 +1,60 @@
+/**
+ * Estilos específicos para o preview de contratos
+ * Responsabilidade: estilização do conteúdo renderizado no preview
+ */
+
+/* Estilos para o modal de preview */
+.contract-preview {
+  @apply font-serif leading-relaxed;
+}
+
+.contract-preview h1 {
+  @apply text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-3;
+}
+
+.contract-preview h2 {
+  @apply text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 mt-8;
+}
+
+.contract-preview h3 {
+  @apply text-lg font-medium text-gray-700 dark:text-gray-200 mb-3 mt-6;
+}
+
+.contract-preview p {
+  @apply mb-4 text-gray-700 dark:text-gray-300 text-justify;
+}
+
+.contract-preview ul,
+.contract-preview ol {
+  @apply mb-4 ml-6 text-gray-700 dark:text-gray-300;
+}
+
+.contract-preview li {
+  @apply mb-2;
+}
+
+.contract-preview strong {
+  @apply font-semibold text-gray-900 dark:text-white;
+}
+
+.contract-preview em {
+  @apply italic;
+}
+
+/* Estilos para impressão */
+@media print {
+  .contract-preview {
+    @apply text-black;
+  }
+  
+  .contract-preview h1,
+  .contract-preview h2,
+  .contract-preview h3 {
+    @apply text-black;
+  }
+  
+  .contract-preview p,
+  .contract-preview li {
+    @apply text-black;
+  }
+}

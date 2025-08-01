@@ -239,14 +239,15 @@ export class ContractDbService {
 
       // Teste básico de conexão com Supabase
       console.log('🔌 [ContractDbService] Testando conexão com Supabase...');
-      const { data: connectionTest, error: connectionError } = await supabase
+      const { data: connectionTest, error: connectionError, count } = await supabase
         .from('contracts')
-        .select('count(*)', { count: 'exact' })
-        .limit(0);
+        .select('*', { count: 'exact', head: true })
+        .limit(1);
       
       console.log('📊 [ContractDbService] Teste de conexão:', {
         success: !connectionError,
         connectionTest,
+        count,
         connectionError: connectionError?.message
       });
 

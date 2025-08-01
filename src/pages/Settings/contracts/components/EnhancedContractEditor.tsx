@@ -8,6 +8,7 @@ import { ContractEditorProps } from '../types';
 import { ContractType } from '../types/contract.types';
 import { useContracts } from '../hooks/useContracts';
 import { useAuth } from '../../../../hooks/useAuth';
+import { usePreview, PreviewModal } from '../features/preview';
 import Button from '../../../../components/ui/button/Button';
 import TiptapEditor from './TiptapEditor';
 
@@ -63,6 +64,8 @@ export default function EnhancedContractEditor({
     clearError
   } = useContracts();
 
+  const { isPreviewOpen, openPreview, closePreview } = usePreview();
+
   console.log('🔗 [EnhancedContractEditor] Hook useContracts:', {
     saving,
     error,
@@ -104,6 +107,20 @@ export default function EnhancedContractEditor({
       setContent(initialContent);
     }
   }, [initialContent]);
+
+  // Event listener for preview button clicks
+  useEffect(() => {
+    const handlePreviewEvent = (event: CustomEvent) => {
+      console.log('👁️ [EnhancedContractEditor] Preview event recebido:', event.detail);
+      openPreview();
+    };
+
+    window.addEventListener('contractPreview', handlePreviewEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('contractPreview', handlePreviewEvent as EventListener);
+    };
+  }, [openPreview]);
 
   const handleContentChange = (html: string) => {
     setContent(html);
@@ -272,6 +289,9 @@ export default function EnhancedContractEditor({
             onChange={handleContentChange}
             placeholder="Cole aqui o texto do seu contrato..."
             disabled={isLoading}
+            contractType={legacyType}
+            contractTitle={title}
+            showPreview={true}
           />
         </div>
 
@@ -343,6 +363,14 @@ export default function EnhancedContractEditor({
           </Button>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={isPreviewOpen}
+        onClose={closePreview}
+        content={content}
+        title={title}
+      />
     </div>
   );
 }

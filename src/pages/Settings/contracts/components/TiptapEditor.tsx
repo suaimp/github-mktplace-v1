@@ -3,6 +3,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { useState, useEffect } from 'react';
+import { LegacyContractType } from '../types';
+import PreviewButton from '../features/preview/components/PreviewButton';
 import './TiptapEditor.css';
 
 interface TiptapEditorProps {
@@ -10,13 +12,20 @@ interface TiptapEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  // Props para o preview
+  contractType?: LegacyContractType;
+  contractTitle?: string;
+  showPreview?: boolean;
 }
 
 export default function TiptapEditor({
   content,
   onChange,
   placeholder = "Cole aqui o texto do seu contrato...",
-  disabled = false
+  disabled = false,
+  contractType = 'terms',
+  contractTitle = 'Contrato',
+  showPreview = true
 }: TiptapEditorProps) {
   const [isReady, setIsReady] = useState(false);
 
@@ -172,6 +181,24 @@ export default function TiptapEditor({
             1. Lista
           </button>
         </div>
+
+        {/* Preview Button */}
+        {showPreview && (
+          <>
+            {/* Divisor */}
+            <div className="w-px bg-gray-300 dark:bg-gray-600"></div>
+
+            {/* Preview */}
+            <div className="flex gap-1">
+              <PreviewButton
+                content={content}
+                contractType={contractType}
+                title={contractTitle}
+                disabled={disabled}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Editor */}
