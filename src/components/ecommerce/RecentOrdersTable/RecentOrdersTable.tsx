@@ -1,12 +1,10 @@
 import { useRef } from "react";
 import { paginate } from "./actions/pagination";
 import { OrderTableHeader } from "./components/OrderTableHeader";
-import { OrderTableRow } from "./components/OrderTableRow";
-import { useOrdersTable } from "./hooks/useOrdersTable";
+import { OrderTableRowUpdated } from "./components/OrderTableRowUpdated";
+import { useOrdersTableNew } from "./hooks/useOrdersTableNew";
 import "./styles/TableStyles.css";
-
-//@ts-ignore
-import { OrderItem } from '../../../services/db-services/marketplace-services/order/OrderService';
+import { OrderTableData } from './interfaces/OrderTableTypes';
 
 // Função utilitária para centralizar o botão ativo na paginação
 function scrollToActivePageBtn(page: number, container: HTMLDivElement | null) {
@@ -25,29 +23,27 @@ export default function RecentOrdersTable() {
     showAll,
     currentPage,
     ordersPerPage,
- 
     filterValue,
     isFiltering,
-    orderItems,
+    orders,
+    loading,
     setCurrentPage,
- 
     toggleShowAll,
- 
-  } = useOrdersTable();
+  } = useOrdersTableNew();
   
   const paginationRef = useRef<HTMLDivElement>(null);
 
-  // Filtro sobre orderItems
+  // Filtro sobre orders
   const filteredItems = isFiltering && filterValue.trim()
-    ? orderItems.filter(item =>
-        item.product_name?.toLowerCase().includes(filterValue.toLowerCase()) ||
-        item.order_id?.toLowerCase().includes(filterValue.toLowerCase()) ||
-        item.publication_status?.toLowerCase().includes(filterValue.toLowerCase())
+    ? orders.filter(item =>
+        item.id?.toLowerCase().includes(filterValue.toLowerCase()) ||
+        item.status?.toLowerCase().includes(filterValue.toLowerCase()) ||
+        item.urls.some(url => url?.toLowerCase().includes(filterValue.toLowerCase()))
       )
-    : orderItems;
+    : orders;
   const totalPagesItems = (showAll || isFiltering) ? Math.ceil(filteredItems.length / ordersPerPage) : 1;
   // Paginação para modo 'Ver todos' ou filtrando
-  let paginatedItems: OrderItem[];
+  let paginatedItems: OrderTableData[];
   paginatedItems = paginate(filteredItems, 1, ordersPerPage);
   if (showAll || isFiltering) {
     paginatedItems = paginate(filteredItems, currentPage, ordersPerPage);
@@ -74,9 +70,23 @@ export default function RecentOrdersTable() {
         <table className="recent-orders-table min-w-full w-full table-fixed" style={{ maxHeight: 'max-content' }}>
           <OrderTableHeader />
           <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {paginatedItems.map((item) => (
-              <OrderTableRow key={item.id} item={item} />
-            ))}
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="text-center py-8 text-gray-500">
+                  Carregando pedidos...
+                </td>
+              </tr>
+            ) : paginatedItems.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center py-8 text-gray-500">
+                  Nenhum pedido encontrado.
+                </td>
+              </tr>
+            ) : (
+              paginatedItems.map((order) => (
+                <OrderTableRowUpdated key={order.id} order={order} />
+              ))
+            )}
           </tbody>
         </table>
       </div>

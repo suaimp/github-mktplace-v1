@@ -26,6 +26,17 @@
   height: 32px; /* Altura reduzida de 48px para 32px */
 }
 
+/* Estilos para linhas clicáveis */
+.recent-orders-table .recent-orders-table-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.recent-orders-table .recent-orders-table-row:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
 .recent-orders-table .product-content {
   display: flex;
   align-items: center;

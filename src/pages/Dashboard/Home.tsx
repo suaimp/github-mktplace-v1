@@ -4,7 +4,6 @@ import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/Rece
 import AnalyticsSummary from "../../components/ecommerce/AnalyticsSummary";
 import AnalyticsChart from "../../components/ecommerce/AnalyticsSummary/AnalyticsChart";
 import BestSellingSitesChart from "../../components/ecommerce/LegendStyleExample/BestSellingSitesChart";
-import TopClientsChart from "../../components/ecommerce/TopClientsChart/TopClientsChart";
 import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
 
 import FAQ from "../../components/ecommerce/FAQ";
@@ -88,9 +87,6 @@ export default function Home() {
                 <AnalyticsChart />
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <BestSellingSitesChart />
-                  <TopClientsChart />
-                </div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <TopSitesPromoChart />
                 </div>
               </div>

@@ -17,6 +17,11 @@
     --font-weight-black: 900;
     /* defalut: opacity & blur */
     --background-blur: 3px;
+    /* Favicon background colors */
+    --favicon-bg-light: rgb(255, 255, 255); /* white */
+    --favicon-bg-dark: rgb(17, 24, 39); /* gray-900 */
+    --favicon-border-light: rgb(229, 231, 235); /* gray-200 */
+    --favicon-border-dark: rgb(75, 85, 99); /* gray-600 */
   }
 
   body {
@@ -916,4 +921,10 @@ span.flatpickr-weekday,
 /* Força cor padrão para texto em geral no dark mode */
 .dark .prose {
   color: rgb(209, 213, 219) !important; /* gray-300 */
+}
+
+/* === Favicon colors override for dark mode === */
+.dark {
+  --favicon-bg-light: var(--favicon-bg-dark);
+  --favicon-border-light: var(--favicon-border-dark);
 }
