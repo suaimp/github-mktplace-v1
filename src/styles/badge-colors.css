@@ -24,6 +24,12 @@
   --badge-brand-text: #2563eb;
   --badge-brand-bg-dark: rgba(59, 130, 246, 0.15);
   --badge-brand-text-dark: #60a5fa;
+
+  /* Gray light background colors */
+  --badge-gray-light-bg: #f2f4f7;
+  --badge-gray-light-text: #344054;
+  --badge-gray-light-bg-dark: rgba(75, 85, 99, 0.15);
+  --badge-gray-light-text-dark: #d1d5db;
 }
 
 /* Badge base styles */
@@ -172,4 +178,23 @@
 .dark .badge-link-default {
   background-color: var(--badge-info-bg-dark);
   color: var(--badge-info-text-dark);
+}
+
+/* Gray light badge styles - para categorias */
+.badge-gray-light {
+  background-color: var(--badge-gray-light-bg);
+  color: var(--badge-gray-light-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600; /* Texto negrito */
+}
+
+.dark .badge-gray-light {
+  background-color: var(--badge-gray-light-bg-dark);
+  color: var(--badge-gray-light-text-dark);
 }

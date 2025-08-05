@@ -192,7 +192,7 @@ export function formatMarketplaceValue(
             {value.map((item, index) => (
               <span
                 key={index}
-                className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
+                className="badge-gray-light"
               >
                 {item}
               </span>
