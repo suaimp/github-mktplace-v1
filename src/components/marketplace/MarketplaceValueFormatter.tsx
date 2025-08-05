@@ -1,4 +1,4 @@
-import { getFaviconUrl, getFlagUrl } from "../form/utils/formatters";
+import { getFaviconUrl, getFlagUrl, extractCleanDomain } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
 import { NicheRenderer } from "./niche_rendering";
 import { renderUnifiedBadge } from "./services/unifiedBadgeRenderer";
@@ -7,14 +7,8 @@ import { renderUnifiedBadge } from "./services/unifiedBadgeRenderer";
 export function renderUrlWithFavicon(url: string) {
   if (!url) return "-";
 
-  // Clean up the URL to remove protocol and trailing slash
-  let displayUrl = url;
-
-  // Remove protocol (http:// or https://)
-  displayUrl = displayUrl.replace(/^https?:\/\//, "");
-
-  // Remove trailing slash
-  displayUrl = displayUrl.replace(/\/$/, "");
+  // Use extractCleanDomain to remove www, .br and other country extensions
+  const displayUrl = extractCleanDomain(url);
 
   return (
     <div className="url-cell">

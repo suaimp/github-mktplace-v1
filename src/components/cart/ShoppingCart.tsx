@@ -12,6 +12,21 @@ export default function ShoppingCart() {
   const shoppingCartToCheckoutResume = useShoppingCartToCheckoutResume();
   const navigate = useNavigate();
 
+  // Função para formatar número para padrão brasileiro
+  const formatBrazilianPrice = (value: any): string => {
+    if (typeof value === 'number') {
+      // Se o número tem mais de 3 dígitos na parte inteira, trata como milhares
+      if (value >= 1000) {
+        return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        // Para números menores, multiplica por 1000 para converter 17.397 em 17397
+        const adjustedValue = value * 1000;
+        return `R$ ${adjustedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+    }
+    return value;
+  };
+
   // Close cart when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -186,7 +201,7 @@ export default function ShoppingCart() {
                 Subtotal
               </p>
               <p className="font-bold text-gray-800 dark:text-white/90">
-                R$ {totalPrice.toFixed(2)}
+                {formatBrazilianPrice(totalPrice)}
               </p>
             </div>
             <Button

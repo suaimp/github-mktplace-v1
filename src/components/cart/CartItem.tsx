@@ -6,7 +6,7 @@ import { TrashBinIcon } from "../../icons";
 interface CartItemProps {
   entryId: string;
   productName: string;
-  price: number;
+  price: any; // Aceita qualquer tipo, sem formatação
   quantity: number;
   url?: string;
 }
@@ -20,6 +20,24 @@ export default function CartItem({
 }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Função para formatar número para padrão brasileiro
+  const formatBrazilianPrice = (value: any): string => {
+    if (typeof value === 'number') {
+      // Se o número tem mais de 3 dígitos na parte inteira, trata como milhares
+      if (value >= 1000) {
+        return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        // Para números menores, multiplica por 1000 para converter 17.397 em 17397
+        const adjustedValue = value * 1000;
+        return `R$ ${adjustedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+    }
+    return value;
+  };
+
+  // Debug para ver o formato atual
+  console.log("Price recebido:", price, "Tipo:", typeof price);
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -113,7 +131,7 @@ export default function CartItem({
 
       {/* Preço */}
       <p className="whitespace-nowrap font-bold min-w-[80px] text-right">
-        R$ {price.toFixed(2)}
+        {formatBrazilianPrice(price)}
       </p>
 
       {/* Botão Remover */}
