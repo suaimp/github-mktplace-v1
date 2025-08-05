@@ -1,1 +1,1 @@
-export { default as BestSellingSitesChart } from "./BestSellingSitesChart";
+export { BestSellingSitesChart } from "./best-selling-chart";

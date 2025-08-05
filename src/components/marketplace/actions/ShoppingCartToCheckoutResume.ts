@@ -147,15 +147,18 @@ export function useShoppingCartToCheckoutResume() {
         "🔴 [ShoppingCartToCheckoutResume] FUNÇÃO REMOVE executada com item:",
         item
       );
-      // Busca o registro do resumo pelo user_id e entry_id
+      // Busca TODOS os registros do resumo pelo user_id e entry_id
       const resumes = (await getCartCheckoutResumeByUser(
         item.user_id
       )) as CartCheckoutResumeWithEntry[];
-      const found = resumes?.find((r) => r.entry_id === item.entry_id);
+      const toRemove = resumes?.filter((r) => r.entry_id === item.entry_id) || [];
 
-      if (found) {
-        await deleteCartCheckoutResume(found.id);
-        console.log("ShoppingCartToCheckoutResume.ts - remove (delete):", item);
+      if (toRemove.length > 0) {
+        // Remove TODAS as duplicatas do mesmo entry_id
+        for (const reg of toRemove) {
+          await deleteCartCheckoutResume(reg.id);
+        }
+        console.log(`ShoppingCartToCheckoutResume.ts - remove (delete): Removidas ${toRemove.length} duplicatas para entry_id ${item.entry_id}`);
       } else {
         console.warn("Resumo não encontrado para delete", item);
       }

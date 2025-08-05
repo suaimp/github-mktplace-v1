@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import RecentOrdersTable from "../../components/ecommerce/RecentOrdersTable/RecentOrdersTable";
 import AnalyticsSummary from "../../components/ecommerce/AnalyticsSummary";
 import AnalyticsChart from "../../components/ecommerce/AnalyticsSummary/AnalyticsChart";
-import BestSellingSitesChart from "../../components/ecommerce/LegendStyleExample/BestSellingSitesChart";
+import { BestSellingSitesChart } from "../../components/ecommerce/LegendStyleExample";
 import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
 
 import FAQ from "../../components/ecommerce/FAQ";
