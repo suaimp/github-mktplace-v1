@@ -1,1 +1,1 @@
-export { formatBrazilianCurrency, formatBrazilianValue, roundToPrecision } from './formatters';
+export { formatBrazilianCurrency, formatBrazilianValueFromDb, roundToPrecision } from './formatters';
