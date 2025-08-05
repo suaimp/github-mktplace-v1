@@ -144,7 +144,6 @@ export default function CompanyDataCard({
           admin_id: admin_id as string | null,
           user_id: user_id as string | null
         };
-        console.log('Payload UPDATE company_data:', updatePayload);
         const { error: updateError } = await supabase
           .from("company_data")
           .update(updatePayload)
@@ -163,7 +162,6 @@ export default function CompanyDataCard({
           admin_id: admin_id as string | null,
           user_id: user_id as string | null
         };
-        console.log('Payload INSERT company_data:', insertPayload);
         const { error: insertError } = await supabase
           .from("company_data")
           .insert([insertPayload]);

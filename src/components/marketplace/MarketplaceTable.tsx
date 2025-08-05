@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { isSortableField } from "./table/isSortableField";
 import { supabase } from "../../lib/supabase";
 import "./styles/MarketplaceTableStyles.css";
@@ -19,6 +19,8 @@ import { useTableState } from "./Tooltip/hooks/useTableState";
 import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 import { useMarketplaceSorting, sortEntries } from "./sorting";
 import { useTabNavigation } from "../tables/TabNavigation";
+import { BoltIcon, FireIcon, StarIcon } from "../../icons";
+import { CellWithIcon } from "./cell-icons/components";
 // Importar componentes de paginação específicos do marketplace
 import { 
   useMarketplacePagination, 
@@ -32,7 +34,6 @@ interface MarketplaceTableProps {
 
 export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const { favoriteEntryIds } = useFavorites();
-  console.log(`🛒 [MarketplaceTable] === COMPONENT START === formId: "${formId}"`);
   
   const { items } = useCart();
   const [loading, setLoading] = useState(true);
@@ -63,9 +64,21 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
    
   // Definir tabs para filtros do marketplace
   const tabs = [
-    { id: 'todos', label: 'Todos' },
-    { id: 'promocao', label: 'Promoção' },
-    { id: 'favoritos', label: 'Favoritos' }
+    { 
+      id: 'todos', 
+      label: 'Todos',
+      icon: <BoltIcon className="w-4 h-4" />
+    },
+    { 
+      id: 'promocao', 
+      label: 'Promoção',
+      icon: <FireIcon className="w-4 h-4" />
+    },
+    { 
+      id: 'favoritos', 
+      label: 'Favoritos',
+      icon: <StarIcon className="w-4 h-4" />
+    }
   ];
 
   // Hook para gerenciar as tabs
@@ -150,14 +163,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   }, [entries, searchTerm, sortState.field, sortState.direction, fields, activeTabId]);
 
   async function loadMarketplaceData() {
-    console.log(`🛒 [MarketplaceTable] === LOAD START === formId: "${formId}"`);
-    
     try {
       setLoading(true);
       setError("");
 
-      console.log(`📋 [MarketplaceTable] Loading form fields for formId: ${formId}`);
-      
       // Load form fields with settings
       const { data: fieldsData, error: fieldsError } = await supabase
         .from("form_fields")
@@ -170,11 +179,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         throw fieldsError;
       }
 
-      console.log(`✅ [MarketplaceTable] Loaded ${fieldsData?.length || 0} fields`);
-
       // Filter fields to only show those that should be visible in marketplace
       const visibleFields = fieldsData.filter((field) => {
         const settings = field.form_field_settings;
+        
         if (settings?.visibility === "hidden" || settings?.visibility === "admin") {
           return false;
         }
@@ -182,8 +190,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       });
 
       setFields(visibleFields);
-
-      console.log(`📊 [MarketplaceTable] Loading entries for formId: ${formId}`);
 
       // Load form entries - ONLY VERIFIED ENTRIES
       const { data: entriesData, error: entriesError } = await supabase
@@ -204,18 +210,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       if (entriesError) {
         console.error(`❌ [MarketplaceTable] Error loading entries:`, entriesError);
         throw entriesError;
-      }
-
-      console.log(`✅ [MarketplaceTable] Raw entries data:`, entriesData);
-      console.log(`📊 [MarketplaceTable] Loaded ${entriesData?.length || 0} VERIFIED entries for formId: ${formId}`);
-
-      // Show status distribution (should only show "verificado" now)
-      if (entriesData && entriesData.length > 0) {
-        const statusCounts = entriesData.reduce((acc: any, entry: any) => {
-          acc[entry.status] = (acc[entry.status] || 0) + 1;
-          return acc;
-        }, {});
-        console.log(`📊 [MarketplaceTable] Status distribution (verified only):`, statusCounts);
       }
 
       // Process entries to map values to fields
@@ -246,9 +240,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           values,
         };
       });
-
-      console.log(`🔄 [MarketplaceTable] Processed ${processedEntries.length} entries`);
-      console.log(`📄 [MarketplaceTable] First processed entry:`, processedEntries[0]);
 
       setEntries(processedEntries);
     } catch (err) {
@@ -327,14 +318,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   // Filtro de campos para mobile: Site, Categorias, Preço
   const mobileFields = [siteField, categoryField, priceField].filter(Boolean);
 
-  console.log(`🎯 [MarketplaceTable] Component state:`, {
-    loading,
-    error,
-    entriesCount: entries.length,
-    filteredEntriesCount: filteredEntries.length,
-    fieldsCount: fields.length
-  });
-
   if (loading) {
     return <MarketplaceTableSkeleton />;
   }
@@ -352,8 +335,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  console.log(`📄 [MarketplaceTable] Rendering with ${paginatedEntries.length} paginated entries`);
 
   return (
     <div className="w-full relative overflow-hidden">
@@ -650,7 +631,31 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                                     />
                                   );
                                 }
-                                return formatMarketplaceValue(fieldValue, field.field_type, true);
+                                
+                                // Verificação direta para valores "Sim" e "Não" - aplicar badge diretamente (MOBILE)
+                                if (fieldValue === 'Sim' || fieldValue === 'Não') {
+                                  const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
+                                  return (
+                                    <CellWithIcon 
+                                      fieldType={field.field_type} 
+                                      fieldLabel={field.label}
+                                    >
+                                      <span className={badgeClass}>
+                                        {fieldValue}
+                                      </span>
+                                    </CellWithIcon>
+                                  );
+                                }
+                                
+                                const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                                return (
+                                  <CellWithIcon 
+                                    fieldType={field.field_type} 
+                                    fieldLabel={field.label}
+                                  >
+                                    {formattedValue}
+                                  </CellWithIcon>
+                                );
                               })()}
                             </div>
                           </td>
@@ -666,6 +671,36 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                             <div className="flex items-center justify-start">
                               {(() => {
                                 const fieldValue = entry.values[field.id];
+                                
+                                // Verificação para valores "Sim" e "Não" - aplicar badge diretamente
+                                const normalizedValue = fieldValue?.toString().trim();
+                                if (normalizedValue === 'Sim' || normalizedValue === 'Não') {
+                                  const badgeClass = normalizedValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
+                                  return (
+                                    <CellWithIcon 
+                                      fieldType={field.field_type} 
+                                      fieldLabel={field.label}
+                                    >
+                                      <span className={badgeClass}>
+                                        {normalizedValue}
+                                      </span>
+                                    </CellWithIcon>
+                                  );
+                                }
+
+                                if (fieldValue === 'Sim' || fieldValue === 'Não') {
+                                  const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
+                                  return (
+                                    <CellWithIcon 
+                                      fieldType={field.field_type} 
+                                      fieldLabel={field.label}
+                                    >
+                                      <span className={badgeClass}>
+                                        {fieldValue}
+                                      </span>
+                                    </CellWithIcon>
+                                  );
+                                }
                                 
                                 if (field.field_type === "product") {
                                   const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
@@ -685,16 +720,29 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                                   if (fieldValue === null || fieldValue === undefined) return "-";
                                   const numValue = parseInt(fieldValue.toString().replace(/,/g, ""));
                                   return (
-                                    <div className="flex items-center">
-                                      <span>{fieldValue}</span>
-                                      {!isNaN(numValue) && (
-                                        <ApiMetricBadge value={numValue} fieldType={field.field_type} />
-                                      )}
-                                    </div>
+                                    <CellWithIcon 
+                                      fieldType={field.field_type} 
+                                      fieldLabel={field.label}
+                                    >
+                                      <div className="flex items-center">
+                                        <span>{fieldValue}</span>
+                                        {!isNaN(numValue) && (
+                                          <ApiMetricBadge value={numValue} fieldType={field.field_type} />
+                                        )}
+                                      </div>
+                                    </CellWithIcon>
                                   );
                                 }
                                 
-                                return formatMarketplaceValue(fieldValue, field.field_type, true);
+                                const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                                return (
+                                  <CellWithIcon 
+                                    fieldType={field.field_type} 
+                                    fieldLabel={field.label}
+                                  >
+                                    {formattedValue}
+                                  </CellWithIcon>
+                                );
                               })()}
                             </div>
                           </td>

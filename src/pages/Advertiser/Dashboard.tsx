@@ -7,6 +7,7 @@ import FeedbackForm from "../../components/ecommerce/FeedbackForm/FeedbackForm";
 import WelcomeMessage from "../../components/common/WelcomeMessage";
 import { supabase } from "../../lib/supabase";
 import TopSitesPromoChart from "../../components/ecommerce/chart-TopSites/TopSitesPromoChart";
+import { BestSellingSitesChart } from "../../components/ecommerce/LegendStyleExample";
 // import FavoriteSitesChart from "../../components/ecommerce/chart-FavoriteSites/FavoriteSitesChart";
 
 export default function AdvertiserDashboard() {
@@ -24,30 +25,23 @@ export default function AdvertiserDashboard() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        console.log("Dashboard: Nenhum usuário autenticado");
         setLoading(false);
         return;
       }
 
-      console.log("Dashboard: Verificando admin para usuário:", user.id);
+
 
       // Verificar se o usuário é admin na tabela admins
-      const { data: adminData, error: adminError } = await supabase
+      const { data: adminData } = await supabase
         .from("admins")
         .select("role")
         .eq("id", user.id)
         .maybeSingle();
 
-      console.log("Dashboard: Resultado da consulta admin:", {
-        adminData,
-        adminError,
-      });
+
 
       if (adminData?.role === "admin") {
-        console.log("Dashboard: Usuário é admin!");
         setIsAdmin(true);
-      } else {
-        console.log("Dashboard: Usuário não é admin");
       }
     } catch (error) {
       console.error("Erro ao verificar role de admin:", error);
@@ -71,18 +65,19 @@ export default function AdvertiserDashboard() {
         description="Painel de controle para anunciantes"
       />
 
-      {/* Novo layout principal com grid de 2 colunas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-start">
-        {/* Primeira coluna */}
+      {/* Novo layout principal com grid de 2 colunas, esquerda maior */}
+      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 mb-8 items-start">
+        {/* Primeira coluna (maior) */}
         <div className="flex flex-col gap-4 h-full">
           <WelcomeMessage className="mb-4" />
           <div className="w-full h-full">
-            <div className="h-full">
+            <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-4">
               <TopSitesPromoChart />
+              <BestSellingSitesChart />
             </div>
           </div>
         </div>
-        {/* Segunda coluna */}
+        {/* Segunda coluna (menor) */}
         <div>
           <RecentOrdersTable />
         </div>

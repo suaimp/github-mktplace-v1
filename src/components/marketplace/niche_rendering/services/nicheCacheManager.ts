@@ -35,8 +35,6 @@ class NicheCacheManager {
       return;
     }
 
-    console.log("[NicheCacheManager] Starting real-time listener for form_field_niche changes");
-
     this.realtimeChannel = supabase
       .channel('form_field_niche_changes')
       .on(
@@ -46,8 +44,7 @@ class NicheCacheManager {
           schema: 'public',
           table: 'form_field_niche'
         },
-        (payload) => {
-          console.log("[NicheCacheManager] Detected change in form_field_niche:", payload);
+        () => {
           this.invalidateCache();
         }
       )
@@ -59,7 +56,6 @@ class NicheCacheManager {
   // Para o listener
   private stopListening(): void {
     if (this.realtimeChannel) {
-      console.log("[NicheCacheManager] Stopping real-time listener for form_field_niche changes");
       supabase.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
     }
@@ -68,7 +64,6 @@ class NicheCacheManager {
 
   // Invalidate o cache notificando todos os callbacks
   private invalidateCache(): void {
-    console.log(`[NicheCacheManager] Invalidating cache and notifying ${this.callbacks.size} listeners`);
     this.callbacks.forEach(callback => {
       try {
         callback();

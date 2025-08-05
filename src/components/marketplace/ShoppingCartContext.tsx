@@ -305,16 +305,6 @@ export function CartProvider({ children }: CartProviderProps) {
         throw new Error("User not authenticated");
       }
 
-      // Log dos dados recebidos para debug
-      console.log("Adding item to cart with details:", {
-        entryId,
-        productName,
-        price,
-        quantity,
-        image,
-        url
-      });
-
       await retryOperation(async () => {
         // Check if item already exists in cart
         const { data: existingItem } = await supabase
@@ -327,15 +317,6 @@ export function CartProvider({ children }: CartProviderProps) {
         if (existingItem) {
           // Update quantity
           const newQuantity = existingItem.quantity + quantity;
-
-          console.log("🔄 [UPDATE] Atualizando quantidade no carrinho:", {
-            existingItem,
-            oldQuantity: existingItem.quantity,
-            addingQuantity: quantity,
-            newQuantity,
-            entryId,
-            userId: user.id
-          });
 
           const { error: updateError } = await supabase
             .from("shopping_cart_items")
@@ -359,15 +340,6 @@ export function CartProvider({ children }: CartProviderProps) {
             // Nota: productName, price, image, url não são salvos na tabela atual
             // mas são usados para logging e cache local
           };
-
-          console.log("➕ [INSERT] Inserindo novo item no carrinho:", {
-            insertData,
-            productName,
-            price,
-            image,
-            url,
-            note: "productName, price, image, url não são salvos na tabela"
-          });
 
           const { error: insertError } = await supabase
             .from("shopping_cart_items")
@@ -456,7 +428,6 @@ export function CartProvider({ children }: CartProviderProps) {
 
       // ✅ NOVA LÓGICA: Se o carrinho ficou vazio, limpar order_totals
       if (updatedItems.length === 0) {
-        console.log("🧹 [AUTO CLEAR] Carrinho ficou vazio, limpando order_totals...");
         try {
           const { error: totalsError } = await supabase
             .from("order_totals")
@@ -464,16 +435,13 @@ export function CartProvider({ children }: CartProviderProps) {
             .eq("user_id", user.id);
 
           if (totalsError) {
-            console.error("❌ Erro ao limpar order_totals:", totalsError);
-          } else {
-            console.log("✅ order_totals limpo automaticamente (carrinho vazio)");
+            // Error handled silently
           }
         } catch (err) {
-          console.error("❌ Erro ao limpar order_totals:", err);
+          // Error handled silently
         }
       }
     } catch (err) {
-      console.error("Error removing item from cart:", err);
       setError("Unable to remove item from cart. Please try again.");
     } finally {
       setLoading(false);
@@ -499,15 +467,6 @@ export function CartProvider({ children }: CartProviderProps) {
       }
 
       await retryOperation(async () => {
-        console.log("🔄 [UPDATE QUANTITY] Atualizando quantidade:", {
-          entryId,
-          oldQuantity:
-            items.find((item) => item.entry_id === entryId)?.quantity ||
-            "não encontrado",
-          newQuantity: quantity,
-          userId: user.id
-        });
-
         const { error: updateError } = await supabase
           .from("shopping_cart_items")
           .update({ quantity })
@@ -552,18 +511,6 @@ export function CartProvider({ children }: CartProviderProps) {
       }
 
       await retryOperation(async () => {
-        console.log("🧹 [CLEAR CART] Limpando todo o carrinho:", {
-          userId: user.id,
-          currentItems: items.map((item) => ({
-            id: item.id,
-            entry_id: item.entry_id,
-            quantity: item.quantity,
-            productName: item.product.name,
-            productPrice: item.product.price
-          })),
-          totalItems: items.length
-        });
-
         // Delete all items from shopping_cart_items
         const { error: deleteError } = await supabase
           .from("shopping_cart_items")
@@ -594,7 +541,6 @@ export function CartProvider({ children }: CartProviderProps) {
       // Update local state
       setItems([]);
     } catch (err) {
-      console.error("Error clearing cart:", err);
       setError("Unable to clear cart. Please try again.");
     } finally {
       setLoading(false);

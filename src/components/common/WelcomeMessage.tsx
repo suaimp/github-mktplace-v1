@@ -19,56 +19,35 @@ export default function WelcomeMessage({
 
   async function loadUserData() {
     try {
-      console.log("WelcomeMessage: Carregando dados do usuário...");
-
       const {
         data: { user }
       } = await supabase.auth.getUser();
       if (!user) {
-        console.log("WelcomeMessage: Usuário não encontrado");
         setLoading(false);
         return;
       }
 
-      console.log("WelcomeMessage: Usuário autenticado:", user.id);
-
       // Primeiro tenta buscar no perfil de platform_users (como no PlatformUserProfile)
-      const { data: platformProfile, error: platformError } = await supabase
+      const { data: platformProfile } = await supabase
         .from("platform_users")
         .select("first_name, last_name")
         .eq("id", user.id)
         .maybeSingle();
 
-      console.log("WelcomeMessage: Platform query result:", {
-        platformProfile,
-        platformError
-      });
       if (platformProfile?.first_name) {
-        console.log(
-          "WelcomeMessage: Nome encontrado nos platform_users:",
-          platformProfile.first_name
-        );
         setUserName(platformProfile.first_name);
         setLoading(false);
         return;
       }
 
       // Se não encontrou nos platform_users, tenta buscar nos admins
-      const { data: adminProfile, error: adminError } = await supabase
+      const { data: adminProfile } = await supabase
         .from("admins")
         .select("first_name, last_name")
         .eq("id", user.id)
         .maybeSingle();
 
-      console.log("WelcomeMessage: Admin query result:", {
-        adminProfile,
-        adminError
-      });
       if (adminProfile?.first_name) {
-        console.log(
-          "WelcomeMessage: Nome encontrado nos admins:",
-          adminProfile.first_name
-        );
         setUserName(adminProfile.first_name);
         setLoading(false);
         return;
@@ -81,14 +60,9 @@ export default function WelcomeMessage({
         user.email?.split("@")[0] ||
         "Usuário";
 
-      console.log("WelcomeMessage: Usando fallback para nome:", displayName);
       setUserName(displayName);
       setLoading(false);
     } catch (error) {
-      console.error(
-        "WelcomeMessage: Erro ao carregar dados do usuário:",
-        error
-      );
       setUserName("Usuário");
       setLoading(false);
     }

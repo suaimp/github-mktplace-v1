@@ -2,6 +2,7 @@ import React from "react";
 import GridShape from "../../components/common/GridShape";
 import { Link, useLocation } from "react-router";
 import { useLogos } from "../../hooks/useLogos";
+import { useSiteDescription } from "./hooks/useSettings";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   const { logos, loading } = useLogos();
+  const { siteDescription, loading: descriptionLoading } = useSiteDescription();
   const location = useLocation();
   
   // Não exibir a imagem lateral na página de verificação de email
@@ -35,7 +37,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   )}
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Sistema de Gestão Administrativa
+                  {descriptionLoading ? (
+                    <span className="inline-block w-48 h-4 bg-gray-600 animate-pulse rounded"></span>
+                  ) : (
+                    siteDescription
+                  )}
                 </p>
               </div>
             </div>

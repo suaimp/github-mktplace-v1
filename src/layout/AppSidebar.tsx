@@ -140,10 +140,6 @@ export default function AppSidebar() {
       const organizedItems = organizeMenuItems(items || []);
       setMenuItems(organizedItems);
 
-      // Log for debugging
-      console.log("User role:", userRole);
-      console.log("Is admin:", isAdmin);
-      console.log("Menu items loaded:", items?.length);
     } catch (err) {
       console.error("Error loading menu items:", err);
     }

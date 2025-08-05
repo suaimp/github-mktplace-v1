@@ -40,15 +40,6 @@ export default function AddToCartButton({
 
     try {
       setLoading(true);
-      console.log("Adding to cart with price:", price);
-      console.log("Dados enviados para addItem:", {
-        entryId,
-        productName,
-        price,
-        quantity: 1,
-        image,
-        url
-      });
       await addItem(entryId, productName, price, 1, image, url);
 
       // Mostrar toast de sucesso

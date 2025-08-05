@@ -20,7 +20,6 @@ class NicheDataService {
   constructor() {
     // Registra para invalidação automática do cache
     this.cacheCleanupFunction = nicheCacheManager.onCacheInvalidation(() => {
-      console.log("[NicheDataService] Cache invalidated by NicheCacheManager");
       this.clearCache();
     });
   }
@@ -51,14 +50,11 @@ class NicheDataService {
 
   private async loadNichesFromDatabase(): Promise<NicheOption[]> {
     try {
-      console.log("[NicheDataService] Fetching niches from database...");
-
       const { data: nicheFields, error } = await supabase
         .from("form_field_niche")
         .select("options");
 
       if (error) {
-        console.error("[NicheDataService] Error fetching niches:", error);
         return [];
       }
 
@@ -78,7 +74,6 @@ class NicheDataService {
       });
 
       const result = Array.from(uniqueNiches.values());
-      console.log(`[NicheDataService] Loaded ${result.length} unique niches`);
       
       return result;
     } catch (error) {

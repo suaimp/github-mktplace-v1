@@ -1,6 +1,7 @@
 import { getFaviconUrl, getFlagUrl } from "../form/utils/formatters";
 import { supabase } from "../../lib/supabase";
 import { NicheRenderer } from "./niche_rendering";
+import { renderUnifiedBadge } from "./services/unifiedBadgeRenderer";
 
 // Render URL with favicon
 export function renderUrlWithFavicon(url: string) {
@@ -144,7 +145,8 @@ export function renderNicheWithIcon(value: any) {
 export function formatMarketplaceValue(
   value: any,
   fieldType: string,
-  showCountryCodes: boolean = false
+  showCountryCodes: boolean = false,
+  fieldLabel?: string
 ) {
   if (value === null || value === undefined) return "-";
 
@@ -190,7 +192,7 @@ export function formatMarketplaceValue(
             {value.map((item, index) => (
               <span
                 key={index}
-                className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-theme-2xs xl:text-theme-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400"
+                className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
               >
                 {item}
               </span>
@@ -201,7 +203,10 @@ export function formatMarketplaceValue(
       return value;
 
     case "toggle":
-      return value ? "Sim" : "Não";
+    case "radio":
+      // Usar o serviço unificado para consistency
+      const radioResult = renderUnifiedBadge(value, fieldType, fieldLabel);
+      return radioResult;
 
     case "product":
       try {
@@ -274,6 +279,8 @@ export function formatMarketplaceValue(
       return value.toString();
 
     default:
-      return value.toString();
+      // Use unified badge renderer for all other cases
+      const unifiedResult = renderUnifiedBadge(value, fieldType, fieldLabel);
+      return unifiedResult;
   }
 }

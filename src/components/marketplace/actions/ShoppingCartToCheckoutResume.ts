@@ -16,29 +16,18 @@ export type CartCheckoutResumeWithEntry =
   };
 
 export function useShoppingCartToCheckoutResume() {
-  console.log("📦 [ShoppingCartToCheckoutResume] HOOK inicializado");
 
   // Função para adicionar item ao checkout resume
 
   const add = useCallback(
     async (item: { user_id: string; entry_id: string; quantity: number }) => {
-      console.log(
-        "🟢 [ShoppingCartToCheckoutResume] FUNÇÃO ADD executada com item:",
-        item
-      );
 
       // NOVA LÓGICA: Usa a função utilitária para buscar o preço correto
       const correctPrice = await getPriceFromEntryWithCache(item.entry_id);
       const price = correctPrice || 0; // fallback para 0 se não encontrar
 
-      console.log(
-        `[ShoppingCartToCheckoutResume] Preço obtido para entry_id ${item.entry_id}:`,
-        price
-      );
-
       // Busca os valores do entry_id para outras informações (URL, nichos, etc.)
       const allEntryValues = await getFormEntryValuesByEntryId(item.entry_id);
-      console.log("allEntryValues:", allEntryValues);
       // NOVA LÓGICA: busca url https e remove https://
       const urlEntry = Array.isArray(allEntryValues)
         ? allEntryValues.find(
@@ -49,17 +38,9 @@ export function useShoppingCartToCheckoutResume() {
       if (urlEntry && typeof urlEntry.value === "string") {
         urlWithoutHttps = urlEntry.value.replace(/^https:\/\//, "");
       }
-      console.log(
-        "ShoppingCartToCheckoutResume.ts - url sem https://:",
-        urlWithoutHttps
-      );
       const onlyWithValueJson = Array.isArray(allEntryValues)
         ? allEntryValues.filter((v) => !!v.value_json)
         : [];
-      console.log(
-        "ShoppingCartToCheckoutResume.ts - allEntryValues com value_json:",
-        onlyWithValueJson
-      );
       // Filtra apenas os que possuem value_json com algum item de array contendo campo niche
       const entryValues = onlyWithValueJson.filter(
         (v) =>
@@ -93,10 +74,6 @@ export function useShoppingCartToCheckoutResume() {
             }
           })()
       );
-      console.log(
-        "ShoppingCartToCheckoutResume.ts - entryValues com value_json contendo array com campo niche:",
-        entryValues
-      );
       // Cria um array apenas com os value_json dos entryValues filtrados
       const entryValuesValueJson = entryValues.map((v) => v.value_json);
       // Filtra para retornar apenas os arrays de nichos (ex: [{niche: ..., price: ...}, ...])
@@ -128,10 +105,6 @@ export function useShoppingCartToCheckoutResume() {
         .filter((arr) => Array.isArray(arr) && arr.length > 0);
       // Pega apenas a instância 0 (primeiro array de niches)
       const nichesArray = onlyNicheArrays[0] || [];
-      console.log(
-        "ShoppingCartToCheckoutResume.ts - nichesArray:",
-        nichesArray
-      );
       const payload = {
         user_id: item.user_id,
         entry_id: item.entry_id,
@@ -141,7 +114,6 @@ export function useShoppingCartToCheckoutResume() {
         price: price, // agora sempre number
         service_content: ""
       };
-      console.log("ShoppingCartToCheckoutResume.ts - price no payload:", price);
       await createCartCheckoutResume(payload);
     },
     []
@@ -150,10 +122,6 @@ export function useShoppingCartToCheckoutResume() {
   // Função para editar item (update)
   const edit = useCallback(
     async (item: { user_id: string; entry_id: string; quantity: number }) => {
-      console.log(
-        "🟡 [ShoppingCartToCheckoutResume] FUNÇÃO EDIT executada com item:",
-        item
-      );
 
       // Remove todos os registros do entry_id desse usuário
       const resumes = (await getCartCheckoutResumeByUser(

@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export interface MarketplacePaginationParams {
   page: number;
   limit: number;
@@ -31,7 +33,7 @@ export interface MarketplaceTableControlsProps {
   onSearchChange: (value: string) => void;
   
   // Tab navigation props
-  tabs: Array<{ id: string; label: string }>;
+  tabs: Array<{ id: string; label: string; icon?: ReactNode }>;
   activeTabId: string;
   onTabChange: (tabId: string) => void;
 }

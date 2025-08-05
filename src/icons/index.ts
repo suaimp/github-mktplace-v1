@@ -6,6 +6,7 @@ import AlertIcon from "./alert.svg?react";
 import InfoIcon from "./info.svg?react";
 import ErrorIcon from "./info-error.svg?react";
 import BoltIcon from "./bolt.svg?react";
+import AnalyticsIcon from "./analytics.svg?react";
 import ArrowUpIcon from "./arrow-up.svg?react";
 import ArrowDownIcon from "./arrow-down.svg?react";
 import FolderIcon from "./folder.svg?react";
@@ -62,6 +63,7 @@ import SimilarwebTrafficIcon from "./similarweb-traffic.svg?react";
 import GoogleTrafficIcon from "./google-traffic.svg?react";
 import FilterIcon from "./filter.svg?react";
 import ShoppingCartIcon from "./shopping-cart.svg?react";
+import FireIcon from "./fire.svg?react";
 import TicketIcon from "./ticket-icon";
 import StarIcon from "./StarIcon";
 
@@ -84,6 +86,7 @@ export {
   AudioIcon,
   VideoIcon,
   BoltIcon,
+  AnalyticsIcon,
   PlusIcon,
   BoxIcon,
   CloseIcon,
@@ -138,6 +141,7 @@ export {
   GoogleTrafficIcon,
   FilterIcon,
   ShoppingCartIcon,
+  FireIcon,
   TicketIcon, // Niche Icons
   UploadIcon,
   FinanceIcon,

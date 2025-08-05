@@ -1,7 +1,7 @@
 import React from 'react';
 import { MarketplaceTableControlsProps } from '../types';
 import { MarketplaceItemsPerPageSelector } from './MarketplaceItemsPerPageSelector';
-import { TabNavigation } from '../../../tables/TabNavigation';
+import { MarketplaceTabNavigation } from '../../navigation';
 
 export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> = ({
   itemsPerPage,
@@ -22,12 +22,11 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* Tab Navigation */}
-        <TabNavigation
+        <MarketplaceTabNavigation
           tabs={tabs}
           activeTabId={activeTabId}
           onTabChange={onTabChange}
           compact
-          buttonMinWidth="120px"
         />
 
         {/* Search Input */}

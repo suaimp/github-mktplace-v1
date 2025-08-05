@@ -1,0 +1,175 @@
+/* Badge Colors - Cores padronizadas para badges em light/dark mode */
+
+:root {
+  /* Success/Green colors */
+  --badge-success-bg: #ecfdf3;
+  --badge-success-text: #039855;
+  --badge-success-bg-dark: rgba(34, 197, 94, 0.15);
+  --badge-success-text-dark: #4ade80;
+
+  /* Warning/Orange colors - Tom correto baseado no span fornecido */
+  --badge-warning-bg: #fffaeb;  /* warning-50 */
+  --badge-warning-text: #dc6803; /* warning-600 */
+  --badge-warning-bg-dark: rgba(245, 158, 11, 0.15); /* warning-500/15 */
+  --badge-warning-text-dark: #fb923c; /* orange-400 */
+
+  /* Info/Gray colors */
+  --badge-info-bg: #f9fafb;
+  --badge-info-text: #6b7280;
+  --badge-info-bg-dark: rgba(107, 114, 128, 0.15);
+  --badge-info-text-dark: #9ca3af;
+
+  /* Brand/Primary colors */
+  --badge-brand-bg: #eff6ff;
+  --badge-brand-text: #2563eb;
+  --badge-brand-bg-dark: rgba(59, 130, 246, 0.15);
+  --badge-brand-text-dark: #60a5fa;
+}
+
+/* Badge base styles */
+.badge-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+/* Success badge styles */
+.badge-success {
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-text);
+}
+
+.dark .badge-success {
+  background-color: var(--badge-success-bg-dark);
+  color: var(--badge-success-text-dark);
+}
+
+/* Warning badge styles */
+.badge-warning {
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+
+.dark .badge-warning {
+  background-color: var(--badge-warning-bg-dark);
+  color: var(--badge-warning-text-dark);
+}
+
+/* Info badge styles */
+.badge-info {
+  background-color: var(--badge-info-bg);
+  color: var(--badge-info-text);
+}
+
+.dark .badge-info {
+  background-color: var(--badge-info-bg-dark);
+  color: var(--badge-info-text-dark);
+}
+
+/* Brand badge styles */
+.badge-brand {
+  background-color: var(--badge-brand-bg);
+  color: var(--badge-brand-text);
+}
+
+.dark .badge-brand {
+  background-color: var(--badge-brand-bg-dark);
+  color: var(--badge-brand-text-dark);
+}
+
+/* Utility classes for specific badge types */
+.badge-sponsored-yes {
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .badge-sponsored-yes {
+  background-color: var(--badge-success-bg-dark);
+  color: var(--badge-success-text-dark);
+}
+
+.badge-sponsored-no {
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .badge-sponsored-no {
+  background-color: var(--badge-warning-bg-dark);
+  color: var(--badge-warning-text-dark);
+}
+
+.badge-link-dofollow {
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .badge-link-dofollow {
+  background-color: var(--badge-success-bg-dark);
+  color: var(--badge-success-text-dark);
+}
+
+.badge-link-nofollow {
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .badge-link-nofollow {
+  background-color: var(--badge-warning-bg-dark);
+  color: var(--badge-warning-text-dark);
+}
+
+.badge-link-default {
+  background-color: var(--badge-info-bg);
+  color: var(--badge-info-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .badge-link-default {
+  background-color: var(--badge-info-bg-dark);
+  color: var(--badge-info-text-dark);
+}

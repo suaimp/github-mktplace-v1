@@ -54,15 +54,6 @@ export default function BulkSelectionBar({
         // Usar a nova função para calcular o preço
         const productPrice = extractProductPrice(entry, productPriceField);
 
-        console.log("[BulkSelectionBar] Dados enviados para addItem:", {
-          entryId: entry.id,
-          productName,
-          productPrice,
-          quantity: 1,
-          image: undefined,
-          productUrl
-        });
-
         // Add to cart
         await addItem(
           entry.id,
@@ -84,7 +75,6 @@ export default function BulkSelectionBar({
       // Clear selection after adding to cart
       onClear();
     } catch (error) {
-      console.error("Error adding items to cart:", error);
       showToast("Erro ao adicionar itens ao carrinho", "error");
     } finally {
       setLoading(false);
@@ -118,7 +108,7 @@ export default function BulkSelectionBar({
       // Clear selection after adding to favorites
       onClear();
     } catch (error) {
-      console.error("Error adding to favorites:", error);
+      // Error handled silently
     } finally {
       setAddingToFavorites(false);
     }

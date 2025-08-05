@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import { ValidationErrors } from "./types/validation";
 import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
@@ -7,23 +9,14 @@ import Input from "../../components/form/input/InputField";
 import PhoneInput from "../../components/form/group-input/PhoneInput";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
-import { supabase } from "../../lib/supabase";
+
 import { EyeIcon, EyeCloseIcon } from "../../icons";
 import { Link } from "react-router-dom";
 import TawkChat from "../../components/TawkChat/TawkChat";
+import { accountTypes, AccountType } from "./types/accountTypes.js";
+import { supabase } from "../../lib/supabase";
 
-const accountTypes = [
-  {
-    value: "advertiser",
-    label: "Anunciante",
-    description: "Crie e gerencie campanhas publicitárias"
-  },
-  // {
-  //   value: "publisher",
-  //   label: "Publisher",
-  //   description: "Monetize seu conteúdo com anúncios"
-  // }
-];
+
 
 const brazilianPhoneCodes = [
   { code: "BR", label: "+55" }, // Brazil first
@@ -48,16 +41,7 @@ const brazilianPhoneCodes = [
   { code: "BO", label: "+591" }
 ];
 
-interface ValidationErrors {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  phone?: string;
-  accountType?: string;
-  terms?: string;
-}
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -71,11 +55,10 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [phone, setPhone] = useState("");
-  const [accountType, setAccountType] = useState("");
+  // Set default account type to 'advertiser' (Anunciante)
+  const [accountType, setAccountType] = useState<AccountType>("advertiser");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
-    {}
-  );
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const validatePassword = (password: string): boolean => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -353,7 +336,7 @@ export default function Register() {
                     )}
                   </div>
 
-                  <div>
+                  <div className="hidden">
                     <Label>
                       Tipo de Conta <span className="text-error-500">*</span>
                     </Label>
@@ -407,6 +390,7 @@ export default function Register() {
                       <Link
                         to="/terms"
                         className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                        target="_blank"
                       >
                         Termos e Condições
                       </Link>{" "}
@@ -414,6 +398,7 @@ export default function Register() {
                       <Link
                         to="/privacy"
                         className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                        target="_blank"
                       >
                         Política de Privacidade
                       </Link>
