@@ -1,5 +1,3 @@
-import { Country } from '../../../../services/db-services/common/countriesService';
-
 export interface CountrySelectOption {
   value: string;
   label: string;
