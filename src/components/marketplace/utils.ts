@@ -17,8 +17,29 @@ export function parsePrice(price: any): number {
   }
 
   if (typeof price === "string") {
-    // Remove currency symbols and non-numeric characters except decimal separator
-    const cleanPrice = price.replace(/[^\d,\.]/g, "").replace(",", ".");
+    // Remove currency symbols but keep digits, commas and dots
+    let cleanPrice = price.replace(/[^\d,\.]/g, "");
+    
+    // Detectar formato brasileiro vs americano
+    // Se tem vírgula e ponto, ex: "1.234,56" (brasileiro) ou "1,234.56" (americano)
+    if (cleanPrice.includes(",") && cleanPrice.includes(".")) {
+      const lastComma = cleanPrice.lastIndexOf(",");
+      const lastDot = cleanPrice.lastIndexOf(".");
+      
+      if (lastComma > lastDot) {
+        // Formato brasileiro: "1.234,56" - vírgula é decimal
+        cleanPrice = cleanPrice.replace(/\./g, "").replace(",", ".");
+      } else {
+        // Formato americano: "1,234.56" - ponto é decimal
+        cleanPrice = cleanPrice.replace(/,/g, "");
+      }
+    }
+    // Se tem apenas vírgula, assumir formato brasileiro
+    else if (cleanPrice.includes(",") && !cleanPrice.includes(".")) {
+      cleanPrice = cleanPrice.replace(",", ".");
+    }
+    // Se tem apenas ponto, assumir formato americano (já está correto)
+    
     return parseFloat(cleanPrice) || 0;
   }
 

@@ -46,30 +46,6 @@ export default function ResumeTable(props: ResumeTableProps) {
   const logic = useResumeTableLogic();
   // Remover import e uso de useCouponInput, pois não é mais utilizado
 
-  useEffect(() => {
-    const handler = () => {
-      setReloadKey((k) => k + 1); // força recarregar
-      if (typeof props.onReload === "function") props.onReload();
-    };
-    window.addEventListener("resume-table-reload", handler);
-    return () => window.removeEventListener("resume-table-reload", handler);
-  }, [props]);
-
-  useEffect(() => {
-    if (reloadKey > 0) {
-      logic.fetchResumeData();
-    }
-  }, [reloadKey]);
-
-  // Cleanup dos timers de debounce quando o componente for desmontado
-  useEffect(() => {
-    return () => {
-      Object.values(wordCountDebounceTimers).forEach(timer => {
-        clearTimeout(timer);
-      });
-    };
-  }, [wordCountDebounceTimers]);
-
   const {
     resumeData,
     loading,
@@ -90,8 +66,45 @@ export default function ResumeTable(props: ResumeTableProps) {
     serviceCardsByActiveService,
     getSelectedNicheName,
     getSelectedServiceTitle,
-    getNichePrice
+    getNichePrice,
+    reloadTableData // NOVA FUNÇÃO: para recarregar apenas dados da tabela
   } = logic;
+
+  useEffect(() => {
+    const handler = () => {
+      setReloadKey((k) => k + 1); // força recarregar
+      if (typeof props.onReload === "function") props.onReload();
+    };
+    
+    // NOVA LÓGICA: Listener separado para recarregar apenas dados da tabela
+    const tableOnlyHandler = () => {
+      console.log("🔄 [ResumeTable] Recarregando apenas dados da tabela...");
+      reloadTableData();
+    };
+    
+    window.addEventListener("resume-table-reload", handler);
+    window.addEventListener("resume-table-data-only-reload", tableOnlyHandler);
+    
+    return () => {
+      window.removeEventListener("resume-table-reload", handler);
+      window.removeEventListener("resume-table-data-only-reload", tableOnlyHandler);
+    };
+  }, [props, reloadTableData]);
+
+  useEffect(() => {
+    if (reloadKey > 0) {
+      logic.fetchResumeData();
+    }
+  }, [reloadKey]);
+
+  // Cleanup dos timers de debounce quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      Object.values(wordCountDebounceTimers).forEach(timer => {
+        clearTimeout(timer);
+      });
+    };
+  }, [wordCountDebounceTimers]);
 
   // Debounced trigger para cálculos - espera 500ms de inatividade
   const debouncedCalculationTrigger = useDebounce(calculationTrigger, 500);

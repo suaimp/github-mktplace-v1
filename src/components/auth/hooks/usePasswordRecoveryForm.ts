@@ -52,42 +52,20 @@ export const usePasswordRecoveryForm = (): UsePasswordRecoveryFormReturn => {
 
   // Verificar erros na URL ao carregar
   useEffect(() => {
-    console.log('🔍 [PasswordRecovery] URL atual:', window.location.href);
-    console.log('🔍 [PasswordRecovery] Hash completo:', window.location.hash);
-    
     const hash = window.location.hash.substring(1);
-    console.log('🔍 [PasswordRecovery] Hash sem #:', hash);
     
     if (hash) {
-      console.log('🔍 [PasswordRecovery] Hash length:', hash.length);
-      console.log('🔍 [PasswordRecovery] Hash primeiros 100 chars:', hash.substring(0, 100));
-      
       const hashParams = new URLSearchParams(hash);
-      console.log('🔍 [PasswordRecovery] Hash params:', Object.fromEntries(hashParams));
-      console.log('🔍 [PasswordRecovery] Hash params size:', hashParams.size);
       
       // Tentar extrair manualmente
       const accessTokenMatch = hash.match(/access_token=([^&]+)/);
       const refreshTokenMatch = hash.match(/refresh_token=([^&]+)/);
-      console.log('🔍 [PasswordRecovery] Manual access token match:', !!accessTokenMatch);
-      console.log('🔍 [PasswordRecovery] Manual refresh token match:', !!refreshTokenMatch);
-      
-      if (accessTokenMatch) {
-        console.log('🔍 [PasswordRecovery] Access token manual:', accessTokenMatch[1].substring(0, 20) + '...');
-      }
-      if (refreshTokenMatch) {
-        console.log('🔍 [PasswordRecovery] Refresh token manual:', refreshTokenMatch[1].substring(0, 20) + '...');
-      }
       
       // Verificar se há erro no hash
       const error = hashParams.get('error');
       const errorCode = hashParams.get('error_code');
       
-      console.log('🔍 [PasswordRecovery] Error:', error);
-      console.log('🔍 [PasswordRecovery] Error code:', errorCode);
-      
       if (error) {
-        console.log('❌ [PasswordRecovery] Erro detectado na URL');
         if (errorCode === 'otp_expired') {
           setError("O link de recuperação expirou. Solicite um novo link.");
         } else if (error === 'access_denied') {
@@ -101,40 +79,26 @@ export const usePasswordRecoveryForm = (): UsePasswordRecoveryFormReturn => {
       // Verificar se há tokens usando URLSearchParams
       const detectedAccessToken = hashParams.get('access_token');
       const detectedRefreshToken = hashParams.get('refresh_token');
-      console.log('🔍 [PasswordRecovery] Access token presente:', !!detectedAccessToken);
-      console.log('🔍 [PasswordRecovery] Refresh token presente:', !!detectedRefreshToken);
       
       // Se URLSearchParams não funcionou, usar extração manual como fallback
       let finalAccessToken = detectedAccessToken;
       let finalRefreshToken = detectedRefreshToken;
       
       if (!finalAccessToken && accessTokenMatch) {
-        console.log('� [PasswordRecovery] Usando extração manual para access_token');
         finalAccessToken = accessTokenMatch[1];
       }
       
       if (!finalRefreshToken && refreshTokenMatch) {
-        console.log('🔧 [PasswordRecovery] Usando extração manual para refresh_token');
         finalRefreshToken = refreshTokenMatch[1];
       }
       
       if (finalAccessToken) {
-        console.log('🔍 [PasswordRecovery] Access token start:', finalAccessToken.substring(0, 20) + '...');
         setAccessToken(finalAccessToken); // ✅ Armazenar no estado
       }
       
       if (finalRefreshToken) {
-        console.log('🔍 [PasswordRecovery] Refresh token start:', finalRefreshToken.substring(0, 20) + '...');
         setRefreshToken(finalRefreshToken); // ✅ Armazenar no estado
       }
-      
-      // Log final dos tokens armazenados
-      console.log('💾 [PasswordRecovery] Tokens armazenados no estado:', {
-        accessToken: finalAccessToken ? 'SALVO' : 'NÃO_ENCONTRADO',
-        refreshToken: finalRefreshToken ? 'SALVO' : 'NÃO_ENCONTRADO'
-      });
-    } else {
-      console.log('🔍 [PasswordRecovery] Nenhum hash encontrado na URL');
     }
   }, []);
 

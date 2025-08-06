@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { getCartCheckoutResumeByUser } from "../../services/db-services/marketplace-services/checkout/CartCheckoutResumeService";
 import { getOrderTotalsByUser } from "../../services/db-services/marketplace-services/order/OrderTotalsService";
 import { useCheckoutCardsActions } from "../ServicePackages/cards/checkoutCardsActions";
 import { useResumeTableEdit } from "./actions/ResumeTableEdit";
@@ -12,6 +11,8 @@ import {
 import { SERVICE_OPTIONS } from "./constants/options";
 import { useNicheState } from "./hooks/useNicheState";
 import { NicheDbService } from "./services/NicheDbService";
+import ResumeTableCacheService from "./services/ResumeTableCacheService";
+import { useIsolatedTableReload } from "./hooks/useIsolatedTableReload";
 
 export function useResumeTableLogic() {
   const [resumeData, setResumeData] = useState<any[]>([]);
@@ -21,6 +22,12 @@ export function useResumeTableLogic() {
   
   // Usar o novo hook para gerenciar nichos
   const { selectedNiches, initializeNiches, setSelectedNiches } = useNicheState();
+  
+  // Hook para controlar recarregamento isolado da tabela
+  const { tableReloadKey, reloadTableOnly } = useIsolatedTableReload();
+  
+  // Cache service para otimizar carregamento
+  const cacheService = ResumeTableCacheService.getInstance();
   
   const [selectedService, setSelectedService] = useState<{
     [id: string]: string;
@@ -52,8 +59,8 @@ export function useResumeTableLogic() {
           setLoading(false);
           return;
         }
-        const data = await getCartCheckoutResumeByUser(user.id);
-        console.log("📥 Dados carregados do banco:", data);
+        const data = await cacheService.getData(user.id);
+        console.log("📥 Dados carregados (cache ou banco):", data);
         
         // Verifica e corrige dados malformados
         const sanitizedData = (data || []).map((item: any) => {
@@ -138,8 +145,9 @@ export function useResumeTableLogic() {
     };
     window.addEventListener("resume-table-reload", handler);
     return () => window.removeEventListener("resume-table-reload", handler);
+    // ATUALIZAÇÃO: Incluir tableReloadKey como dependência para recarregar quando necessário
     // eslint-disable-next-line
-  }, []);
+  }, [tableReloadKey]);
 
   useEffect(() => {
     // Recarregando estados com resumeData
@@ -342,19 +350,38 @@ export function useResumeTableLogic() {
   function fetchResumeData() {
     setLoading(true);
     setError(null);
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         setResumeData([]);
         setLoading(false);
         return;
       }
-      getCartCheckoutResumeByUser(user.id)
-        .then((data) => setResumeData(data || []))
-        .catch(() => {
-          setError("Erro ao buscar dados do resumo.");
-          setResumeData([]);
-        })
-        .finally(() => setLoading(false));
+      
+      try {
+        // NOVA LÓGICA: Usar cache service com força refresh para garantir dados atualizados
+        const data = await cacheService.getData(user.id, true);
+        console.log("📥 Dados recarregados forçosamente:", data);
+        setResumeData(data || []);
+      } catch (error) {
+        setError("Erro ao buscar dados do resumo.");
+        setResumeData([]);
+        console.error("❌ Erro ao recarregar dados:", error);
+      } finally {
+        setLoading(false);
+      }
+    });
+  }
+
+  // Função para recarregar apenas a tabela (sem afetar tabControls)
+  function reloadTableData() {
+    console.log("🔄 [useResumeTableLogic] Recarregando apenas dados da tabela...");
+    reloadTableOnly();
+    
+    // Invalida cache para garantir dados frescos
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        cacheService.invalidateCache(user.id);
+      }
     });
   }
 
@@ -429,6 +456,7 @@ export function useResumeTableLogic() {
     getSelectedNicheName,
     getSelectedServiceTitle,
     getNichePrice,
-    fetchResumeData // expõe função
+    fetchResumeData, // expõe função
+    reloadTableData // NOVA FUNÇÃO: recarregar apenas dados da tabela
   };
 }

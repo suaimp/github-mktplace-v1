@@ -1,73 +1,73 @@
 /**
- * Hook personalizado para gerenciar o estado do PIX
+ * Hook personalizado para gerenciar estado PIX (versão modular)
+ * Responsabilidade: Gerenciar estado e ações do PIX
  */
 
 import { useState, useCallback } from 'react';
-import { PixQrCodeState, PixCustomerData } from '../types/PixTypes';
-import { PixPaymentService } from '../services/PixPaymentService';
+import { PixQrCodeState, PixCustomerData, PixOrderSummary } from '../interfaces/PixTypes';
+import { PixPaymentServiceModular } from '../services/PixPaymentServiceModular';
 
-export function usePixPayment() {
+export function usePixPaymentModular() {
   const [pixState, setPixState] = useState<PixQrCodeState>({
     qrCodeUrl: null,
     copiaECola: null,
     isGenerating: false,
-    timer: 0
+    error: null
   });
 
-  const [error, setError] = useState<string | null>(null);
+  const pixService = PixPaymentServiceModular.getInstance();
 
   /**
-   * Gera o QR Code PIX
+   * Gera o QR Code PIX usando dados atualizados
    */
   const generatePixQrCode = useCallback(async (
     customerData: PixCustomerData,
-    totalAmount: number,
-    orderId: string,
-    orderItems: any[],
-    orderSummary: any
+    orderSummary: PixOrderSummary,
+    orderId: string
   ) => {
     try {
-      setPixState(prev => ({ ...prev, isGenerating: true }));
-      setError(null);
+      setPixState(prev => ({ 
+        ...prev, 
+        isGenerating: true, 
+        error: null 
+      }));
 
-      console.log('🔄 Iniciando geração do QR Code PIX...');
+      console.log('🔄 [PIX HOOK] Iniciando geração do QR Code...');
 
-      // Calcular items com desconto
-      const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-      const discountedItems = PixPaymentService.calculateDiscountedItems(
-        orderItems,
-        totalOriginal,
-        totalAmount
-      );
-
-      // Gerar QR Code
-      const result = await PixPaymentService.generateQrCode(
+      // Usar o serviço modular com dados corretos
+      const result = await pixService.generateQrCode(
         customerData,
-        totalAmount,
-        orderId,
-        discountedItems
+        orderSummary, // dados atualizados do order_totals
+        orderId
       );
 
       if (result.success && result.qr_code && result.qr_code_url) {
-        setPixState(prev => ({
-          ...prev,
-          qrCodeUrl: result.qr_code_url!,
-          copiaECola: result.qr_code!,
-          isGenerating: false
-        }));
+        setPixState({
+          qrCodeUrl: result.qr_code_url,
+          copiaECola: result.qr_code,
+          isGenerating: false,
+          error: null
+        });
 
-        console.log('✅ QR Code PIX gerado com sucesso');
+        console.log('✅ [PIX HOOK] QR Code gerado com sucesso');
         return result;
       } else {
         throw new Error(result.error || 'Falha ao gerar QR Code PIX');
       }
+
     } catch (error: any) {
-      console.error('❌ Erro na geração do QR Code PIX:', error);
-      setError(error.message);
-      setPixState(prev => ({ ...prev, isGenerating: false }));
+      console.error('❌ [PIX HOOK] Erro:', error);
+      const errorMessage = error.message || 'Erro ao gerar QR code PIX';
+      
+      setPixState(prev => ({
+        ...prev,
+        isGenerating: false,
+        error: errorMessage
+      }));
+
       throw error;
     }
-  }, []);
+  }, [pixService]);
 
   /**
    * Copia o código PIX para a área de transferência
@@ -77,52 +77,47 @@ export function usePixPayment() {
 
     try {
       await navigator.clipboard.writeText(pixState.copiaECola);
-      console.log('📋 Código PIX copiado com sucesso');
+      console.log('📋 [PIX HOOK] Código PIX copiado com sucesso');
       return true;
     } catch (error) {
-      console.error('❌ Erro ao copiar código PIX:', error);
+      console.error('❌ [PIX HOOK] Erro ao copiar código PIX:', error);
       return false;
     }
   }, [pixState.copiaECola]);
 
   /**
-   * Limpa o estado do PIX
+   * Limpa os dados do PIX
    */
-  const clearPixState = useCallback(() => {
+  const clearPixData = useCallback(() => {
     setPixState({
       qrCodeUrl: null,
       copiaECola: null,
       isGenerating: false,
-      timer: 0
+      error: null
     });
-    setError(null);
   }, []);
 
   /**
-   * Inicia o timer de geração do QR Code
+   * Reset completo do estado PIX
    */
-  const startTimer = useCallback((seconds: number = 45) => {
-    setPixState(prev => ({ ...prev, timer: seconds }));
-    
-    const interval = setInterval(() => {
-      setPixState(prev => {
-        if (prev.timer <= 1) {
-          clearInterval(interval);
-          return { ...prev, timer: 0 };
-        }
-        return { ...prev, timer: prev.timer - 1 };
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const resetPixState = useCallback(() => {
+    clearPixData();
+  }, [clearPixData]);
 
   return {
-    pixState,
-    error,
+    // Estado
+    pixQrCodeUrl: pixState.qrCodeUrl,
+    pixCopiaECola: pixState.copiaECola,
+    pixProcessing: pixState.isGenerating,
+    pixError: pixState.error,
+    
+    // Ações
     generatePixQrCode,
     copyPixCode,
-    clearPixState,
-    startTimer
+    clearPixData,
+    resetPixState,
+    
+    // Service instance (para casos específicos)
+    pixService
   };
 }

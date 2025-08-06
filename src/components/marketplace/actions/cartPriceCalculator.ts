@@ -28,30 +28,16 @@ export function calculateCartProductPrice(
   entryValues: PriceValue[],
   productPriceField: ProductPriceField | undefined
 ): number {
-  console.log("[cartPriceCalculator] Valores recebidos:", {
-    entryValues,
-    productPriceField,
-    entryValuesLength: entryValues?.length || 0
-  });
-
   let productPrice = 0;
 
   if (!productPriceField) {
-    console.log("[cartPriceCalculator] productPriceField não definido");
     return productPrice;
   }
   const priceValue = entryValues.find(
     (v) => v.field_id === productPriceField.id
   );
 
-  console.log("[cartPriceCalculator] priceValue encontrado:", {
-    priceValue,
-    productPriceFieldId: productPriceField.id,
-    found: !!priceValue
-  });
-
   if (!priceValue) {
-    console.log("[cartPriceCalculator] priceValue não encontrado");
     return productPrice;
   }
   try {
@@ -63,10 +49,6 @@ export function calculateCartProductPrice(
         typeof priceValue.value_json === "string"
           ? JSON.parse(priceValue.value_json)
           : priceValue.value_json;
-      console.log(
-        "[cartPriceCalculator] Dados encontrados em value_json:",
-        priceData
-      );
     }
     // Fallback para value se value_json não existir
     else if (priceValue.value) {
@@ -74,10 +56,6 @@ export function calculateCartProductPrice(
         typeof priceValue.value === "string"
           ? JSON.parse(priceValue.value)
           : priceValue.value;
-      console.log(
-        "[cartPriceCalculator] Dados encontrados em value:",
-        priceData
-      );
     }
 
     if (priceData) {
@@ -86,31 +64,13 @@ export function calculateCartProductPrice(
         const promotionalPriceNum = parsePrice(priceData.promotional_price);
         if (promotionalPriceNum > 0) {
           productPrice = promotionalPriceNum;
-          console.log("[cartPriceCalculator] Usando promotional_price:", {
-            promotional_price: priceData.promotional_price,
-            parsed_price: productPrice,
-            reason: "promotional_price > 0"
-          });
         } else {
           // promotional_price existe mas é 0 ou inválido, usa price normal
           productPrice = parsePrice(priceData.price);
-          console.log(
-            "[cartPriceCalculator] promotional_price é 0, usando price normal:",
-            {
-              promotional_price: priceData.promotional_price,
-              price: priceData.price,
-              parsed_price: productPrice
-            }
-          );
         }
       } else {
         // Não tem promotional_price, usa price normal
         productPrice = parsePrice(priceData.price);
-        console.log("[cartPriceCalculator] Usando price normal:", {
-          price: priceData.price,
-          parsed_price: productPrice,
-          reason: "promotional_price não existe"
-        });
       }
     }
   } catch (e) {

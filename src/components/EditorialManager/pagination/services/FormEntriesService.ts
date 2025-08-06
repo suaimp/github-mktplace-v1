@@ -11,9 +11,6 @@ export class FormEntriesService {
     try {
       const { page, limit, searchTerm, statusFilter, sortField, sortDirection, formId } = params;
       
-      console.log(`🔄 [FormEntriesService] Loading entries - Page: ${page}, Limit: ${limit}, FormId: ${formId}`);
-      const startTime = performance.now();
-      
       // Calcular offset
       const offset = (page - 1) * limit;
       
@@ -73,15 +70,11 @@ export class FormEntriesService {
 
       if (error) throw error;
 
-      console.log(`⚡ [FormEntriesService] Query executed in ${(performance.now() - startTime).toFixed(2)}ms`);
-      
       // Se há termo de busca, precisamos filtrar antes da paginação
       let filteredData = data;
       let filteredCount = count;
       
       if (searchTerm && formId) {
-        const searchStartTime = performance.now();
-        
         // Buscar fields para pesquisa
         const { data: fields } = await supabase
           .from("form_fields")
@@ -201,12 +194,9 @@ export class FormEntriesService {
         filteredData = searchFilteredEntries.slice(startIndex, endIndex);
         filteredCount = searchFilteredEntries.length;
         
-        console.log(`🔍 [FormEntriesService] Search filter applied in ${(performance.now() - searchStartTime).toFixed(2)}ms`);
-        console.log(`📊 [FormEntriesService] Found ${filteredCount} results for "${searchTerm}"`);
       }
 
       // OTIMIZAÇÃO 3: Processar entries e buscar publishers em lote
-      const processStartTime = performance.now();
       
       // Usar os dados filtrados se houve busca, senão usar os dados originais
       const dataToProcess = searchTerm ? filteredData : data;
@@ -244,7 +234,6 @@ export class FormEntriesService {
       const processedEntries = (dataToProcess || []).map((entry: any) => {
         // Log para depuração do objeto bruto recebido do banco
         // eslint-disable-next-line no-console
-        console.log('[FormEntriesService] entry from DB:', entry);
 
         // Processo otimizado de valores
         const values: Record<string, any> = {};
@@ -280,14 +269,9 @@ export class FormEntriesService {
         };
       });
 
-      console.log(`🔧 [FormEntriesService] Entries processed in ${(performance.now() - processStartTime).toFixed(2)}ms`);
-
       // Aplicar ordenação no lado do cliente para campos que não podem ser ordenados no DB
       let finalProcessedEntries = processedEntries;
       if (sortField && !SortingConfigService.isDatabaseSortField(sortField)) {
-        console.log(`🔄 [FormEntriesService] Applying client-side sorting for field: ${sortField}`);
-        const clientSortStartTime = performance.now();
-        
         // Buscar campos do formulário para configuração de ordenação
         let formFields: any[] = [];
         if (formId) {
@@ -305,16 +289,12 @@ export class FormEntriesService {
           formFields
         );
         
-        console.log(`⚡ [FormEntriesService] Client-side sorting applied in ${(performance.now() - clientSortStartTime).toFixed(2)}ms`);
       }
 
       // Para busca, já aplicamos a filtragem na query, então usar finalProcessedEntries diretamente
       // Usar contagem filtrada se houve busca
       const finalTotalItems = searchTerm ? (filteredCount || 0) : (count || 0);
       const totalPages = Math.ceil(finalTotalItems / limit);
-
-      console.log(`✅ [FormEntriesService] Total processing time: ${(performance.now() - startTime).toFixed(2)}ms`);
-
       return {
         data: finalProcessedEntries,
         pagination: {
@@ -337,9 +317,6 @@ export class FormEntriesService {
    */
   static async loadStatusCounts(formId?: string): Promise<StatusCounts> {
     try {
-      console.log(`📊 [FormEntriesService] Loading status counts for formId: ${formId}`);
-      const startTime = performance.now();
-
       // OTIMIZAÇÃO: Query mais eficiente usando aggregate ao invés de fetch + filter
       let query = supabase
         .from("form_entries")
@@ -373,7 +350,6 @@ export class FormEntriesService {
         reprovado: statusCount.reprovado
       };
 
-      console.log(`✅ [FormEntriesService] Status counts loaded in ${(performance.now() - startTime).toFixed(2)}ms:`, counts);
       return counts;
     } catch (error) {
       console.error("Error loading status counts:", error);

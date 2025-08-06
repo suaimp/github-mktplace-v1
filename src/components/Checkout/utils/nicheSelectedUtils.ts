@@ -1,4 +1,5 @@
 import { NICHE_OPTIONS } from "../constants/options";
+import { normalizePrice } from "./priceNormalizer";
 
 // Funções utilitárias para lidar com o valor selecionado de nicho e preço
 
@@ -60,12 +61,16 @@ export function getNichePrice(
   if (!selectedNicheName || selectedNicheName === "Nenhum" || selectedNicheName === NICHE_OPTIONS.PLACEHOLDER) return 0;
   const found = niches.find((n: NicheItem) => n.niche === selectedNicheName);
   if (found && found.price) {
-    const nichePrice = Number(
-      String(found.price)
-        .replace(/[^0-9,.-]+/g, "")
-        .replace(",", ".")
-    );
-    // Agora retorna apenas o valor do nicho selecionado
+    // ATUALIZAÇÃO: Usar o normalizador de preços para aceitar tanto number quanto string formatada
+    const nichePrice = normalizePrice(found.price);
+    
+    console.log(`🔍 [getNichePrice] Processando preço do nicho:`, {
+      originalPrice: found.price,
+      originalType: typeof found.price,
+      normalizedPrice: nichePrice,
+      niche: selectedNicheName
+    });
+    
     return nichePrice;
   }
   return 0;

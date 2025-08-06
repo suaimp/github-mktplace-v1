@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { isSortableField } from "./table/isSortableField";
 import { supabase } from "../../lib/supabase";
 import "./styles/MarketplaceTableStyles.css";
@@ -27,6 +27,8 @@ import {
   MarketplaceTableControls, 
   MarketplacePagination 
 } from "./pagination";
+// Importar sistema de seleção do marketplace
+import { useMarketplaceSelection } from "./selection";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -41,7 +43,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [entries, setEntries] = useState<any[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
-  const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
@@ -95,6 +96,25 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   
   // Hook para gerenciar o estado da tabela e tooltips
   const { tableLoaded } = useTableState({ entriesCount: entries.length });
+
+  // Calcular entradas paginadas antes dos hooks de seleção
+  const paginatedEntries = filteredEntries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Hook de seleção com escopo por página - deve ser chamado sempre na mesma ordem
+  const {
+    selectedEntries,
+    isAllSelected,
+    selectedCount,
+    handleSelectEntry,
+    handleSelectAll,
+    handleClearSelection
+  } = useMarketplaceSelection({
+    currentPageEntries: paginatedEntries,
+    scope: 'page'
+  });
 
   // Funções para o modal de detalhes
   const openDetailsModal = (entry: any) => {
@@ -250,30 +270,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     }
   }
 
-  const handleSelectEntry = (entryId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    event.stopPropagation();
-    setSelectedEntries((prev) => {
-      if (prev.includes(entryId)) {
-        return prev.filter((id) => id !== entryId);
-      } else {
-        return [...prev, entryId];
-      }
-    });
-  };
-
-  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.stopPropagation();
-    if (selectedEntries.length === filteredEntries.length && filteredEntries.length > 0) {
-      setSelectedEntries([]);
-    } else {
-      setSelectedEntries(filteredEntries.map((entry) => entry.id));
-    }
-  };
-
-  const handleClearSelection = () => {
-    setSelectedEntries([]);
-  };
-
   // Find product name and price fields
   const productNameField = fields.find(
     (field) => field.form_field_settings?.is_product_name === true
@@ -330,17 +326,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     return <MarketplaceTableEmpty message="Nenhum produto encontrado" />;
   }
 
-  // Pagination
-  const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   return (
     <div className="w-full relative overflow-hidden">
       {selectedEntries.length > 0 && (
         <BulkSelectionBar
-          selectedCount={selectedEntries.length}
+          selectedCount={selectedCount}
           onClear={handleClearSelection}
           selectedEntries={selectedEntries}
           productNameField={productNameField}
@@ -374,15 +364,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         type="checkbox"
                         id="selectAll"
                         className="sr-only"
-                        checked={selectedEntries.length === filteredEntries.length && filteredEntries.length > 0}
+                        checked={isAllSelected}
                         onChange={handleSelectAll}
                       />
                       <label htmlFor="selectAll" className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-[1.25px] hover:border-brand-500 dark:hover:border-brand-500 ${
-                        selectedEntries.length === filteredEntries.length && filteredEntries.length > 0
+                        isAllSelected
                           ? "border-brand-500 bg-brand-500"
                           : "bg-transparent border-gray-300 dark:border-gray-700"
                       }`}>
-                        <span className={selectedEntries.length === filteredEntries.length && filteredEntries.length > 0 ? "" : "opacity-0"}>
+                        <span className={isAllSelected ? "" : "opacity-0"}>
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="white" strokeWidth="1.94437" strokeLinecap="round" strokeLinejoin="round"></path>
                           </svg>
@@ -394,170 +384,162 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 </th>
                 
                 {/* Cabeçalhos para mobile (menor que xl) - apenas colunas essenciais */}
-                <div className="xl:hidden contents">
-                  {mobileFields.map((field) => {
-                    if (!field) return null;
-                    const settings = field.form_field_settings || {};
-                    const displayName = settings.marketplace_label || field.label;
-                    
-                    return (
-                      <th key={field.id} scope="col" className="text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                        <span>{displayName}</span>
-                      </th>
-                    );
-                  })}
-                </div>
+                {mobileFields.map((field) => {
+                  if (!field) return null;
+                  const settings = field.form_field_settings || {};
+                  const displayName = settings.marketplace_label || field.label;
+                  
+                  return (
+                    <th key={field.id} scope="col" className="xl:hidden text-left text-[13px] font-semibold text-gray-900 dark:text-white">
+                      <span>{displayName}</span>
+                    </th>
+                  );
+                })}
 
                 {/* Cabeçalhos para desktop (xl e acima) - todas as colunas */}
-                <div className="hidden xl:contents">
-                  {tableFields.map((field) => {
-                    const settings = field.form_field_settings || {};
-                    const displayName = settings.marketplace_label || field.label;
-                    const isSortable = isSortableField(field);
+                {tableFields.map((field) => {
+                  const settings = field.form_field_settings || {};
+                  const displayName = settings.marketplace_label || field.label;
+                  const isSortable = isSortableField(field);
 
-                    // Definições de tooltip por campo
-                    let tooltipText = "";
-                    let showTooltip = true;
-                    
-                    const helptext = settings.helptext || settings.help_text || field.helptext || field.help_text;
-                    if (typeof helptext === 'string' && helptext.trim() !== '') {
-                      tooltipText = helptext;
-                    } else {
-                      switch (field.field_type) {
-                        case "brand":
-                          tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          break;
-                        case "country":
-                          tooltipText = "País: País de origem ou audiência.";
-                          break;
-                        case "moz_da":
-                          tooltipText = "DA: Pontuação de autoridade do domínio (Moz).";
-                          break;
-                        case "ahrefs_traffic":
-                        case "similarweb_traffic":
-                        case "google_traffic":
-                        case "semrush_as":
-                          tooltipText = "Tráfego: Número estimado de visitantes.";
-                          break;
-                        case "categories":
-                        case "category":
-                          tooltipText = "Categorias: Tópicos principais do site.";
-                          break;
-                        case "links":
-                          tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
-                          break;
-                        case "product":
-                          tooltipText = "Preço do Artigo: Custo para publicar um artigo.";
-                          break;
-                        case "site_url":
-                        case "url":
+                  // Definições de tooltip por campo
+                  let tooltipText = "";
+                  let showTooltip = true;
+                  
+                  const helptext = settings.helptext || settings.help_text || field.helptext || field.help_text;
+                  if (typeof helptext === 'string' && helptext.trim() !== '') {
+                    tooltipText = helptext;
+                  } else {
+                    switch (field.field_type) {
+                      case "brand":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                      case "country":
+                        tooltipText = "País: País de origem ou audiência.";
+                        break;
+                      case "moz_da":
+                        tooltipText = "DA: Pontuação de autoridade do domínio (Moz).";
+                        break;
+                      case "ahrefs_traffic":
+                      case "similarweb_traffic":
+                      case "google_traffic":
+                      case "semrush_as":
+                        tooltipText = "Tráfego: Número estimado de visitantes.";
+                        break;
+                      case "categories":
+                      case "category":
+                        tooltipText = "Categorias: Tópicos principais do site.";
+                        break;
+                      case "links":
+                        tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
+                        break;
+                      case "product":
+                        tooltipText = "Preço do Artigo: Custo para publicar um artigo.";
+                        break;
+                      case "site_url":
+                      case "url":
+                        showTooltip = false;
+                        break;
+                      case "toggle":
+                        tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
+                        break;
+                      default:
+                        if (displayName && displayName.toLowerCase().includes("site")) {
                           showTooltip = false;
-                          break;
-                        case "toggle":
+                        } else if (displayName && displayName.toLowerCase().includes("comprar")) {
+                          showTooltip = false;
+                        } else if (displayName && displayName.toLowerCase().includes("categoria")) {
+                          tooltipText = "Categorias: Tópicos principais do site.";
+                        } else if (displayName && displayName.toLowerCase().includes("marca")) {
                           tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          break;
-                        default:
-                          if (displayName && displayName.toLowerCase().includes("site")) {
-                            showTooltip = false;
-                          } else if (displayName && displayName.toLowerCase().includes("comprar")) {
-                            showTooltip = false;
-                          } else if (displayName && displayName.toLowerCase().includes("categoria")) {
-                            tooltipText = "Categorias: Tópicos principais do site.";
-                          } else if (displayName && displayName.toLowerCase().includes("marca")) {
-                            tooltipText = "Artigo Patrocinado: será em forma de publicidade.";
-                          } else if (displayName && displayName.toLowerCase().includes("link")) {
-                            tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
-                          }
-                          break;
-                      }
+                        } else if (displayName && displayName.toLowerCase().includes("link")) {
+                          tooltipText = "Quantidade de Links: Número de links (internos ou externos).";
+                        }
+                        break;
                     }
+                  }
 
-                    return (
-                      <th
-                        key={field.id}
-                        scope="col"
-                        className={`text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
-                          isSortable ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" : ""
-                        }`}
-                        onClick={isSortable ? () => handleSort(field.id) : undefined}
-                      >
-                        <div className="flex items-center justify-start gap-2">
-                          <div className="flex items-center justify-start">
-                            <div className="flex items-center gap-1">
-                              {field.field_type === "niche" ? (
-                                <div className="flex items-center gap-1">
-                                  <span>{displayName}</span>
+                  return (
+                    <th
+                      key={field.id}
+                      scope="col"
+                      className={`hidden xl:table-cell text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
+                        isSortable ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" : ""
+                      }`}
+                      onClick={isSortable ? () => handleSort(field.id) : undefined}
+                    >
+                      <div className="flex items-center justify-start gap-2">
+                        <div className="flex items-center justify-start">
+                          <div className="flex items-center gap-1">
+                            {field.field_type === "niche" ? (
+                              <div className="flex items-center gap-1">
+                                <span>{displayName}</span>
+                                <MarketplaceTableTooltip 
+                                  text={"O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna."} 
+                                  tableLoaded={tableLoaded}
+                                  entriesCount={entries.length}
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <span>{displayName}</span>
+                                {showTooltip && (
                                   <MarketplaceTableTooltip 
-                                    text={"O Site recusará ofertas para artigos relacionados a nichos diferentes dos itens destacados nesta coluna."} 
+                                    text={tooltipText} 
                                     tableLoaded={tableLoaded}
                                     entriesCount={entries.length}
                                   />
-                                </div>
-                              ) : (
-                                <>
-                                  <span>{displayName}</span>
-                                  {showTooltip && (
-                                    <MarketplaceTableTooltip 
-                                      text={tooltipText} 
-                                      tableLoaded={tableLoaded}
-                                      entriesCount={entries.length}
-                                    />
-                                  )}
-                                </>
-                              )}
-                            </div>
-                            {isSortable && (
-                              <span className="flex flex-col gap-0.5 ml-1">
-                                <svg
-                                  className={`${
-                                    sortState.field === field.id && sortState.direction === 'asc' 
-                                      ? 'fill-brand-500 dark:fill-brand-400' 
-                                      : 'fill-gray-300 dark:fill-gray-700'
-                                  }`}
-                                  width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
-                                </svg>
-                                <svg
-                                  className={`${
-                                    sortState.field === field.id && sortState.direction === 'desc' 
-                                      ? 'fill-brand-500 dark:fill-brand-400' 
-                                      : 'fill-gray-300 dark:fill-gray-700'
-                                  }`}
-                                  width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
-                                </svg>
-                              </span>
+                                )}
+                              </>
                             )}
                           </div>
+                          {isSortable && (
+                            <span className="flex flex-col gap-0.5 ml-1">
+                              <svg
+                                className={`${
+                                  sortState.field === field.id && sortState.direction === 'asc' 
+                                    ? 'fill-brand-500 dark:fill-brand-400' 
+                                    : 'fill-gray-300 dark:fill-gray-700'
+                                }`}
+                                width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z" fill=""></path>
+                              </svg>
+                              <svg
+                                className={`${
+                                  sortState.field === field.id && sortState.direction === 'desc' 
+                                    ? 'fill-brand-500 dark:fill-brand-400' 
+                                    : 'fill-gray-300 dark:fill-gray-700'
+                                }`}
+                                width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z" fill=""></path>
+                              </svg>
+                            </span>
+                          )}
                         </div>
-                      </th>
-                    );
-                  })}
-                </div>
+                      </div>
+                    </th>
+                  );
+                })}
 
                 {/* Botão de compra para mobile */}
-                <div className="xl:hidden contents">
-                  {buttonBuyField && (
-                    <th scope="col" className="text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                      <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
-                    </th>
-                  )}
-                </div>
+                {buttonBuyField && (
+                  <th scope="col" className="xl:hidden text-left text-[13px] font-semibold text-gray-900 dark:text-white">
+                    <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
+                  </th>
+                )}
 
                 {/* Botão de compra para desktop */}
-                <div className="hidden xl:contents">
-                  {buttonBuyField && (
-                    <th
-                      scope="col" 
-                      className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
-                      style={{ boxShadow: '-2px 0 4px rgba(0, 0, 0, 0.05)' }}
-                    >
-                      <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
-                    </th>
-                  )}
-                </div>
+                {buttonBuyField && (
+                  <th
+                    scope="col" 
+                    className="hidden xl:table-cell sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
+                    style={{ boxShadow: '-2px 0 4px rgba(0, 0, 0, 0.05)' }}
+                  >
+                    <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
@@ -610,184 +592,176 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     </td>
                     
                     {/* Células para mobile (menor que xl) - apenas campos essenciais */}
-                    <div className="xl:hidden contents">
-                      {mobileFields.map((field) => {
-                        if (!field) return null;
-                        
-                        return (
-                          <td key={field.id} className="text-[13px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap">
-                            <div className="flex items-center justify-start">
-                              {(() => {
-                                const fieldValue = entry.values[field.id];
-                                if (field.field_type === "product") {
-                                  const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
-                                  return (
-                                    <PriceSimulationDisplay
-                                      commission={commissionValue}
-                                      productData={fieldValue}
-                                      layout="inline"
-                                      showMarginBelow={false}
-                                      showOriginalPrice={true}
-                                    />
-                                  );
-                                }
-                                
-                                // Verificação direta para valores "Sim" e "Não" - aplicar badge diretamente (MOBILE)
-                                if (fieldValue === 'Sim' || fieldValue === 'Não') {
-                                  const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
-                                  return (
-                                    <CellWithIcon 
-                                      fieldType={field.field_type} 
-                                      fieldLabel={field.label}
-                                    >
-                                      <span className={badgeClass}>
-                                        {fieldValue}
-                                      </span>
-                                    </CellWithIcon>
-                                  );
-                                }
-                                
-                                const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                    {mobileFields.map((field) => {
+                      if (!field) return null;
+                      
+                      return (
+                        <td key={field.id} className="xl:hidden text-[13px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap">
+                          <div className="flex items-center justify-start">
+                            {(() => {
+                              const fieldValue = entry.values[field.id];
+                              if (field.field_type === "product") {
+                                const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
+                                return (
+                                  <PriceSimulationDisplay
+                                    commission={commissionValue}
+                                    productData={fieldValue}
+                                    layout="inline"
+                                    showMarginBelow={false}
+                                    showOriginalPrice={true}
+                                  />
+                                );
+                              }
+                              
+                              // Verificação direta para valores "Sim" e "Não" - aplicar badge diretamente (MOBILE)
+                              if (fieldValue === 'Sim' || fieldValue === 'Não') {
+                                const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
                                 return (
                                   <CellWithIcon 
                                     fieldType={field.field_type} 
                                     fieldLabel={field.label}
                                   >
-                                    {formattedValue}
+                                    <span className={badgeClass}>
+                                      {fieldValue}
+                                    </span>
                                   </CellWithIcon>
                                 );
-                              })()}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </div>
+                              }
+                              
+                              const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                              return (
+                                <CellWithIcon 
+                                  fieldType={field.field_type} 
+                                  fieldLabel={field.label}
+                                >
+                                  {formattedValue}
+                                </CellWithIcon>
+                              );
+                            })()}
+                          </div>
+                        </td>
+                      );
+                    })}
 
                     {/* Células para desktop (xl e acima) - todas as colunas */}
-                    <div className="hidden xl:contents">
-                      {tableFields.map((field) => {
-                        return (
-                          <td key={field.id} className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
-                            <div className="flex items-center justify-start">
-                              {(() => {
-                                const fieldValue = entry.values[field.id];
-                                
-                                // Verificação para valores "Sim" e "Não" - aplicar badge diretamente
-                                const normalizedValue = fieldValue?.toString().trim();
-                                if (normalizedValue === 'Sim' || normalizedValue === 'Não') {
-                                  const badgeClass = normalizedValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
-                                  return (
-                                    <CellWithIcon 
-                                      fieldType={field.field_type} 
-                                      fieldLabel={field.label}
-                                    >
-                                      <span className={badgeClass}>
-                                        {normalizedValue}
-                                      </span>
-                                    </CellWithIcon>
-                                  );
-                                }
-
-                                if (fieldValue === 'Sim' || fieldValue === 'Não') {
-                                  const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
-                                  return (
-                                    <CellWithIcon 
-                                      fieldType={field.field_type} 
-                                      fieldLabel={field.label}
-                                    >
-                                      <span className={badgeClass}>
-                                        {fieldValue}
-                                      </span>
-                                    </CellWithIcon>
-                                  );
-                                }
-                                
-                                if (field.field_type === "product") {
-                                  const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
-                                  return (
-                                    <PriceSimulationDisplay
-                                      commission={commissionValue}
-                                      productData={fieldValue}
-                                      layout="inline"
-                                      showMarginBelow={false}
-                                      showOriginalPrice={true}
-                                    />
-                                  );
-                                }
-                                
-                                // Para campos com métricas API, mostrar badge de score
-                                if (["moz_da", "semrush_as", "ahrefs_dr"].includes(field.field_type)) {
-                                  if (fieldValue === null || fieldValue === undefined) return "-";
-                                  const numValue = parseInt(fieldValue.toString().replace(/,/g, ""));
-                                  return (
-                                    <CellWithIcon 
-                                      fieldType={field.field_type} 
-                                      fieldLabel={field.label}
-                                    >
-                                      <div className="flex items-center">
-                                        <span>{fieldValue}</span>
-                                        {!isNaN(numValue) && (
-                                          <ApiMetricBadge value={numValue} fieldType={field.field_type} />
-                                        )}
-                                      </div>
-                                    </CellWithIcon>
-                                  );
-                                }
-                                
-                                const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                    {tableFields.map((field) => {
+                      return (
+                        <td key={field.id} className="hidden xl:table-cell whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
+                          <div className="flex items-center justify-start">
+                            {(() => {
+                              const fieldValue = entry.values[field.id];
+                              
+                              // Verificação para valores "Sim" e "Não" - aplicar badge diretamente
+                              const normalizedValue = fieldValue?.toString().trim();
+                              if (normalizedValue === 'Sim' || normalizedValue === 'Não') {
+                                const badgeClass = normalizedValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
                                 return (
                                   <CellWithIcon 
                                     fieldType={field.field_type} 
                                     fieldLabel={field.label}
                                   >
-                                    {formattedValue}
+                                    <span className={badgeClass}>
+                                      {normalizedValue}
+                                    </span>
                                   </CellWithIcon>
                                 );
-                              })()}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </div>
+                              }
+
+                              if (fieldValue === 'Sim' || fieldValue === 'Não') {
+                                const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
+                                return (
+                                  <CellWithIcon 
+                                    fieldType={field.field_type} 
+                                    fieldLabel={field.label}
+                                  >
+                                    <span className={badgeClass}>
+                                      {fieldValue}
+                                    </span>
+                                  </CellWithIcon>
+                                );
+                              }
+                              
+                              if (field.field_type === "product") {
+                                const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
+                                return (
+                                  <PriceSimulationDisplay
+                                    commission={commissionValue}
+                                    productData={fieldValue}
+                                    layout="inline"
+                                    showMarginBelow={false}
+                                    showOriginalPrice={true}
+                                  />
+                                );
+                              }
+                              
+                              // Para campos com métricas API, mostrar badge de score
+                              if (["moz_da", "semrush_as", "ahrefs_dr"].includes(field.field_type)) {
+                                if (fieldValue === null || fieldValue === undefined) return "-";
+                                const numValue = parseInt(fieldValue.toString().replace(/,/g, ""));
+                                return (
+                                  <CellWithIcon 
+                                    fieldType={field.field_type} 
+                                    fieldLabel={field.label}
+                                  >
+                                    <div className="flex items-center">
+                                      <span>{fieldValue}</span>
+                                      {!isNaN(numValue) && (
+                                        <ApiMetricBadge value={numValue} fieldType={field.field_type} />
+                                      )}
+                                    </div>
+                                  </CellWithIcon>
+                                );
+                              }
+                              
+                              const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
+                              return (
+                                <CellWithIcon 
+                                  fieldType={field.field_type} 
+                                  fieldLabel={field.label}
+                                >
+                                  {formattedValue}
+                                </CellWithIcon>
+                              );
+                            })()}
+                          </div>
+                        </td>
+                      );
+                    })}
 
                     {/* Botão de compra para mobile */}
-                    <div className="xl:hidden contents">
-                      {buttonBuyField && (
-                        <td className="text-[13px] xl:whitespace-nowrap">
-                          <div className="flex items-center justify-start">
-                            <AddToCartButton
-                              entryId={entry.id}
-                              productName={productName}
-                              price={productPrice}
-                              url={productUrl}
-                              isInCart={isInCart}
-                              buttonStyle="outline"
-                            />
-                          </div>
-                        </td>
-                      )}
-                    </div>
+                    {buttonBuyField && (
+                      <td className="xl:hidden text-[13px] xl:whitespace-nowrap">
+                        <div className="flex items-center justify-start">
+                          <AddToCartButton
+                            entryId={entry.id}
+                            productName={productName}
+                            price={productPrice}
+                            url={productUrl}
+                            isInCart={isInCart}
+                            buttonStyle="outline"
+                          />
+                        </div>
+                      </td>
+                    )}
 
                     {/* Botão de compra para desktop */}
-                    <div className="hidden xl:contents">
-                      {buttonBuyField && (
-                        <td 
-                          className="sticky right-0 z-10 whitespace-nowrap text-[13px]"
-                          style={{ boxShadow: 'rgba(0, 0, 0, 0.05) -2px 0px 4px' }}
-                        >
-                          <div className="flex items-center justify-start">
-                            <AddToCartButton
-                              entryId={entry.id}
-                              productName={productName}
-                              price={productPrice}
-                              url={productUrl}
-                              isInCart={isInCart}
-                              buttonStyle="outline"
-                            />
-                          </div>
-                        </td>
-                      )}
-                    </div>
+                    {buttonBuyField && (
+                      <td 
+                        className="hidden xl:table-cell sticky right-0 z-10 whitespace-nowrap text-[13px]"
+                        style={{ boxShadow: 'rgba(0, 0, 0, 0.05) -2px 0px 4px' }}
+                      >
+                        <div className="flex items-center justify-start">
+                          <AddToCartButton
+                            entryId={entry.id}
+                            productName={productName}
+                            price={productPrice}
+                            url={productUrl}
+                            isInCart={isInCart}
+                            buttonStyle="outline"
+                          />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}

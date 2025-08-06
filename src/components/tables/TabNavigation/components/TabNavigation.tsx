@@ -35,11 +35,8 @@ export default function TabNavigation({
   };
 
   if (tabs.length === 0) {
-    console.warn('⚠️ [TabNavigation] Nenhuma tab fornecida');
     return null;
   }
-
-  console.log(`📋 [TabNavigation] Renderizando ${tabs.length} tabs, ativa: ${activeTabId}`);
 
   return (
     <nav 

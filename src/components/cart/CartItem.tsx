@@ -21,23 +21,30 @@ export default function CartItem({
   const { updateQuantity, removeItem } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Função para formatar número para padrão brasileiro
-  const formatBrazilianPrice = (value: any): string => {
+  // Função para converter formato americano para brasileiro e garantir 2 casas decimais
+  const ensureDecimalFormat = (value: any): string => {
+    let numericValue: number;
+    
+    // Se é número, usa direto
     if (typeof value === 'number') {
-      // Se o número tem mais de 3 dígitos na parte inteira, trata como milhares
-      if (value >= 1000) {
-        return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      } else {
-        // Para números menores, multiplica por 1000 para converter 17.397 em 17397
-        const adjustedValue = value * 1000;
-        return `R$ ${adjustedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      numericValue = value;
+    }
+    // Se é string no formato americano (ex: "159.80"), converte para número
+    else if (typeof value === 'string') {
+      numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return value; // Se não conseguir converter, retorna como está
       }
     }
-    return value;
+    else {
+      return '0,00';
+    }
+    
+    return numericValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   };
-
-  // Debug para ver o formato atual
-  console.log("Price recebido:", price, "Tipo:", typeof price);
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -131,7 +138,7 @@ export default function CartItem({
 
       {/* Preço */}
       <p className="whitespace-nowrap font-bold min-w-[80px] text-right">
-        {formatBrazilianPrice(price)}
+        R$ {ensureDecimalFormat(price)}
       </p>
 
       {/* Botão Remover */}

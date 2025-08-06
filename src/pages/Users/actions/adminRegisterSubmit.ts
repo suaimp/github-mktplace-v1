@@ -26,24 +26,17 @@ export async function submitAdminRegister({
       return { success: false, error: 'Não foi possível encontrar o role de administrador.' };
     }
     
-    console.log('✅ [AdminRegister] Role admin encontrado:', adminRole.id);
-
     // Verificar se já existe admin com o mesmo e-mail
-    console.log('🔍 [AdminRegister] Verificando se admin já existe...');
     const { data: existing } = await supabase
       .from('admins')
       .select('id')
       .eq('email', email.trim())
       .maybeSingle();
     if (existing) {
-      console.log('⚠️ [AdminRegister] Admin já existe:', existing.id);
       return { success: false, error: 'Este e-mail já está cadastrado como administrador.' };
     }
     
-    console.log('✅ [AdminRegister] Email disponível, prosseguindo...');
-
     // 1. Verificar se usuário já existe no Supabase Auth primeiro
-    console.log('🔍 [AdminRegister] Verificando se usuário já existe no Auth...');
     
     let userId: string = '';
     let userAlreadyExists = false;

@@ -18,6 +18,8 @@ import PixPaymentWatcher from "./PixPaymentWatcher";
 import { v4 as uuidv4 } from 'uuid';
 import { useCustomSticky } from "../../hooks/useCustomSticky";
 import { InstallmentOption } from "../../components/Checkout/PaymentInformationForm/Installments/types";
+// Novo import para PIX modular
+import { usePixPaymentModular } from "./Payment/pix/hooks/usePixPayment";
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -89,8 +91,18 @@ export default function Payment() {
     appliedCouponId: null as string | null,
     discountValue: 0,
   });
-  const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
-  const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
+  
+  // PIX Modular Hook - substitui pixQrCodeUrl e pixCopiaECola
+  const {
+    pixQrCodeUrl,
+    pixCopiaECola,
+ 
+ 
+    generatePixQrCode: generatePixQrCodeModular,
+    clearPixData,
+     
+  } = usePixPaymentModular();
+  
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
     string[]
   >(["card", "pix", "boleto"]);
@@ -482,8 +494,7 @@ export default function Payment() {
 
     // Clear PIX data when switching methods
     if (method !== "pix") {
-      setPixQrCodeUrl(null);
-      setPixCopiaECola(null);
+      clearPixData(); // Hook modular limpa os dados PIX
     }
     // For PIX, we'll generate QR Code when user fills the form data
   };
@@ -557,131 +568,108 @@ export default function Payment() {
     try {
       setProcessing(true);
       
-      // CRÍTICO: Verificar se legal_status está definido
-      console.log("🚨 DEBUG CRÍTICO - Estado do formData antes do PIX:", {
-        formData,
-        legal_status: formData.legal_status,
-        legal_status_type: typeof formData.legal_status,
-        legal_status_defined: formData.legal_status !== undefined,
-        legal_status_not_null: formData.legal_status !== null,
-        legal_status_string: String(formData.legal_status),
-        all_formData_keys: Object.keys(formData),
-        timestamp: new Date().toISOString()
-      });
-
-      // VERIFICAÇÃO DE SEGURANÇA
+      // VERIFICAÇÃO DE SEGURANÇA - legal_status deve estar definido
       if (!formData.legal_status) {
-        console.error("❌ ERRO CRÍTICO: legal_status não está definido!");
-        console.log("📋 FormData completo:", formData);
+        console.error("❌ ERRO: legal_status não está definido!");
         setError("Erro: Status legal do cliente não definido. Recarregue a página.");
         return;
       }
       
-      // FORÇAR RELOAD DOS TOTAIS ANTES DE GERAR PIX
+      // Recarregar totais para garantir dados atualizados
       console.log("🔄 Recarregando totais antes de gerar PIX...");
       await loadOrderTotal();
-      
-      // Aguardar um frame para garantir que o state foi atualizado
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // 1. Crie o pedido no banco (se ainda não existir)
+      // 1. Criar o pedido no banco (se ainda não existir)
       let orderId = currentOrderId;
       if (!orderId) {
         orderId = await createPixOrderInDatabase();
       }
-      // 2. Gere o QR Code PIX, enviando o orderId
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("No authenticated session found");
-      }
-      const total = orderSummary.totalFinalPrice;
       
-      // DEBUG: Log dos dados críticos antes de enviar
-      console.log("🐛 PIX DEBUG - Dados críticos sendo enviados:", {
-        customer_legal_status: formData.legal_status,
-        customer_legal_status_type: typeof formData.legal_status,
-        customer_document: formData.documentNumber,
-        customer_document_clean: formData.documentNumber.replace(/\D/g, ""),
-        customer_document_length: formData.documentNumber.replace(/\D/g, "").length,
-        expected_document_type: formData.legal_status === "business" ? "cnpj" : "cpf",
-        expected_customer_type: formData.legal_status === "business" ? "company" : "individual",
-        timestamp: new Date().toISOString()
+      // 2. Preparar dados do cliente para PIX modular
+      const pixCustomerData = {
+        name: formData.name,
+        email: formData.email,
+        document: formData.documentNumber.replace(/\D/g, ""),
+        phone: formData.phone.replace(/\D/g, ""),
+        legal_status: formData.legal_status,
+        company_name: formData.company_name
+      };
+      
+      // 3. Preparar dados do pedido com valores corretos (sem double conversion)
+      const pixOrderSummary = {
+        totalProductPrice: orderSummary.totalProductPrice,
+        totalContentPrice: orderSummary.totalContentPrice, 
+        totalFinalPrice: orderSummary.totalFinalPrice,
+        items: orderSummary.items || [],
+        appliedCouponId: orderSummary.appliedCouponId,
+        discountValue: orderSummary.discountValue
+      };
+      
+      console.log("� [PAYMENT.TSX] Chamando PIX modular com dados corretos:", {
+        pixCustomerData,
+        pixOrderSummary,
+        orderId,
+        total_final_price_reais: pixOrderSummary.totalFinalPrice,
+        total_final_price_cents: pixOrderSummary.totalFinalPrice * 100
       });
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pagarme-pix-payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            amount: Math.round(total * 100),
-            customer_name: formData.name,
-            customer_email: formData.email,
-            customer_document: formData.documentNumber.replace(/\D/g, ""),
-            customer_phone: formData.phone.replace(/\D/g, ""),
-            customer_legal_status: formData.legal_status, // CRÍTICO: deve estar definido
-            customer_company_name: formData.company_name,
-            order_id: orderId,
-            order_items: (() => {
-              // Calcular valores com desconto proporcional
-              const totalOriginal = orderSummary.totalProductPrice + orderSummary.totalContentPrice;
-              const totalWithDiscount = orderSummary.totalFinalPrice;
-              const discountRatio = totalWithDiscount / totalOriginal;
-              
-              return orderSummary.items.map((item: any) => {
-                const originalPrice = Number(item.price);
-                const discountedPrice = originalPrice * discountRatio;
-                
-                return {
-                  amount: Math.round(discountedPrice * 100),
-                  description: item.product_url || "Produto Marketplace",
-                  quantity: item.quantity || 1,
-                  code: item.entry_id || `ITEM_${Date.now()}`
-                };
-              });
-            })()
-          }),
+      // LOG COMPARATIVO: Diferença com implementação anterior
+      console.log("🔄 [PAYMENT.TSX] === COMPARAÇÃO COM IMPLEMENTAÇÃO ANTERIOR ===", {
+        timestamp: new Date().toISOString(),
+        implementacao_anterior: {
+          usava_totalAmount_state: "setTotalAmount(Math.round(parseFloat(data.total_final_price) * 100))",
+          double_conversion: "totalAmount já em centavos + Math.round(totalToUse * 100)",
+          problema: "Double conversion causava valor errado"
+        },
+        implementacao_modular: {
+          usa_orderSummary_direto: "orderSummary.totalFinalPrice (em reais)",
+          single_conversion: "convertToCents(totalAmount) apenas no serviço modular",
+          solucao: "Conversão única elimina double conversion"
+        },
+        valores_comparacao: {
+          totalAmount_legado_cents: totalAmount,
+          totalAmount_legado_reais: totalAmount / 100,
+          totalFinalPrice_modular_reais: pixOrderSummary.totalFinalPrice,
+          totalFinalPrice_modular_cents: pixOrderSummary.totalFinalPrice * 100,
+          diferenca_cents: Math.abs(totalAmount - (pixOrderSummary.totalFinalPrice * 100)),
+          problema_resolvido: Math.abs(totalAmount - (pixOrderSummary.totalFinalPrice * 100)) < 1
         }
+      });
+      
+      // 4. Gerar QR Code usando serviço modular (elimina double conversion)
+      const result = await generatePixQrCodeModular(
+        pixCustomerData,
+        pixOrderSummary,
+        orderId
       );
-      let responseData;
-      try {
-        responseData = await response.json();
-      } catch (jsonErr) {
-        responseData = {};
-      }
       
-      // Log da resposta completa para debug
-      console.log("🐛 PIX DEBUG - Resposta completa:", responseData);
+      // LOG FINAL: Resultado da operação
+      console.log("✅ [PAYMENT.TSX] === RESULTADO FINAL ===", {
+        timestamp: new Date().toISOString(),
+        sucesso: !!result.success,
+        tem_qr_code: !!result.qr_code,
+        tem_qr_code_url: !!result.qr_code_url,
+        erro: result.error || 'nenhum',
+        payload_enviado_incluia: {
+          valor_total: true,
+          dados_cliente: true,
+          items_produto: true,
+          items_conteudo: pixOrderSummary.totalContentPrice > 0,
+          problema_original_resolvido: pixOrderSummary.totalContentPrice > 0 && !!result.success
+        }
+      });
       
-      // 3. Assim que receber o charge_id/payment_id, atualize o pedido no banco
-      if (responseData.raw_response?.charges?.[0]?.id) {
-        const paymentId = responseData.raw_response.charges[0].id;
+      // 5. Atualizar payment_id no pedido se retornado
+      if (result.raw_response?.charges?.[0]?.id) {
+        const paymentId = result.raw_response.charges[0].id;
         await updateOrderPaymentId(orderId, paymentId);
       }
-      if (responseData.success && responseData.qr_code_url && responseData.qr_code) {
-        setPixQrCodeUrl(responseData.qr_code_url);
-        setPixCopiaECola(responseData.qr_code);
-      } else {
-        // Mesmo em erro, tente exibir o QR Code se vier na resposta
-        if (responseData.qr_code_url && responseData.qr_code) {
-          setPixQrCodeUrl(responseData.qr_code_url);
-          setPixCopiaECola(responseData.qr_code);
-        }
-        throw new Error(responseData.error || responseData.message || "Failed to generate PIX QR code");
-      }
+      
+      console.log("✅ [PAYMENT.TSX] PIX QR Code gerado com sucesso via módulo");
+      
     } catch (error: any) {
-      console.error("❌ Erro completo na geração do PIX:", {
-        error,
-        message: error.message,
-        stack: error.stack,
-        formData_legal_status: formData.legal_status,
-        timestamp: new Date().toISOString()
-      });
+      console.error("❌ [PAYMENT.TSX] Erro na geração do PIX:", error);
       const sanitizedMessage = sanitizeErrorMessage(
         error.message || "Erro ao gerar QR code PIX"
       );

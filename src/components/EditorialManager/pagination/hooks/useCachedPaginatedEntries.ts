@@ -14,9 +14,7 @@ export function useCachedPaginatedEntries(formId?: string) {
 
   // OTIMIZAÇÃO: Memoizar a função de fetch para evitar recriações
   const fetchEntries = useCallback(async (params: PaginationParams) => {
-    console.log(`🔄 [useCachedPaginatedEntries] Fetching entries for formId: ${formId}`);
     const response: PaginatedResponse<FormEntry> = await FormEntriesService.loadEntriesPaginated(params);
-    console.log(`✅ [useCachedPaginatedEntries] Fetched ${response.data.length} entries`);
     return response;
   }, [formId]);
 
@@ -38,10 +36,8 @@ export function useCachedPaginatedEntries(formId?: string) {
     if (!formId) return;
 
     try {
-      console.log(`📊 [useCachedPaginatedEntries] Loading status counts for formId: ${formId}`);
       const counts = await FormEntriesService.loadStatusCounts(formId);
       setStatusCounts(counts);
-      console.log(`✅ [useCachedPaginatedEntries] Status counts loaded:`, counts);
     } catch (err) {
       console.error("Error loading status counts:", err);
     }
@@ -54,7 +50,6 @@ export function useCachedPaginatedEntries(formId?: string) {
 
   // Enhanced refresh function that also refreshes status counts
   const refreshEntries = useCallback(() => {
-    console.log(`🔄 [useCachedPaginatedEntries] Refreshing entries and status counts`);
     paginationResult.refreshData();
     loadStatusCounts();
   }, [paginationResult.refreshData, loadStatusCounts]);
