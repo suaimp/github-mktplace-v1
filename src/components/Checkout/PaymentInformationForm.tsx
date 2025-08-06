@@ -6,6 +6,7 @@ import Select from "../form/Select";
 import { supabase } from "../../lib/supabase";
 import { CountryStates } from "../UserProfile/company/CountryStates";
 import { validateCNPJ, validateCPF } from "../../utils/inputMasks";
+import { CountrySelect } from "./PaymentInformationForm/country";
  
 
 interface PaymentInformationFormProps {
@@ -467,17 +468,10 @@ function PaymentInformationForm({
           />
         </div>
         <div>
-          <Label>
-            País <span className="text-error-500">*</span>
-          </Label>
-          <Select
-            options={Object.entries(CountryStates).map(([code]) => ({
-              value: code,
-              label: code,
-              icon: undefined // Adapte para mostrar bandeira se quiser
-            }))}
+          <CountrySelect
             value={country}
             onChange={handleCountryChange}
+            required={true}
           />
         </div>
       </div>
