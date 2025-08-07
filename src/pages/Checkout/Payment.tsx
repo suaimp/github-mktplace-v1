@@ -20,6 +20,10 @@ import { useCustomSticky } from "../../hooks/useCustomSticky";
 import { InstallmentOption } from "../../components/Checkout/PaymentInformationForm/Installments/types";
 // Novo import para PIX modular
 import { usePixPaymentModular } from "./Payment/pix/hooks/usePixPayment";
+// Sistema de tratamento de erros PagarMe
+import { 
+  usePagarmeErrorHandler
+} from "../../components/Checkout/Payment/error-handling";
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -82,6 +86,16 @@ export default function Payment() {
     streetNumber: ""
   });
 
+  // Sistema de tratamento de erros PagarMe
+  const pagarmeErrorHandler = usePagarmeErrorHandler({
+    component: 'Payment',
+    enableAutoRetry: false,
+    onError: (processedError) => {
+      console.log('🔴 Erro PagarMe processado:', processedError);
+      setError(processedError.message);
+    }
+  });
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderSummary, setOrderSummary] = useState({
     items: [] as any[],
@@ -130,7 +144,7 @@ export default function Payment() {
   // Hook para sticky positioning personalizado
   // const { isFixed } = useCustomSticky(); // Não utilizado no momento
 
-  const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
+  const stickyHook = useCustomSticky({ offsetTop: 80, onlyOnDesktop: true });
 
   useEffect(() => {
     loadPaymentSettings();
@@ -1150,8 +1164,13 @@ export default function Payment() {
 
       if (!tokenResponse.ok) {
         console.log('[DEBUG] return: tokenResponse não ok');
-        const errorMsg = tokenResult.error || 'Ocorreu um erro inesperado. Tente novamente.';
-        setError(errorMsg);
+        // Usar sistema PagarMe para traduzir erro de tokenização
+        const tokenErrorData = {
+          message: tokenResult.error || tokenResult.message || 'The request is invalid',
+          errors: tokenResult.errors,
+          status: tokenResponse.status
+        };
+        pagarmeErrorHandler.handleError(tokenErrorData, 'card_tokenization');
         setProcessing(false);
         return;
       }
@@ -1281,17 +1300,28 @@ export default function Payment() {
 
       if (!response.ok) {
         console.log('[DEBUG] return: response não ok');
-        const errorMsg = result.error || 'Ocorreu um erro inesperado. Tente novamente.';
-        setError(errorMsg);
+        // Usar sistema PagarMe para traduzir erro
+        const errorData = {
+          message: result.error || result.message || 'The request is invalid',
+          errors: result.errors,
+          gateway_response: result.gateway_response,
+          status: response.status
+        };
+        pagarmeErrorHandler.handleError(errorData, 'payment_request');
         setProcessing(false);
         return;
       }
 
       // Verificar se o pagamento foi realmente aprovado
       if (result.status === 'failed') {
-        const errorMessage = result.charges?.[0]?.last_transaction?.gateway_response?.errors?.[0]?.message || 
-                           'Pagamento rejeitado pelo gateway';
-        throw new Error(errorMessage);
+        const gatewayError = result.charges?.[0]?.last_transaction?.gateway_response?.errors?.[0];
+        const errorData = {
+          message: gatewayError?.message || 'Pagamento rejeitado pelo gateway',
+          gateway_response: result.charges?.[0]?.last_transaction?.gateway_response
+        };
+        pagarmeErrorHandler.handleError(errorData, 'payment_failed');
+        setProcessing(false);
+        return;
       }
 
       // EXPANDINDO OS STATUS ACEITOS - incluindo processing, pending, etc.
@@ -1389,7 +1419,8 @@ export default function Payment() {
       }
     } catch (error) {
       console.error('[ERROR] Erro no handleSubmit:', error);
-      setError(error instanceof Error ? error.message : "Erro ao processar pagamento");
+      // Usar o novo sistema de tratamento de erros PagarMe
+      pagarmeErrorHandler.handleError(error, 'credit_card_payment');
     } finally {
       setProcessing(false);
     }

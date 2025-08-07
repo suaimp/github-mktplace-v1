@@ -20,7 +20,7 @@ export default function Checkout() {
   const { goToShop } = useShopNavigation();
 
   // Hook para sticky positioning personalizado
-  const stickyHook = useCustomSticky({ offsetTop: 20, onlyOnDesktop: true });
+  const stickyHook = useCustomSticky({ offsetTop: 80, onlyOnDesktop: true });
 
   if (orderCompleted) {
     return (
