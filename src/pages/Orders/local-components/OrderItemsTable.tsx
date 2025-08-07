@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { formatCurrency } from "../../../components/marketplace/utils";
 import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
@@ -42,7 +41,6 @@ export default function OrderItemsTable({
   refreshTrigger,
 }: OrderItemsTableProps) {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [totalAmount, setTotalAmount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Estado local para o status de publicação de cada item
@@ -70,13 +68,6 @@ export default function OrderItemsTable({
       if (error) throw error;
 
       setOrderItems(data || []);
-
-      // Calcular total
-      const total = (data || []).reduce(
-        (sum, item) => sum + (item.total_price || 0),
-        0
-      );
-      setTotalAmount(total);
     } catch (err: any) {
       console.error("Error loading order items:", err);
       setError(err.message || "Erro ao carregar itens do pedido");
@@ -268,7 +259,7 @@ export default function OrderItemsTable({
                     )}
                   </div>
                 </th>
-                <th
+                {/* <th
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => handleSort("quantity")}
                 >
@@ -285,7 +276,7 @@ export default function OrderItemsTable({
                       </span>
                     )}
                   </div>
-                </th>
+                </th> */}
                 <th
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => handleSort("article_document_path")}
@@ -361,7 +352,7 @@ export default function OrderItemsTable({
                     </div>
                   </th>
                 )}
-                <th
+                {/* <th
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => handleSort("total_price")}
                 >
@@ -378,7 +369,7 @@ export default function OrderItemsTable({
                       </span>
                     )}
                   </div>
-                </th>
+                </th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
@@ -512,9 +503,9 @@ export default function OrderItemsTable({
                       );
                     })()}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                  {/* <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {item.quantity}
-                  </td>
+                  </td> */}
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {(() => {
                       // Caso tenha arquivo enviado
@@ -797,25 +788,12 @@ export default function OrderItemsTable({
                       </select>
                     </td>
                   )}
-                  <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                  {/* <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
                     {formatCurrency(item.total_price)}
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <td
-                  colSpan={isAdmin ? 7 : 6}
-                  className="px-4 py-4 text-right font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Total:
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-gray-800 dark:text-white font-semibold">
-                  {formatCurrency(totalAmount)}
-                </td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>

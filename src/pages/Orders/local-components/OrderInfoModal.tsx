@@ -2,6 +2,7 @@ import React from "react";
 import Button from "../../../components/ui/button/Button";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
+import { formatCurrency } from "../../../utils/currency";
 
 interface Order {
   id: string;
@@ -107,6 +108,14 @@ export default function OrderInfoModal({
                 </h4>
                 <p className="text-gray-800 dark:text-white">
                   {getPaymentMethodLabel(order.payment_method)}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Valor Total
+                </h4>
+                <p className="text-gray-800 dark:text-white font-semibold text-lg">
+                  {formatCurrency(order.total_amount)}
                 </p>
               </div>
               <div>
