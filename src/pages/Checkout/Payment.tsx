@@ -299,11 +299,22 @@ export default function Payment() {
   }
 
   async function loadOrderTotal() {
+    console.log("🔍 [PAYMENT] === CARREGANDO ORDER TOTALS ===", {
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname,
+      action: "loadOrderTotal iniciado"
+    });
+
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log("❌ [PAYMENT] Usuário não autenticado");
+        return;
+      }
+
+      console.log("🔍 [PAYMENT] Buscando dados do banco para usuário:", user.id);
 
       const { data, error } = await supabase
         .from("order_totals")
@@ -313,32 +324,45 @@ export default function Payment() {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ [PAYMENT] Erro ao buscar order_totals:", error);
+        throw error;
+      }
+
+      console.log("📊 [PAYMENT] === DADOS RETORNADOS DO BANCO ===", {
+        data,
+        hasData: !!data,
+        timestamp: new Date().toISOString()
+      });
 
       if (data) {
         // Convert to cents for Stripe
         setTotalAmount(Math.round(parseFloat(data.total_final_price) * 100));
-        setOrderSummary((prev) => ({
-          ...prev,
+        
+        const orderSummaryData = {
           totalProductPrice: Number(data.total_product_price),
           totalContentPrice: Number(data.total_content_price),
           totalFinalPrice: Number(data.total_final_price),
           appliedCouponId: data.applied_coupon_id,
           discountValue: Number(data.discount_value) || 0,
+        };
+
+        setOrderSummary((prev) => ({
+          ...prev,
+          ...orderSummaryData
         }));
         
         // DEBUG: Log dos valores carregados do banco
-        console.log("🔍 ORDER TOTALS LOADED:", {
-          totalProductPrice: Number(data.total_product_price),
-          totalContentPrice: Number(data.total_content_price),
-          totalFinalPrice: Number(data.total_final_price),
-          appliedCouponId: data.applied_coupon_id,
-          discountValue: Number(data.discount_value) || 0,
+        console.log("🔍 [PAYMENT] === ORDER TOTALS LOADED ===", {
+          ...orderSummaryData,
           calculatedWithoutDiscount: Number(data.total_product_price) + Number(data.total_content_price),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          hasDiscount: Number(data.discount_value) > 0,
+          hasCouponId: !!data.applied_coupon_id,
+          totalAmountCents: Math.round(parseFloat(data.total_final_price) * 100)
         });
       } else {
-        console.log("⚠️ No order totals found for user");
+        console.log("⚠️ [PAYMENT] No order totals found for user");
       }
     } catch (error) {
       console.error("Error loading order total:", error);

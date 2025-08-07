@@ -38,13 +38,6 @@ export default function FinishOrder() {
 
   const { areAllFieldsSelected, loading: loadingValidation } = useCheckoutValidation();
 
-  // Log para debug do estado do botão
-  console.log('[FinishOrder] Estado do botão:', {
-    areAllFieldsSelected,
-    loadingValidation,
-    shouldBeDisabled: !areAllFieldsSelected || loadingValidation
-  });
-
   // Detectar se está na página de pagamento
   const isPaymentPage = location.pathname === "/checkout/payment";
 
@@ -67,17 +60,28 @@ export default function FinishOrder() {
         if (!user) {
           setError("Usuário não está logado");
           return;
-        } // Usar o serviço OrderTotalsService para buscar os totais
+        }
+
+        // Usar o serviço OrderTotalsService para buscar os totais
         const orderTotals = await getOrderTotalsByUser(user.id);
 
         if (orderTotals && orderTotals.length > 0) {
-          const latestTotal = orderTotals[0]; // Verificar se o user_id do registro corresponde ao usuário logado
+          const latestTotal = orderTotals[0];
           if (latestTotal.user_id === user.id) {
             const productPrice = Number(latestTotal.total_product_price) || 0;
             const contentPrice = Number(latestTotal.total_content_price) || 0;
             const finalPrice = Number(latestTotal.total_final_price) || 0;
             const couponId = latestTotal.applied_coupon_id || null;
             const discount = Number(latestTotal.discount_value) || 0;
+            
+            // Log simplificado apenas quando há desconto
+            if (discount > 0) {
+              console.log("💰 [FINISH ORDER] Desconto carregado:", {
+                discount,
+                finalPrice,
+                calculatedWithoutDiscount: productPrice + contentPrice
+              });
+            }
             
             setTotalProductPrice(productPrice);
             setTotalContentPrice(contentPrice);
@@ -146,6 +150,38 @@ export default function FinishOrder() {
     appliedCoupon,
     discountValue
   } = useCouponDiscount(couponValue, checkoutTotal);
+  
+  // Log de debug para estado do componente (após declaração das variáveis)
+  console.log("🎯 [FINISH ORDER] === ESTADO ATUAL DO COMPONENTE ===", {
+    timestamp: new Date().toISOString(),
+    location: window.location.pathname,
+    isPaymentPage,
+    estados: {
+      totalProductPrice,
+      totalContentPrice,
+      totalFinalPrice,
+      dbDiscountValue,
+      dbAppliedCouponId,
+      loading,
+      error
+    },
+    contexto_cupom: {
+      discountValue,
+      appliedCoupon: appliedCoupon?.code || null,
+      couponLoading,
+      couponError
+    },
+    checkout_total: {
+      checkoutTotal,
+      loadingCheckoutTotal
+    },
+    problema_desconto: {
+      deve_mostrar_desconto: isPaymentPage ? dbDiscountValue > 0 : discountValue > 0,
+      valor_desconto_usado: isPaymentPage ? dbDiscountValue : discountValue,
+      fonte_desconto: isPaymentPage ? 'dbDiscountValue (banco)' : 'discountValue (contexto)'
+    }
+  });
+  
   // Usar checkoutTotal como base do total exibido
  
 
@@ -285,6 +321,7 @@ export default function FinishOrder() {
             )}
           </div>
         </div>
+
         {/* Exibir desconto se houver */}
         {(isPaymentPage ? dbDiscountValue > 0 : discountValue > 0) && (
           <div className="flex items-center justify-between mt-2">

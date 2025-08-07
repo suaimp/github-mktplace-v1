@@ -6,8 +6,6 @@ export function useCheckoutValidation() {
   const [areAllFieldsSelected, setAreAllFieldsSelected] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  console.log('[useCheckoutValidation] Hook iniciado/re-renderizado');
-
   const checkValidation = async () => {
     try {
       setLoading(true);
@@ -22,26 +20,11 @@ export function useCheckoutValidation() {
       }
 
       // Forçar busca de dados frescos do banco, ignorando cache
-      const timestamp = Date.now();
-      console.log('[useCheckoutValidation] Buscando dados frescos:', { timestamp });
-      
       const { data: freshCheckoutItems, error: fetchError } = await supabase
         .from('cart_checkout_resume')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      console.log('[useCheckoutValidation] Dados frescos do banco:', {
-        error: fetchError,
-        itemsCount: freshCheckoutItems?.length || 0,
-        items: freshCheckoutItems?.map(item => ({
-          id: item.id,
-          niche_selected: item.niche_selected,
-          service_selected: item.service_selected,
-          niche_type: typeof item.niche_selected,
-          service_type: typeof item.service_selected
-        }))
-      });
       
       if (fetchError) {
         console.error('[useCheckoutValidation] Erro ao buscar dados:', fetchError);
@@ -210,28 +193,7 @@ export function useCheckoutValidation() {
         const isNicheValid = isValidNicheValue(extractedNicheValue);
         const isServiceValid = isValidServiceValue(extractedServiceValue);
         
-        // Log detalhado para debug
-        console.log('[useCheckoutValidation] Validando item:', {
-          itemId: item.id,
-          raw_niche_selected: item.niche_selected,
-          raw_service_selected: item.service_selected,
-          extractedNicheValue,
-          extractedServiceValue,
-          niche_placeholder: NICHE_OPTIONS.PLACEHOLDER,
-          service_placeholder: SERVICE_OPTIONS.PLACEHOLDER,
-          isNicheValid,
-          isServiceValid,
-          isItemValid: isNicheValid && isServiceValid
-        });
-        
         return isNicheValid && isServiceValid;
-      });
-
-      console.log('[useCheckoutValidation] Resultado da validação:', {
-        allFieldsValid,
-        itemCount: freshCheckoutItems.length,
-        niche_placeholder: NICHE_OPTIONS.PLACEHOLDER,
-        service_placeholder: SERVICE_OPTIONS.PLACEHOLDER
       });
 
       setAreAllFieldsSelected(allFieldsValid);
@@ -244,12 +206,10 @@ export function useCheckoutValidation() {
   };
 
   useEffect(() => {
-    console.log('[useCheckoutValidation] useEffect executado - configurando listeners');
     checkValidation();
 
     // Escutar evento de atualização da tabela de resumo
     const handleResumeTableUpdate = () => {
-      console.log('[useCheckoutValidation] Evento recebido - revalidando campos');
       checkValidation();
     };
 
@@ -258,7 +218,6 @@ export function useCheckoutValidation() {
     window.addEventListener('service-selection-changed', handleResumeTableUpdate);
 
     return () => {
-      console.log('[useCheckoutValidation] Cleanup - removendo listeners');
       window.removeEventListener('resume-table-reload', handleResumeTableUpdate);
       window.removeEventListener('niche-selection-changed', handleResumeTableUpdate);
       window.removeEventListener('service-selection-changed', handleResumeTableUpdate);

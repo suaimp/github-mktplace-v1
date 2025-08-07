@@ -14,7 +14,7 @@ import { calculateTotal } from "./utils/calculateTotal";
 import { SERVICE_OPTIONS, NICHE_OPTIONS } from "./constants/options";
 import { syncItemTotalsToDb } from "./utils/syncItemTotalsToDb";
 import { shouldShowWordCountInput } from "./utils/display/shouldShowWordCountInput";
- 
+import { useCouponContext } from "./hooks/useCouponContext";
 
 interface ResumeTableProps {
   onReload?: () => void;
@@ -44,7 +44,8 @@ export default function ResumeTable(props: ResumeTableProps) {
   const [wordCountDebounceTimers, setWordCountDebounceTimers] = useState<{ [id: string]: number }>({});
 
   const logic = useResumeTableLogic();
-  // Remover import e uso de useCouponInput, pois não é mais utilizado
+  // Obter dados do contexto de cupom para aplicar desconto nos cálculos
+  const { discountValue, appliedCoupon } = useCouponContext();
 
   const {
     resumeData,
@@ -78,7 +79,6 @@ export default function ResumeTable(props: ResumeTableProps) {
     
     // NOVA LÓGICA: Listener separado para recarregar apenas dados da tabela
     const tableOnlyHandler = () => {
-      console.log("🔄 [ResumeTable] Recarregando apenas dados da tabela...");
       reloadTableData();
     };
     
@@ -109,7 +109,7 @@ export default function ResumeTable(props: ResumeTableProps) {
   // Debounced trigger para cálculos - espera 500ms de inatividade
   const debouncedCalculationTrigger = useDebounce(calculationTrigger, 500);
 
-  // Trigger de mudanças para atualizar o cálculo
+  // Trigger único de mudanças para atualizar o cálculo (incluindo cupons)
   useEffect(() => {
     setCalculationTrigger((prev) => prev + 1);
   }, [
@@ -118,7 +118,9 @@ export default function ResumeTable(props: ResumeTableProps) {
     selectedNiches,
     selectedService,
     wordCounts,
-    serviceCardsByActiveService
+    serviceCardsByActiveService,
+    discountValue,
+    appliedCoupon?.id
   ]);
 
   // Calcular e atualizar totais apenas após debounce
@@ -166,16 +168,26 @@ export default function ResumeTable(props: ResumeTableProps) {
         });
       });
 
+      // Log para debug apenas quando há desconto
+      if (discountValue > 0) {
+        console.log("🧮 [RESUME TABLE] Aplicando desconto:", {
+          discountValue,
+          appliedCoupon: appliedCoupon?.code || null,
+          somaFinal: totalFinalPricesArray.reduce((a, b) => a + b, 0),
+          timestamp: new Date().toISOString()
+        });
+      }
+
       calculateTotal(
         totalFinalPricesArray,
         totalProductPricesArray,
         totalContentPricesArray,
-        totalWordCountArray
-      ).catch((error) => {
-        console.error("Erro ao calcular totais:", error);
+        totalWordCountArray,
+        discountValue,        appliedCoupon?.id || null      ).catch((error) => {
+        console.error("❌ [RESUME TABLE] Erro ao calcular totais:", error);
       });
     }
-  }, [debouncedCalculationTrigger]);
+  }, [debouncedCalculationTrigger, discountValue, appliedCoupon?.id]);
 
   const { removeItem } = useCart();
 
@@ -593,36 +605,14 @@ export default function ResumeTable(props: ResumeTableProps) {
                           } pl-4`}
                           value={(() => {
                             const selectedTitle = getSelectedServiceTitle(item, selectedService);
-                            console.log(`🔍 SERVICE SELECT VALUE DEBUG [${item.id}]:`, {
-                              selectedTitle,
-                              itemServiceSelected: item.service_selected,
-                              localSelected: selectedService[item.id],
-                              willUsePlaceholder: selectedTitle === SERVICE_OPTIONS.NO_SELECTION,
-                              finalValue: selectedTitle === SERVICE_OPTIONS.NO_SELECTION ? SERVICE_OPTIONS.PLACEHOLDER : selectedTitle,
-                              isSelectedTitleNone: selectedTitle === SERVICE_OPTIONS.NONE,
-                              isSelectedTitlePlaceholder: selectedTitle === SERVICE_OPTIONS.PLACEHOLDER,
-                              isSelectedTitleNoSelection: selectedTitle === SERVICE_OPTIONS.NO_SELECTION,
-                              isSelectedTitleNull: selectedTitle === null,
-                              isSelectedTitleUndefined: selectedTitle === undefined
-                            });
                             // Se retornou NO_SELECTION, usa PLACEHOLDER no select
                             return selectedTitle === SERVICE_OPTIONS.NO_SELECTION ? SERVICE_OPTIONS.PLACEHOLDER : selectedTitle;
                           })()}
                           onChange={async (e) => {
                             const value = e.target.value;
                             
-                            console.log(`🎯 SELECT ONCHANGE DEBUG [${item.id}]:`, {
-                              selectedValue: value,
-                              isPlaceholder: value === SERVICE_OPTIONS.PLACEHOLDER,
-                              isNone: value === SERVICE_OPTIONS.NONE,
-                              valueType: typeof value,
-                              SERVICE_OPTIONS_PLACEHOLDER: SERVICE_OPTIONS.PLACEHOLDER,
-                              SERVICE_OPTIONS_NONE: SERVICE_OPTIONS.NONE
-                            });
-                            
                             // Se selecionou o placeholder, não faz nada
                             if (value === SERVICE_OPTIONS.PLACEHOLDER) {
-                              console.log(`❌ Placeholder selected, doing nothing`);
                               return;
                             }
                             

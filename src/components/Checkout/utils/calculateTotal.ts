@@ -11,11 +11,25 @@ export async function calculateTotal(
   discountValue: number = 0,
   couponId?: string | null
 ): Promise<number> {
+  console.log("🧮 [CALCULATE TOTAL] === FUNÇÃO CHAMADA ===", {
+    discountValue,
+    couponId,
+    totalFinalArray,
+    totalProductArray,
+    totalContentArray,
+    totalWordCountArray,
+    hasDiscount: discountValue > 0,
+    hasCouponId: !!couponId,
+    timestamp: new Date().toISOString(),
+    location: window.location.pathname
+  });
+
   if (
     !totalFinalArray ||
     !Array.isArray(totalFinalArray) ||
     totalFinalArray.length === 0
   ) {
+    console.log("⚠️ [CALCULATE TOTAL] Array vazio, retornando 0");
     // Apenas calcula e retorna, não envia ao banco
     return 0;
   }
@@ -76,18 +90,40 @@ async function performCalculation(
   couponId?: string | null
 ): Promise<number> {
   try {
-    console.log("📊 [CALCULATE TOTAL] Salvando totais:", {
+    console.log("📊 [CALCULATE TOTAL] === SALVANDO TOTAIS ===", {
       userId,
       somaProduct,
       somaContent,
       somaFinal,
       somaWordCount,
       discountValue,
-      couponId
+      couponId,
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname,
+      hasDiscount: discountValue > 0,
+      hasCouponId: !!couponId
     });
 
     // Calcular o valor final com desconto
     const finalPriceWithDiscount = Math.max(somaFinal - discountValue, 0);
+
+    // LOG DETALHADO DA FÓRMULA
+    console.log("🧮 [CALCULATE TOTAL] === APLICAÇÃO DA FÓRMULA ===", {
+      formula: "(produto + conteúdo) - desconto = valor final",
+      somaProduct,
+      somaContent,
+      somaTotal: somaProduct + somaContent,
+      somaFinal, // Este deve ser igual a somaProduct + somaContent
+      discountValue,
+      finalPriceWithDiscount,
+      formulaCheck: {
+        manualCalculation: (somaProduct + somaContent) - discountValue,
+        automaticCalculation: finalPriceWithDiscount,
+        matches: Math.abs(((somaProduct + somaContent) - discountValue) - finalPriceWithDiscount) < 0.01
+      },
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname
+    });
 
     // Primeiro, tentar buscar se já existe um registro para este usuário
     const { data: existingRecord } = await supabase
@@ -109,12 +145,17 @@ async function performCalculation(
       updated_at: new Date().toISOString()
     };
 
-    console.log("💾 [SAVE ORDER TOTALS] Dados para salvar:", {
+    console.log("💾 [SAVE ORDER TOTALS] === DADOS PARA SALVAR ===", {
       finalPriceWithDiscount,
       originalTotal: somaFinal,
       discountValue,
       couponId,
-      recordData
+      recordData,
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname,
+      hasDiscount: discountValue > 0,
+      hasCouponId: !!couponId,
+      calculoCorreto: finalPriceWithDiscount === (somaFinal - discountValue)
     });
 
     let result;
@@ -143,11 +184,15 @@ async function performCalculation(
       throw new Error(`Erro ao salvar totais: ${result.error.message}`);
     }
 
-    console.log("✅ [ORDER TOTALS WITH DISCOUNT] Totais salvos com desconto:", {
+    console.log("✅ [ORDER TOTALS WITH DISCOUNT] === TOTAIS SALVOS COM SUCESSO ===", {
       originalTotal: somaFinal,
       discountValue,
       finalPriceWithDiscount,
-      couponId
+      couponId,
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname,
+      savedSuccessfully: true,
+      recordId: result.data?.id || 'unknown'
     });
 
     // Disparar evento de atualização

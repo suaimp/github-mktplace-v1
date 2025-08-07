@@ -25,7 +25,6 @@ export function useCouponDiscount(couponCode: string, orderTotal: number): UseCo
       setAppliedCoupon(null);
       setDiscountValue(0);
       setError(null);
-      clearCoupon();
       return;
     }
     setLoading(true);
@@ -38,11 +37,7 @@ export function useCouponDiscount(couponCode: string, orderTotal: number): UseCo
           setDiscountValue(discount);
           setError(null);
           
-          // Atualizar contexto global
-          setGlobalCoupon(result.coupon);
-          setGlobalDiscount(discount);
-          
-          console.log("✅ [CUPOM] Aplicado com sucesso:", {
+          console.log("✅ [CUPOM] Aplicado:", {
             coupon: result.coupon.code,
             discount,
             orderTotal
@@ -51,19 +46,25 @@ export function useCouponDiscount(couponCode: string, orderTotal: number): UseCo
           setAppliedCoupon(null);
           setDiscountValue(0);
           setError(result.error || "Cupom inválido");
-          clearCoupon();
-          
-          console.log("❌ [CUPOM] Inválido:", result.error);
         }
       })
       .catch(() => {
         setAppliedCoupon(null);
         setDiscountValue(0);
         setError("Erro ao validar cupom");
-        clearCoupon();
       })
       .finally(() => setLoading(false));
-  }, [couponCode, orderTotal, setGlobalCoupon, setGlobalDiscount, clearCoupon]);
+  }, [couponCode, orderTotal]);
+
+  // Sincronizar com o contexto global apenas quando appliedCoupon ou discountValue mudam
+  useEffect(() => {
+    if (appliedCoupon && discountValue > 0) {
+      setGlobalCoupon(appliedCoupon);
+      setGlobalDiscount(discountValue);
+    } else {
+      clearCoupon();
+    }
+  }, [appliedCoupon, discountValue, setGlobalCoupon, setGlobalDiscount, clearCoupon]);
 
   useEffect(() => {
     validate();
