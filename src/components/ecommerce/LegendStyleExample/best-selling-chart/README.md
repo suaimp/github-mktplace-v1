@@ -1,25 +1,42 @@
-# Best Selling Sites Chart - Estrutura Modular
+# Best Selling Sites Chart - Estrutura Modular com Lógica de Preços do Marketplace
 
-Este módulo implementa o componente de chart para exibir os sites mais vendidos, seguindo o princípio de responsabilidade única.
+Este módulo implementa o componente de chart para exibir os sites mais vendidos, seguindo o princípio de responsabilidade única e a mesma lógica visual de preços usada no MarketplaceTable.
 
-## Estrutura de Arquivos
+## 🎯 Funcionalidades
+
+### Exibição de Preços
+- ✅ **Preços Promocionais**: Quando há `promotional_price`, exibe preço original riscado + preço promocional + % de desconto
+- ✅ **Preços Normais**: Quando não há `promotional_price`, exibe apenas o preço normal
+- ✅ **Formatação**: Mesma formatação de moeda brasileira usada no MarketplaceTable
+- ✅ **Lógica Consistente**: Prioriza `promotional_price` se disponível e válido, senão usa `price`
+
+### Dados e Integração
+- ✅ Busca dados da tabela `best_selling_sites`
+- ✅ Integração com `form_entry_values` para obter preços estruturados
+- ✅ Ordenação por quantidade de vendas
+- ✅ Favicons automáticos dos sites
+- ✅ Formatação inteligente de nomes de sites
+
+## 📁 Estrutura de Arquivos
 
 ```
 best-selling-chart/
 ├── README.md                          # Este arquivo
-├── index.ts                           # Exportações principais
+├── index.ts                           # Exportações centralizadas
 ├── BestSellingSitesChart.tsx          # Componente principal
 ├── components/
-│   └── SiteRow.tsx                    # Componente para cada linha do chart
+│   ├── SiteRow.tsx                    # Componente para cada linha do chart
+│   └── PriceDisplay.tsx               # 🆕 Componente para exibir preços com lógica do Marketplace
 ├── hooks/
 │   └── useBestSellingSitesChart.ts    # Hook para buscar e processar dados
 ├── types/
-│   └── index.ts                       # Tipos TypeScript
+│   └── index.ts                       # Tipos TypeScript (atualizado com PriceInfo)
 └── utils/
-    └── dataFormatters.ts              # Utilitários para formatação de dados
+    ├── dataFormatters.ts              # Utilitários originais (mantidos para compatibilidade)
+    └── priceCalculators.ts            # 🆕 Utilitários para cálculo de preços
 ```
 
-## Componentes
+## 🔧 Componentes
 
 ### 1. BestSellingSitesChart (Principal)
 **Arquivo:** `BestSellingSitesChart.tsx`
@@ -29,103 +46,128 @@ best-selling-chart/
 - Gerenciamento de estados de loading e error
 - Integração com o hook de dados
 
-### 2. SiteRow
+### 2. SiteRow (Atualizado)
 **Arquivo:** `components/SiteRow.tsx`
 
 **Responsabilidades:**
 - Renderização de cada linha individual do chart
 - Exibição do favicon do site
-- Formatação do nome do site e preço
+- Formatação do nome do site
+- **🆕 Integração com PriceDisplay** para exibir preços
 
-### 3. useBestSellingSitesChart (Hook)
+### 3. PriceDisplay (🆕 Novo)
+**Arquivo:** `components/PriceDisplay.tsx`
+
+**Responsabilidades:**
+- Exibição de preços seguindo a lógica visual do MarketplaceTable
+- Preço promocional com desconto (preço original riscado + % OFF)
+- Preço normal quando não há promoção
+- Formatação consistente de moeda
+
+### 4. useBestSellingSitesChart (Hook Atualizado)
 **Arquivo:** `hooks/useBestSellingSitesChart.ts`
 
 **Responsabilidades:**
 - Busca dados da tabela `best_selling_sites`
 - Busca preços dos produtos via `form_entry_values`
+- **🆕 Calcula informações estruturadas** de preço usando `calculatePriceInfo`
 - Processamento e formatação dos dados
 - Gerenciamento de estados (loading, error, data)
 
-## Funcionalidades
+## 📋 Tipos
 
-### 🎯 **Fonte de Dados**
-- **Tabela principal:** `best_selling_sites`
-- **Preços:** `form_entry_values` (busca por `entry_id`)
-- **Ordenação:** Por quantidade vendida (descendente)
-- **Limite:** Top 5 sites
-
-### 💰 **Lógica de Preços**
-1. Busca no campo `value_json` primeiro (formato estruturado)
-2. Se tem `promotional_price` e não é "0", usa ele
-3. Senão, usa o `price` normal
-4. Se não tem JSON, usa o campo `value` (texto simples)
-
-### 🌐 **Formatação de Sites**
-- **Remove:** `www.`, protocolos (`http://`, `https://`)
-- **Mantém:** Domínio principal + extensão (`.com`, `.net`, etc.)
-- **Favicon:** Gerado via Google Favicons API
-
-### 🔄 **Estados do Componente**
-- **Loading:** Mostra skeleton loader
-- **Error:** Mostra mensagem de erro com retry
-- **Success:** Exibe lista de sites com preços
-- **Empty:** Mensagem quando não há dados
-
-## Tipos
-
-### `SiteDisplayData`
+### PriceInfo (🆕 Novo)
 ```typescript
-{
-  siteName: string;    // Nome formatado do site
-  siteUrl: string;     // URL original
-  price: string;       // Preço formatado
-  quantity: number;    // Quantidade vendida
-  favicon?: string;    // URL do favicon
+interface PriceInfo {
+  originalPrice: number;
+  promotionalPrice?: number;
+  discountPercentage: number;
 }
 ```
 
-### `PriceData`
+### SiteDisplayData (Atualizado)
 ```typescript
-{
-  price: string;
-  old_price?: string;
-  promotional_price?: string;
-  old_promotional_price?: string;
+interface SiteDisplayData {
+  siteName: string;
+  siteUrl: string;
+  price: string; // Mantido para compatibilidade
+  priceInfo?: PriceInfo; // 🆕 Nova propriedade
+  quantity: number;
+  favicon?: string;
 }
 ```
 
-## Utilitários
+## 🛠️ Utilitários
 
-### `extractPrice()`
-Extrai o preço mais relevante dos dados do formulário
+### priceCalculators.ts (🆕 Novo)
+- `calculatePriceInfo()`: Calcula informações estruturadas de preço
+- `parseBrazilianPrice()`: Converte valores brasileiros para números
+- `extractPrice()`: Função original mantida para compatibilidade
+- `formatSiteName()`: Extrai nome do site da URL
+- `getFaviconUrl()`: Gera URL do favicon
 
-### `formatSiteName()`
-Formata URLs em nomes de sites legíveis
+### dataFormatters.ts (Mantido)
+- Funções originais mantidas para compatibilidade com código existente
 
-### `getFaviconUrl()`
-Gera URLs de favicons via Google API
+## 💻 Integração
 
-## Integração
-
-Para usar em outros lugares:
-
+### Como usar no Dashboard
 ```tsx
-import { BestSellingSitesChart } from './best-selling-chart';
+import { BestSellingSitesChart } from './components/ecommerce/LegendStyleExample/best-selling-chart';
 
-<BestSellingSitesChart />
+function Dashboard() {
+  return (
+    <div>
+      <BestSellingSitesChart />
+    </div>
+  );
+}
 ```
 
-## Dependências
+### Exemplo de exibição de preços
+- **Com promoção**: ~~R$ 150,00~~ **R$ 120,00** `20% OFF`
+- **Sem promoção**: R$ 150,00
 
-- ✅ Tabela `best_selling_sites` (migration criada)
-- ✅ Trigger automático para popular dados
-- ✅ `FormEntryValuesService` para buscar preços
-- ✅ Componentes de UI (LoadingState, ErrorState)
+## 📦 Dependências
 
-## Princípios Seguidos
+- React 18+
+- Supabase (para dados)
+- FormEntryValuesService (para buscar preços)
+- Tailwind CSS (para estilos)
 
-- ✅ **Responsabilidade Única:** Cada arquivo tem uma função específica
-- ✅ **Modularidade:** Separação clara de concerns
-- ✅ **Reutilização:** Componentes e utilitários reutilizáveis
-- ✅ **Tipagem:** TypeScript completo
-- ✅ **Performance:** Hooks otimizados e dados limitados
+## ⚙️ Princípios Seguidos
+
+- ✅ **Responsabilidade Única**: Cada arquivo tem uma função específica
+- ✅ **Modularidade**: Componentes pequenos e reutilizáveis
+- ✅ **Separação de Responsabilidades**: Lógica de negócio, apresentação e dados separados
+- ✅ **Consistência Visual**: Mesma lógica de preços do MarketplaceTable
+- ✅ **Compatibilidade**: Funcionalidade original mantida
+- ✅ **Type Safety**: Interfaces TypeScript para todos os dados
+- ✅ **Tratamento de Estados**: Loading, Error, Empty, Success
+
+## 🔄 Migração e Compatibilidade
+
+- ✅ **Backward Compatible**: Código existente continuará funcionando
+- ✅ **Gradual Migration**: Novos recursos são opcionais
+- ✅ **Fallback**: Se `priceInfo` não estiver disponível, usa o `price` string original
+
+## 🎨 Visual
+
+### Antes
+```
+Site                    Preço
+example.com             R$ 120,00
+```
+
+### Depois (Com Promoção)
+```
+Site                    Preço
+                       R$ 150,00  (riscado)
+example.com            R$ 120,00  20% OFF
+```
+
+### Depois (Sem Promoção)
+```
+Site                    Preço
+example.com             R$ 150,00
+```

@@ -19,6 +19,9 @@ export interface SiteDisplayData {
   siteName: string;
   siteUrl: string;
   price: string;
+  promotionalPrice?: string;
+  oldPrice?: string;
+  hasPromotion: boolean;
   quantity: number;
   favicon?: string;
 }

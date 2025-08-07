@@ -1,10 +1,21 @@
 import { SiteDisplayData } from '../types';
+import { PriceDisplay } from '../../../../common/price';
 
 interface SiteRowProps {
   site: SiteDisplayData;
 }
 
 export function SiteRow({ site }: SiteRowProps) {
+  const priceData = {
+    price: site.price,
+    promotionalPrice: site.promotionalPrice,
+    oldPrice: site.oldPrice,
+    hasPromotion: site.hasPromotion
+  };
+
+  console.log('SiteRow - site data:', site);
+  console.log('SiteRow - priceData:', priceData);
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
       <div className="flex items-center gap-3">
@@ -20,9 +31,11 @@ export function SiteRow({ site }: SiteRowProps) {
           {site.siteName}
         </span>
       </div>
-      <span className="text-right text-gray-500 text-theme-sm dark:text-gray-400">
-        {site.price}
-      </span>
+      <PriceDisplay 
+        priceData={priceData}
+        size="sm"
+        alignment="right"
+      />
     </div>
   );
 }

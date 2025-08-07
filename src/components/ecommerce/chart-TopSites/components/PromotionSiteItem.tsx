@@ -1,5 +1,6 @@
 import { PromotionSiteDisplay, PromotionSitesService } from '../../../../services/db-services/promotion-services/promotionSitesService';
 import { extractCleanDomain } from '../../../../components/form/utils/formatters';
+import { PriceDisplay } from '../../../common/price';
 
 interface PromotionSiteItemProps {
   site: PromotionSiteDisplay;
@@ -9,7 +10,6 @@ interface PromotionSiteItemProps {
 export default function PromotionSiteItem({ site, isLast = false }: PromotionSiteItemProps) {
   // Usa o domínio limpo para exibição
   const displayUrl = extractCleanDomain(site.url);
-  const formattedPercent = PromotionSitesService.formatPercent(site.percent);
 
   // Função para gerar URL do favicon
   const getFaviconUrl = (url: string): string => {
@@ -19,6 +19,13 @@ export default function PromotionSiteItem({ site, isLast = false }: PromotionSit
     } catch {
       return `https://www.google.com/s2/favicons?domain=default.com&sz=16`;
     }
+  };
+
+  // Converte dados para formato do PriceDisplay
+  const priceData = {
+    price: site.price.toString(),
+    promotionalPrice: site.promotional_price.toString(),
+    hasPromotion: site.promotional_price > 0 && site.promotional_price < site.price
   };
 
   return (
@@ -41,9 +48,11 @@ export default function PromotionSiteItem({ site, isLast = false }: PromotionSit
           {displayUrl}
         </span>
       </div>
-      <span className="text-right text-gray-500 text-theme-sm dark:text-gray-400">
-        {formattedPercent}
-      </span>
+      <PriceDisplay 
+        priceData={priceData}
+        size="sm"
+        alignment="right"
+      />
     </div>
   );
 }

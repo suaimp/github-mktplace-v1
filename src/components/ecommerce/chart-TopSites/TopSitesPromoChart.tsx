@@ -24,7 +24,7 @@ export default function TopSitesPromoChart() {
       <div className="my-6">
         <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
           <span className="text-gray-400 text-theme-xs">Site</span>
-          <span className="text-right text-gray-400 text-theme-xs">Desconto</span>
+          <span className="text-right text-gray-400 text-theme-xs">Preço</span>
         </div>
         {sites.map((site, index) => (
           <PromotionSiteItem

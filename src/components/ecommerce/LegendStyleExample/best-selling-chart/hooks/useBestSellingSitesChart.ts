@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../../../lib/supabase';
 import { FormEntryValuesService } from '../../../../EditorialManager/services/formEntryValuesService';
 import { SiteDisplayData, FormEntryPrice } from '../types';
-import { extractPrice, formatSiteName, getFaviconUrl } from '../utils/dataFormatters';
+import { extractPriceInfo, formatSiteName, getFaviconUrl } from '../utils/dataFormatters';
 
 export function useBestSellingSitesChart() {
   const [data, setData] = useState<SiteDisplayData[]>([]);
@@ -37,7 +37,12 @@ export function useBestSellingSitesChart() {
             // Buscar os valores do form_entry_values para este entry_id
             const valuesResult = await FormEntryValuesService.getFormEntryValues(site.entry_id);
             
-            let price = "Preço não disponível";
+            let priceInfo = {
+              price: "Preço não disponível",
+              promotionalPrice: undefined as string | undefined,
+              oldPrice: undefined as string | undefined,
+              hasPromotion: false
+            };
             
             if (valuesResult.data && valuesResult.data.length > 0) {
               // Procurar por campo de preço nos valores
@@ -53,14 +58,26 @@ export function useBestSellingSitesChart() {
                   value: priceField.value,
                   value_json: priceField.value_json
                 };
-                price = extractPrice(priceData);
+                console.log('priceField raw data:', priceField);
+                console.log('priceData:', priceData);
+                const extractedInfo = extractPriceInfo(priceData);
+                priceInfo = {
+                  price: extractedInfo.price,
+                  promotionalPrice: extractedInfo.promotionalPrice,
+                  oldPrice: extractedInfo.oldPrice,
+                  hasPromotion: extractedInfo.hasPromotion
+                };
+                console.log('extracted price info:', priceInfo);
               }
             }
 
             return {
               siteName: formatSiteName(site.product_url),
               siteUrl: site.product_url,
-              price,
+              price: priceInfo.price,
+              promotionalPrice: priceInfo.promotionalPrice,
+              oldPrice: priceInfo.oldPrice,
+              hasPromotion: priceInfo.hasPromotion,
               quantity: site.quantity,
               favicon: getFaviconUrl(site.product_url)
             } as SiteDisplayData;
@@ -70,6 +87,9 @@ export function useBestSellingSitesChart() {
               siteName: formatSiteName(site.product_url),
               siteUrl: site.product_url,
               price: "Erro ao carregar preço",
+              promotionalPrice: undefined,
+              oldPrice: undefined,
+              hasPromotion: false,
               quantity: site.quantity,
               favicon: getFaviconUrl(site.product_url)
             } as SiteDisplayData;

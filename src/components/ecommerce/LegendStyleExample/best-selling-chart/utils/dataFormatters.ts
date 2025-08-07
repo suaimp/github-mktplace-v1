@@ -1,30 +1,115 @@
 import { PriceData, FormEntryPrice } from '../types';
 
 /**
- * Extrai o preço do valor JSON ou texto
+ * Formata um valor numérico para o formato de moeda brasileira
  */
-export function extractPrice(priceData: FormEntryPrice): string {
+function formatToBrazilianCurrency(value: string | number): string {
+  // Remove caracteres não numéricos e converte para número
+  const numericValue = typeof value === 'string' 
+    ? parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'))
+    : value;
+    
+  if (isNaN(numericValue)) {
+    return "Preço não disponível";
+  }
+  
+  // Formata para moeda brasileira
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numericValue);
+}
+
+/**
+ * Extrai informações completas de preço incluindo preços promocionais
+ */
+export function extractPriceInfo(priceData: FormEntryPrice): {
+  price: string;
+  promotionalPrice?: string;
+  oldPrice?: string;
+  hasPromotion: boolean;
+} {
+  let price = "Preço não disponível";
+  let promotionalPrice: string | undefined;
+  let oldPrice: string | undefined;
+  let hasPromotion = false;
+
+  let jsonData: PriceData | null = null;
+
   // Primeiro tenta o value_json (formato estruturado)
   if (priceData.value_json) {
-    const jsonData = priceData.value_json as PriceData;
-    
-    // Se tem promotional_price e não é "0", usa ele
-    if (jsonData.promotional_price && jsonData.promotional_price !== "0") {
-      return jsonData.promotional_price;
+    jsonData = priceData.value_json as PriceData;
+  }
+  // Se não tem value_json, tenta parsear o value como JSON
+  else if (priceData.value) {
+    try {
+      // Tenta fazer parse do value como JSON
+      const parsed = JSON.parse(priceData.value);
+      if (parsed && typeof parsed === 'object' && 'price' in parsed) {
+        jsonData = parsed as PriceData;
+      }
+    } catch (error) {
+      // Se não conseguir fazer parse, trata como string simples
+      console.log('Value não é JSON válido, tratando como string simples:', priceData.value);
     }
-    
-    // Senão usa o price normal
+  }
+
+  // Se conseguiu extrair dados JSON
+  if (jsonData) {
+    // Preço principal
     if (jsonData.price) {
-      return jsonData.price;
+      price = jsonData.price.includes('R$') 
+        ? jsonData.price 
+        : formatToBrazilianCurrency(jsonData.price);
+    }
+    
+    // Preço promocional
+    if (jsonData.promotional_price && 
+        jsonData.promotional_price !== "0" && 
+        jsonData.promotional_price.trim() !== "") {
+      promotionalPrice = jsonData.promotional_price.includes('R$') 
+        ? jsonData.promotional_price 
+        : formatToBrazilianCurrency(jsonData.promotional_price);
+      hasPromotion = true;
+    }
+    
+    // Preço antigo
+    if (jsonData.old_price) {
+      oldPrice = jsonData.old_price.includes('R$') 
+        ? jsonData.old_price 
+        : formatToBrazilianCurrency(jsonData.old_price);
     }
   }
-  
-  // Se não tem JSON, tenta o value (texto simples)
-  if (priceData.value) {
-    return priceData.value;
+  // Se não tem JSON e ainda não tem preço, tenta o value como string simples
+  else if (price === "Preço não disponível" && priceData.value) {
+    price = priceData.value.includes('R$') 
+      ? priceData.value 
+      : formatToBrazilianCurrency(priceData.value);
   }
   
-  return "Preço não disponível";
+  return {
+    price,
+    promotionalPrice,
+    oldPrice,
+    hasPromotion
+  };
+}
+
+/**
+ * Extrai o preço do valor JSON ou texto (versão legada mantida para compatibilidade)
+ */
+export function extractPrice(priceData: FormEntryPrice): string {
+  const priceInfo = extractPriceInfo(priceData);
+  
+  // Se há promoção, retorna o preço promocional
+  if (priceInfo.hasPromotion && priceInfo.promotionalPrice) {
+    return priceInfo.promotionalPrice;
+  }
+  
+  // Senão retorna o preço normal
+  return priceInfo.price;
 }
 
 /**
