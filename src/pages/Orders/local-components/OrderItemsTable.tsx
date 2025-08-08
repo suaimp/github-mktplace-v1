@@ -67,6 +67,9 @@ export default function OrderItemsTable({
   const articleDetailsModal = useArticleDetailsModal();
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [selectedChatItem, setSelectedChatItem] = useState<OrderItem | null>(null);
+  
+  // Estado para controlar notificações visualizadas
+  const [viewedNotifications, setViewedNotifications] = useState<Set<string>>(new Set());
 
   // Função para abrir o chat
   const handleOpenChat = (item: OrderItem) => {
@@ -82,6 +85,8 @@ export default function OrderItemsTable({
 
   // Função para abrir detalhes do artigo
   const handleOpenArticleDetails = (item: OrderItem) => {
+    // Marcar como visualizado
+    setViewedNotifications(prev => new Set(prev).add(item.id));
     articleDetailsModal.openModal(item.id, item.outline);
   };
 
@@ -631,17 +636,36 @@ export default function OrderItemsTable({
                       const hasPackage = hasPackageSelected(item);
                       const hasOutline = hasOutlineData(item);
                       
+                      if (hasPackage && hasOutline) {
+                        // Se tem pauta, mostrar texto estático com check
+                        return (
+                          <div className="flex items-center">
+                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </div>
+                            <span className="text-sm text-gray-900 dark:text-gray-100">Pauta enviada</span>
+                          </div>
+                        );
+                      }
+                      
                       let buttonText = "Enviar Artigo";
                       let buttonAction = () => onDocModalOpen(item.id);
                       
                       if (hasPackage) {
-                        if (hasOutline) {
-                          buttonText = "Visualizar Pauta";
-                          buttonAction = () => pautaModal.openViewModal(item.id, item.outline);
-                        } else {
-                          buttonText = "Enviar Pauta";
-                          buttonAction = () => pautaModal.openModal(item.id);
-                        }
+                        buttonText = "Enviar Pauta";
+                        buttonAction = () => pautaModal.openModal(item.id);
                       }
                       
                       return (
@@ -869,11 +893,18 @@ export default function OrderItemsTable({
                       {/* Botão de Detalhes */}
                       <button
                         onClick={() => handleOpenArticleDetails(item)}
-                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                        className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
                         style={{ borderRadius: '12px' }}
                         title="Ver detalhes do artigo"
                       >
                         <HorizontaLDots className="w-5 h-5 text-white" />
+                        
+                        {/* Notificação de nova pauta */}
+                        {hasOutlineData(item) && !viewedNotifications.has(item.id) && (
+                          <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
+                            <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                          </span>
+                        )}
                       </button>
                     </div>
                   </td>
