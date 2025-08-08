@@ -662,25 +662,6 @@ export default function OrderItemsTable({
                           </div>
                         );
                       }
-
-                      // Para ADMIN com pacote: mostrar mensagens informativas
-                      if (isAdmin && hasPackage) {
-                        if (!hasOutline) {
-                          // Admin: aguardando pauta do cliente
-                          return (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 italic">
-                              Aguardando pauta
-                            </span>
-                          );
-                        } else {
-                          // Admin: pauta recebida, aguardando artigo
-                          return (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 italic">
-                              Aguardando artigo
-                            </span>
-                          );
-                        }
-                      }
                       
                       let buttonText = "Enviar Artigo";
                       let buttonAction = () => onDocModalOpen(item.id);
@@ -689,6 +670,10 @@ export default function OrderItemsTable({
                         // Se tem pacote mas não tem pauta, mostrar "Enviar Pauta"
                         buttonText = "Enviar Pauta";
                         buttonAction = () => pautaModal.openModal(item.id);
+                      } else if (hasPackage && hasOutline && isAdmin) {
+                        // Se tem pacote e pauta, admin vê "Enviar Artigo"
+                        buttonText = "Enviar Artigo";
+                        buttonAction = () => onDocModalOpen(item.id);
                       }
                       
                       return (
