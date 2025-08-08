@@ -7,7 +7,7 @@ import { PautaFormData } from '../types';
 import { usePautaSubmit } from './usePautaSubmit';
 import { OutlineService } from '../services/OutlineService';
 
-export function usePautaModal() {
+export function usePautaModal(onSuccess?: () => void) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string>('');
   const [mode, setMode] = useState<'create' | 'view'>('create');
@@ -93,6 +93,7 @@ export function usePautaModal() {
     
     if (success) {
       closeModal(); // Fechar modal apenas se sucesso
+      onSuccess?.(); // Chamar callback de sucesso se fornecido
     }
   };
 

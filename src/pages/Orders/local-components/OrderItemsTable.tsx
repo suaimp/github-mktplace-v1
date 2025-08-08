@@ -3,12 +3,11 @@ import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
-import { hasPackageSelected } from "../utils/packageDetection";
-import { hasOutlineData } from "../utils/outlineDetection";
 import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
 import { SimpleChatModal } from "./SimpleChatModal";
 import { ChatIcon, HorizontaLDots } from "../../../icons";
+import { OrderItemStatusService, OrderItemAnalyzer } from "./OrderItemsTable/index";
 
 interface OrderItem {
   id: string;
@@ -50,6 +49,7 @@ export default function OrderItemsTable({
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   // Estado local para o status de publicação de cada item
   const [localStatus, setLocalStatus] = useState<{ [itemId: string]: string }>(
     {}
@@ -57,19 +57,16 @@ export default function OrderItemsTable({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   // Adicione estados para ordenação
-  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortField, setSortField] = useState<string>("product_name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Hook para o modal de pauta
-  const pautaModal = usePautaModal();
+  // Hook para o modal de pauta (com callback de refresh)
+  const pautaModal = usePautaModal(() => setRefreshCounter(prev => prev + 1));
 
   // Hooks para os novos modais
   const articleDetailsModal = useArticleDetailsModal();
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [selectedChatItem, setSelectedChatItem] = useState<OrderItem | null>(null);
-  
-  // Estado para controlar notificações visualizadas
-  const [viewedNotifications, setViewedNotifications] = useState<Set<string>>(new Set());
 
   // Função para abrir o chat
   const handleOpenChat = (item: OrderItem) => {
@@ -85,8 +82,6 @@ export default function OrderItemsTable({
 
   // Função para abrir detalhes do artigo
   const handleOpenArticleDetails = (item: OrderItem) => {
-    // Marcar como visualizado
-    setViewedNotifications(prev => new Set(prev).add(item.id));
     articleDetailsModal.openModal(item.id, item.outline);
   };
 
@@ -125,6 +120,14 @@ export default function OrderItemsTable({
       loadOrderItems();
     }
   }, [refreshTrigger, orderId]);
+
+  // Listener para refresh após envio de pauta
+  useEffect(() => {
+    if (refreshCounter > 0 && orderId) {
+      console.log("🔄 Refresh após pauta enviada:", refreshCounter);
+      loadOrderItems();
+    }
+  }, [refreshCounter, orderId]);
 
   // Atualiza o estado local sempre que os itens mudam
   useEffect(() => {
@@ -633,11 +636,11 @@ export default function OrderItemsTable({
                         );
                       }
                       // Caso não tenha nada, botão de enviar artigo/pauta
-                      const hasPackage = hasPackageSelected(item);
-                      const hasOutline = hasOutlineData(item);
+                      const hasPackage = OrderItemAnalyzer.hasPackageSelected(item);
+                      const hasOutline = OrderItemAnalyzer.hasOutlineData(item);
                       
-                      if (hasPackage && hasOutline) {
-                        // Se tem pauta, mostrar texto estático com check
+                      if (hasPackage && hasOutline && !isAdmin) {
+                        // Se tem pauta, mostrar texto estático com check (apenas para usuário não-admin)
                         return (
                           <div className="flex items-center">
                             <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
@@ -659,11 +662,31 @@ export default function OrderItemsTable({
                           </div>
                         );
                       }
+
+                      // Para ADMIN com pacote: mostrar mensagens informativas
+                      if (isAdmin && hasPackage) {
+                        if (!hasOutline) {
+                          // Admin: aguardando pauta do cliente
+                          return (
+                            <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                              Aguardando pauta
+                            </span>
+                          );
+                        } else {
+                          // Admin: pauta recebida, aguardando artigo
+                          return (
+                            <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                              Aguardando artigo
+                            </span>
+                          );
+                        }
+                      }
                       
                       let buttonText = "Enviar Artigo";
                       let buttonAction = () => onDocModalOpen(item.id);
                       
-                      if (hasPackage) {
+                      if (hasPackage && !hasOutline) {
+                        // Se tem pacote mas não tem pauta, mostrar "Enviar Pauta"
                         buttonText = "Enviar Pauta";
                         buttonAction = () => pautaModal.openModal(item.id);
                       }
@@ -819,60 +842,13 @@ export default function OrderItemsTable({
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {(() => {
-                      // Se aprovado
-                      if (item.publication_status === "approved") {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500">
-                            Artigo Publicado
-                          </span>
-                        );
-                      }
-                      // Se reprovado
-                      if (item.publication_status === "rejected") {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-400">
-                            Reprovado
-                          </span>
-                        );
-                      }
-                      // Lógica para status pendente
-                      let serviceData: any = null;
-                      try {
-                        if (Array.isArray(item.service_content) && item.service_content.length > 0) {
-                          const jsonString = item.service_content[0];
-                          if (typeof jsonString === "string") {
-                            serviceData = JSON.parse(jsonString);
-                          } else if (typeof jsonString === "object") {
-                            serviceData = jsonString;
-                          }
-                        } else if (typeof item.service_content === "string") {
-                          serviceData = JSON.parse(item.service_content);
-                        } else if (typeof item.service_content === "object") {
-                          serviceData = item.service_content;
-                        }
-                      } catch (e) {
-                        // erro de parse, ignora
-                      }
-                      // Se não há pacote ou benefits vazio
-                      if (!serviceData || !serviceData.benefits || serviceData.benefits.length === 0) {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400">
-                            Artigo Pendente
-                          </span>
-                        );
-                      }
-                      // Se há benefits preenchido
-                      if (serviceData.benefits && serviceData.benefits.length > 0) {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-gray-500 text-white dark:bg-white/5 dark:text-white">
-                            Pauta Pendente
-                          </span>
-                        );
-                      }
-                      // fallback
+                      // Usar o novo serviço de status
+                      const context = OrderItemAnalyzer.extractStatusContext(item);
+                      const status = OrderItemStatusService.determineStatus(context);
+                      
                       return (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
-                          Pendente
+                        <span className={status.className}>
+                          {status.label}
                         </span>
                       );
                     })()}
@@ -899,8 +875,8 @@ export default function OrderItemsTable({
                       >
                         <HorizontaLDots className="w-5 h-5 text-white" />
                         
-                        {/* Notificação de nova pauta */}
-                        {hasOutlineData(item) && !viewedNotifications.has(item.id) && (
+                        {/* Notificação até artigo ser enviado */}
+                        {!OrderItemAnalyzer.hasArticleData(item) && (
                           <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
                             <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                           </span>

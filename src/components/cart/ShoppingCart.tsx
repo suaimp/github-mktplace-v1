@@ -8,6 +8,7 @@ import Button from "../ui/button/Button";
 
 export default function ShoppingCart() {
   const [isOpen, setIsOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const { items, totalItems, totalPrice, loading, error } = useCart();
   const shoppingCartToCheckoutResume = useShoppingCartToCheckoutResume();
   const navigate = useNavigate();
@@ -78,13 +79,14 @@ export default function ShoppingCart() {
 
   const handleCheckout = async () => {
     try {
+      setCheckoutLoading(true);
+      
       // Sincronizar preços promocionais para todos os itens do carrinho
       for (const item of items) {
         await shoppingCartToCheckoutResume.syncPriceFromValue(item.entry_id);
       }
 
       // Navegar para o checkout
-
       setIsOpen(false);
       navigate("/checkout");
     } catch (error) {
@@ -92,6 +94,8 @@ export default function ShoppingCart() {
       // Mesmo com erro, navega para o checkout
       setIsOpen(false);
       navigate("/checkout");
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
@@ -216,9 +220,12 @@ export default function ShoppingCart() {
             </div>
             <Button
               onClick={handleCheckout}
-              className="w-full"
-              disabled={loading}
+              className="w-full flex items-center justify-center gap-2"
+              disabled={loading || checkoutLoading}
             >
+              {checkoutLoading && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
               Finalizar Compra
             </Button>
           </div>
