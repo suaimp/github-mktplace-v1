@@ -18,7 +18,7 @@ export class OrderItemStatusService {
     },
     published: {
       type: 'published',
-      label: 'Publicado',
+  label: 'Artigo Publicado',
       className: 'inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400'
     },
     article_sent: {
@@ -62,12 +62,13 @@ export class OrderItemStatusService {
       return this.STATUS_CONFIG.rejected;
     }
 
-    // 2. Publicado APENAS quando admin adiciona URL do artigo
-    if (context.isPublished || context.hasArticleUrl) {
+
+    // 2. Publicado APENAS quando admin adiciona URL do artigo publicado
+    if (context.hasArticleUrl) {
       return this.STATUS_CONFIG.published;
     }
 
-    // 3. Se tem artigo enviado (doc) -> Em preparação
+    // 3. Se tem artigo enviado (doc ou link) -> Em preparação
     if (context.hasArticle) {
       return this.STATUS_CONFIG.in_preparation;
     }

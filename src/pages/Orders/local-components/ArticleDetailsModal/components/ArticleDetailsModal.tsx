@@ -27,7 +27,7 @@ export function ArticleDetailsModal({
       
       {/* Slide Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full max-w-lg min-w-[320px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -58,7 +58,7 @@ export function ArticleDetailsModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 p-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>

@@ -372,10 +372,12 @@ export default function OrderItemsTable({
                     )}
                   </div>
                 </th>
-                {/* Nova coluna para botões de chat e detalhes */}
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {/* Sem título conforme solicitado */}
-                </th>
+                {/* Nova coluna para botões de chat e detalhes (apenas admin) */}
+                {isAdmin && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {/* Sem título conforme solicitado */}
+                  </th>
+                )}
                 {isAdmin && (
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -838,37 +840,37 @@ export default function OrderItemsTable({
                       );
                     })()}
                   </td>
-                  {/* Nova coluna para botões de chat e detalhes */}
-                  <td className="whitespace-nowrap px-4 py-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      {/* Botão de Chat */}
-                      <button
-                        onClick={() => handleOpenChat(item)}
-                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                        style={{ borderRadius: '12px' }}
-                        title="Abrir chat"
-                      >
-                        <ChatIcon className="w-5 h-5 text-white" />
-                      </button>
-                      
-                      {/* Botão de Detalhes */}
-                      <button
-                        onClick={() => handleOpenArticleDetails(item)}
-                        className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                        style={{ borderRadius: '12px' }}
-                        title="Ver detalhes do artigo"
-                      >
-                        <HorizontaLDots className="w-5 h-5 text-white" />
-                        
-                        {/* Notificação até artigo ser enviado */}
-                        {!OrderItemAnalyzer.hasArticleData(item) && (
-                          <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
-                            <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                  </td>
+                  {/* Nova coluna para botões de chat e detalhes (apenas admin) */}
+                  {isAdmin && (
+                    <td className="whitespace-nowrap px-4 py-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        {/* Botão de Chat */}
+                        <button
+                          onClick={() => handleOpenChat(item)}
+                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                          style={{ borderRadius: '12px' }}
+                          title="Abrir chat"
+                        >
+                          <ChatIcon className="w-5 h-5 text-white" />
+                        </button>
+                        {/* Botão de Detalhes */}
+                        <button
+                          onClick={() => handleOpenArticleDetails(item)}
+                          className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                          style={{ borderRadius: '12px' }}
+                          title="Ver detalhes do artigo"
+                        >
+                          <HorizontaLDots className="w-5 h-5 text-white" />
+                          {/* Notificação até artigo ser enviado */}
+                          {!OrderItemAnalyzer.hasArticleData(item) && (
+                            <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
+                              <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  )}
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                       <select

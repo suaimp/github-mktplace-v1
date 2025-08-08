@@ -55,7 +55,10 @@ export class OrderItemAnalyzer {
    * Verifica se o item tem artigo enviado
    */
   static hasArticleData(item: OrderItem): boolean {
-    return !!(item.article_document_path || item.article_doc);
+    // Considera artigo enviado se houver upload OU se article_doc for string não vazia OU link
+    if (item.article_document_path) return true;
+    if (typeof item.article_doc === 'string' && item.article_doc.trim() !== '') return true;
+    return false;
   }
 
   /**
