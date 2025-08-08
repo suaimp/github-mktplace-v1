@@ -3,6 +3,8 @@ import { getFaviconUrl } from "../../../components/form/utils/formatters";
 import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
+import { hasPackageSelected } from "../utils/packageDetection";
+import { PautaModal, usePautaModal } from "./PautaModal";
 
 interface OrderItem {
   id: string;
@@ -52,6 +54,9 @@ export default function OrderItemsTable({
   // Adicione estados para ordenação
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Hook para o modal de pauta
+  const pautaModal = usePautaModal();
 
   // Função para carregar os itens do pedido
   const loadOrderItems = async () => {
@@ -591,10 +596,19 @@ export default function OrderItemsTable({
                           </div>
                         );
                       }
-                      // Caso não tenha nada, botão de enviar artigo
+                      // Caso não tenha nada, botão de enviar artigo/pauta
+                      const hasPackage = hasPackageSelected(item);
+                      const buttonText = hasPackage ? "Enviar Pauta" : "Enviar Artigo";
+                      
                       return (
                         <button
-                          onClick={() => onDocModalOpen(item.id)}
+                          onClick={() => {
+                            if (hasPackage) {
+                              pautaModal.openModal(item.id);
+                            } else {
+                              onDocModalOpen(item.id);
+                            }
+                          }}
                           className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
                         >
                           <svg
@@ -611,7 +625,7 @@ export default function OrderItemsTable({
                               d="M12 4v16m8-8H4"
                             />
                           </svg>
-                          Enviar Artigo
+                          {buttonText}
                         </button>
                       );
                     })()}
@@ -633,78 +647,111 @@ export default function OrderItemsTable({
                             Abrir url
                           </a>
                           <div className="relative">
-                            <button
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
-                              title="Opções"
-                              type="button"
-                              onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                            >
-                              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                                <circle cx="12" cy="5" r="2" fill="currentColor" />
-                                <circle cx="12" cy="12" r="2" fill="currentColor" />
-                                <circle cx="12" cy="19" r="2" fill="currentColor" />
-                              </svg>
-                            </button>
-                            {openMenuId === item.id && (
-                              <div
-                                ref={menuRef}
-                                className="absolute z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg mt-2 text-xs min-w-[100px] max-w-[140px] max-h-32 overflow-y-auto"
-                                style={{
-                                  right: 'auto',
-                                  left: window.innerWidth - (menuRef.current?.getBoundingClientRect().right || 0) < 160 ? 'auto' : '100%',
-                                  minWidth: 100,
-                                  maxWidth: 140,
-                                  fontSize: '0.85rem',
-                                  padding: 0,
-                                }}
+                            {isAdmin ? (
+                              // Admin: ícone de opções (três pontos) com menu
+                              <>
+                                <button
+                                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
+                                  title="Opções"
+                                  type="button"
+                                  onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                                >
+                                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="2" fill="currentColor" />
+                                    <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                    <circle cx="12" cy="19" r="2" fill="currentColor" />
+                                  </svg>
+                                </button>
+                                {openMenuId === item.id && (
+                                  <div
+                                    ref={menuRef}
+                                    className="absolute z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg text-xs min-w-[100px] max-w-[140px] max-h-32 overflow-y-auto"
+                                    style={{
+                                      left: '100%',
+                                      top: '50%',
+                                      transform: 'translateY(-50%)',
+                                      marginLeft: '8px',
+                                      minWidth: 100,
+                                      maxWidth: 140,
+                                      fontSize: '0.85rem',
+                                      padding: 0,
+                                    }}
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        onUrlEditModalOpen(item.id, item.article_url || "");
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                      type="button"
+                                      style={{ fontSize: '0.85rem' }}
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(item.article_url!);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                      type="button"
+                                      style={{ fontSize: '0.85rem' }}
+                                    >
+                                      Copiar
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              // Usuário comum: ícone de copiar direto
+                              <button
+                                onClick={() => navigator.clipboard.writeText(item.article_url!)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
+                                title="Copiar URL"
+                                type="button"
                               >
-                                <button
-                                  onClick={() => {
-                                    onUrlEditModalOpen(item.id, item.article_url || "");
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                  type="button"
-                                  style={{ fontSize: '0.85rem' }}
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(item.article_url!);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="block w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                  type="button"
-                                  style={{ fontSize: '0.85rem' }}
-                                >
-                                  Copiar
-                                </button>
-                              </div>
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth="2" 
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </button>
                             )}
                           </div>
                         </>
                       ) : (
-                        <button
-                          onClick={() => onUrlEditModalOpen(item.id, "")}
-                          className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
-                        >
-                          <svg
-                            className="w-4 h-4 mr-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
+                        // Se não há URL do artigo
+                        isAdmin ? (
+                          // Admin: mostra botão "Adicionar URL"
+                          <button
+                            onClick={() => onUrlEditModalOpen(item.id, "")}
+                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          Adicionar URL
-                        </button>
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            Adicionar URL
+                          </button>
+                        ) : (
+                          // Usuário comum: mostra "Aguardando"
+                          <span className="text-gray-500 dark:text-gray-400 italic">
+                            Aguardando
+                          </span>
+                        )
                       )}
                     </div>
                   </td>
@@ -797,6 +844,15 @@ export default function OrderItemsTable({
           </table>
         </div>
       </div>
+      
+      {/* Modal de Pauta */}
+      <PautaModal
+        isOpen={pautaModal.isOpen}
+        onClose={pautaModal.closeModal}
+        onSubmit={pautaModal.submitPauta}
+        itemId={pautaModal.selectedItemId}
+        loading={pautaModal.loading}
+      />
     </div>
   );
 }
