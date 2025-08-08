@@ -9,6 +9,7 @@ export type OrderItemStatusType =
   | 'pauta_sent'         // Pauta enviada
   | 'article_sent'       // Artigo enviado
   | 'in_preparation'     // Em preparação
+  | 'publication_pending' // Publicação Pendente (artigo enviado, aguardando publicação)
   | 'published'          // Publicado
   | 'rejected'           // Reprovado
   | 'pending'            // Pendente (fallback)

@@ -18,8 +18,15 @@ export class OrderItemStatusService {
     },
     published: {
       type: 'published',
-  label: 'Artigo Publicado',
+      label: 'Artigo Publicado',
+      // url do artigo já publicado (após publicação)
       className: 'inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400'
+    },
+    publication_pending: {
+      type: 'publication_pending',
+      label: 'Publicação Pendente',
+      // artigo enviado (upload ou link), mas ainda não publicado (sem url do artigo)
+      className: 'inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
     },
     article_sent: {
       type: 'article_sent',
@@ -68,9 +75,10 @@ export class OrderItemStatusService {
       return this.STATUS_CONFIG.published;
     }
 
-    // 3. Se tem artigo enviado (doc ou link) -> Em preparação
+    // 3. Se artigo foi enviado (upload ou link), mas ainda não publicado (sem url)
+    // Artigo doc = artigo antes de ser publicado (upload ou link)
     if (context.hasArticle) {
-      return this.STATUS_CONFIG.in_preparation;
+      return this.STATUS_CONFIG.publication_pending;
     }
 
     // 4. Se tem pacote, avaliar fluxo de pauta

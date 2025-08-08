@@ -359,7 +359,7 @@ export default function OrderItemsTable({
                   onClick={() => handleSort("publication_status")}
                 >
                   <div className="flex items-center gap-1">
-                    <span>Status de Publicação</span>
+                    <span>STATUS</span>
                     {sortField === "publication_status" && (
                       <span className="flex flex-col gap-0.5 ml-1">
                         <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">

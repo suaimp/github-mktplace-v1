@@ -52,10 +52,11 @@ export class OrderItemAnalyzer {
   }
 
   /**
-   * Verifica se o item tem artigo enviado
+   * Verifica se o item tem artigo enviado (pré-publicação)
+   * Artigo doc = artigo antes de ser publicado (upload ou link)
    */
   static hasArticleData(item: OrderItem): boolean {
-    // Considera artigo enviado se houver upload OU se article_doc for string não vazia OU link
+    // Considera artigo enviado se houver upload OU se article_doc for string não vazia
     if (item.article_document_path) return true;
     if (typeof item.article_doc === 'string' && item.article_doc.trim() !== '') return true;
     return false;
