@@ -500,12 +500,14 @@ export default function PaymentMethodForm({
                 label={
                   <span>
                     Eu aceito os{' '}
-                    <button
-                      type="button"
-                      className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-500 hover:text-brand-600 dark:text-brand-400 underline"
                     >
                       termos e condições
-                    </button>
+                    </a>
                   </span>
                 }
               />
@@ -569,12 +571,14 @@ export default function PaymentMethodForm({
                 />
                 <span className="text-gray-700 dark:text-gray-200">
                   Eu aceito os{' '}
-                  <button
-                    type="button"
-                    className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-500 hover:text-brand-600 dark:text-brand-400 underline"
                   >
                     termos e condições
-                  </button>
+                  </a>
                 </span>
               </label>
               {!termsAccepted && (
