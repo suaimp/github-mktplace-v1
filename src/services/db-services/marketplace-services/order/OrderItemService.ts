@@ -17,6 +17,7 @@ export interface OrderItem {
   article_url_status?: string;
   publication_status?: string;
   article_url?: string;
+  outline?: any; // JSON data for article outline (pauta)
 }
 
 function showToast(message: string, type: "success" | "error" = "success") {
@@ -172,7 +173,8 @@ export const OrderItemService = {
         article_doc,
         article_url_status,
         publication_status,
-        article_url
+        article_url,
+        outline
       `
       )
       .eq("id", id)
@@ -210,6 +212,32 @@ export const OrderItemService = {
     return true;
   },
 
+  async updateOrderItemOutline(itemId: string, outlineData: any) {
+    try {
+      const { data, error } = await supabase
+        .from("order_items")
+        .update({ 
+          outline: outlineData
+        })
+        .eq("id", itemId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao salvar pauta:", error);
+        showToast("Erro ao salvar pauta do artigo.", "error");
+        throw error;
+      }
+
+      showToast("Pauta do artigo salva com sucesso!", "success");
+      return data;
+    } catch (error) {
+      console.error("Erro ao atualizar outline:", error);
+      showToast("Erro ao salvar pauta do artigo.", "error");
+      throw error;
+    }
+  },
+
   async listOrderItemsByOrder(order_id: string) {
     const { data, error } = await supabase
       .from("order_items")
@@ -230,7 +258,8 @@ export const OrderItemService = {
         article_doc,
         article_url_status,
         publication_status,
-        article_url
+        article_url,
+        outline
       `
       )
       .eq("order_id", order_id);

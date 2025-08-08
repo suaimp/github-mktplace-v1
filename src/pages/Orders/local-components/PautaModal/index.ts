@@ -9,6 +9,9 @@ export { PautaTextareaField } from './components/PautaTextareaField';
 
 export { usePautaForm } from './hooks/usePautaForm';
 export { usePautaModal } from './hooks/usePautaModal';
+export { usePautaSubmit } from './hooks/usePautaSubmit';
+
+export { OutlineService } from './services/OutlineService';
 
 export { validatePautaForm, hasFormErrors } from './utils/validation';
 

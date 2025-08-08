@@ -3,20 +3,70 @@
  */
 
 import { useState } from 'react';
-import { PautaService, PautaFormData } from '../../../../../services/db-services/marketplace-services/order/PautaService';
-import { showToast } from '../../../../../utils/toast';
+import { PautaFormData } from '../types';
+import { usePautaSubmit } from './usePautaSubmit';
+import { OutlineService } from '../services/OutlineService';
 
 export function usePautaModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'create' | 'view'>('create');
+  const [initialData, setInitialData] = useState<PautaFormData | undefined>(undefined);
+  
+  // Usar o hook de submit
+  const { isSubmitting, submitError, submitPauta, clearError } = usePautaSubmit();
 
   /**
-   * Abre o modal para um item específico
+   * Abre o modal para enviar pauta (modo create)
    */
-  const openModal = (itemId: string) => {
+  const openModal = async (itemId: string) => {
     setSelectedItemId(itemId);
+    setMode('create');
+    setInitialData(undefined);
     setIsOpen(true);
+    clearError();
+  };
+
+  /**
+   * Abre o modal para visualizar pauta existente (modo view)
+   */
+  const openViewModal = async (itemId: string, outlineData?: any) => {
+    try {
+      setSelectedItemId(itemId);
+      setMode('view');
+      
+      // Se outlineData foi fornecido, usar diretamente
+      if (outlineData) {
+        console.log('📋 Dados outline recebidos:', outlineData);
+        
+        // Converter de formato DB para formato do formulário
+        const convertedData = {
+          palavraChave: outlineData.palavra_chave || '',
+          urlSite: outlineData.url_site || '',
+          textoAncora: outlineData.texto_ancora || '',
+          requisitosEspeciais: outlineData.requisitos_especiais || ''
+        };
+        
+        console.log('🔄 Dados convertidos para formulário:', convertedData);
+        setInitialData(convertedData);
+      } else {
+        // Fallback: carregar do banco
+        const existingData = await OutlineService.getOutline(itemId);
+        if (existingData) {
+          setInitialData({
+            palavraChave: existingData.palavra_chave || '',
+            urlSite: existingData.url_site || '',
+            textoAncora: existingData.texto_ancora || '',
+            requisitosEspeciais: existingData.requisitos_especiais || ''
+          });
+        }
+      }
+      
+      setIsOpen(true);
+      clearError();
+    } catch (error) {
+      console.error('Erro ao carregar dados da pauta:', error);
+    }
   };
 
   /**
@@ -25,54 +75,38 @@ export function usePautaModal() {
   const closeModal = () => {
     setIsOpen(false);
     setSelectedItemId('');
-    setLoading(false);
+    setMode('create');
+    setInitialData(undefined);
+    clearError();
   };
 
   /**
-   * Submete a pauta
+   * Submete a pauta usando o novo sistema
    */
-  const submitPauta = async (data: PautaFormData) => {
+  const handleSubmitPauta = async (data: PautaFormData) => {
     if (!selectedItemId) {
       console.error('❌ Item ID não encontrado');
       return;
     }
 
-    try {
-      setLoading(true);
-      
-      console.log('📝 Enviando pauta:', { itemId: selectedItemId, data });
-
-      // Verifica se já existe uma pauta para este item
-      const existingPauta = await PautaService.getPautaByItemId(selectedItemId);
-      
-      let result;
-      if (existingPauta) {
-        // Atualiza pauta existente
-        result = await PautaService.updatePauta(selectedItemId, data);
-        showToast('Pauta atualizada com sucesso!', 'success');
-      } else {
-        // Cria nova pauta
-        result = await PautaService.createPauta(selectedItemId, data);
-        showToast('Pauta enviada com sucesso!', 'success');
-      }
-
-      console.log('✅ Pauta processada com sucesso:', result);
-      
-      closeModal();
-    } catch (error) {
-      console.error('❌ Erro ao enviar pauta:', error);
-      showToast('Erro ao enviar pauta. Tente novamente.', 'error');
-    } finally {
-      setLoading(false);
+    const success = await submitPauta(selectedItemId, data);
+    
+    if (success) {
+      closeModal(); // Fechar modal apenas se sucesso
     }
   };
 
   return {
     isOpen,
     selectedItemId,
-    loading,
+    mode,
+    initialData,
+    loading: isSubmitting, // Compatibilidade com interface existente
+    submitError,
     openModal,
+    openViewModal, // Nova função para modo view
     closeModal,
-    submitPauta
+    submitPauta: handleSubmitPauta,
+    clearError
   };
 }

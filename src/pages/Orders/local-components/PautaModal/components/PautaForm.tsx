@@ -11,9 +11,19 @@ interface PautaFormProps {
   onSubmit: (data: PautaFormData) => Promise<void>;
   loading?: boolean;
   onCancel: () => void;
+  mode?: 'create' | 'view';
+  initialData?: PautaFormData;
 }
 
-export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProps) {
+export function PautaForm({ 
+  onSubmit, 
+  loading = false, 
+  onCancel, 
+  mode = 'create',
+  initialData 
+}: PautaFormProps) {
+  const isViewMode = mode === 'view';
+  
   const {
     formData,
     errors,
@@ -21,7 +31,12 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
     touchField,
     validateForm,
     shouldShowError
-  } = usePautaForm();
+  } = usePautaForm(initialData); // Passar dados iniciais para o hook
+
+  // Debug: verificar dados do formulário
+  console.log('🎭 PautaForm - Mode:', mode);
+  console.log('📝 PautaForm - FormData atual:', formData);
+  console.log('🏁 PautaForm - InitialData recebido:', initialData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +57,7 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
         error={shouldShowError('palavraChave') ? errors.palavraChave : undefined}
         required
         placeholder="Ex: marketing digital, SEO, vendas online..."
+        disabled={isViewMode}
       />
 
       <PautaInputField
@@ -54,6 +70,7 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
         required
         type="url"
         placeholder="https://exemplo.com"
+        disabled={isViewMode}
       />
 
       <PautaInputField
@@ -65,6 +82,7 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
         error={shouldShowError('textoAncora') ? errors.textoAncora : undefined}
         required
         placeholder="Ex: clique aqui, saiba mais, confira nossos serviços..."
+        disabled={isViewMode}
       />
 
       <PautaTextareaField
@@ -77,6 +95,7 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
         required
         placeholder="Descreva aqui requisitos específicos, links de referência, preferências de posicionamento, etc..."
         rows={5}
+        disabled={isViewMode}
       />
 
       <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -86,19 +105,21 @@ export function PautaForm({ onSubmit, loading = false, onCancel }: PautaFormProp
           disabled={loading}
           className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
         >
-          Cancelar
+          {isViewMode ? 'Fechar' : 'Cancelar'}
         </button>
         
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-500 border border-transparent rounded-md hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading && (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          )}
-          Enviar Pauta
-        </button>
+        {!isViewMode && (
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-500 border border-transparent rounded-md hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
+            Enviar Pauta
+          </button>
+        )}
       </div>
     </form>
   );

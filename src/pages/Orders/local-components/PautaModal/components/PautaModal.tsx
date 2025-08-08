@@ -5,12 +5,25 @@
 import { PautaModalProps } from '../types';
 import { PautaForm } from './PautaForm';
 
-export function PautaModal({ isOpen, onClose, onSubmit, loading = false }: PautaModalProps) {
+export function PautaModal({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  loading = false, 
+  submitError,
+  mode = 'create',
+  initialData
+}: PautaModalProps) {
   if (!isOpen) return null;
 
+  const isViewMode = mode === 'view';
+  const modalTitle = isViewMode ? 'Visualizar Pauta' : 'Enviar Pauta';
+
   const handleFormSubmit = async (data: any) => {
-    await onSubmit(data);
-    onClose();
+    if (!isViewMode) {
+      await onSubmit(data);
+      // Não fechar automaticamente, deixar o hook controlar isso
+    }
   };
 
   return (
@@ -47,13 +60,22 @@ export function PautaModal({ isOpen, onClose, onSubmit, loading = false }: Pauta
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-6">
-            Enviar Pauta
+            {modalTitle}
           </h3>
+
+          {/* Exibir erro se houver */}
+          {submitError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+              <p className="text-sm">{submitError}</p>
+            </div>
+          )}
 
           <PautaForm
             onSubmit={handleFormSubmit}
             onCancel={onClose}
             loading={loading}
+            mode={mode}
+            initialData={initialData}
           />
         </div>
       </div>

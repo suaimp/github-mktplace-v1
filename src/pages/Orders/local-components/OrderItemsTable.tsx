@@ -4,6 +4,7 @@ import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
 import { hasPackageSelected } from "../utils/packageDetection";
+import { hasOutlineData } from "../utils/outlineDetection";
 import { PautaModal, usePautaModal } from "./PautaModal";
 
 interface OrderItem {
@@ -17,6 +18,7 @@ interface OrderItem {
   article_url?: string;
   publication_status?: string;
   service_content?: any;
+  outline?: any; // JSON data for article outline (pauta)
 }
 
 interface OrderItemsTableProps {
@@ -251,7 +253,7 @@ export default function OrderItemsTable({
                   onClick={() => handleSort("service_content")}
                 >
                   <div className="flex items-center gap-1">
-                    <span>Pacote</span>
+                    <span>Pacote de Conteúdo</span>
                     {sortField === "service_content" && (
                       <span className="flex flex-col gap-0.5 ml-1">
                         <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -525,7 +527,7 @@ export default function OrderItemsTable({
                               )
                             }
                             disabled={downloadLoading[item.id]}
-                            className="flex items-center p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium focus:outline-none"
+                            className="flex items-center p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium focus:outline-none"
                             style={{ textDecoration: "none", gap: "2px" }}
                             type="button"
                             title="Baixar artigo"
@@ -598,17 +600,24 @@ export default function OrderItemsTable({
                       }
                       // Caso não tenha nada, botão de enviar artigo/pauta
                       const hasPackage = hasPackageSelected(item);
-                      const buttonText = hasPackage ? "Enviar Pauta" : "Enviar Artigo";
+                      const hasOutline = hasOutlineData(item);
+                      
+                      let buttonText = "Enviar Artigo";
+                      let buttonAction = () => onDocModalOpen(item.id);
+                      
+                      if (hasPackage) {
+                        if (hasOutline) {
+                          buttonText = "Visualizar Pauta";
+                          buttonAction = () => pautaModal.openViewModal(item.id, item.outline);
+                        } else {
+                          buttonText = "Enviar Pauta";
+                          buttonAction = () => pautaModal.openModal(item.id);
+                        }
+                      }
                       
                       return (
                         <button
-                          onClick={() => {
-                            if (hasPackage) {
-                              pautaModal.openModal(item.id);
-                            } else {
-                              onDocModalOpen(item.id);
-                            }
-                          }}
+                          onClick={buttonAction}
                           className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
                         >
                           <svg
@@ -852,6 +861,9 @@ export default function OrderItemsTable({
         onSubmit={pautaModal.submitPauta}
         itemId={pautaModal.selectedItemId}
         loading={pautaModal.loading}
+        submitError={pautaModal.submitError}
+        mode={pautaModal.mode}
+        initialData={pautaModal.initialData}
       />
     </div>
   );

@@ -2,7 +2,7 @@
  * Hook para gerenciar o formulário de pauta
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PautaFormData, PautaFormErrors } from '../types';
 import { validatePautaForm, hasFormErrors } from '../utils/validation';
 
@@ -13,10 +13,27 @@ const initialFormData: PautaFormData = {
   requisitosEspeciais: ''
 };
 
-export function usePautaForm() {
-  const [formData, setFormData] = useState<PautaFormData>(initialFormData);
+export function usePautaForm(initialData?: PautaFormData) {
+  const [formData, setFormData] = useState<PautaFormData>(() => {
+    if (initialData) {
+      console.log('📝 Inicializando usePautaForm com dados:', initialData);
+      return initialData;
+    }
+    return initialFormData;
+  });
   const [errors, setErrors] = useState<PautaFormErrors>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
+  // Atualizar formData quando initialData mudar
+  useEffect(() => {
+    if (initialData) {
+      console.log('📝 Hook usePautaForm recebeu initialData (useEffect):', initialData);
+      setFormData(initialData);
+    } else {
+      console.log('📝 Resetando para dados vazios');
+      setFormData(initialFormData);
+    }
+  }, [initialData]);
 
   /**
    * Atualiza um campo do formulário
