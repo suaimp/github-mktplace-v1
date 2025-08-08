@@ -6,6 +6,9 @@ import { supabase } from "../../../lib/supabase";
 import { hasPackageSelected } from "../utils/packageDetection";
 import { hasOutlineData } from "../utils/outlineDetection";
 import { PautaModal, usePautaModal } from "./PautaModal";
+import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
+import { SimpleChatModal } from "./SimpleChatModal";
+import { ChatIcon, HorizontaLDots } from "../../../icons";
 
 interface OrderItem {
   id: string;
@@ -59,6 +62,28 @@ export default function OrderItemsTable({
 
   // Hook para o modal de pauta
   const pautaModal = usePautaModal();
+
+  // Hooks para os novos modais
+  const articleDetailsModal = useArticleDetailsModal();
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [selectedChatItem, setSelectedChatItem] = useState<OrderItem | null>(null);
+
+  // Função para abrir o chat
+  const handleOpenChat = (item: OrderItem) => {
+    setSelectedChatItem(item);
+    setChatModalOpen(true);
+  };
+
+  // Função para fechar o chat
+  const handleCloseChat = () => {
+    setChatModalOpen(false);
+    setSelectedChatItem(null);
+  };
+
+  // Função para abrir detalhes do artigo
+  const handleOpenArticleDetails = (item: OrderItem) => {
+    articleDetailsModal.openModal(item.id, item.outline);
+  };
 
   // Função para carregar os itens do pedido
   const loadOrderItems = async () => {
@@ -338,6 +363,10 @@ export default function OrderItemsTable({
                       </span>
                     )}
                   </div>
+                </th>
+                {/* Nova coluna para botões de chat e detalhes */}
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {/* Sem título conforme solicitado */}
                 </th>
                 {isAdmin && (
                   <th
@@ -824,6 +853,30 @@ export default function OrderItemsTable({
                       );
                     })()}
                   </td>
+                  {/* Nova coluna para botões de chat e detalhes */}
+                  <td className="whitespace-nowrap px-4 py-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      {/* Botão de Chat */}
+                      <button
+                        onClick={() => handleOpenChat(item)}
+                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                        style={{ borderRadius: '12px' }}
+                        title="Abrir chat"
+                      >
+                        <ChatIcon className="w-5 h-5 text-white" />
+                      </button>
+                      
+                      {/* Botão de Detalhes */}
+                      <button
+                        onClick={() => handleOpenArticleDetails(item)}
+                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                        style={{ borderRadius: '12px' }}
+                        title="Ver detalhes do artigo"
+                      >
+                        <HorizontaLDots className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                  </td>
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                       <select
@@ -864,6 +917,26 @@ export default function OrderItemsTable({
         submitError={pautaModal.submitError}
         mode={pautaModal.mode}
         initialData={pautaModal.initialData}
+      />
+
+      {/* Modal de Detalhes do Artigo */}
+      <ArticleDetailsModal
+        isOpen={articleDetailsModal.isOpen}
+        onClose={articleDetailsModal.closeModal}
+        itemId={articleDetailsModal.selectedItemId}
+        pautaData={articleDetailsModal.pautaData}
+        loading={articleDetailsModal.loading}
+      />
+
+      {/* Modal de Chat */}
+      <SimpleChatModal
+        isOpen={chatModalOpen}
+        onClose={handleCloseChat}
+        itemId={selectedChatItem?.id || ''}
+        orderItemData={selectedChatItem ? {
+          product_name: selectedChatItem.product_name,
+          product_url: selectedChatItem.product_url
+        } : undefined}
       />
     </div>
   );
