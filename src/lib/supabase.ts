@@ -29,6 +29,60 @@ const RATE_LIMIT = {
   RESET_MS: 30 * 60 * 1000 // 30 minutes
 };
 
+// Function to translate Supabase auth error messages to Portuguese
+function translateAuthError(error: any): string {
+  if (!error) return "Erro desconhecido";
+  
+  const message = error.message || error.toString();
+  
+  // Common Supabase auth error messages
+  const errorTranslations: Record<string, string> = {
+    "Invalid login credentials": "Email ou senha inválidos",
+    "Email not confirmed": "Email não confirmado. Por favor, verifique sua caixa de entrada.",
+    "User not found": "Usuário não encontrado",
+    "Invalid email": "Email inválido",
+    "Weak password": "Senha muito fraca",
+    "Password should be at least 6 characters": "A senha deve ter pelo menos 6 caracteres",
+    "Signup disabled": "Cadastro desabilitado",
+    "Email already registered": "Este email já está cadastrado",
+    "User already registered": "Usuário já está cadastrado",
+    "Too many requests": "Muitas tentativas. Tente novamente mais tarde.",
+    "Database connection error": "Erro de conexão com o banco de dados",
+    "Auth session missing": "Sessão de autenticação perdida",
+    "Invalid token": "Token inválido",
+    "Token expired": "Token expirado",
+    "Access denied": "Acesso negado",
+    "Unable to validate email address": "Não foi possível validar o endereço de email"
+  };
+  
+  // Check for exact matches first
+  for (const [englishMessage, portugueseMessage] of Object.entries(errorTranslations)) {
+    if (message.toLowerCase().includes(englishMessage.toLowerCase())) {
+      return portugueseMessage;
+    }
+  }
+  
+  // Check for partial matches
+  if (message.toLowerCase().includes("invalid") && message.toLowerCase().includes("credentials")) {
+    return "Email ou senha inválidos";
+  }
+  
+  if (message.toLowerCase().includes("email") && message.toLowerCase().includes("confirmed")) {
+    return "Email não confirmado. Por favor, verifique sua caixa de entrada.";
+  }
+  
+  if (message.toLowerCase().includes("password") && message.toLowerCase().includes("weak")) {
+    return "Senha muito fraca. Use uma senha mais forte.";
+  }
+  
+  if (message.toLowerCase().includes("rate") && message.toLowerCase().includes("limit")) {
+    return "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.";
+  }
+  
+  // Return original message if no translation found, but in Portuguese fallback
+  return message || "Erro de autenticação. Tente novamente.";
+}
+
 // Check and update rate limit
 function checkRateLimit(key: string): boolean {
   const now = Date.now();
@@ -96,17 +150,17 @@ export async function signInAdmin(email: string, password: string) {
     if (!checkRateLimit(rateLimitKey)) {
       const remainingMinutes = getRateLimitReset(rateLimitKey);
       throw new Error(
-        `Too many attempts. Try again in ${remainingMinutes} minutes.`
+        `Muitas tentativas. Tente novamente em ${remainingMinutes} minutos.`
       );
     }
 
     // Basic validation
     if (!normalizedEmail || !password?.trim()) {
-      throw new Error("Email and password are required");
+      throw new Error("Email e senha são obrigatórios");
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      throw new Error("Invalid email");
+      throw new Error("Email inválido");
     }
 
     // Try to login
@@ -119,7 +173,7 @@ export async function signInAdmin(email: string, password: string) {
     });
 
     if (error) throw error;
-    if (!user || !session) throw new Error("User data not found");
+    if (!user || !session) throw new Error("Dados do usuário não encontrados");
 
     // Garantir que o admin está na tabela admins
     try {
@@ -143,7 +197,7 @@ export async function signInAdmin(email: string, password: string) {
 
     if (adminError || !adminData) {
       await signOut();
-      throw new Error("User does not have admin permissions");
+      throw new Error("Usuário não possui permissões de administrador");
     }
 
     // Clear rate limit on successful login
@@ -156,7 +210,7 @@ export async function signInAdmin(email: string, password: string) {
     };
   } catch (error) {
     console.error("Login error:", error);
-    throw error;
+    throw new Error(translateAuthError(error));
   }
 }
 
@@ -170,17 +224,17 @@ export async function signInUser(email: string, password: string) {
     if (!checkRateLimit(rateLimitKey)) {
       const remainingMinutes = getRateLimitReset(rateLimitKey);
       throw new Error(
-        `Too many attempts. Try again in ${remainingMinutes} minutes.`
+        `Muitas tentativas. Tente novamente em ${remainingMinutes} minutos.`
       );
     }
 
     // Basic validation
     if (!normalizedEmail || !password?.trim()) {
-      throw new Error("Email and password are required");
+      throw new Error("Email e senha são obrigatórios");
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      throw new Error("Invalid email");
+      throw new Error("Email inválido");
     }
 
     // Try to login
@@ -193,7 +247,7 @@ export async function signInUser(email: string, password: string) {
     });
 
     if (error) throw error;
-    if (!user || !session) throw new Error("User data not found");
+    if (!user || !session) throw new Error("Dados do usuário não encontrados");
 
     // Check if platform user
     const { data: userData, error: userError } = await supabase
@@ -203,7 +257,7 @@ export async function signInUser(email: string, password: string) {
       .maybeSingle();
 
     if (userError) throw userError;
-    if (!userData) throw new Error("User not found");
+    if (!userData) throw new Error("Usuário não encontrado");
 
     // Check if email is confirmed
     if (!user.email_confirmed_at) {
@@ -223,7 +277,7 @@ export async function signInUser(email: string, password: string) {
     };
   } catch (error) {
     console.error("Login error:", error);
-    throw error;
+    throw new Error(translateAuthError(error));
   }
 }
 

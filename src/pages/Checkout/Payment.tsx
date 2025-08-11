@@ -24,6 +24,8 @@ import { usePixPaymentModular } from "./Payment/pix/hooks/usePixPayment";
 import { 
   usePagarmeErrorHandler
 } from "../../components/Checkout/Payment/error-handling";
+// Hook para dados do pedido na tela de sucesso
+import { useOrderSuccess, formatCurrencyDisplay, getPaymentStatusMessage } from "./Payment/success";
 // Removed unused imports - using direct payment now
 
 // Mock function to simulate payment processing
@@ -69,6 +71,11 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   // const [stripePromise, setStripePromise] = useState<any>(null); // [PAUSADO] Stripe temporariamente desativado
   const [totalAmount, setTotalAmount] = useState(0);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  
+  // Hook para dados do pedido na tela de sucesso
+  const { orderData: orderSuccessData } = useOrderSuccess(currentOrderId);
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -120,7 +127,6 @@ export default function Payment() {
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
     string[]
   >(["card", "pix", "boleto"]);
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [conteudoCliente, setConteudoCliente] = useState<any[]>([]);
   const [outrosProdutos, setOutrosProdutos] = useState<any[]>([]);
@@ -702,6 +708,62 @@ export default function Payment() {
       if (result.raw_response?.charges?.[0]?.id) {
         const paymentId = result.raw_response.charges[0].id;
         await updateOrderPaymentId(orderId, paymentId);
+      }
+      
+      // 6. Enviar e-mail de notificação após gerar QR Code PIX
+      try {
+        const orderEmailData = {
+          name: formData.name,
+          email: formData.email,
+          total: pixOrderSummary.totalFinalPrice,
+          items: pixOrderSummary.items.map((item: any) => {
+            // Niche
+            let niche = "";
+            if (Array.isArray(item.niche_selected) && item.niche_selected.length > 0) {
+              try {
+                const parsed = JSON.parse(item.niche_selected[0]);
+                niche = parsed.niche || parsed.title || parsed.name || "";
+              } catch {
+                niche = "";
+              }
+            }
+            // Package
+            let pacote = "";
+            let word_count = "";
+            if (Array.isArray(item.service_selected) && item.service_selected.length > 0) {
+              try {
+                const parsed = JSON.parse(item.service_selected[0]);
+                pacote = parsed.title || parsed.name || "";
+                word_count = parsed.word_count || "";
+              } catch {
+                pacote = "";
+                word_count = "";
+              }
+            }
+            return {
+              name: item.product_url || "Produto",
+              quantity: item.quantity,
+              price: item.price,
+              niche,
+              package: pacote,
+              word_count,
+            };
+          }),
+        };
+        const payload = { order: orderEmailData };
+        console.log("📧 Enviando e-mail de notificação após gerar QR Code PIX:", JSON.stringify(payload));
+        await fetch(
+          "https://uxbeaslwirkepnowydfu.functions.supabase.co/send-order-email",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+        console.log("✅ E-mail de notificação enviado após gerar QR Code PIX para cliente e administrador");
+      } catch (emailErr) {
+        console.error("❌ Erro ao enviar e-mail após gerar QR Code PIX:", emailErr);
+        // Não interrompe o fluxo se falhar o envio do email
       }
       
       console.log("✅ [PAYMENT.TSX] PIX QR Code gerado com sucesso via módulo");
@@ -1527,18 +1589,26 @@ export default function Payment() {
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Obrigado! Pagamento{" "}
-                    {paymentMethod === "boleto" ? "Pendente" : "Concluído"}!
+                    {orderSuccessData 
+                      ? getPaymentStatusMessage(orderSuccessData.payment_method).title
+                      : `Obrigado! Pagamento ${paymentMethod === "boleto" ? "Pendente" : "Concluído"}!`
+                    }
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400">
                     Seu pagamento de{" "}
-                    {formatCurrency(
-                      orderSummary.totalProductPrice +
-                        orderSummary.totalContentPrice
-                    )}{" "}
-                    {paymentMethod === "boleto"
-                      ? "está aguardando processamento"
-                      : "foi processado com sucesso"}
+                    {orderSuccessData 
+                      ? formatCurrencyDisplay(orderSuccessData.total_amount)
+                      : formatCurrency(
+                          orderSummary.totalProductPrice +
+                            orderSummary.totalContentPrice
+                        )
+                    }{" "}
+                    {orderSuccessData
+                      ? getPaymentStatusMessage(orderSuccessData.payment_method).description
+                      : paymentMethod === "boleto"
+                        ? "está aguardando processamento"
+                        : "foi processado com sucesso"
+                    }
                   </p>
                 </div>
               </div>

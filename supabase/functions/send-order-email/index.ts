@@ -27,7 +27,7 @@ serve(async (req) => {
 
     // Email do cliente e email configurado para receber notificações
     const clientEmail = order.email;
-    const adminEmail = "moisesdev2022@gmail.com"; // Email configurado para receber notificações
+    const adminEmail = "contato@suaimprensa.com.br"; // Email configurado para receber notificações
 
     // Monte o corpo do e-mail com os dados da compra
     const orderDetails = `
@@ -42,7 +42,6 @@ serve(async (req) => {
               `<li>
                 <strong>Produto:</strong> ${item.name}<br/>
                 <strong>Quantidade:</strong> ${item.quantity}<br/>
-                <strong>Preço:</strong> R$ ${item.price}<br/>
                 <strong>Nicho:</strong> ${item.niche || "-"}<br/>
                 <strong>Pacote:</strong> ${item.package || "-"}<br/>
                 <strong>Qtd. Palavras:</strong> ${item.word_count || "-"}

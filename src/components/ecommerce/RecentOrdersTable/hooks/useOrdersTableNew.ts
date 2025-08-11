@@ -29,15 +29,12 @@ export function useOrdersTableNew() {
 
         let fetchedOrders: OrderTableData[] = [];
         
-        console.log('Debug - Final values: userId =', isAdmin ? 'undefined (admin mode)' : userId, ', isAdmin =', isAdmin);
-        
         if (showAll || isFiltering) {
           fetchedOrders = await fetchOrdersWithUrls(isAdmin ? undefined : userId || undefined, isAdmin);
         } else {
           fetchedOrders = await fetchRecentOrdersWithUrls(isAdmin ? undefined : userId || undefined, isAdmin);
         }
 
-        console.log('Debug - Final fetched orders count:', fetchedOrders.length);
         setOrders(fetchedOrders);
       } catch (error) {
         console.error('Erro ao buscar pedidos:', error);

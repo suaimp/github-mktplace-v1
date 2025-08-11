@@ -32,7 +32,6 @@ export function PriceDisplay({
 
   const calculateDiscountPercentage = (originalPrice: string, promotionalPrice: string): number => {
     try {
-      console.log('calculateDiscountPercentage - originalPrice:', originalPrice, 'promotionalPrice:', promotionalPrice);
       
       // Função para converter formato brasileiro para formato de parsing
       const parseBrazilianCurrency = (value: string): number => {
@@ -63,24 +62,13 @@ export function PriceDisplay({
       const original = parseBrazilianCurrency(originalPrice);
       const promotional = parseBrazilianCurrency(promotionalPrice);
       
-      console.log('calculateDiscountPercentage - parsed original:', original, 'parsed promotional:', promotional);
-      
       if (isNaN(original) || isNaN(promotional) || original <= promotional) {
-        console.log('calculateDiscountPercentage - returning 0 because:', { 
-          originalIsNaN: isNaN(original), 
-          promotionalIsNaN: isNaN(promotional), 
-          originalLtePromotional: original <= promotional,
-          original,
-          promotional
-        });
         return 0;
       }
       
       const percentage = Math.round(((original - promotional) / original) * 100);
-      console.log('calculateDiscountPercentage - calculated percentage:', percentage);
       return percentage;
     } catch (error) {
-      console.log('calculateDiscountPercentage - error:', error);
       return 0;
     }
   };

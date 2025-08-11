@@ -5,7 +5,9 @@
 export interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  itemId: string;
+  orderId: string;
+  orderItemId: string;
+  entryId?: string;
   orderItemData?: {
     product_name: string;
     product_url: string;
@@ -15,12 +17,15 @@ export interface ChatModalProps {
 export interface ChatMessage {
   id: string;
   text: string;
-  sender: 'user' | 'support';
+  sender: 'user' | 'admin';
   timestamp: Date;
+  isRead?: boolean;
 }
 
 export interface ChatState {
   messages: ChatMessage[];
   isTyping: boolean;
   isConnected: boolean;
+  isLoading: boolean;
+  unreadCount: number;
 }

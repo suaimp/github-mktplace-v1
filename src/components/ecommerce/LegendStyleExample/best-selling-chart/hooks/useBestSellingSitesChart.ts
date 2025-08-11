@@ -58,8 +58,6 @@ export function useBestSellingSitesChart() {
                   value: priceField.value,
                   value_json: priceField.value_json
                 };
-                console.log('priceField raw data:', priceField);
-                console.log('priceData:', priceData);
                 const extractedInfo = extractPriceInfo(priceData);
                 priceInfo = {
                   price: extractedInfo.price,
@@ -67,7 +65,6 @@ export function useBestSellingSitesChart() {
                   oldPrice: extractedInfo.oldPrice,
                   hasPromotion: extractedInfo.hasPromotion
                 };
-                console.log('extracted price info:', priceInfo);
               }
             }
 

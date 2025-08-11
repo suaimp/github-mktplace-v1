@@ -150,25 +150,26 @@ export function useOrderDetailLogic() {
   // Função para envio da URL do artigo
   const sendArticleUrl = async (itemId: string, url: string, targetColumn: 'article_url' | 'article_doc' = 'article_doc') => {
     try {
-      console.log(`🔗 Iniciando atualização da URL do artigo (${targetColumn}):`, {
-        itemId,
-        url,
-      });
+      console.log(`[SEND_ARTICLE_URL_DEBUG] === ENVIANDO URL PARA ${targetColumn.toUpperCase()} ===`);
+      console.log(`[SEND_ARTICLE_URL_DEBUG] Item ID: ${itemId}`);
+      console.log(`[SEND_ARTICLE_URL_DEBUG] URL: ${url}`);
+      console.log(`[SEND_ARTICLE_URL_DEBUG] Target Column: ${targetColumn}`);
 
-      // Atualiza a coluna correta e o status de publicação para 'approved'
-      await OrderItemService.updateOrderItem(itemId, {
+      const updateData = {
         [targetColumn]: url,
         publication_status: "approved",
-      });
+      };
+      
+      console.log(`[SEND_ARTICLE_URL_DEBUG] Update Data:`, updateData);
 
-      console.log(`🔗 Link do artigo salvo em ${targetColumn} e status aprovado:`, {
-        itemId,
-        url,
-      });
+      // Atualiza a coluna correta e o status de publicação para 'approved'
+      await OrderItemService.updateOrderItem(itemId, updateData);
+
+      console.log(`[SEND_ARTICLE_URL_DEBUG] Link do artigo salvo em ${targetColumn} e status aprovado`);
 
       // O listener PostgreSQL no OrderItemsTable detectará a mudança automaticamente
     } catch (error) {
-      console.error(`❌ Erro ao salvar link do artigo em ${targetColumn}:`, error);
+      console.error(`[SEND_ARTICLE_URL_DEBUG] Erro ao salvar link do artigo em ${targetColumn}:`, error);
       throw error;
     }
   };

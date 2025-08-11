@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
+import { OrderNotificationService } from '../order-notifications/OrderNotificationService';
 
 export interface OutlineData {
   id: string;
@@ -83,6 +84,8 @@ export class OutlineService {
    */
   static async create(data: CreateOutlineData): Promise<OutlineData> {
     try {
+      console.log('[PAUTA_DEBUG] Iniciando criação de pauta:', data);
+      
       const { data: newOutline, error } = await supabase
         .from('outlines')
         .insert([data])
@@ -90,12 +93,60 @@ export class OutlineService {
         .single();
 
       if (error) {
+        console.error('[PAUTA_DEBUG] Erro ao criar pauta:', error);
         console.error('Erro ao criar pauta:', error);
         throw new Error('Erro ao criar pauta');
       }
 
+      console.log('[PAUTA_DEBUG] Pauta criada com sucesso:', newOutline);
+      
+      // Enviar notificação por email após criação bem-sucedida
+      try {
+        console.log('[PAUTA_DEBUG] Iniciando envio de notificação...');
+        
+        // Buscar o order_id do order_item
+        const { data: orderItem, error: orderItemError } = await supabase
+          .from('order_items')
+          .select('order_id')
+          .eq('id', data.order_item_id)
+          .single();
+
+        if (orderItemError || !orderItem) {
+          console.error('[PAUTA_DEBUG] Erro ao buscar order_item:', orderItemError);
+          throw new Error('Não foi possível encontrar o order_item');
+        }
+
+        console.log('[PAUTA_DEBUG] Order_id encontrado:', orderItem.order_id);
+
+        // Preparar dados da pauta para o email
+        const pautaData = {
+          palavraChave: data.palavra_chave || '',
+          urlSite: data.url_site || '',
+          textoAncora: data.texto_ancora || '',
+          requisitosEspeciais: data.requisitos_especiais || ''
+        };
+
+        console.log('[PAUTA_DEBUG] Enviando notificação com dados:', { 
+          orderId: orderItem.order_id, 
+          orderItemId: data.order_item_id, 
+          pautaData 
+        });
+
+        await OrderNotificationService.sendPautaNotification(
+          orderItem.order_id,
+          data.order_item_id,
+          pautaData
+        );
+        
+        console.log('[PAUTA_DEBUG] Notificação enviada com sucesso');
+      } catch (notificationError) {
+        console.error('[PAUTA_DEBUG] Erro ao enviar notificação:', notificationError);
+        // Não falhar a criação da pauta se a notificação falhar
+      }
+
       return newOutline;
     } catch (error) {
+      console.error('[PAUTA_DEBUG] Erro no serviço create:', error);
       console.error('Erro no serviço create:', error);
       throw error;
     }

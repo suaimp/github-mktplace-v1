@@ -13,9 +13,6 @@ export function SiteRow({ site }: SiteRowProps) {
     hasPromotion: site.hasPromotion
   };
 
-  console.log('SiteRow - site data:', site);
-  console.log('SiteRow - priceData:', priceData);
-
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
       <div className="flex items-center gap-3">

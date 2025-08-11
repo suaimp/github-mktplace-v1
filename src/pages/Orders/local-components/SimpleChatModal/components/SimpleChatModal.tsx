@@ -1,32 +1,40 @@
 /**
- * Modal de chat simples - apenas interface visual
+ * Modal de chat funcional com integração ao banco de dados
  */
 
 import { useState } from 'react';
-import { SimpleChatModalProps, ChatMessage } from '../types';
+import { SimpleChatModalProps } from '../types';
+import { useChat } from '../hooks/useSimpleChat';
 
 export function SimpleChatModal({
   isOpen,
   onClose,
   itemId,
+  orderId,
+  entryId,
   orderItemData
 }: SimpleChatModalProps) {
   const [message, setMessage] = useState('');
-  const [messages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      text: 'Olá! Como posso ajudá-lo com este artigo?',
-      sender: 'support',
-      timestamp: new Date()
-    }
-  ]);
+
+  // Usar o hook de chat funcional
+  const { chatState, error, sendMessage } = useChat({
+    orderId: orderId || '',
+    orderItemId: itemId,
+    entryId,
+    isOpen
+  });
 
   if (!isOpen) return null;
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
-    // Por enquanto não faz nada, apenas limpa o input
-    setMessage('');
+    
+    try {
+      await sendMessage(message);
+      setMessage('');
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -35,9 +43,6 @@ export function SimpleChatModal({
       handleSendMessage();
     }
   };
-
-  // Log do itemId para evitar warning (pode ser usado futuramente)
-  console.log('Chat aberto para item:', itemId);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-99999">
@@ -80,11 +85,44 @@ export function SimpleChatModal({
               {orderItemData.product_name || orderItemData.product_url}
             </p>
           )}
+          {/* Status de conexão */}
+          <div className="flex items-center mt-2">
+            <div className={`w-2 h-2 rounded-full mr-2 ${
+              chatState.isConnected ? 'bg-green-500' : 'bg-red-500'
+            }`}></div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {chatState.isConnected ? 'Online' : 'Desconectado'}
+            </span>
+          </div>
         </div>
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px]">
-          {messages.map((msg) => (
+          {/* Loading state */}
+          {chatState.isLoading && (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+              <span className="ml-3 text-gray-500">Carregando mensagens...</span>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!chatState.isLoading && chatState.messages.length === 0 && (
+            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+              <p>Nenhuma mensagem ainda.</p>
+              <p className="text-sm mt-1">Envie uma mensagem para começar a conversa!</p>
+            </div>
+          )}
+
+          {/* Messages */}
+          {chatState.messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -102,18 +140,34 @@ export function SimpleChatModal({
                     ? 'text-brand-100' 
                     : 'text-gray-500 dark:text-gray-400'
                 }`}>
-                  {msg.timestamp.toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
+                  {msg.timestamp.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
                   })}
+                  {msg.sender === 'user' && msg.isRead && (
+                    <span className="ml-2">✓</span>
+                  )}
                 </div>
               </div>
             </div>
           ))}
+
+          {/* Typing indicator */}
+          {chatState.isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 text-sm">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 dark:border-gray-800 p-4">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="flex space-x-2">
             <textarea
               value={message}
@@ -121,14 +175,27 @@ export function SimpleChatModal({
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem..."
               rows={2}
-              className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
+              className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              disabled={chatState.isTyping || !chatState.isConnected}
             />
             <button
               onClick={handleSendMessage}
-              disabled={!message.trim()}
-              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              disabled={!message.trim() || chatState.isTyping || !chatState.isConnected}
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Enviar
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
             </button>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">

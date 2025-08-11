@@ -11,6 +11,7 @@ import { OrderItemStatusService, OrderItemAnalyzer } from "./OrderItemsTable/ind
 
 interface OrderItem {
   id: string;
+  entry_id?: string;
   product_name: string;
   product_url: string;
   quantity: number;
@@ -372,12 +373,10 @@ export default function OrderItemsTable({
                     )}
                   </div>
                 </th>
-                {/* Nova coluna para botões de chat e detalhes (apenas admin) */}
-                {isAdmin && (
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {/* Sem título conforme solicitado */}
-                  </th>
-                )}
+                {/* Coluna para botões de ação */}
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {/* Sem título conforme solicitado */}
+                </th>
                 {isAdmin && (
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -840,20 +839,20 @@ export default function OrderItemsTable({
                       );
                     })()}
                   </td>
-                  {/* Nova coluna para botões de chat e detalhes (apenas admin) */}
-                  {isAdmin && (
-                    <td className="whitespace-nowrap px-4 py-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        {/* Botão de Chat */}
-                        <button
-                          onClick={() => handleOpenChat(item)}
-                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                          style={{ borderRadius: '12px' }}
-                          title="Abrir chat"
-                        >
-                          <ChatIcon className="w-5 h-5 text-white" />
-                        </button>
-                        {/* Botão de Detalhes */}
+                  {/* Coluna de botões de ação */}
+                  <td className="whitespace-nowrap px-4 py-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      {/* Botão de Chat - sempre visível */}
+                      <button
+                        onClick={() => handleOpenChat(item)}
+                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                        style={{ borderRadius: '12px' }}
+                        title="Abrir chat"
+                      >
+                        <ChatIcon className="w-5 h-5 text-white" />
+                      </button>
+                      {/* Botão de Detalhes - apenas para admin */}
+                      {isAdmin && (
                         <button
                           onClick={() => handleOpenArticleDetails(item)}
                           className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
@@ -868,9 +867,9 @@ export default function OrderItemsTable({
                             </span>
                           )}
                         </button>
-                      </div>
-                    </td>
-                  )}
+                      )}
+                    </div>
+                  </td>
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                       <select
@@ -927,6 +926,8 @@ export default function OrderItemsTable({
         isOpen={chatModalOpen}
         onClose={handleCloseChat}
         itemId={selectedChatItem?.id || ''}
+        orderId={orderId}
+        entryId={selectedChatItem?.entry_id}
         orderItemData={selectedChatItem ? {
           product_name: selectedChatItem.product_name,
           product_url: selectedChatItem.product_url

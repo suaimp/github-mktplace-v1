@@ -3,6 +3,7 @@
  */
 
 import { supabase } from '../../../../lib/supabase';
+import { OrderNotificationService } from '../../../../db-service/order-notifications';
 
 export interface PautaFormData {
   palavraChave: string;
@@ -54,7 +55,7 @@ export class PautaService {
 
       console.log('✅ Pauta salva com sucesso:', data);
       
-      return {
+      const result = {
         id: data.id,
         itemId: data.item_id,
         palavraChave: data.palavra_chave,
@@ -64,6 +65,55 @@ export class PautaService {
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
+
+      // Buscar o order_id para enviar notificação
+      try {
+        console.log('🔍 [PAUTA_DEBUG] Buscando order_id para item:', itemId);
+        
+        const { data: orderItemData, error: orderItemError } = await supabase
+          .from('order_items')
+          .select('order_id')
+          .eq('id', itemId)
+          .single();
+
+        console.log('🔍 [PAUTA_DEBUG] Resultado da busca:', { orderItemData, orderItemError });
+
+        if (!orderItemError && orderItemData) {
+          console.log('📧 [PAUTA_DEBUG] Iniciando envio de notificação com dados:', {
+            orderId: orderItemData.order_id,
+            itemId,
+            pautaData
+          });
+          
+          // Enviar notificação de nova pauta de forma assíncrona
+          OrderNotificationService.sendPautaNotification(
+            orderItemData.order_id,
+            itemId,
+            {
+              palavraChave: pautaData.palavraChave,
+              urlSite: pautaData.urlSite,
+              textoAncora: pautaData.textoAncora,
+              requisitosEspeciais: pautaData.requisitosEspeciais
+            }
+          ).then(success => {
+            console.log('📧 [PAUTA_DEBUG] Resultado do envio de notificação:', success);
+          }).catch(notificationError => {
+            console.warn('⚠️ [PAUTA_DEBUG] Erro ao enviar notificação de pauta:', notificationError);
+            // Não fazemos throw aqui para não falhar a criação da pauta
+          });
+        } else {
+          console.error('❌ [PAUTA_DEBUG] Não foi possível encontrar order_id:', {
+            error: orderItemError,
+            data: orderItemData,
+            itemId
+          });
+        }
+      } catch (notificationError) {
+        console.warn('⚠️ [PAUTA_DEBUG] Erro ao processar notificação de pauta:', notificationError);
+        // Não fazemos throw aqui para não falhar a criação da pauta
+      }
+      
+      return result;
     } catch (error) {
       console.error('❌ Erro no PautaService.createPauta:', error);
       throw error;

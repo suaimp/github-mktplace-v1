@@ -129,16 +129,24 @@ export default function OrderDetail() {
 
   const handleSavePublishedArticleUrl = async () => {
     if (!selectedItemForPublishedUrl) return;
+    
+    console.log('[PUBLISHED_URL_DEBUG] === SALVANDO URL DE ARTIGO PUBLICADO ===');
+    console.log('[PUBLISHED_URL_DEBUG] Item ID:', selectedItemForPublishedUrl);
+    console.log('[PUBLISHED_URL_DEBUG] URL:', editingPublishedArticleUrl);
+    
     try {
       await sendArticleUrl(
         selectedItemForPublishedUrl,
         editingPublishedArticleUrl,
         'article_url'
       );
+      
+      console.log('[PUBLISHED_URL_DEBUG] URL salva com sucesso');
       closePublishedUrlModal();
       triggerTableRefresh();
       triggerProgressRefresh();
     } catch (error) {
+      console.error("[PUBLISHED_URL_DEBUG] Erro ao salvar URL do artigo publicado:", error);
       console.error("Erro ao salvar URL do artigo publicado:", error);
     }
   };

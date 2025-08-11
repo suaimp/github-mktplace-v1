@@ -1,4 +1,5 @@
 import { supabase } from "../../../../lib/supabase";
+import { OrderNotificationService } from '../../../../db-service/order-notifications';
 
 export interface OrderItem {
   id: string;
@@ -88,6 +89,11 @@ export const OrderItemService = {
     filePath: string,
     fileName: string
   ) {
+    console.log('[ARTICLE_UPLOAD_DEBUG] === INICIANDO UPLOAD DE ARTIGO ===');
+    console.log('[ARTICLE_UPLOAD_DEBUG] Item ID:', selectedItemId);
+    console.log('[ARTICLE_UPLOAD_DEBUG] File Path:', filePath);
+    console.log('[ARTICLE_UPLOAD_DEBUG] File Name:', fileName);
+
     const { error } = await supabase
       .from("order_items")
       .update({
@@ -96,10 +102,45 @@ export const OrderItemService = {
       })
       .eq("id", selectedItemId);
     if (error) {
+      console.error('[ARTICLE_UPLOAD_DEBUG] Erro ao atualizar documento:', error);
       showToast("Erro ao atualizar documento do artigo.", "error");
       throw error;
     }
+    
+    console.log('[ARTICLE_UPLOAD_DEBUG] Documento atualizado com sucesso');
     showToast("Documento do artigo atualizado com sucesso!", "success");
+
+    // Buscar order_id para enviar notificação
+    try {
+      console.log('[ARTICLE_UPLOAD_DEBUG] Buscando order_id para notificação...');
+      const { data: orderItemData, error: orderItemError } = await supabase
+        .from('order_items')
+        .select('order_id')
+        .eq('id', selectedItemId)
+        .single();
+
+      if (!orderItemError && orderItemData) {
+        console.log('[ARTICLE_UPLOAD_DEBUG] Order_id encontrado:', orderItemData.order_id);
+        console.log('[ARTICLE_UPLOAD_DEBUG] Enviando notificação de upload...');
+        
+        // Enviar notificação de novo artigo via upload
+        await OrderNotificationService.sendArticleDocNotification(
+          orderItemData.order_id,
+          selectedItemId,
+          'upload',
+          {
+            fileName,
+            fileUrl: filePath
+          }
+        );
+        
+        console.log('[ARTICLE_UPLOAD_DEBUG] Notificação de upload enviada com sucesso');
+      } else {
+        console.error('[ARTICLE_UPLOAD_DEBUG] Erro ao buscar order_id:', orderItemError);
+      }
+    } catch (notificationError) {
+      console.error('[ARTICLE_UPLOAD_DEBUG] Erro ao processar notificação:', notificationError);
+    }
   },
 
   async getOrderItemWithOrder(selectedItemId: string) {
@@ -188,6 +229,10 @@ export const OrderItemService = {
   },
 
   async updateOrderItem(id: string, updates: Partial<OrderItem>) {
+    console.log('[ARTICLE_UPDATE_DEBUG] === INICIANDO ATUALIZAÇÃO DE ITEM ===');
+    console.log('[ARTICLE_UPDATE_DEBUG] Item ID:', id);
+    console.log('[ARTICLE_UPDATE_DEBUG] Updates:', updates);
+
     const { data, error } = await supabase
       .from("order_items")
       .update(updates)
@@ -195,10 +240,80 @@ export const OrderItemService = {
       .select()
       .single();
     if (error) {
+      console.error('[ARTICLE_UPDATE_DEBUG] Erro ao atualizar item:', error);
       showToast("Erro ao atualizar item do pedido.", "error");
       throw error;
     }
+    
+    console.log('[ARTICLE_UPDATE_DEBUG] Item atualizado com sucesso:', data);
     showToast("Item do pedido atualizado com sucesso!", "success");
+
+    // Detectar se é uma atualização de artigo e enviar notificação apropriada
+    try {
+      // Se article_doc foi atualizado (link do artigo enviado)
+      if (updates.article_doc && typeof updates.article_doc === 'string' && updates.article_doc.includes('http')) {
+        console.log('[ARTICLE_UPDATE_DEBUG] Detectado envio de link de artigo');
+        console.log('[ARTICLE_UPDATE_DEBUG] URL recebida:', updates.article_doc);
+        
+        const { data: orderItemData, error: orderItemError } = await supabase
+          .from('order_items')
+          .select('order_id')
+          .eq('id', id)
+          .single();
+
+        if (!orderItemError && orderItemData) {
+          console.log('[ARTICLE_UPDATE_DEBUG] Order_id encontrado:', orderItemData.order_id);
+          console.log('[ARTICLE_UPDATE_DEBUG] Enviando notificação de link...');
+          
+          await OrderNotificationService.sendArticleDocNotification(
+            orderItemData.order_id,
+            id,
+            'link',
+            {
+              articleUrl: updates.article_doc
+            }
+          );
+          
+          console.log('[ARTICLE_UPDATE_DEBUG] Notificação de link enviada com sucesso');
+        } else {
+          console.error('[ARTICLE_UPDATE_DEBUG] Erro ao buscar order_id para link:', orderItemError);
+        }
+      } else if (updates.article_doc) {
+        console.log('[ARTICLE_UPDATE_DEBUG] article_doc detectado mas não é URL:', updates.article_doc);
+      }
+
+      // Se article_url foi atualizado (artigo publicado)
+      if (updates.article_url && typeof updates.article_url === 'string' && updates.article_url.trim()) {
+        console.log('[ARTICLE_UPDATE_DEBUG] Detectado artigo publicado');
+        console.log('[ARTICLE_UPDATE_DEBUG] URL recebida:', updates.article_url);
+        
+        const { data: orderItemData, error: orderItemError } = await supabase
+          .from('order_items')
+          .select('order_id')
+          .eq('id', id)
+          .single();
+
+        if (!orderItemError && orderItemData) {
+          console.log('[ARTICLE_UPDATE_DEBUG] Order_id encontrado:', orderItemData.order_id);
+          console.log('[ARTICLE_UPDATE_DEBUG] Enviando notificação de publicação...');
+          
+          await OrderNotificationService.sendArticleUrlNotification(
+            orderItemData.order_id,
+            id,
+            updates.article_url
+          );
+          
+          console.log('[ARTICLE_UPDATE_DEBUG] Notificação de publicação enviada com sucesso');
+        } else {
+          console.error('[ARTICLE_UPDATE_DEBUG] Erro ao buscar order_id para publicação:', orderItemError);
+        }
+      } else {
+        console.log('[ARTICLE_UPDATE_DEBUG] article_url não detectado ou inválido:', updates.article_url);
+      }
+    } catch (notificationError) {
+      console.error('[ARTICLE_UPDATE_DEBUG] Erro ao processar notificações:', notificationError);
+    }
+
     return data;
   },
 
@@ -214,6 +329,10 @@ export const OrderItemService = {
 
   async updateOrderItemOutline(itemId: string, outlineData: any) {
     try {
+      console.log('[PAUTA_SUBMIT_DEBUG] === INICIANDO ATUALIZAÇÃO DE OUTLINE ===');
+      console.log('[PAUTA_SUBMIT_DEBUG] Item ID:', itemId);
+      console.log('[PAUTA_SUBMIT_DEBUG] Outline Data:', outlineData);
+
       const { data, error } = await supabase
         .from("order_items")
         .update({ 
@@ -224,14 +343,48 @@ export const OrderItemService = {
         .single();
 
       if (error) {
+        console.error("[PAUTA_SUBMIT_DEBUG] Erro ao salvar pauta:", error);
         console.error("Erro ao salvar pauta:", error);
         showToast("Erro ao salvar pauta do artigo.", "error");
         throw error;
       }
 
+      console.log('[PAUTA_SUBMIT_DEBUG] Outline salvo com sucesso:', data);
       showToast("Pauta do artigo salva com sucesso!", "success");
+
+      // Enviar notificação por email após salvar com sucesso
+      try {
+        console.log('[PAUTA_SUBMIT_DEBUG] Iniciando envio de notificação...');
+        
+        // Preparar dados da pauta para o email
+        const pautaData = {
+          palavraChave: outlineData.palavra_chave || '',
+          urlSite: outlineData.url_site || '',
+          textoAncora: outlineData.texto_ancora || '',
+          requisitosEspeciais: outlineData.requisitos_especiais || ''
+        };
+
+        console.log('[PAUTA_SUBMIT_DEBUG] Enviando notificação com dados:', { 
+          orderId: data.order_id, 
+          orderItemId: itemId, 
+          pautaData 
+        });
+
+        await OrderNotificationService.sendPautaNotification(
+          data.order_id,
+          itemId,
+          pautaData
+        );
+        
+        console.log('[PAUTA_SUBMIT_DEBUG] Notificação enviada com sucesso');
+      } catch (notificationError) {
+        console.error('[PAUTA_SUBMIT_DEBUG] Erro ao enviar notificação:', notificationError);
+        // Não falhar o salvamento se a notificação falhar
+      }
+
       return data;
     } catch (error) {
+      console.error("[PAUTA_SUBMIT_DEBUG] Erro no serviço updateOrderItemOutline:", error);
       console.error("Erro ao atualizar outline:", error);
       showToast("Erro ao salvar pauta do artigo.", "error");
       throw error;

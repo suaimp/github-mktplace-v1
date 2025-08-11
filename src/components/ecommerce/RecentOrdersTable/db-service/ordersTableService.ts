@@ -15,14 +15,11 @@ export async function fetchOrdersWithUrls(userId?: string, isAdmin?: boolean): P
     if (isAdmin) {
       // Admin vê todos os pedidos, ignorando userId
       orders = await getAllOrders() || [];
-      console.log('Debug - Admin mode: fetched', orders.length, 'orders');
     } else if (userId) {
       // Usuário comum vê apenas seus pedidos
       orders = await getOrdersByUser(userId) || [];
-      console.log('Debug - User mode: fetched', orders.length, 'orders for user', userId);
     } else {
       // Usuário não autenticado não vê nada
-      console.log('Debug - No user authenticated');
       return [];
     }
 
