@@ -95,11 +95,6 @@ const EntriesTable = ({
     setCurrentPage(1);
   }, [setCurrentPage]);
 
-  const stableOnEntriesPerPageChange = useCallback((value: number) => {
-    setEntriesPerPage(value);
-    setCurrentPage(1);
-  }, [setEntriesPerPage, setCurrentPage]);
-
   const stableOnStatusFilterChange = useCallback((value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
@@ -176,8 +171,6 @@ const EntriesTable = ({
         <div className="min-w-[1102px]">
           {/* Barra de controles da tabela */}
           <TableControls
-            entriesPerPage={entriesPerPage}
-            onEntriesPerPageChange={stableOnEntriesPerPageChange}
             searchTerm={searchTerm}
             onSearchChange={stableOnSearchChange}
             onPageReset={stableOnPageReset}
@@ -400,6 +393,10 @@ const EntriesTable = ({
             totalItems={totalItems}
             itemsPerPage={entriesPerPage}
             onPageChange={handlePageChange}
+            onItemsPerPageChange={(value: number) => {
+              setEntriesPerPage(value);
+              setCurrentPage(1);
+            }}
             showInfo={true}
             itemLabel="registros"
           />

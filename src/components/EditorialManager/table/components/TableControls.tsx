@@ -3,11 +3,8 @@ import CsvImportButton from "./CsvImportButton";
 import { PdfExportButton } from "../export";
 import { TabNavigation, useTabNavigation } from "../../../tables/TabNavigation";
 import { useTableSearch } from "../hooks";
-import { ItemsPerPageSelector } from "../../../common/pagination";
 
 interface TableControlsProps {
-  entriesPerPage: number;
-  onEntriesPerPageChange: (value: number) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onPageReset: () => void;
@@ -35,8 +32,6 @@ interface TableControlsProps {
 
 const TableControls = (props: TableControlsProps) => {
   const {
-    entriesPerPage,
-    onEntriesPerPageChange,
     searchTerm,
     onSearchChange,
     onPageReset,
@@ -66,7 +61,7 @@ const TableControls = (props: TableControlsProps) => {
       
       // Verificar quais props mudaram
       const propsToCheck: (keyof TableControlsProps)[] = [
-        'entriesPerPage', 'searchTerm', 'statusFilter', 'statusCounts', 'entries',
+        'searchTerm', 'statusFilter', 'statusCounts', 'entries',
         'formFields', 'formId', 'userId', 'formTitle'
       ];
       
@@ -87,7 +82,7 @@ const TableControls = (props: TableControlsProps) => {
       
       // Verificar se as funções mudaram (referências)
       const functionsToCheck: (keyof TableControlsProps)[] = [
-        'onEntriesPerPageChange', 'onSearchChange', 'onPageReset', 'onCsvImportSuccess', 'onStatusFilterChange'
+        'onSearchChange', 'onPageReset', 'onCsvImportSuccess', 'onStatusFilterChange'
       ];
       
       functionsToCheck.forEach(prop => {
@@ -110,12 +105,6 @@ const TableControls = (props: TableControlsProps) => {
     onPageReset
   });
 
-  // Memoizar a função para evitar re-renders
-  const handleEntriesPerPageChange = useCallback((value: number) => {
-    onEntriesPerPageChange(value);
-    onPageReset();
-  }, [onEntriesPerPageChange, onPageReset]);
-
   // Memoizar tabs para evitar recriação a cada render
   const tabs = useMemo(() => [
     { id: 'todos', label: 'Todos', count: statusCounts.todos },
@@ -135,13 +124,7 @@ const TableControls = (props: TableControlsProps) => {
   }, [handleTabChange, onStatusFilterChange, onPageReset]);
 
   return (
-    <div className="flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-      <ItemsPerPageSelector
-        itemsPerPage={entriesPerPage}
-        onItemsPerPageChange={handleEntriesPerPageChange}
-        itemLabel="registros"
-      />
-
+    <div className="flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-end">
       {/* Área direita: TabNavigation, Input de pesquisa e botões */}
       <div className="flex items-center gap-4">
         {/* TabNavigation */}
@@ -223,7 +206,7 @@ const TableControls = (props: TableControlsProps) => {
 const arePropsEqual = (prevProps: TableControlsProps, nextProps: TableControlsProps) => {
   // Comparar propriedades primitivas
   const primitiveProps: (keyof TableControlsProps)[] = [
-    'entriesPerPage', 'searchTerm', 'statusFilter', 'formId', 'userId', 
+    'searchTerm', 'statusFilter', 'formId', 'userId', 
     'showCsvImport', 'formTitle', 'showPdfExport'
   ];
   
