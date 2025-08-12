@@ -1,26 +1,28 @@
 import React from 'react';
 import { MarketplaceTableControlsProps } from '../types';
-import { MarketplaceItemsPerPageSelector } from './MarketplaceItemsPerPageSelector';
 import { MarketplaceTabNavigation } from '../../navigation';
+import { MarketplaceFilter } from '../../filters';
 
 export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> = ({
-  itemsPerPage,
-  onItemsPerPageChange,
   searchTerm,
   onSearchChange,
   tabs,
   activeTabId,
-  onTabChange
+  onTabChange,
+  filterGroups,
+  selectedFilters,
+  onFiltersChange
 }) => {
   return (
     <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-      {/* Items per page selector */}
-      <MarketplaceItemsPerPageSelector
-        itemsPerPage={itemsPerPage}
-        onItemsPerPageChange={onItemsPerPageChange}
-      />
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Filter Component */}
+        <MarketplaceFilter
+          filterGroups={filterGroups}
+          selectedFilters={selectedFilters}
+          onFiltersChange={onFiltersChange}
+        />
+        
         {/* Tab Navigation */}
         <MarketplaceTabNavigation
           tabs={tabs}

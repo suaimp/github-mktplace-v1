@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { FilterGroup } from '../../filters/types';
 
 export interface MarketplacePaginationParams {
   page: number;
@@ -20,14 +21,13 @@ export interface MarketplacePaginationProps {
   onPageChange: (page: number) => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
+  // Props para o seletor de itens por página
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
 }
 
 // Props para o componente de controles da tabela marketplace
 export interface MarketplaceTableControlsProps {
-  // Pagination props
-  itemsPerPage: number;
-  onItemsPerPageChange: (value: number) => void;
-  
   // Search props
   searchTerm: string;
   onSearchChange: (value: string) => void;
@@ -36,6 +36,11 @@ export interface MarketplaceTableControlsProps {
   tabs: Array<{ id: string; label: string; icon?: ReactNode }>;
   activeTabId: string;
   onTabChange: (tabId: string) => void;
+  
+  // Filter props
+  filterGroups: FilterGroup[];
+  selectedFilters: Record<string, string[]>;
+  onFiltersChange: (filters: Record<string, string[]>) => void;
 }
 
 // Props para o seletor de itens por página específico do marketplace

@@ -29,6 +29,8 @@ import {
 } from "./pagination";
 // Importar sistema de seleção do marketplace
 import { useMarketplaceSelection } from "./selection";
+// Importar sistema de filtros
+import { generateMarketplaceFilterGroups } from "./filters";
 
 interface MarketplaceTableProps {
   formId: string;
@@ -46,6 +48,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
+  // Estado para filtros
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
 
   // Hook de paginação específico para marketplace
   const {
@@ -131,7 +135,127 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     loadMarketplaceData();
   }, [formId]);
 
- 
+  // Função para aplicar filtros customizados
+  const applyCustomFilters = (entries: any[], filters: Record<string, string[]>, fields: any[]) => {
+    if (Object.keys(filters).length === 0) return entries;
+
+    console.log('🔥 [applyCustomFilters] INÍCIO - Total entries para filtrar:', entries.length);
+    console.log('🔥 [applyCustomFilters] Filtros aplicados:', JSON.stringify(filters, null, 2));
+
+    let processedCount = 0;
+    let matchedCount = 0;
+
+    const result = entries.filter(entry => {
+      processedCount++;
+      
+      for (const [filterGroupId, filterValues] of Object.entries(filters)) {
+        if (filterValues.length === 0) continue;
+
+        let matchesFilter = false;
+
+        if (filterGroupId === 'category') {
+          // Usar a mesma lógica de identificação do campo de categorias da tabela
+          let categoryField = fields.find(field => 
+            field.field_type === "categories" || 
+            field.field_type === "category" ||
+            (field.field_type === "multiselect" && field.label?.toLowerCase().includes('categoria')) ||
+            field.label?.toLowerCase().includes('categoria') ||
+            field.label?.toLowerCase().includes('category') ||
+            field.label?.toLowerCase().includes('nicho') ||
+            field.label?.toLowerCase().includes('niche')
+          );
+
+          if (categoryField) {
+            const entryValue = entry.values[categoryField.id];
+            
+            if (entryValue) {
+              // Tentar diferentes formatos de dados
+              let categories: string[] = [];
+              
+              if (Array.isArray(entryValue)) {
+                // Se é array, pode ser array de strings ou array de objetos
+                categories = entryValue.map(item => {
+                  if (typeof item === 'string') {
+                    return item.trim();
+                  } else if (typeof item === 'object' && item !== null) {
+                    // Se é objeto, tentar extrair propriedades comuns
+                    if (item.name) return item.name;
+                    else if (item.label) return item.label;
+                    else if (item.title) return item.title;
+                    else if (item.value) return item.value;
+                    else return item.toString();
+                  } else {
+                    return item.toString().trim();
+                  }
+                });
+              } else if (typeof entryValue === 'string') {
+                if (entryValue.includes(',')) {
+                  categories = entryValue.split(',').map(cat => cat.trim());
+                } else if (entryValue.includes(';')) {
+                  categories = entryValue.split(';').map(cat => cat.trim());
+                } else if (entryValue.includes('|')) {
+                  categories = entryValue.split('|').map(cat => cat.trim());
+                } else {
+                  categories = [entryValue.trim()];
+                }
+              } else if (typeof entryValue === 'object' && entryValue !== null) {
+                if (entryValue.name) categories = [entryValue.name];
+                else if (entryValue.label) categories = [entryValue.label];
+                else if (entryValue.title) categories = [entryValue.title];
+                else if (entryValue.value) categories = [entryValue.value];
+                else categories = [entryValue.toString()];
+              } else {
+                categories = [entryValue.toString().trim()];
+              }
+
+              console.log('🔥 [applyCustomFilters] categories processadas:', categories);
+
+              // Verificar se alguma categoria corresponde ao filtro (case-insensitive + normalizada)
+              for (const filterValue of filterValues) {
+                console.log('🔥 [applyCustomFilters] Testando filterValue:', JSON.stringify(filterValue), 'contra categories:', JSON.stringify(categories));
+                
+                const match = categories.some(cat => {
+                  const lowerCat = cat.toLowerCase();
+                  const lowerFilter = filterValue.toLowerCase();
+                  console.log('🔥 [applyCustomFilters] Comparando:', JSON.stringify(lowerCat), '===', JSON.stringify(lowerFilter), '=', lowerCat === lowerFilter);
+                  
+                  // Comparação case-insensitive
+                  if (lowerCat === lowerFilter) {
+                    return true;
+                  }
+                  
+                  // Comparação normalizada (sem acentos)
+                  const normalizedCat = cat.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                  const normalizedFilter = filterValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                  console.log('🔥 [applyCustomFilters] Normalized:', JSON.stringify(normalizedCat), '===', JSON.stringify(normalizedFilter), '=', normalizedCat === normalizedFilter);
+                  return normalizedCat === normalizedFilter;
+                });
+                
+                if (match) {
+                  matchesFilter = true;
+                  matchedCount++;
+                  console.log(`🔥 [applyCustomFilters] ✅ MATCH ENCONTRADO! Entry ${processedCount} - filterValue:`, filterValue, 'categories:', categories);
+                  break;
+                } else {
+                  console.log('🔥 [applyCustomFilters] ❌ NO MATCH for filterValue:', filterValue, 'categories:', categories);
+                }
+              }
+            }
+          }
+        }
+
+        // Se não encontrou match para este grupo de filtro, excluir entry
+        if (!matchesFilter) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    console.log('🔥 [applyCustomFilters] FIM - Processadas:', processedCount, 'Matched:', matchedCount, 'Result length:', result.length);
+    return result;
+  };
 
   // Filter and sort entries when dependencies change
   useEffect(() => {
@@ -154,6 +278,9 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       // Filtrar apenas os entries que estão nos favoritos do usuário logado
       result = result.filter((entry) => favoriteEntryIds.includes(entry.id));
     }
+
+    // Apply custom filters
+    result = applyCustomFilters(result, selectedFilters, fields);
 
     // Apply search filter if search term exists
     if (searchTerm) {
@@ -180,7 +307,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     }
 
     setFilteredEntries(result);
-  }, [entries, searchTerm, sortState.field, sortState.direction, fields, activeTabId]);
+  }, [entries, searchTerm, sortState.field, sortState.direction, fields, activeTabId, selectedFilters]);
 
   async function loadMarketplaceData() {
     try {
@@ -301,9 +428,15 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     field.field_type === "url" || field.field_type === "site_url"
   );
 
-  // Encontrar campo de categorias
+  // Encontrar campo de categorias - usar a lógica mais flexível baseada nos logs
   const categoryField = tableFields.find(field => 
-    field.field_type === "categories" || field.field_type === "category"
+    field.field_type === "categories" || 
+    field.field_type === "category" ||
+    (field.field_type === "multiselect" && field.label?.toLowerCase().includes('categoria')) ||
+    field.label?.toLowerCase().includes('categoria') ||
+    field.label?.toLowerCase().includes('category') ||
+    field.label?.toLowerCase().includes('nicho') ||
+    field.label?.toLowerCase().includes('niche')
   );
 
   // Encontrar campo de preço
@@ -344,13 +477,14 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       <div className="w-full bg-white dark:bg-white/[0.03] overflow-hidden">
         {/* Table Controls - Usando componentes modulares */}
         <MarketplaceTableControls
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={handleItemsPerPageChange}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           tabs={tabs}
           activeTabId={activeTabId}
           onTabChange={handleTabChange}
+          filterGroups={generateMarketplaceFilterGroups(entries, fields)}
+          selectedFilters={selectedFilters}
+          onFiltersChange={setSelectedFilters}
         />
 
         <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar">            
@@ -779,6 +913,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           onPreviousPage={goToPreviousPage}
           onNextPage={goToNextPage}
           onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
 
