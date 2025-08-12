@@ -117,8 +117,6 @@ const EntriesTable = ({
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       {/* Barra de controles da tabela - sempre visível, fora do overflow */}
       <TableControls
-        entriesPerPage={entriesPerPage}
-        onEntriesPerPageChange={handleEntriesPerPageChange}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         onPageReset={handlePageReset}
@@ -348,6 +346,7 @@ const EntriesTable = ({
             totalItems={totalItems}
             itemsPerPage={entriesPerPage}
             onPageChange={handlePageChange}
+            onItemsPerPageChange={handleEntriesPerPageChange}
             showInfo={true}
             itemLabel="registros"
           />

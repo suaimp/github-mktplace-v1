@@ -19,7 +19,6 @@ jest.mock('../../../../../../db-service/order-notifications', () => ({
 }));
 
 import { PautaService } from '../../PautaService';
-import { OrderNotificationService } from '../../../../../../db-service/order-notifications/OrderNotificationService';
 
 // Helper para criar mock completo do Supabase table
 const createCompleteTableMock = (mockData: any = null, mockError: any = null) => ({

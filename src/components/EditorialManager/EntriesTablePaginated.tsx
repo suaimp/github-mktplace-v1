@@ -11,7 +11,7 @@ import { formatDate } from "../form/utils/formatters";
 import { renderFormattedValue } from "./EntryValueFormatter";
 import PriceSimulationDisplay from "./actions/PriceSimulationDisplay";
 import { TableControls, SearchStats } from "./table/components";
-import { usePaginatedEntries, PaginationControls } from "./pagination";
+import { usePaginatedEntries, Pagination } from "./pagination";
 
 interface EntriesTableProps {
   entries: any[];
@@ -50,6 +50,7 @@ export default function EntriesTable({
     currentPage,
     entriesPerPage,
     totalPages,
+    totalItems,
     searchTerm,
     statusFilter,
     sortField,
@@ -137,8 +138,6 @@ export default function EntriesTable({
     <div className="overflow-hidden bg-white rounded-xl shadow-sm dark:bg-gray-900">
       {/* Controls */}
       <TableControls
-        entriesPerPage={entriesPerPage}
-        onEntriesPerPageChange={handleEntriesPerPageChange}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         onPageReset={handlePageReset}
@@ -294,10 +293,15 @@ export default function EntriesTable({
 
       {/* Pagination */}
       <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-        <PaginationControls
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={entriesPerPage}
           onPageChange={handlePageChange}
+          onItemsPerPageChange={handleEntriesPerPageChange}
+          showInfo={true}
+          itemLabel="registros"
         />
       </div>
     </div>

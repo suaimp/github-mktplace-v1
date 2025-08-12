@@ -3,7 +3,7 @@
  */
 
 export const mockSupabaseClient = {
-  from: jest.fn((table: string) => ({
+  from: jest.fn((_table: string) => ({
     select: jest.fn().mockReturnThis(),
     insert: jest.fn().mockReturnThis(),
     update: jest.fn().mockReturnThis(),
