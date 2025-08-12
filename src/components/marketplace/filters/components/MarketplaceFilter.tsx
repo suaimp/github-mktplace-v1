@@ -16,6 +16,7 @@ export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
     searchTerm,
     setSearchTerm,
     handleFilterChange,
+    clearFilters,
     getSelectedCount,
     filterOptionsBySearch
   } = useMarketplaceFilters(selectedFilters);
@@ -42,6 +43,7 @@ export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
         filterGroups={filteredGroups}
         selectedFilters={internalFilters}
         onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
       />

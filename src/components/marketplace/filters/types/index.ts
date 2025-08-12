@@ -25,6 +25,7 @@ export interface FilterDropdownProps {
   filterGroups: FilterGroup[];
   selectedFilters: Record<string, string[]>;
   onFilterChange: (groupId: string, optionId: string, selected: boolean) => void;
+  onClearFilters: () => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
 }

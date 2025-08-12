@@ -18,7 +18,7 @@ export const MarketplaceFilterButton: React.FC<FilterButtonProps> = ({
         bg-white dark:bg-gray-800 
         shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 
         hover:text-gray-900 dark:hover:text-gray-100
-        rounded-md px-3 text-xs hidden h-8 lg:flex
+        rounded-md px-3 text-xs hidden h-11 lg:flex
         ${isOpen ? 'bg-gray-50 dark:bg-gray-700' : ''}
         ${selectedCount > 0 ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}
       `}
