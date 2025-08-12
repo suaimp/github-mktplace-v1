@@ -13,9 +13,8 @@ import { TableControls, SearchStats } from "./table/components";
 import { useCachedPaginatedEntries } from "./pagination";
 import { Pagination } from "./pagination/components";
 import { useTableDataSync } from "./dataSync/hooks/useDataSync";
-import EntriesTableSkeleton from "./table/EntriesTableSkeleton";
+import { EntriesTableSkeleton } from "./table";
 import { SortableHeader } from "./sorting/components/SortableHeader";
-import { useEffect, useRef, useCallback, useMemo } from "react";
 
 import { getStatusBadge } from "./utils/getStatusBadge";
 
@@ -45,7 +44,6 @@ const EntriesTable = ({
 }: EntriesTableProps) => {
   const {
     entries,
-    loading,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -53,7 +51,6 @@ const EntriesTable = ({
     entriesPerPage,
     setEntriesPerPage,
     searchTerm,
-    setSearchTerm,
     statusFilter,
     setStatusFilter,
     statusCounts,
@@ -61,75 +58,10 @@ const EntriesTable = ({
     sortDirection,
     handleSort,
     handlePageChange,
-    refreshEntries
+    handleSearch,
+    refreshEntries,
+    loading
   } = useCachedPaginatedEntries(selectedFormId);
-
-  // Log para debug de re-renderizações do EntriesTable
-  const prevEntriesRef = useRef<any[]>([]);
-  const prevStatusCountsRef = useRef<any>({});
-  
-  useEffect(() => {
-    if (entries !== prevEntriesRef.current) {
-      console.log('📊 [EntriesTable] Entries mudaram:', {
-        previousLength: prevEntriesRef.current?.length || 0,
-        currentLength: entries?.length || 0,
-        searchTerm,
-        statusFilter
-      });
-      prevEntriesRef.current = entries;
-    }
-  }, [entries, searchTerm, statusFilter]);
-  
-  useEffect(() => {
-    if (JSON.stringify(statusCounts) !== JSON.stringify(prevStatusCountsRef.current)) {
-      console.log('📈 [EntriesTable] StatusCounts mudaram:', {
-        previous: prevStatusCountsRef.current,
-        current: statusCounts
-      });
-      prevStatusCountsRef.current = statusCounts;
-    }
-  }, [statusCounts]);
-
-  // Criar versões estáveis das funções para evitar re-renders desnecessários
-  const stableOnPageReset = useCallback(() => {
-    setCurrentPage(1);
-  }, [setCurrentPage]);
-
-  const stableOnEntriesPerPageChange = useCallback((value: number) => {
-    setEntriesPerPage(value);
-    setCurrentPage(1);
-  }, [setEntriesPerPage, setCurrentPage]);
-
-  const stableOnStatusFilterChange = useCallback((value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  }, [setStatusFilter, setCurrentPage]);
-
-  const stableOnSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, [setSearchTerm]);
-
-  const stableOnCsvImportSuccess = useCallback(() => {
-    onCsvImportSuccess();
-  }, [onCsvImportSuccess]);
-
-  // Memoizar entries apenas quando o comprimento mudar (para otimizar TableControls)
-  const memoizedEntriesForControls = useMemo(() => {
-    // Para o TableControls, só precisamos da referência para export PDF
-    // Memoizamos baseado apenas no comprimento para evitar re-renders desnecessários
-    return entries;
-  }, [entries.length]);
-
-  // Memoizar statusCounts para evitar referências instáveis
-  const memoizedStatusCounts = useMemo(() => statusCounts, [
-    statusCounts.todos,
-    statusCounts.em_analise,
-    statusCounts.verificado,
-    statusCounts.reprovado
-  ]);
-
-  // Memoizar fields para evitar re-renders quando a referência muda
-  const memoizedFields = useMemo(() => fields, [JSON.stringify(fields)]);
 
   // Implementar sincronização de dados em tempo real
   useTableDataSync(
@@ -140,6 +72,21 @@ const EntriesTable = ({
       priority: 1
     }
   );
+
+  // Create stable callback references to prevent unnecessary re-renders
+  const handlePageReset = () => {
+    setCurrentPage(1);
+  };
+
+  const handleEntriesPerPageChange = (value: number) => {
+    setEntriesPerPage(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
 
   // Display fields: prioritize price and commission fields, then first two other fields
   // Filter out admin-only and button_buy fields
@@ -161,53 +108,56 @@ const EntriesTable = ({
     ...otherFields
   ];
 
-  // Não substituir toda a interface durante loading de busca
-  // Apenas mostrar skeleton se for um loading inicial (sem dados)
-  const isInitialLoading = loading && entries.length === 0 && !searchTerm && statusFilter === 'todos';
-  
-  if (isInitialLoading) {
+  // Show skeleton only on initial load
+  if (loading && !entries.length) {
     return <EntriesTableSkeleton rows={entriesPerPage} columns={displayFields.length + 5} />;
   }
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      {/* Container com overflow horizontal para todo o conteúdo */}
+      {/* Barra de controles da tabela - sempre visível, fora do overflow */}
+      <TableControls
+        entriesPerPage={entriesPerPage}
+        onEntriesPerPageChange={handleEntriesPerPageChange}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        onPageReset={handlePageReset}
+        formFields={fields}
+        formId={selectedFormId}
+        userId={userId}
+        onCsvImportSuccess={onCsvImportSuccess}
+        showCsvImport={!!selectedFormId}
+        formTitle={formTitle}
+        showPdfExport={true}
+        onStatusFilterChange={handleStatusFilterChange}
+        statusFilter={statusFilter}
+        statusCounts={statusCounts}
+        entries={entries}
+      />
+      
+      {/* Container com overflow horizontal apenas para a tabela */}
       <div className="overflow-x-auto table-scrollbar">
         <div className="min-w-[1102px]">
-          {/* Barra de controles da tabela */}
-          <TableControls
-            entriesPerPage={entriesPerPage}
-            onEntriesPerPageChange={stableOnEntriesPerPageChange}
-            searchTerm={searchTerm}
-            onSearchChange={stableOnSearchChange}
-            onPageReset={stableOnPageReset}
-            formFields={memoizedFields}
-            formId={selectedFormId}
-            userId={userId}
-            onCsvImportSuccess={stableOnCsvImportSuccess}
-            showCsvImport={!!selectedFormId}
-            formTitle={formTitle}
-            showPdfExport={true}
-            onStatusFilterChange={stableOnStatusFilterChange}
-            statusFilter={statusFilter}
-            statusCounts={memoizedStatusCounts}
-            entries={memoizedEntriesForControls}
-          />
-          {/* Estatísticas de busca */}
-          <SearchStats 
-            total={totalItems}
-            filtered={entries.length}
-            hasFilter={searchTerm !== '' || statusFilter !== 'todos'}
-            searchTerm={searchTerm}
-          />
-          {/* Tabela */}
-          <div className="relative">
-            {loading && !isInitialLoading ? (
-              // Skeleton apenas na área da tabela durante buscas
-              <div className="border-t border-gray-100 dark:border-white/[0.05]">
-                <EntriesTableSkeleton rows={entriesPerPage} columns={displayFields.length + 5} />
+          {/* Renderizar skeleton da tabela apenas ou conteúdo real */}
+          {loading ? (
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-2 dark:bg-gray-700"></div>
+              <div className="space-y-2">
+                {Array.from({ length: entriesPerPage }).map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-200 rounded dark:bg-gray-700"></div>
+                ))}
               </div>
-            ) : (
+            </div>
+          ) : (
+            <>
+              {/* Estatísticas de busca */}
+              <SearchStats 
+                total={totalItems}
+                filtered={entries.length}
+                hasFilter={searchTerm !== '' || statusFilter !== 'todos'}
+                searchTerm={searchTerm}
+              />
+              {/* Tabela */}
               <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
@@ -391,8 +341,6 @@ const EntriesTable = ({
               )}
             </TableBody>
           </Table>
-            )}
-          </div>
           {/* Paginação com cache */}
           <Pagination
             currentPage={currentPage}
@@ -403,6 +351,8 @@ const EntriesTable = ({
             showInfo={true}
             itemLabel="registros"
           />
+            </>
+          )}
         </div>
       </div>
     </div>

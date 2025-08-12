@@ -3,7 +3,7 @@
  */
 
 export const EMAIL_CONFIG = {
-  ADMIN_EMAIL: 'MoisesDev2022@gmail.com',
+  ADMIN_EMAIL: 'contato@suaimprensa.com.br',
   FROM_EMAIL: 'noreply@cp.suaimprensa.com.br',
   FROM_NAME: 'Marketplace Sua Imprensa'
 } as const;
