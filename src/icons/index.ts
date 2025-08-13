@@ -65,6 +65,7 @@ import GoogleTrafficIcon from "./google-traffic.svg?react";
 import FilterIcon from "./filter.svg?react";
 import ShoppingCartIcon from "./shopping-cart.svg?react";
 import FireIcon from "./fire.svg?react";
+import ExternalLinkIcon from "./external-link.svg?react";
 import TicketIcon from "./ticket-icon";
 import StarIcon from "./StarIcon";
 
@@ -144,6 +145,7 @@ export {
   FilterIcon,
   ShoppingCartIcon,
   FireIcon,
+  ExternalLinkIcon,
   TicketIcon, // Niche Icons
   UploadIcon,
   FinanceIcon,

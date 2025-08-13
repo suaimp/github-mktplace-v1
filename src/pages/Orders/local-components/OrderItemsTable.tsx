@@ -6,7 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
 import { SimpleChatModal } from "./SimpleChatModal";
-import { ChatIcon, HorizontaLDots } from "../../../icons";
+import { ChatIcon, HorizontaLDots, ExternalLinkIcon } from "../../../icons";
 import { OrderItemStatusService, OrderItemAnalyzer } from "./OrderItemsTable/index";
 
 interface OrderItem {
@@ -556,83 +556,124 @@ export default function OrderItemsTable({
                       // Caso tenha arquivo enviado
                       if (item.article_document_path) {
                         return (
-                          <button
-                            onClick={() =>
-                              onDownloadFile(
-                                item.article_document_path!,
-                                item.article_doc || "documento.docx",
-                                item.id
-                              )
-                            }
-                            disabled={downloadLoading[item.id]}
-                            className="flex items-center p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium focus:outline-none"
-                            style={{ textDecoration: "none", gap: "2px" }}
-                            type="button"
-                            title="Baixar artigo"
-                          >
-                            <span className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
-                              Artigo
-                            </span>
-                            <span className="ml-1 flex items-center">
+                          <div className="flex items-center">
+                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
                               <svg
-                                className="w-5 h-5"
+                                className="w-3 h-3 text-white"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
                               >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth="2"
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                  fill="none"
-                                  stroke="currentColor"
+                                  d="M5 13l4 4L19 7"
                                 />
                               </svg>
-                            </span>
-                          </button>
+                            </div>
+                            <button
+                              onClick={() =>
+                                onDownloadFile(
+                                  item.article_document_path!,
+                                  item.article_doc || "documento.docx",
+                                  item.id
+                                )
+                              }
+                              disabled={downloadLoading[item.id]}
+                              className="flex items-center p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium focus:outline-none"
+                              style={{ textDecoration: "none", gap: "2px" }}
+                              type="button"
+                              title="Baixar artigo"
+                            >
+                              <span className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                                Artigo
+                              </span>
+                              <span className="ml-1 flex items-center">
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    fill="none"
+                                    stroke="currentColor"
+                                  />
+                                </svg>
+                              </span>
+                            </button>
+                          </div>
                         );
                       }
                       // Caso article_doc contenha 'http' (link)
                       if (item.article_doc && typeof item.article_doc === "string" && item.article_doc.includes("http")) {
                         return (
-                          <div className="flex items-center gap-1">
-                            <a
-                              href={item.article_doc}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center font-medium focus:outline-none"
-                              style={{ textDecoration: "none" }}
-                              title="Abrir artigo em nova aba"
-                            >
-                              Artigo
-                            </a>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item.article_doc!);
-                              }}
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
-                              title="Copiar link"
-                              type="button"
-                              style={{ marginLeft: "-2px" }}
-                            >
-                              <span className="sr-only">Copiar link</span>
+                          <div className="flex items-center">
+                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
                               <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
+                                className="w-3 h-3 text-white"
                                 fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
                                 <path
-                                  fillRule="evenodd"
-                                  clipRule="evenodd"
-                                  d="M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z"
-                                  fill="currentColor"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
                                 />
                               </svg>
-                            </button>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <a
+                                href={item.article_doc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center font-medium focus:outline-none"
+                                style={{ textDecoration: "none" }}
+                                title="Abrir artigo em nova aba"
+                              >
+                                Artigo
+                              </a>
+                              <button
+                                onClick={() => window.open(item.article_doc!, '_blank')}
+                                className="inline-flex items-center justify-center"
+                                title="Abrir em nova aba"
+                              >
+                                <ExternalLinkIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer rounded" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item.article_doc!);
+                                }}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center"
+                                title="Copiar link"
+                                type="button"
+                                style={{ marginLeft: "-2px" }}
+                              >
+                                <span className="sr-only">Copiar link</span>
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    clipRule="evenodd"
+                                    d="M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         );
                       }
@@ -702,9 +743,24 @@ export default function OrderItemsTable({
                     })()}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       {item.article_url ? (
                         <>
+                          <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          </div>
                           <a
                             href={
                               item.article_url?.startsWith("http")
@@ -715,9 +771,21 @@ export default function OrderItemsTable({
                             rel="noopener noreferrer"
                             className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
                           >
-                            Abrir url
+                            Publicado
                           </a>
-                          <div className="relative">
+                          <button
+                            onClick={() => window.open(
+                              item.article_url?.startsWith("http")
+                                ? item.article_url
+                                : `https://${item.article_url}`,
+                              '_blank'
+                            )}
+                            className="inline-flex items-center justify-center"
+                            title="Abrir em nova aba"
+                          >
+                            <ExternalLinkIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer rounded" />
+                          </button>
+                          <div className="relative -ml-1">
                             {isAdmin ? (
                               // Admin: ícone de opções (três pontos) com menu
                               <>
