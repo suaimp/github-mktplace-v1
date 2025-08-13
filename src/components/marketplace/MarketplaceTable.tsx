@@ -410,7 +410,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           fields={fields}
         />
 
-        <div className="w-full overflow-x-auto overflow-y-auto custom-scrollbar" style={{ height: 'calc(100vh - var(--header-height, 80px) - var(--content-top, 200px) - 150px)' }}>            
+        <div className="w-full overflow-x-auto overflow-y-auto custom-scrollbar" style={{ minHeight: 'calc(100vh - var(--header-height, 80px) - var(--content-top, 200px) - 150px)' }}>            
           <table className="marketplace-table w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
