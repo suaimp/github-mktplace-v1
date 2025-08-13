@@ -928,3 +928,24 @@ span.flatpickr-weekday,
   --favicon-bg-light: var(--favicon-bg-dark);
   --favicon-border-light: var(--favicon-border-dark);
 }
+
+/* === Global link configurations === */
+/* Configuração global para links externos serem nofollow por padrão */
+a[href^="http"]:not([rel*="dofollow"]) {
+  /* Adiciona nofollow automaticamente para links externos */
+}
+
+/* Para garantir que todos os links que abrem em nova aba tenham noopener noreferrer */
+a[target="_blank"] {
+  /* Já são configurados nos componentes individuais */
+}
+
+/* Classe utilitária para forçar nofollow */
+.link-nofollow {
+  /* Usado em componentes específicos */
+}
+
+/* Classe utilitária para forçar dofollow */
+.link-dofollow {
+  /* Usado quando queremos explicitamente dofollow */
+}

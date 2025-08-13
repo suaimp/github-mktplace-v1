@@ -9,6 +9,9 @@ import { useEffect, useState } from "react";
 /* Restrict */
 import AdminRoute from "./routes/AdminRoute";
 
+/* Hooks */
+import { useGlobalLinkConfig } from "./hooks/useGlobalLinkConfig";
+
 /* routes */
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
@@ -114,6 +117,13 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Configuração global para links serem nofollow por padrão
+  useGlobalLinkConfig({
+    enforceNofollow: true,
+    excludeInternalLinks: true,
+    addSecurityAttributes: true,
+  });
+
   return (
     <Router>
       <DynamicFavicon />
