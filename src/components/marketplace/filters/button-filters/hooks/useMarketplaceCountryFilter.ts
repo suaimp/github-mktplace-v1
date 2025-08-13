@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { MarketplaceCountryFilterService } from '../services/MarketplaceCountryFilterService';
-import { CountryFilterOption } from '../types';
+ 
 
 export const useMarketplaceCountryFilter = (initialSelected: string[] = []) => {
   const [selectedCountries, setSelectedCountries] = useState<string[]>(initialSelected);

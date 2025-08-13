@@ -3,7 +3,7 @@ import { BaseFilterButton, BaseRangeFilterDropdown } from '../base';
 import { useTrafficFilter } from './hooks/useTrafficFilter';
 import { TrafficFilterService } from './services/TrafficFilterService';
 import { TrafficRangeItem } from './types/TrafficFilterTypes';
-import { AhrefsTrafficIcon } from '../../../../../../icons';
+import { PlusCircleIcon } from '../../../../../../icons';
 
 interface MarketplaceTrafficDropdownProps {
   entries: any[];
@@ -203,7 +203,7 @@ export function MarketplaceTrafficDropdown({
         onClick={() => setIsOpen(!isOpen)}
         isOpen={isOpen}
         label={getButtonText()}
-        icon={<AhrefsTrafficIcon />}
+        icon={<PlusCircleIcon />}
         ariaLabel={`Filtrar por tráfego${entries.length > 0 ? ` (${entries.length} registros)` : ''}`}
       />
 

@@ -31,70 +31,69 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
 }) => {
   return (
     <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Filter Components */}
-        <div className="flex flex-wrap gap-2">
-          <MarketplaceFilter
-            filterGroups={filterGroups}
-            selectedFilters={selectedFilters}
-            onFiltersChange={onFiltersChange}
-            entries={entries}
-            fields={fields}
-          />
-          
-          <MarketplaceCountryFilter
-            selectedCountries={selectedCountries}
-            onCountriesChange={onCountriesChange}
-            entries={entries}
-            fields={fields}
-          />
-          
-          <MarketplaceLinksFilter
-            selectedLinks={selectedLinks}
-            onLinksChange={onLinksChange}
-            entries={entries}
-            fields={fields}
-          />
-          
-          <MarketplaceNicheFilter
-            selectedNiches={selectedNiches}
-            onNichesChange={onNichesChange}
-            onFilterChange={(filterFn) => {
-              onNicheFilterChange?.(filterFn);
-            }}
-            entries={entries}
-            fields={fields}
-          />
-          
-          <MarketplaceDADropdown
-            entries={entries.length}
-            onFilterChange={(filterFn) => {
-              onDAFilterChange(filterFn);
-            }}
-            fields={fields}
-          />
-          
-          <MarketplaceTrafficDropdown
-            entries={entries}
-            fields={fields}
-            onFilterChange={(filterFn) => {
-              onTrafficFilterChange?.(filterFn);
-            }}
-          />
-          
-          <MarketplacePriceButton
-            entries={entries}
-            fields={fields}
-            onFilterChange={(filteredEntries) => {
-              // Convert filtered entries to filter function
-              const filterFn = (entry: any) => {
-                return filteredEntries.some(filtered => filtered === entry);
-              };
-              onPriceFilterChange?.(filterFn);
-            }}
-          />
-        </div>
+      {/* Filtros na esquerda */}
+      <div className="flex flex-wrap gap-2">
+        <MarketplaceFilter
+          filterGroups={filterGroups}
+          selectedFilters={selectedFilters}
+          onFiltersChange={onFiltersChange}
+          entries={entries}
+          fields={fields}
+        />
         
+        <MarketplaceCountryFilter
+          selectedCountries={selectedCountries}
+          onCountriesChange={onCountriesChange}
+          entries={entries}
+          fields={fields}
+        />
+        
+        <MarketplaceLinksFilter
+          selectedLinks={selectedLinks}
+          onLinksChange={onLinksChange}
+          entries={entries}
+          fields={fields}
+        />
+        
+        <MarketplaceNicheFilter
+          selectedNiches={selectedNiches}
+          onNichesChange={onNichesChange}
+          onFilterChange={(filterFn) => {
+            onNicheFilterChange?.(filterFn);
+          }}
+          entries={entries}
+          fields={fields}
+        />
+
+        <MarketplaceDADropdown
+          entries={entries}
+          fields={fields}
+          onFilterChange={(filterFn) => {
+            onDAFilterChange?.(filterFn);
+          }}
+        />
+
+        <MarketplaceTrafficDropdown
+          entries={entries}
+          onFilterChange={(filterFn) => {
+            onTrafficFilterChange?.(filterFn);
+          }}
+        />
+        
+        <MarketplacePriceButton
+          entries={entries}
+          fields={fields}
+          onFilterChange={(filteredEntries) => {
+            const filterFn = (entry: any) => {
+              return filteredEntries.some(filtered => filtered === entry);
+            };
+            onPriceFilterChange?.(filterFn);
+          }}
+        />
+      </div>
+
+      {/* Tab Navigation e Search na direita */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* Tab Navigation */}
         <MarketplaceTabNavigation
           tabs={tabs}

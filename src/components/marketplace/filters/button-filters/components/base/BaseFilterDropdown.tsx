@@ -21,14 +21,14 @@ interface BaseFilterDropdownProps {
 export const BaseFilterDropdown: React.FC<BaseFilterDropdownProps> = ({
   isOpen,
   onOpenChange,
-  title,
+ 
   searchPlaceholder,
   searchTerm,
   onSearchChange,
   hasSelectedItems,
   onClearFilters,
   children,
-  emptyMessage = "Nenhum item encontrado"
+ 
 }) => {
   if (!isOpen) return null;
 

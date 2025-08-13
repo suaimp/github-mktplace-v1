@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { BaseFilterButton } from '../base';
-import { BoxIcon } from '../../../../../../icons';
+import { PlusCircleIcon } from '../../../../../../icons';
 
 interface MarketplaceLinksButtonProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ export const MarketplaceLinksButton: React.FC<MarketplaceLinksButtonProps> = ({
       isOpen={isOpen}
       onClick={() => onOpenChange(!isOpen)}
       label="Links"
-      icon={<BoxIcon />}
+      icon={<PlusCircleIcon />}
       selectedCount={selectedLinks.length}
     />
   );

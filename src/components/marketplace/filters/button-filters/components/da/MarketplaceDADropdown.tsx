@@ -6,6 +6,7 @@
 import React from 'react';
 import { BaseFilterButton, BaseRangeFilterDropdown, BaseRangeFilterItem } from '../base';
 import { useDAFilter } from '../../hooks/useDAFilter';
+import { PlusCircleIcon } from '../../../../../../icons';
 
 interface MarketplaceDADropdownProps {
   entries?: number;
@@ -146,22 +147,7 @@ export const MarketplaceDADropdown: React.FC<MarketplaceDADropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         isOpen={isOpen}
         label={getButtonText()}
-        icon={
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <path d="M7 8h10M7 12h8M7 16h6" />
-          </svg>
-        }
+        icon={<PlusCircleIcon />}
         ariaLabel={`Filtrar por DA${entries > 0 ? ` (${entries} registros)` : ''}`}
       />
 

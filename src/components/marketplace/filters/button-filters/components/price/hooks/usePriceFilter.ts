@@ -52,10 +52,7 @@ export function usePriceFilter(
     return state.selectedIntervals.length > 0;
   }, [state.selectedIntervals]);
 
-  // Apply current filter criteria
-  const applyFilter = useCallback((criteria: PriceFilterCriteria): PriceSite[] => {
-    return PriceFilterService.filterSites(entries, criteria, fields);
-  }, [entries, fields]);
+ 
 
   // Get current filter criteria
   const getCurrentCriteria = useCallback((): PriceFilterCriteria => {
