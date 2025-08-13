@@ -17,6 +17,8 @@ export interface MarketplaceFilterProps {
   onFiltersChange: (filters: Record<string, string[]>) => void;
   selectedFilters: Record<string, string[]>;
   filterGroups: FilterGroup[];
+  entries?: any[];
+  fields?: any[];
 }
 
 export interface FilterDropdownProps {
@@ -28,6 +30,7 @@ export interface FilterDropdownProps {
   onClearFilters: () => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  entryCounts?: Record<string, number>;
 }
 
 export interface FilterButtonProps {
@@ -35,6 +38,15 @@ export interface FilterButtonProps {
   onClick: () => void;
   isOpen: boolean;
 }
+
+// Importar tipos dos botões modulares
+export type { 
+  CategoryButtonProps, 
+  CountryButtonProps,
+  BaseButtonProps,
+  CountryFilterOption,
+  Country
+} from '../button-filters/types';
 
 export interface FilterItemProps {
   option: FilterOption;

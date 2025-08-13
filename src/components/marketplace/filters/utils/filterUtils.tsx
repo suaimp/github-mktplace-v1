@@ -35,10 +35,6 @@ export const generateMarketplaceFilterGroups = (entries: any[], fields: any[]): 
 };
 
 const getCategoriesFromEntries = (entries: any[], fields: any[]) => {
-  console.log('🔍 [getCategoriesFromEntries] Iniciando debug:');
-  console.log('🔍 [getCategoriesFromEntries] Total entries:', entries.length);
-  console.log('🔍 [getCategoriesFromEntries] Total fields:', fields.length);
-  
   // Usar exatamente a mesma lógica da tabela para identificar o campo de categorias
   const categoryField = fields.find(field => 
     field.field_type === "categories" || 
@@ -50,25 +46,15 @@ const getCategoriesFromEntries = (entries: any[], fields: any[]) => {
     field.label?.toLowerCase().includes('niche')
   );
 
-  console.log('🔍 [getCategoriesFromEntries] categoryField final:', categoryField);
-
   // Se não encontrar o campo de categorias, retornar vazio
   if (!categoryField) {
-    console.log('❌ [getCategoriesFromEntries] Nenhum campo de categoria encontrado!');
-    console.log('🔍 [getCategoriesFromEntries] Field types disponíveis:', [...new Set(fields.map(f => f.field_type))]);
-    console.log('🔍 [getCategoriesFromEntries] Labels disponíveis:', fields.map(f => f.label));
     return [];
   }
 
-  console.log('✅ [getCategoriesFromEntries] Campo de categoria encontrado:', categoryField.id, categoryField.label, categoryField.field_type);
-
   const categoryCounts = new Map<string, number>();
 
-  entries.forEach((entry, index) => {
+  entries.forEach((entry) => {
     const value = entry.values[categoryField.id];
-    if (index < 5) { // Log apenas os 5 primeiros para debug
-      console.log(`🔍 [getCategoriesFromEntries] Entry ${index} - categoryField.id: ${categoryField.id}, value:`, value, typeof value);
-    }
     
     if (value) {
       // Tentar diferentes formatos de dados
@@ -112,19 +98,6 @@ const getCategoriesFromEntries = (entries: any[], fields: any[]) => {
         categories = [value.toString().trim()];
       }
 
-      if (index < 5) { // Log detalhado apenas os 5 primeiros para debug
-        console.log(`🔍 [getCategoriesFromEntries] Entry ${index} - categories processadas:`, categories);
-      }
-
-      // Verificar se esta entry contém "Negócios" para debug
-      const hasNegocios = categories.some(cat => 
-        cat.includes('Negócio') || cat.includes('negócio') || 
-        cat.includes('Negocio') || cat.includes('negocio')
-      );
-      if (hasNegocios) {
-        console.log(`🔍 [getCategoriesFromEntries] ✅ Entry ${index} CONTÉM Negócios:`, categories);
-      }
-
       // Contar cada categoria
       categories.forEach(category => {
         if (category && category.length > 0) {
@@ -137,8 +110,6 @@ const getCategoriesFromEntries = (entries: any[], fields: any[]) => {
     }
   });
 
-  console.log('🔍 [getCategoriesFromEntries] categoryCounts:', Array.from(categoryCounts.entries()));
-
   const result = Array.from(categoryCounts.entries())
     .map(([category, count]) => ({
       id: category.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
@@ -149,6 +120,5 @@ const getCategoriesFromEntries = (entries: any[], fields: any[]) => {
     .sort((a, b) => b.count - a.count) // Ordenar por quantidade, descendente
     .slice(0, 15); // Limitar a 15 categorias principais
 
-  console.log('🔍 [getCategoriesFromEntries] result:', result);
   return result;
 };

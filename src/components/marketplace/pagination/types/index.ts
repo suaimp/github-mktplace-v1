@@ -41,6 +41,32 @@ export interface MarketplaceTableControlsProps {
   filterGroups: FilterGroup[];
   selectedFilters: Record<string, string[]>;
   onFiltersChange: (filters: Record<string, string[]>) => void;
+  
+  // Country filter props
+  selectedCountries: string[];
+  onCountriesChange: (countries: string[]) => void;
+  
+  // Links filter props
+  selectedLinks: string[];
+  onLinksChange: (links: string[]) => void;
+  
+  // Niche filter props
+  selectedNiches: string[];
+  onNichesChange: (niches: string[]) => void;
+  onNicheFilterChange?: (filterFn: (entry: any) => boolean) => void;
+  
+  // DA filter props
+  onDAFilterChange: (filterFn: (entry: any) => boolean) => void;
+  
+  // Traffic filter props
+  onTrafficFilterChange?: (filterFn: (entry: any) => boolean) => void;
+  
+  // Price filter props
+  onPriceFilterChange?: (filterFn: (entry: any) => boolean) => void;
+  
+  // Data for counting entries
+  entries?: any[];
+  fields?: any[];
 }
 
 // Props para o seletor de itens por página específico do marketplace

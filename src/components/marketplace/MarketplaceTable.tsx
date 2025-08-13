@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { isSortableField } from "./table/isSortableField";
 import { supabase } from "../../lib/supabase";
 import "./styles/MarketplaceTableStyles.css";
+import { useFilterManager } from "./filters/hooks/useFilterManager";
+import { BasicFiltersService, BasicFiltersConfig } from "./filters/services/BasicFiltersService";
 
 import AddToCartButton from "./AddToCartButton";
 import { useCart } from "./ShoppingCartContext";
@@ -50,6 +52,20 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   // Estado para filtros
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  // Estado para filtros de país
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  // Estado para filtros de links
+  const [selectedLinks, setSelectedLinks] = useState<string[]>([]);
+  // Estado para filtros de nicho
+  const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  
+  // Use the modular filter manager
+  const filterManager = useFilterManager();
+
+  // Force reset do estado na inicialização
+  useEffect(() => {
+    filterManager.resetFilters();
+  }, []);
 
   // Hook de paginação específico para marketplace
   const {
@@ -135,128 +151,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     loadMarketplaceData();
   }, [formId]);
 
-  // Função para aplicar filtros customizados
-  const applyCustomFilters = (entries: any[], filters: Record<string, string[]>, fields: any[]) => {
-    if (Object.keys(filters).length === 0) return entries;
-
-    console.log('🔥 [applyCustomFilters] INÍCIO - Total entries para filtrar:', entries.length);
-    console.log('🔥 [applyCustomFilters] Filtros aplicados:', JSON.stringify(filters, null, 2));
-
-    let processedCount = 0;
-    let matchedCount = 0;
-
-    const result = entries.filter(entry => {
-      processedCount++;
-      
-      for (const [filterGroupId, filterValues] of Object.entries(filters)) {
-        if (filterValues.length === 0) continue;
-
-        let matchesFilter = false;
-
-        if (filterGroupId === 'category') {
-          // Usar a mesma lógica de identificação do campo de categorias da tabela
-          let categoryField = fields.find(field => 
-            field.field_type === "categories" || 
-            field.field_type === "category" ||
-            (field.field_type === "multiselect" && field.label?.toLowerCase().includes('categoria')) ||
-            field.label?.toLowerCase().includes('categoria') ||
-            field.label?.toLowerCase().includes('category') ||
-            field.label?.toLowerCase().includes('nicho') ||
-            field.label?.toLowerCase().includes('niche')
-          );
-
-          if (categoryField) {
-            const entryValue = entry.values[categoryField.id];
-            
-            if (entryValue) {
-              // Tentar diferentes formatos de dados
-              let categories: string[] = [];
-              
-              if (Array.isArray(entryValue)) {
-                // Se é array, pode ser array de strings ou array de objetos
-                categories = entryValue.map(item => {
-                  if (typeof item === 'string') {
-                    return item.trim();
-                  } else if (typeof item === 'object' && item !== null) {
-                    // Se é objeto, tentar extrair propriedades comuns
-                    if (item.name) return item.name;
-                    else if (item.label) return item.label;
-                    else if (item.title) return item.title;
-                    else if (item.value) return item.value;
-                    else return item.toString();
-                  } else {
-                    return item.toString().trim();
-                  }
-                });
-              } else if (typeof entryValue === 'string') {
-                if (entryValue.includes(',')) {
-                  categories = entryValue.split(',').map(cat => cat.trim());
-                } else if (entryValue.includes(';')) {
-                  categories = entryValue.split(';').map(cat => cat.trim());
-                } else if (entryValue.includes('|')) {
-                  categories = entryValue.split('|').map(cat => cat.trim());
-                } else {
-                  categories = [entryValue.trim()];
-                }
-              } else if (typeof entryValue === 'object' && entryValue !== null) {
-                if (entryValue.name) categories = [entryValue.name];
-                else if (entryValue.label) categories = [entryValue.label];
-                else if (entryValue.title) categories = [entryValue.title];
-                else if (entryValue.value) categories = [entryValue.value];
-                else categories = [entryValue.toString()];
-              } else {
-                categories = [entryValue.toString().trim()];
-              }
-
-              console.log('🔥 [applyCustomFilters] categories processadas:', categories);
-
-              // Verificar se alguma categoria corresponde ao filtro (case-insensitive + normalizada)
-              for (const filterValue of filterValues) {
-                console.log('🔥 [applyCustomFilters] Testando filterValue:', JSON.stringify(filterValue), 'contra categories:', JSON.stringify(categories));
-                
-                const match = categories.some(cat => {
-                  const lowerCat = cat.toLowerCase();
-                  const lowerFilter = filterValue.toLowerCase();
-                  console.log('🔥 [applyCustomFilters] Comparando:', JSON.stringify(lowerCat), '===', JSON.stringify(lowerFilter), '=', lowerCat === lowerFilter);
-                  
-                  // Comparação case-insensitive
-                  if (lowerCat === lowerFilter) {
-                    return true;
-                  }
-                  
-                  // Comparação normalizada (sem acentos)
-                  const normalizedCat = cat.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                  const normalizedFilter = filterValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                  console.log('🔥 [applyCustomFilters] Normalized:', JSON.stringify(normalizedCat), '===', JSON.stringify(normalizedFilter), '=', normalizedCat === normalizedFilter);
-                  return normalizedCat === normalizedFilter;
-                });
-                
-                if (match) {
-                  matchesFilter = true;
-                  matchedCount++;
-                  console.log(`🔥 [applyCustomFilters] ✅ MATCH ENCONTRADO! Entry ${processedCount} - filterValue:`, filterValue, 'categories:', categories);
-                  break;
-                } else {
-                  console.log('🔥 [applyCustomFilters] ❌ NO MATCH for filterValue:', filterValue, 'categories:', categories);
-                }
-              }
-            }
-          }
-        }
-
-        // Se não encontrou match para este grupo de filtro, excluir entry
-        if (!matchesFilter) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    console.log('🔥 [applyCustomFilters] FIM - Processadas:', processedCount, 'Matched:', matchedCount, 'Result length:', result.length);
-    return result;
-  };
-
   // Filter and sort entries when dependencies change
   useEffect(() => {
     let result = [...entries];
@@ -279,24 +173,19 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
       result = result.filter((entry) => favoriteEntryIds.includes(entry.id));
     }
 
-    // Apply custom filters
-    result = applyCustomFilters(result, selectedFilters, fields);
+    // Apply basic filters using the service
+    const basicConfig: BasicFiltersConfig = {
+      selectedFilters,
+      selectedCountries,
+      selectedLinks,
+      selectedNiches,
+      searchTerm
+    };
+    
+    result = BasicFiltersService.applyAllBasicFilters(result, basicConfig, fields);
 
-    // Apply search filter if search term exists
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      result = result.filter((entry) => {
-        return Object.entries(entry.values).some(([fieldId, value]) => {
-          const field = fields.find((f) => f.id === fieldId);
-          if (!field) return false;
-
-          if (["text", "textarea", "email", "url"].includes(field.field_type)) {
-            return String(value).toLowerCase().includes(lowerSearchTerm);
-          }
-          return false;
-        });
-      });
-    }
+    // Apply advanced filters using FilterManager
+    result = filterManager.applyFilters(result);
 
     // Apply sorting if sort field is set
     if (sortState.field) {
@@ -307,7 +196,20 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     }
 
     setFilteredEntries(result);
-  }, [entries, searchTerm, sortState.field, sortState.direction, fields, activeTabId, selectedFilters]);
+  }, [
+    entries, 
+    searchTerm, 
+    sortState.field, 
+    sortState.direction, 
+    fields, 
+    activeTabId, 
+    selectedFilters, 
+    selectedCountries, 
+    selectedLinks, 
+    selectedNiches,
+    favoriteEntryIds,
+    filterManager
+  ]);
 
   async function loadMarketplaceData() {
     try {
@@ -387,6 +289,13 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           values,
         };
       });
+
+      // Debug: Log a sample entry to see niche data structure
+      if (processedEntries.length > 0) {
+        console.log('🔍 [MarketplaceTable] Sample entry with values:', processedEntries[0]);
+        console.log('🔍 [MarketplaceTable] All field types:', visibleFields.map(f => ({ id: f.id, field_type: f.field_type, label: f.label })));
+        console.log('🔍 [MarketplaceTable] Niche fields:', visibleFields.filter(f => f.field_type === 'niche'));
+      }
 
       setEntries(processedEntries);
     } catch (err) {
@@ -485,9 +394,21 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           filterGroups={generateMarketplaceFilterGroups(entries, fields)}
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
+          selectedCountries={selectedCountries}
+          onCountriesChange={setSelectedCountries}
+          selectedLinks={selectedLinks}
+          onLinksChange={setSelectedLinks}
+          selectedNiches={selectedNiches}
+          onNichesChange={setSelectedNiches}
+          onNicheFilterChange={filterManager.setNicheFilter}
+          onDAFilterChange={filterManager.setDAFilter}
+          onTrafficFilterChange={filterManager.setTrafficFilter}
+          onPriceFilterChange={filterManager.setPriceFilter}
+          entries={entries}
+          fields={fields}
         />
 
-        <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar">            
+        <div className="w-full overflow-x-auto overflow-y-auto custom-scrollbar" style={{ height: 'calc(100vh - var(--header-height, 80px) - var(--content-top, 200px) - 150px)' }}>            
           <table className="marketplace-table w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>

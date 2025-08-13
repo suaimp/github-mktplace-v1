@@ -1,7 +1,11 @@
 import React from 'react';
 import { MarketplaceTableControlsProps } from '../types';
 import { MarketplaceTabNavigation } from '../../navigation';
-import { MarketplaceFilter } from '../../filters';
+import { MarketplaceFilter, MarketplaceCountryFilter, MarketplaceLinksFilter } from '../../filters';
+import { MarketplaceDADropdown } from '../../filters/button-filters/components/da';
+import { MarketplaceTrafficDropdown } from '../../filters/button-filters/components/traffic';
+import { MarketplacePriceButton } from '../../filters/button-filters/components/price';
+import { MarketplaceNicheFilter } from '../../filters/button-filters/components/niche';
 
 export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> = ({
   searchTerm,
@@ -11,17 +15,85 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
   onTabChange,
   filterGroups,
   selectedFilters,
-  onFiltersChange
+  onFiltersChange,
+  selectedCountries,
+  onCountriesChange,
+  selectedLinks,
+  onLinksChange,
+  selectedNiches,
+  onNichesChange,
+  onNicheFilterChange,
+  onDAFilterChange,
+  onTrafficFilterChange,
+  onPriceFilterChange,
+  entries = [],
+  fields = []
 }) => {
   return (
     <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Filter Component */}
-        <MarketplaceFilter
-          filterGroups={filterGroups}
-          selectedFilters={selectedFilters}
-          onFiltersChange={onFiltersChange}
-        />
+        {/* Filter Components */}
+        <div className="flex flex-wrap gap-2">
+          <MarketplaceFilter
+            filterGroups={filterGroups}
+            selectedFilters={selectedFilters}
+            onFiltersChange={onFiltersChange}
+            entries={entries}
+            fields={fields}
+          />
+          
+          <MarketplaceCountryFilter
+            selectedCountries={selectedCountries}
+            onCountriesChange={onCountriesChange}
+            entries={entries}
+            fields={fields}
+          />
+          
+          <MarketplaceLinksFilter
+            selectedLinks={selectedLinks}
+            onLinksChange={onLinksChange}
+            entries={entries}
+            fields={fields}
+          />
+          
+          <MarketplaceNicheFilter
+            selectedNiches={selectedNiches}
+            onNichesChange={onNichesChange}
+            onFilterChange={(filterFn) => {
+              onNicheFilterChange?.(filterFn);
+            }}
+            entries={entries}
+            fields={fields}
+          />
+          
+          <MarketplaceDADropdown
+            entries={entries.length}
+            onFilterChange={(filterFn) => {
+              onDAFilterChange(filterFn);
+            }}
+            fields={fields}
+          />
+          
+          <MarketplaceTrafficDropdown
+            entries={entries}
+            fields={fields}
+            onFilterChange={(filterFn) => {
+              onTrafficFilterChange?.(filterFn);
+            }}
+          />
+          
+          <MarketplacePriceButton
+            entries={entries}
+            fields={fields}
+            onFilterChange={(filteredEntries) => {
+              // Convert filtered entries to filter function
+              const filterFn = (entry: any) => {
+                return filteredEntries.some(filtered => filtered === entry);
+              };
+              onPriceFilterChange?.(filterFn);
+            }}
+          />
+        </div>
         
         {/* Tab Navigation */}
         <MarketplaceTabNavigation

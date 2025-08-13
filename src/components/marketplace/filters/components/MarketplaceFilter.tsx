@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
 import { MarketplaceFilterProps } from '../types';
 import { useMarketplaceFilters } from '../hooks/useMarketplaceFilters';
-import { MarketplaceFilterButton } from './MarketplaceFilterButton';
+import { MarketplaceCategoryButton } from '../button-filters/components/category';
 import { MarketplaceFilterDropdown } from './MarketplaceFilterDropdown';
 
 export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
   onFiltersChange,
   selectedFilters,
-  filterGroups
+  filterGroups,
+  entries = [],
+  fields = []
 }) => {
   const {
     selectedFilters: internalFilters,
@@ -21,6 +23,28 @@ export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
     filterOptionsBySearch
   } = useMarketplaceFilters(selectedFilters);
 
+  // Calcular contadores de registros para cada categoria
+  const entryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    
+    filterGroups.forEach(group => {
+      const field = fields.find(f => f.id === group.id);
+      if (field) {
+        group.options.forEach(option => {
+          counts[option.value] = entries.filter(entry => {
+            const fieldValue = entry.values?.[field.id];
+            if (Array.isArray(fieldValue)) {
+              return fieldValue.includes(option.value);
+            }
+            return String(fieldValue) === option.value;
+          }).length;
+        });
+      }
+    });
+    
+    return counts;
+  }, [entries, fields, filterGroups]);
+
   // Sync internal filters with external prop
   useEffect(() => {
     onFiltersChange(internalFilters);
@@ -31,7 +55,7 @@ export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
 
   return (
     <div className="relative">
-      <MarketplaceFilterButton
+      <MarketplaceCategoryButton
         selectedCount={selectedCount}
         onClick={() => setIsOpen(!isOpen)}
         isOpen={isOpen}
@@ -46,6 +70,7 @@ export const MarketplaceFilter: React.FC<MarketplaceFilterProps> = ({
         onClearFilters={clearFilters}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        entryCounts={entryCounts}
       />
     </div>
   );

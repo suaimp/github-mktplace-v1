@@ -1,4 +1,5 @@
 import PlusIcon from "./plus.svg?react";
+import PlusCircleIcon from "./plus-circle.svg?react";
 import CloseIcon from "./close.svg?react";
 import BoxIcon from "./box.svg?react";
 import CheckCircleIcon from "./check-circle.svg?react";
@@ -88,6 +89,7 @@ export {
   BoltIcon,
   AnalyticsIcon,
   PlusIcon,
+  PlusCircleIcon,
   BoxIcon,
   CloseIcon,
   CheckCircleIcon,

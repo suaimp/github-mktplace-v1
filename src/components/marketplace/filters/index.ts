@@ -1,9 +1,13 @@
 export { MarketplaceFilter } from './components/MarketplaceFilter';
-export { MarketplaceFilterButton } from './components/MarketplaceFilterButton';
+export { MarketplaceCategoryFilter } from './components/MarketplaceCategoryFilter';
 export { MarketplaceFilterDropdown } from './components/MarketplaceFilterDropdown';
 export { MarketplaceFilterItem } from './components/MarketplaceFilterItem';
 export { MarketplaceClearFiltersButton } from './components/MarketplaceClearFiltersButton';
 export { MarketplaceFilterSeparator } from './components/MarketplaceFilterSeparator';
+
+// Exportar novos componentes modulares
+export * from './button-filters';
+export { MarketplaceLinksFilter } from './button-filters/components/links';
 
 export { useMarketplaceFilters } from './hooks/useMarketplaceFilters';
 
@@ -15,5 +19,7 @@ export type {
   MarketplaceFilterProps,
   FilterDropdownProps,
   FilterButtonProps,
+  CategoryButtonProps,
+  CountryButtonProps,
   FilterItemProps
 } from './types';
