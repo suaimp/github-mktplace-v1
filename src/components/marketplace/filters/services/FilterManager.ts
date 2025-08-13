@@ -67,24 +67,34 @@ export class FilterManager {
   public applyFilters(entries: any[]): any[] {
     let result = [...entries];
 
+    console.log('🎯 [FilterManager] Applying filters to', entries.length, 'entries');
+
     // Apply DA filter
     if (this.filters.da) {
+      const beforeCount = result.length;
       result = result.filter(this.filters.da);
+      console.log(`🎯 [FilterManager] DA filter: ${beforeCount} → ${result.length}`);
     }
 
     // Apply Traffic filter
     if (this.filters.traffic) {
+      const beforeCount = result.length;
       result = result.filter(this.filters.traffic);
+      console.log(`🎯 [FilterManager] Traffic filter: ${beforeCount} → ${result.length}`);
     }
 
     // Apply Price filter
     if (this.filters.price) {
+      const beforeCount = result.length;
       result = result.filter(this.filters.price);
+      console.log(`🎯 [FilterManager] Price filter: ${beforeCount} → ${result.length}`);
     }
 
     // Apply Niche filter
     if (this.filters.niche) {
+      const beforeCount = result.length;
       result = result.filter(this.filters.niche);
+      console.log(`🎯 [FilterManager] Niche filter: ${beforeCount} → ${result.length}`);
     }
 
     return result;

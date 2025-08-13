@@ -186,7 +186,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
 
     // Apply advanced filters using FilterManager
     result = filterManager.applyFilters(result);
-
+    
     // Apply sorting if sort field is set
     if (sortState.field) {
       const sortField = fields.find(f => f.id === sortState.field);
@@ -208,7 +208,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     selectedLinks, 
     selectedNiches,
     favoriteEntryIds,
-    filterManager
+    filterManager.getVersion() // Use version instead of the whole object
   ]);
 
   async function loadMarketplaceData() {
@@ -290,11 +290,13 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
         };
       });
 
-      // Debug: Log a sample entry to see niche data structure
+      // Debug: Log a sample entry to see data structure (only if there are entries)
       if (processedEntries.length > 0) {
-        console.log('🔍 [MarketplaceTable] Sample entry with values:', processedEntries[0]);
-        console.log('🔍 [MarketplaceTable] All field types:', visibleFields.map(f => ({ id: f.id, field_type: f.field_type, label: f.label })));
-        console.log('🔍 [MarketplaceTable] Niche fields:', visibleFields.filter(f => f.field_type === 'niche'));
+        console.log('✅ [MarketplaceTable] Data loaded successfully:', {
+          entriesCount: processedEntries.length,
+          fieldsCount: visibleFields.length,
+          trafficField: visibleFields.find(f => f.field_type?.includes('traffic'))?.label || 'Not found'
+        });
       }
 
       setEntries(processedEntries);

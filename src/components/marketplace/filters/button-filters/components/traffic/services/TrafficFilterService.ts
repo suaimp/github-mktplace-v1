@@ -44,21 +44,44 @@ export class TrafficFilterService {
    * Detecta qual campo de tráfego usar baseado nos fields disponíveis
    */
   public static detectTrafficField(fields: any[]): any | null {
-    if (!fields || fields.length === 0) return null;
+    console.log('[TrafficFilterService] detectTrafficField called with:', {
+      fieldsCount: fields?.length || 0,
+      fields: fields?.map(f => ({ id: f.id, field_type: f.field_type, label: f.label })) || []
+    });
+
+    if (!fields || fields.length === 0) {
+      console.log('[TrafficFilterService] No fields provided, returning null');
+      return null;
+    }
 
     // Ordem de prioridade: ahrefs_traffic, similarweb_traffic, google_traffic
-    const trafficTypes = ['ahrefs_traffic', 'similarweb_traffic', 'google_traffic'];
+    const trafficTypes = ['ahrefs_traffic', 'similarweb_traffic', 'google_traffic', 'semrush_as'];
+    
+    console.log('[TrafficFilterService] Looking for traffic types:', trafficTypes);
     
     for (const type of trafficTypes) {
       const field = fields.find(f => f.field_type === type);
-      if (field) return field;
+      if (field) {
+        console.log('[TrafficFilterService] Found traffic field by type:', { type, field: { id: field.id, field_type: field.field_type, label: field.label } });
+        return field;
+      }
     }
+
+    console.log('[TrafficFilterService] No fields found by type, searching by label...');
 
     // Se não encontrou pelos tipos, procurar por labels que contenham "tráfego" ou "traffic"
     const field = fields.find(f => {
       const label = f.label?.toLowerCase() || '';
-      return label.includes('tráfego') || label.includes('traffic');
+      const hasTrafficInLabel = label.includes('tráfego') || label.includes('traffic');
+      if (hasTrafficInLabel) {
+        console.log('[TrafficFilterService] Found potential traffic field by label:', { id: f.id, field_type: f.field_type, label: f.label });
+      }
+      return hasTrafficInLabel;
     });
+
+    if (!field) {
+      console.log('[TrafficFilterService] No traffic field found. Available field types:', fields.map(f => f.field_type));
+    }
 
     return field;
   }
@@ -75,16 +98,9 @@ export class TrafficFilterService {
       counts[interval.id] = 0;
     });
 
-    // Detecta qual campo de tráfego usar
-    const trafficField = this.detectTrafficField(fields);
-    if (!trafficField) return counts;
-
     // Conta os sites em cada intervalo
     entries.forEach(entry => {
-      // Verifica se tem structure entry.values (do marketplace) ou entry direto
-      const values = entry.values || entry;
-      const rawTrafficValue = values?.[trafficField.id];
-      const trafficValue = this.parseAmericanNumber(rawTrafficValue);
+      const trafficValue = this.getHighestTrafficValue(entry, fields);
       
       if (trafficValue > 0) {
         const interval = intervals.find(int => {
@@ -151,17 +167,94 @@ export class TrafficFilterService {
   /**
    * Get the highest traffic value from available traffic fields
    */
-  public static getHighestTrafficValue(site: Site): number {
-    const trafficFields = this.getTrafficFields();
+  public static getHighestTrafficValue(site: Site, fields?: any[]): number {
     let highestValue = 0;
 
-    trafficFields.forEach(field => {
-      const rawValue = site[field as keyof Site];
-      const value = this.parseAmericanNumber(rawValue);
-      if (value > highestValue) {
-        highestValue = value;
+    // Debug: Log the complete site structure for first few sites
+    if (Math.random() < 0.2) { // 20% of the time
+      console.log('[TrafficFilter] getHighestTrafficValue - Site structure:', {
+        siteId: site.id,
+        siteKeys: Object.keys(site),
+        hasValues: !!site.values,
+        valuesKeys: site.values ? Object.keys(site.values) : null,
+        hasFields: !!fields,
+        fieldsCount: fields?.length || 0,
+        // Look for any field that contains "traffic"
+        trafficLikeFields: site.values ? Object.keys(site.values).filter(key => 
+          key.toLowerCase().includes('traffic') || 
+          key.toLowerCase().includes('trafego') ||
+          key.toLowerCase().includes('ahrefs') ||
+          key.toLowerCase().includes('similarweb') ||
+          key.toLowerCase().includes('google')
+        ) : null
+      });
+    }
+
+    // If fields are provided, use them to find traffic fields by field_type
+    if (fields && fields.length > 0) {
+      const trafficFields = fields.filter(field => 
+        field.field_type === 'ahrefs_traffic' ||
+        field.field_type === 'similarweb_traffic' ||
+        field.field_type === 'google_traffic' ||
+        field.field_type === 'semrush_as'
+      );
+
+      console.log('[TrafficFilter] Found traffic fields:', trafficFields.map(f => ({
+        id: f.id,
+        field_type: f.field_type,
+        label: f.label
+      })));
+
+      if (trafficFields.length === 0) {
+        console.log('[TrafficFilter] No traffic fields found by field_type. All field_types:', fields.map(f => f.field_type));
+        console.log('[TrafficFilter] Looking for fields with traffic-like labels...');
+        
+        const trafficLikeFields = fields.filter(f => {
+          const label = f.label?.toLowerCase() || '';
+          return label.includes('traffic') || label.includes('tráfego') || label.includes('trafego');
+        });
+        
+        console.log('[TrafficFilter] Traffic-like fields by label:', trafficLikeFields.map(f => ({
+          id: f.id,
+          field_type: f.field_type,
+          label: f.label
+        })));
       }
-    });
+
+      trafficFields.forEach(field => {
+        const rawValue = site.values?.[field.id];
+        const value = this.parseAmericanNumber(rawValue);
+        if (value > highestValue) {
+          highestValue = value;
+        }
+
+        // Debug individual field checks
+        if (Math.random() < 0.1) {
+          console.log('[TrafficFilter] Field check:', {
+            fieldId: field.id,
+            fieldType: field.field_type,
+            rawValue,
+            parsedValue: value,
+            currentHighest: highestValue
+          });
+        }
+      });
+    } else {
+      // Fallback: try hardcoded field names (for backward compatibility)
+      const trafficFieldNames = this.getTrafficFields();
+      trafficFieldNames.forEach(fieldName => {
+        // Check both direct property and values object (marketplace structure)
+        let rawValue = site[fieldName as keyof Site];
+        if (!rawValue && site.values) {
+          rawValue = site.values[fieldName];
+        }
+        
+        const value = this.parseAmericanNumber(rawValue);
+        if (value > highestValue) {
+          highestValue = value;
+        }
+      });
+    }
 
     return highestValue;
   }

@@ -3,12 +3,14 @@
  * Responsabilidade: Interface React para o FilterManager
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { FilterManager, FilterFunction, FilterState } from '../services/FilterManager';
 
 export function useFilterManager() {
   const [, forceUpdate] = useState({});
-  const filterManager = FilterManager.getInstance();
+  
+  // Use useMemo to ensure filterManager instance is stable
+  const filterManager = useMemo(() => FilterManager.getInstance(), []);
 
   useEffect(() => {
     const unsubscribe = filterManager.subscribe(() => {

@@ -38,18 +38,31 @@ export const MarketplaceNicheFilter: React.FC<MarketplaceNicheFilterProps> = ({
 
   // Sync internal state with external state
   useEffect(() => {
-    // Update internal selected niches when prop changes
-    selectedNiches.forEach(niche => {
-      if (!nicheFilter.state.selectedNiches.includes(niche)) {
+    // Create a simple comparison to avoid unnecessary updates
+    const currentNiches = [...nicheFilter.state.selectedNiches].sort();
+    const externalNiches = [...selectedNiches].sort();
+    
+    // Only update if they're actually different
+    if (JSON.stringify(currentNiches) !== JSON.stringify(externalNiches)) {
+      // First clear all selections
+      nicheFilter.clearFilters();
+      // Then add the external selections
+      selectedNiches.forEach(niche => {
         nicheFilter.toggleNiche(niche);
-      }
-    });
-  }, [selectedNiches]);
+      });
+    }
+  }, [selectedNiches.join(',')]); // Use join to create stable dependency
 
   // Update parent when internal selection changes
   useEffect(() => {
-    onNichesChange(nicheFilter.state.selectedNiches);
-  }, [nicheFilter.state.selectedNiches, onNichesChange]);
+    const currentNiches = [...nicheFilter.state.selectedNiches].sort();
+    const externalNiches = [...selectedNiches].sort();
+    
+    // Only notify parent if values are different
+    if (JSON.stringify(currentNiches) !== JSON.stringify(externalNiches)) {
+      onNichesChange(nicheFilter.state.selectedNiches);
+    }
+  }, [nicheFilter.state.selectedNiches.join(',')]);
 
   // Update filter function when selection changes
   useEffect(() => {
@@ -62,7 +75,7 @@ export const MarketplaceNicheFilter: React.FC<MarketplaceNicheFilterProps> = ({
         onFilterChange(() => true);
       }
     }
-  }, [nicheFilter.state.selectedNiches, onFilterChange]);
+  }, [nicheFilter.state.selectedNiches.join(',')]);
 
   return (
     <div className="relative">

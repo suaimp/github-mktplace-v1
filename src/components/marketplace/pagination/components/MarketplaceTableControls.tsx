@@ -75,6 +75,7 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
 
         <MarketplaceTrafficDropdown
           entries={entries}
+          fields={fields}
           onFilterChange={(filterFn) => {
             onTrafficFilterChange?.(filterFn);
           }}

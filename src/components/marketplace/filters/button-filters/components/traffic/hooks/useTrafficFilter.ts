@@ -1,8 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   TrafficFilterState, 
-  UseTrafficFilterReturn, 
-  TrafficFilterCriteria 
+  UseTrafficFilterReturn
 } from '../types/TrafficFilterTypes.js';
 import { TrafficFilterService } from '../services/TrafficFilterService.js';
 import { CustomRange } from '../../base/types/RangeFilterTypes';
@@ -17,7 +16,7 @@ export function useTrafficFilter(entries: any[] = [], fields: any[] = []): UseTr
     selectedIntervals: [],
     customRange: null,
     isOpen: false,
-    intervalCounts: {}
+    intervalCounts: {} // Será sobrescrito pelo useMemo
   });
 
   // Estado temporário para custom range (padrão do DA filter)
@@ -33,14 +32,18 @@ export function useTrafficFilter(entries: any[] = [], fields: any[] = []): UseTr
   // Sincronizar tempCustomRange com state.customRange quando abrir dropdown
   useEffect(() => {
     if (isOpen) {
-      setTempCustomRange(state.customRange || { min: null, max: null });
+      const currentRange = state.customRange || { min: null, max: null };
+      const tempRange = tempCustomRange;
+      
+      // Only update if different to prevent loops
+      if (JSON.stringify(currentRange) !== JSON.stringify(tempRange)) {
+        setTempCustomRange(currentRange);
+      }
     }
-  }, [isOpen, state.customRange]);
+  }, [isOpen]);
 
-  // Atualiza as contagens no estado quando necessário
-  useEffect(() => {
-    setState(prev => ({ ...prev, intervalCounts }));
-  }, [intervalCounts]);
+  // Remove o useEffect que atualiza intervalCounts no estado para evitar loop
+  // intervalCounts será usado diretamente do useMemo
 
   /**
    * Toggle de seleção de intervalo
@@ -101,15 +104,70 @@ export function useTrafficFilter(entries: any[] = [], fields: any[] = []): UseTr
   const getFilterFunction = useCallback(() => {
     if (!isActive) return null;
 
-    const criteria: TrafficFilterCriteria = {
+    console.log('[TrafficFilter] Creating filter function with active filters:', {
       selectedIntervals: state.selectedIntervals,
       customRange: state.customRange
-    };
+    });
 
     return (entry: any) => {
-      // Aplica filtro usando TrafficFilterService
-      const filteredEntries = TrafficFilterService.filterSites([entry], criteria);
-      return filteredEntries.length > 0;
+      // Se não há filtros ativos, mostrar tudo
+      if (state.selectedIntervals.length === 0 && !state.customRange) {
+        return true;
+      }
+
+      // Obter o maior valor de tráfego do site
+      const highestTraffic = TrafficFilterService.getHighestTrafficValue(entry, fields);
+      
+      // Debug ocasional
+      if (Math.random() < 0.1) {
+        console.log('[TrafficFilter] Testing entry:', {
+          entryId: entry.id,
+          highestTraffic,
+          selectedIntervals: state.selectedIntervals,
+          customRange: state.customRange,
+          rawValues: {
+            ahrefs: entry.values?.ahrefs_traffic,
+            similarweb: entry.values?.similarweb_traffic,
+            google: entry.values?.google_traffic
+          }
+        });
+      }
+
+      // Se não tem dados de tráfego, mostrar (para não perder sites)
+      if (highestTraffic === 0) {
+        return true;
+      }
+
+      // Verificar intervalos selecionados
+      if (state.selectedIntervals.length > 0) {
+        const intervals = TrafficFilterService.getTrafficIntervals();
+        const matchesInterval = state.selectedIntervals.some(intervalId => {
+          const interval = intervals.find(i => i.id === intervalId);
+          if (!interval) return false;
+          
+          if (interval.max === null) {
+            return highestTraffic >= interval.min;
+          }
+          return highestTraffic >= interval.min && highestTraffic <= interval.max;
+        });
+
+        if (matchesInterval) {
+          return true;
+        }
+      }
+
+      // Verificar range customizado
+      if (state.customRange) {
+        const { min, max } = state.customRange;
+        const meetsMin = min === null || highestTraffic >= min;
+        const meetsMax = max === null || highestTraffic <= max;
+        if (meetsMin && meetsMax) {
+          return true;
+        }
+      }
+
+      // Se chegou até aqui e há filtros ativos, não passa
+      return false;
     };
   }, [isActive, state.selectedIntervals, state.customRange]);
 

@@ -101,7 +101,8 @@ export function MarketplaceTrafficDropdown({
     setCustomRange,
     applyCustomRange,
     clearAll,
-    setIsOpen
+    setIsOpen,
+    getFilterFunction
   } = useTrafficFilter(entries, fields);
   
   // Memoizar intervalos para evitar re-criações desnecessárias
@@ -111,63 +112,21 @@ export function MarketplaceTrafficDropdown({
 
   // Detecta qual campo de tráfego usar
   const trafficField = React.useMemo(() => {
-    return TrafficFilterService.detectTrafficField(fields);
+    console.log('[TrafficDropdown] Detecting traffic field from fields:', {
+      fieldsCount: fields.length,
+      fieldsTypes: fields.map(f => ({ id: f.id, field_type: f.field_type, label: f.label })),
+      trafficRelatedFields: fields.filter(f => 
+        f.field_type?.includes('traffic') || 
+        f.label?.toLowerCase()?.includes('traffic') ||
+        f.label?.toLowerCase()?.includes('tráfego')
+      )
+    });
+    
+    const detected = TrafficFilterService.detectTrafficField(fields);
+    console.log('[TrafficDropdown] Detected traffic field:', detected);
+    
+    return detected;
   }, [fields]);
-
-  // Efeito para notificar mudanças no filtro - usando useCallback para estabilizar a função
-  const createFilterFunction = React.useCallback(() => {
-    if (!trafficField) return () => true;
-
-    return (entry: any) => {
-      // Verificação básica de tipo
-      if (typeof entry !== 'object' || entry === null) {
-        return true; // Incluir por segurança
-      }
-      
-      // Se não há filtros ativos, mostrar todos
-      if (!hasSelectedItems) {
-        return true;
-      }
-      
-      // Verificar se tem campo de tráfego
-      const values = entry.values || entry;
-      const rawTrafficValue = values?.[trafficField.id];
-      
-      // Se não tem valor de tráfego, mostrar
-      if (rawTrafficValue === null || rawTrafficValue === undefined) {
-        return true;
-      }
-      
-      // Extrair valor numérico
-      const trafficValue = TrafficFilterService.parseAmericanNumber(rawTrafficValue);
-      
-      if (trafficValue <= 0) {
-        return true;
-      }
-      
-      // Verificar se o valor está em algum intervalo selecionado
-      const isInSelectedInterval = state.selectedIntervals.some(intervalId => {
-        const interval = intervals.find(i => i.id === intervalId);
-        if (!interval) return false;
-        
-        if (interval.max === null) {
-          return trafficValue >= interval.min;
-        }
-        return trafficValue >= interval.min && trafficValue <= interval.max;
-      });
-      
-      // Verificar custom range se existe
-      let isInCustomRange = false;
-      if (state.customRange) {
-        const { min, max } = state.customRange;
-        const minCheck = min === null || trafficValue >= min;
-        const maxCheck = max === null || trafficValue <= max;
-        isInCustomRange = minCheck && maxCheck;
-      }
-      
-      return isInSelectedInterval || isInCustomRange;
-    };
-  }, [trafficField, hasSelectedItems, state.selectedIntervals, state.customRange, intervals]);
 
   // Estabilizar callback usando ref para evitar loops
   const onFilterChangeRef = React.useRef(onFilterChange);
@@ -179,10 +138,12 @@ export function MarketplaceTrafficDropdown({
   React.useEffect(() => {
     if (onFilterChangeRef.current) {
       console.log('[Traffic Filter] Creating filter function. hasSelectedItems:', hasSelectedItems, 'trafficField:', trafficField?.id);
-      const filterFn = createFilterFunction();
-      onFilterChangeRef.current(filterFn);
+      const filterFn = getFilterFunction();
+      // Se não há filtro ativo, passa uma função que retorna true para todos
+      const finalFilterFn = filterFn || (() => true);
+      onFilterChangeRef.current(finalFilterFn);
     }
-  }, [createFilterFunction]);
+  }, [getFilterFunction, hasSelectedItems, trafficField]);
 
   // Calcular count dos filtros selecionados
   const selectedCount = state.selectedIntervals.length + (state.customRange ? 1 : 0);
