@@ -9,6 +9,7 @@ import { useDAFilter } from '../../hooks/useDAFilter';
 import { PlusCircleIcon } from '../../../../../../icons';
 
 interface MarketplaceDADropdownProps {
+    //@ts-ignore
   entries?: number;
   onFilterChange: (filterFn: (entry: any) => boolean) => void; // Tornar obrigatório
   fields?: any[];

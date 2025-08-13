@@ -66,7 +66,7 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
         />
 
         <MarketplaceDADropdown
-          entries={entries}
+          entries={entries.length}
           fields={fields}
           onFilterChange={(filterFn) => {
             onDAFilterChange?.(filterFn);
