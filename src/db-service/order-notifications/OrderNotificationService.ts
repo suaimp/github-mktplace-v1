@@ -4,7 +4,7 @@
 
 import { supabase } from '../../lib/supabase';
 import { EmailTemplateService } from './templates';
-import { EMAIL_CONFIG, getPlatformName, getDynamicFromString } from './config';
+import { EMAIL_CONFIG, getPlatformName } from './config';
 import {
   PautaEmailData,
   ArticleDocEmailData,
