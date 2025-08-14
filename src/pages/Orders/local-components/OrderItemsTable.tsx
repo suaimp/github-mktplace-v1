@@ -34,6 +34,7 @@ interface OrderItemsTableProps {
   onChangePublicationStatus: (itemId: string, status: string) => void;
   downloadLoading: { [key: string]: boolean };
   refreshTrigger?: number; // Prop para disparar refresh
+  paymentStatus?: string; // Status do pagamento do pedido
 }
 
 export default function OrderItemsTable({
@@ -46,6 +47,7 @@ export default function OrderItemsTable({
   onChangePublicationStatus,
   downloadLoading,
   refreshTrigger,
+  paymentStatus,
 }: OrderItemsTableProps) {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -553,6 +555,15 @@ export default function OrderItemsTable({
                   </td> */}
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {(() => {
+                      // Se o pagamento estiver pendente, mostrar "Aguardando Pagamento"
+                      if (paymentStatus === 'pending') {
+                        return (
+                          <span className="text-gray-500 dark:text-gray-400 italic">
+                            Aguardando Pagamento
+                          </span>
+                        );
+                      }
+
                       // Caso tenha arquivo enviado
                       if (item.article_document_path) {
                         return (
@@ -744,7 +755,12 @@ export default function OrderItemsTable({
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     <div className="flex items-center gap-1">
-                      {item.article_url ? (
+                      {/* Se o pagamento estiver pendente, mostrar "Aguardando Pagamento" */}
+                      {paymentStatus === 'pending' ? (
+                        <span className="text-gray-500 dark:text-gray-400 italic">
+                          Aguardando Pagamento
+                        </span>
+                      ) : item.article_url ? (
                         <>
                           <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
                             <svg
@@ -897,7 +913,7 @@ export default function OrderItemsTable({
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {(() => {
                       // Usar o novo serviço de status
-                      const context = OrderItemAnalyzer.extractStatusContext(item);
+                      const context = OrderItemAnalyzer.extractStatusContext(item, paymentStatus);
                       const status = OrderItemStatusService.determineStatus(context);
                       
                       return (

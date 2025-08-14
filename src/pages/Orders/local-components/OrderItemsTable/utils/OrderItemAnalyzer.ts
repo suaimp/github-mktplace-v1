@@ -86,7 +86,7 @@ export class OrderItemAnalyzer {
   /**
    * Extrai o contexto completo de um item para determinação de status
    */
-  static extractStatusContext(item: OrderItem): OrderItemStatusContext {
+  static extractStatusContext(item: OrderItem, paymentStatus?: string): OrderItemStatusContext {
     return {
       hasPackage: this.hasPackageSelected(item),
       hasOutline: this.hasOutlineData(item),
@@ -94,7 +94,8 @@ export class OrderItemAnalyzer {
       hasArticleUrl: this.hasArticleUrl(item),
       publicationStatus: item.publication_status || '',
       isRejected: this.isRejected(item),
-      isPublished: this.isPublished(item)
+      isPublished: this.isPublished(item),
+      paymentStatus: paymentStatus
     };
   }
 }

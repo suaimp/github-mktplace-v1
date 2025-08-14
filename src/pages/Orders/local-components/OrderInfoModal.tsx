@@ -136,10 +136,19 @@ export default function OrderInfoModal({
                   </p>
                 </div>
               )}
-              {/* Botão de confirmação de boleto para admins */}
-              {order.payment_method === "boleto" &&
-                order.payment_status === "pending" &&
-                isAdmin && (
+              {/* Botão de confirmação de pagamento para admins */}
+              {(() => {
+                const isPaymentPending = order.payment_status === "pending";
+                
+                console.log('🔍 [OrderInfoModal] Verificando condições para botão de confirmar pagamento:', {
+                  payment_method: order.payment_method,
+                  payment_status: order.payment_status,
+                  isAdmin,
+                  isPaymentPending,
+                  shouldShowButton: isPaymentPending && isAdmin
+                });
+
+                return isPaymentPending && isAdmin ? (
                   <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
@@ -147,7 +156,10 @@ export default function OrderInfoModal({
                           Aguardando Confirmação de Pagamento
                         </h4>
                         <p className="text-xs text-yellow-600 dark:text-yellow-300">
-                          Boleto aguardando confirmação bancária
+                          {order.payment_method === "boleto" 
+                            ? "Boleto aguardando confirmação bancária" 
+                            : `Pagamento via ${order.payment_method.toUpperCase()} aguardando confirmação`
+                          }
                         </p>
                       </div>
                       <Button
@@ -186,7 +198,8 @@ export default function OrderInfoModal({
                       </Button>
                     </div>
                   </div>
-                )}
+                ) : null;
+              })()}
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-800 my-4 pt-4">

@@ -11,6 +11,11 @@ export class OrderItemStatusService {
    * Mapa de configurações de status
    */
   private static readonly STATUS_CONFIG: Record<OrderItemStatusType, OrderItemStatus> = {
+    payment_pending: {
+      type: 'payment_pending',
+      label: 'Pagamento Pendente',
+      className: 'inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+    },
     rejected: {
       type: 'rejected',
       label: 'Reprovado',
@@ -64,20 +69,37 @@ export class OrderItemStatusService {
    * Determina o status de um item baseado no contexto
    */
   static determineStatus(context: OrderItemStatusContext): OrderItemStatus {
-    // 1. Primeiro, verificar status críticos
+    console.log('🔍 [OrderItemStatusService] Determinando status com contexto:', {
+      paymentStatus: context.paymentStatus,
+      hasPackage: context.hasPackage,
+      hasOutline: context.hasOutline,
+      hasArticle: context.hasArticle,
+      hasArticleUrl: context.hasArticleUrl,
+      isRejected: context.isRejected
+    });
+
+    // 0. PRIORIDADE MÁXIMA: Verificar se pagamento está pendente
+    if (context.paymentStatus === "pending") {
+      console.log('✅ [OrderItemStatusService] Retornando status: Pagamento Pendente');
+      return this.STATUS_CONFIG.payment_pending;
+    }
+
+    // 1. Verificar status críticos
     if (context.isRejected) {
+      console.log('➡️ [OrderItemStatusService] Retornando status: Reprovado');
       return this.STATUS_CONFIG.rejected;
     }
 
-
     // 2. Publicado APENAS quando admin adiciona URL do artigo publicado
     if (context.hasArticleUrl) {
+      console.log('➡️ [OrderItemStatusService] Retornando status: Artigo Publicado');
       return this.STATUS_CONFIG.published;
     }
 
     // 3. Se artigo foi enviado (upload ou link), mas ainda não publicado (sem url)
     // Artigo doc = artigo antes de ser publicado (upload ou link)
     if (context.hasArticle) {
+      console.log('➡️ [OrderItemStatusService] Retornando status: Publicação Pendente');
       return this.STATUS_CONFIG.publication_pending;
     }
 
@@ -85,14 +107,17 @@ export class OrderItemStatusService {
     if (context.hasPackage) {
       // Se tem pauta enviada -> Em preparação
       if (context.hasOutline) {
+        console.log('➡️ [OrderItemStatusService] Retornando status: Em preparação');
         return this.STATUS_CONFIG.in_preparation;
       }
       
       // Se tem pacote mas não tem pauta nem artigo
+      console.log('➡️ [OrderItemStatusService] Retornando status: Aguardando Pauta');
       return this.STATUS_CONFIG.pauta_pending;
     }
 
     // 5. Se não tem pacote, aguarda artigo
+    console.log('➡️ [OrderItemStatusService] Retornando status: Artigo Pendente');
     return this.STATUS_CONFIG.article_pending;
   }
 

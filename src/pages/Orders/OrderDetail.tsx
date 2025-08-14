@@ -1,17 +1,17 @@
 import { useOrderDetailLogic } from "./actions/useOrderDetailLogic";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import OrderProgress from "./local-components/OrderProgress";
 import OrderItemsTable from "./local-components/OrderItemsTable";
-import { supabase } from "../../lib/supabase";
 import OrderInfoModal from "./local-components/OrderInfoModal";
 import { useOrderInfoModal } from "./actions/useOrderInfoModal";
 import Select from "../../components/form/Select";
 import Input from "../../components/form/input/InputField";
+import { useAdminCheck } from "../../hooks/useAdminCheck";
 
 export default function OrderDetail() {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAdminCheck();
   const [refreshTableTrigger, setRefreshTableTrigger] = useState(0);
   const [refreshProgressTrigger, setRefreshProgressTrigger] = useState(0);
 
@@ -71,29 +71,6 @@ export default function OrderDetail() {
   const [articleSendType, setArticleSendType] = useState<string>("upload");
   const [articleUrlInput, setArticleUrlInput] = useState("");
   const [articleUrlError, setArticleUrlError] = useState<string | null>(null);
-
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: adminData } = await supabase
-          .from("admins")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setIsAdmin(!!adminData);
-      } catch (error) {
-        console.error("Error checking admin status:", error);
-      }
-    };
-    checkAdminStatus();
-  }, []);
 
   // Funções para o modal de edição de URL do artigo
   const openPublishedUrlModal = (itemId: string, currentUrl: string = "") => {
@@ -352,7 +329,7 @@ export default function OrderDetail() {
           {" "}
           <OrderItemsTable
             orderId={order.id}
-            isAdmin={isAdmin}
+            isAdmin={!!isAdmin}
             onPackageModalOpen={openPackageModal}
             onDocModalOpen={openDocModal}
             onUrlEditModalOpen={openPublishedUrlModal}
@@ -363,6 +340,7 @@ export default function OrderDetail() {
             }}
             downloadLoading={downloadLoading}
             refreshTrigger={refreshTableTrigger}
+            paymentStatus={order.payment_status}
           />
         </div>
         {/* Anteriormente era exibido o Order Details Sidebar aqui - agora será apenas no modal */}
@@ -742,7 +720,7 @@ export default function OrderDetail() {
         isConfirmDeleteModalOpen={isConfirmDeleteModalOpen}
         closeConfirmDeleteModal={closeConfirmDeleteModal}
         deleteOrder={deleteOrder}
-        isAdmin={isAdmin}
+        isAdmin={!!isAdmin}
       />
     </div>
   );

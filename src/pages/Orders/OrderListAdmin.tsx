@@ -40,7 +40,16 @@ export default function OrderListAdmin() {
     handleSort
   } = useOrderListAdmin();
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, paymentStatus?: string) => {
+    // Se o pagamento está pendente, sempre mostrar "Pagamento Pendente" em vermelho
+    if (paymentStatus === "pending") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400">
+          Pagamento Pendente
+        </span>
+      );
+    }
+
     switch (status) {
       case "completed":
         return <Badge color="success">Concluído</Badge>;
@@ -243,7 +252,7 @@ export default function OrderListAdmin() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        {getStatusBadge(order.status)}
+                        {getStatusBadge(order.status, order.payment_status)}
                       </TableCell>
                       <TableCell className="px-6 py-4">
                         {getPaymentStatusBadge(order.payment_status)}

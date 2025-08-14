@@ -4,6 +4,7 @@
  */
 
 export type OrderItemStatusType = 
+  | 'payment_pending'    // Pagamento pendente (prioridade máxima)
   | 'article_pending'    // Artigo pendente
   | 'pauta_pending'      // Aguardando pauta  
   | 'pauta_sent'         // Pauta enviada
@@ -29,4 +30,5 @@ export interface OrderItemStatusContext {
   publicationStatus: string;
   isRejected: boolean;
   isPublished: boolean;
+  paymentStatus?: string; // Status do pagamento do pedido
 }
