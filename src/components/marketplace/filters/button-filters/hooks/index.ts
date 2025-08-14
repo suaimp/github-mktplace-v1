@@ -3,3 +3,4 @@
  */
 
 export { useMarketplaceCountryFilter } from './useMarketplaceCountryFilter';
+export { useResponsiveFilters } from './useResponsiveFilters';

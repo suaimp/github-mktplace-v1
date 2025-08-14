@@ -48,7 +48,7 @@ Componente para renderizar itens individuais de range:
 ```typescript
 interface RangeOption {
   id: string;              // Identificador único (ex: 'A', 'B', 'C')
-  label: string;           // Nome da classificação (ex: 'Excelente')
+  label: string;           // Nome da classificação (ex: 'Autoridade Elevada')
   minValue: number;        // Valor mínimo do range
   maxValue: number;        // Valor máximo do range
   backgroundColor: string; // Cor de fundo do badge
@@ -112,11 +112,11 @@ O sistema implementa 5 classificações baseadas nos valores do ApiMetricBadge:
 
 | Classificação | Range | Cor de Fundo | Cor do Texto | Qualidade |
 |---------------|--------|--------------|--------------|-----------|
-| A (Excelente) | 80-100 | #9EF2C9 | #007C65 | Premium |
-| B (Muito Bom) | 60-79  | #C4E5FE | #006DCA | Alta |
-| C (Bom)       | 40-59  | #EDD9FF | #8649E1 | Média-Alta |
-| D (Regular)   | 20-39  | #FCE081 | #A75800 | Limitada |
-| F (Fraco)     | 0-19   | #f9b4b4 | #b84f53 | Questionável |
+| A (Autoridade Elevada) | 80-100 | #9EF2C9 | #007C65 | Premium |
+| B (Autoridade Relevante) | 60-79  | #C4E5FE | #006DCA | Alta |
+| C (Autoridade Média)       | 40-59  | #EDD9FF | #8649E1 | Média-Alta |
+| D (Autoridade Moderada)   | 20-39  | #FCE081 | #A75800 | Limitada |
+| F (Autoridade Inicial)     | 0-19   | #f9b4b4 | #b84f53 | Questionável |
 
 ## Uso do Componente
 

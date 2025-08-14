@@ -174,11 +174,11 @@ export class ClassificationColorService {
     description: string;
   }> {
     const classifications = [
-      { id: 'A' as const, label: 'Excelente', minValue: 80, maxValue: 100 },
-      { id: 'B' as const, label: 'Muito Bom', minValue: 60, maxValue: 79 },
-      { id: 'C' as const, label: 'Bom', minValue: 40, maxValue: 59 },
-      { id: 'D' as const, label: 'Regular', minValue: 20, maxValue: 39 },
-      { id: 'F' as const, label: 'Fraco', minValue: 0, maxValue: 19 }
+      { id: 'A' as const, label: 'Autoridade Elevada', minValue: 80, maxValue: 100 },
+      { id: 'B' as const, label: 'Autoridade Relevante', minValue: 60, maxValue: 79 },
+      { id: 'C' as const, label: 'Autoridade Média', minValue: 40, maxValue: 59 },
+      { id: 'D' as const, label: 'Autoridade Moderada', minValue: 20, maxValue: 39 },
+      { id: 'F' as const, label: 'Autoridade Inicial', minValue: 0, maxValue: 19 }
     ];
 
     return classifications.map(item => {

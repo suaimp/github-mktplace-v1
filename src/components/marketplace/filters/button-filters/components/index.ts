@@ -10,3 +10,4 @@ export * from './da';
 export * from './traffic';
 export * from './price';
 export * from './niche';
+export * from './more-filters';

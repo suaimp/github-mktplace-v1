@@ -6,6 +6,18 @@ import { MarketplaceDADropdown } from '../../filters/button-filters/components/d
 import { MarketplaceTrafficDropdown } from '../../filters/button-filters/components/traffic';
 import { MarketplacePriceButton } from '../../filters/button-filters/components/price';
 import { MarketplaceNicheFilter } from '../../filters/button-filters/components/niche';
+import { 
+  MoreFiltersButton, 
+  MoreFiltersDropdown, 
+  CompactFilterWrapper,
+  CompactPriceFilter,
+  CompactTrafficFilter,
+  CompactDAFilter,
+  CompactNicheFilter,
+  CompactLinksFilter,
+  CompactCountryFilter
+} from '../../filters/button-filters/components/more-filters';
+import { useResponsiveFilters } from '../../filters/button-filters/hooks';
 
 export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> = ({
   searchTerm,
@@ -29,8 +41,30 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
   entries = [],
   fields = []
 }) => {
+  const {
+    showPrice,
+    showTraffic,
+    showDA,
+    showNiche,
+    showLinks,
+    showCountry,
+    shouldShowMoreFilters,
+    moreFiltersOpen,
+    setMoreFiltersOpen
+  } = useResponsiveFilters();
+
+  // Calcular quantos filtros estão ativos nos filtros ocultos
+  const hiddenActiveFiltersCount = [
+    !showPrice ? 0 : 0, // TODO: adicionar lógica para contar filtros ativos do preço
+    !showTraffic ? 0 : 0, // TODO: adicionar lógica para contar filtros ativos do tráfego
+    !showDA ? 0 : 0, // TODO: adicionar lógica para contar filtros ativos do DA
+    !showNiche ? (selectedNiches?.length || 0) : 0,
+    !showLinks ? (selectedLinks?.length || 0) : 0,
+    !showCountry ? (selectedCountries?.length || 0) : 0
+  ].reduce((acc: number, count: number) => acc + count, 0);
+
   return (
-    <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full flex flex-col gap-2 px-4 py-4 border-b border-gray-100 dark:border-white/[0.05] rounded-t-xl smd:flex-row smd:items-center smd:justify-between">
       {/* Filtros na esquerda */}
       <div className="flex flex-wrap gap-2">
         <MarketplaceFilter
@@ -41,60 +75,160 @@ export const MarketplaceTableControls: React.FC<MarketplaceTableControlsProps> =
           fields={fields}
         />
         
-        <MarketplaceCountryFilter
-          selectedCountries={selectedCountries}
-          onCountriesChange={onCountriesChange}
-          entries={entries}
-          fields={fields}
-        />
+        {showCountry && (
+          <MarketplaceCountryFilter
+            selectedCountries={selectedCountries}
+            onCountriesChange={onCountriesChange}
+            entries={entries}
+            fields={fields}
+          />
+        )}
         
-        <MarketplaceLinksFilter
-          selectedLinks={selectedLinks}
-          onLinksChange={onLinksChange}
-          entries={entries}
-          fields={fields}
-        />
+        {showLinks && (
+          <MarketplaceLinksFilter
+            selectedLinks={selectedLinks}
+            onLinksChange={onLinksChange}
+            entries={entries}
+            fields={fields}
+          />
+        )}
         
-        <MarketplaceNicheFilter
-          selectedNiches={selectedNiches}
-          onNichesChange={onNichesChange}
-          onFilterChange={(filterFn) => {
-            onNicheFilterChange?.(filterFn);
-          }}
-          entries={entries}
-          fields={fields}
-        />
+        {showNiche && (
+          <MarketplaceNicheFilter
+            selectedNiches={selectedNiches}
+            onNichesChange={onNichesChange}
+            onFilterChange={(filterFn) => {
+              onNicheFilterChange?.(filterFn);
+            }}
+            entries={entries}
+            fields={fields}
+          />
+        )}
 
-        <MarketplaceDADropdown
-          entries={entries.length}
-          fields={fields}
-          onFilterChange={(filterFn) => {
-            onDAFilterChange?.(filterFn);
-          }}
-        />
+        {showDA && (
+          <MarketplaceDADropdown
+            entries={entries.length}
+            fields={fields}
+            onFilterChange={(filterFn) => {
+              onDAFilterChange?.(filterFn);
+            }}
+          />
+        )}
 
-        <MarketplaceTrafficDropdown
-          entries={entries}
-          fields={fields}
-          onFilterChange={(filterFn) => {
-            onTrafficFilterChange?.(filterFn);
-          }}
-        />
+        {showTraffic && (
+          <MarketplaceTrafficDropdown
+            entries={entries}
+            fields={fields}
+            onFilterChange={(filterFn) => {
+              onTrafficFilterChange?.(filterFn);
+            }}
+          />
+        )}
         
-        <MarketplacePriceButton
-          entries={entries}
-          fields={fields}
-          onFilterChange={(filteredEntries) => {
-            const filterFn = (entry: any) => {
-              return filteredEntries.some(filtered => filtered === entry);
-            };
-            onPriceFilterChange?.(filterFn);
-          }}
-        />
+        {showPrice && (
+          <MarketplacePriceButton
+            entries={entries}
+            fields={fields}
+            onFilterChange={(filteredEntries) => {
+              const filterFn = (entry: any) => {
+                return filteredEntries.some(filtered => filtered === entry);
+              };
+              onPriceFilterChange?.(filterFn);
+            }}
+          />
+        )}
+
+        {/* Botão Mais Filtros */}
+        {shouldShowMoreFilters && (
+          <div className="relative">
+            <MoreFiltersButton
+              isOpen={moreFiltersOpen}
+              onOpenChange={setMoreFiltersOpen}
+              activeFiltersCount={hiddenActiveFiltersCount}
+            />
+            
+            <MoreFiltersDropdown
+              isOpen={moreFiltersOpen}
+              onClose={() => setMoreFiltersOpen(false)}
+            >
+              {!showPrice && (
+                <CompactFilterWrapper title="Preço">
+                  <CompactPriceFilter
+                    entries={entries}
+                    fields={fields}
+                    onFilterChange={(filterFn) => {
+                      onPriceFilterChange?.(filterFn);
+                    }}
+                  />
+                </CompactFilterWrapper>
+              )}
+
+              {!showTraffic && (
+                <CompactFilterWrapper title="Tráfego">
+                  <CompactTrafficFilter
+                    entries={entries}
+                    fields={fields}
+                    onFilterChange={(filterFn) => {
+                      onTrafficFilterChange?.(filterFn);
+                    }}
+                  />
+                </CompactFilterWrapper>
+              )}
+
+              {!showDA && (
+                <CompactFilterWrapper title="Domain Authority">
+                  <CompactDAFilter
+                    entries={entries}
+                    fields={fields}
+                    onFilterChange={(filterFn) => {
+                      onDAFilterChange?.(filterFn);
+                    }}
+                  />
+                </CompactFilterWrapper>
+              )}
+
+              {!showNiche && (
+                <CompactFilterWrapper title="Nicho">
+                  <CompactNicheFilter
+                    selectedNiches={selectedNiches}
+                    onNichesChange={onNichesChange}
+                    onFilterChange={(filterFn) => {
+                      onNicheFilterChange?.(filterFn);
+                    }}
+                    entries={entries}
+                    fields={fields}
+                  />
+                </CompactFilterWrapper>
+              )}
+
+              {!showLinks && (
+                <CompactFilterWrapper title="Links">
+                  <CompactLinksFilter
+                    selectedLinks={selectedLinks}
+                    onLinksChange={onLinksChange}
+                    entries={entries}
+                    fields={fields}
+                  />
+                </CompactFilterWrapper>
+              )}
+
+              {!showCountry && (
+                <CompactFilterWrapper title="País">
+                  <CompactCountryFilter
+                    selectedCountries={selectedCountries}
+                    onCountriesChange={onCountriesChange}
+                    entries={entries}
+                    fields={fields}
+                  />
+                </CompactFilterWrapper>
+              )}
+            </MoreFiltersDropdown>
+          </div>
+        )}
       </div>
 
       {/* Tab Navigation e Search na direita */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 smd:flex-row smd:items-center">
         {/* Tab Navigation */}
         <MarketplaceTabNavigation
           tabs={tabs}
