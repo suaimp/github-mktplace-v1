@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthLayout";
+import MarketplaceStatusBanner from "./components/MarketplaceStatusBanner";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Checkbox from "../../components/form/input/Checkbox";
@@ -73,6 +74,11 @@ export default function Login() {
         <div className="flex flex-col flex-1">
           <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
             <div>
+              {/* Banner de Status do Marketplace */}
+              <div className="mb-6">
+                <MarketplaceStatusBanner />
+              </div>
+
               <div className="mb-5 sm:mb-8">
                 <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
                   {isAdminLogin ? "Login Administrativo" : "Login"}

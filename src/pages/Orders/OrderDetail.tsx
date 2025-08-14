@@ -322,7 +322,7 @@ export default function OrderDetail() {
           </div>
         </div>
         {/* Order Progress */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-6 hidden">
           <OrderProgress
             currentStep={getCurrentProgressStep()}
             paymentStatus={

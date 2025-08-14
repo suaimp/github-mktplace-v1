@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button from "../../components/ui/button/Button";
 import Label from "../../components/form/Label";
 import SiteMetaContainer from "./components/SiteMetaContainer";
+import MarketplaceModeSettings from "./components/MarketplaceModeSettings";
 import { SiteSettingsService } from "../../services/db-services/settings-services/siteSettingsService";
 import { LogoService, LogoFile } from "../../services/db-services/settings-services/logoService";
 import { SiteMetaFormData } from "./types";
@@ -109,6 +110,11 @@ export default function LogoSettings() {
         hideSubmitButton={true}
         externalLoading={loading}
       />
+
+      {/* Seção de Configurações de Modo do Marketplace */}
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+        <MarketplaceModeSettings />
+      </div>
 
       {/* Separador visual */}
       <div className="border-t border-gray-200 dark:border-gray-800 pt-8">

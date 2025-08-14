@@ -4,7 +4,7 @@
 
 import { supabase } from '../../lib/supabase';
 import { EmailTemplateService } from './templates';
-import { EMAIL_CONFIG } from './config';
+import { EMAIL_CONFIG, getPlatformName, getDynamicFromString } from './config';
 import {
   PautaEmailData,
   ArticleDocEmailData,
@@ -99,6 +99,9 @@ export class OrderNotificationService {
     try {
       console.log('📧 [EMAIL_DEBUG] Enviando email individual para:', email);
 
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+
       const {   error } = await supabase.functions.invoke('send-order-notification-email', {
         body: {
           to: [email],
@@ -106,7 +109,7 @@ export class OrderNotificationService {
           html,
           from: {
             email: EMAIL_CONFIG.FROM_EMAIL,
-            name: EMAIL_CONFIG.FROM_NAME
+            name: platformName
           }
         }
       });
@@ -140,6 +143,9 @@ export class OrderNotificationService {
         adminEmail: recipients.adminEmail
       });
 
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+
       const { data, error } = await supabase.functions.invoke('send-order-notification-email', {
         body: {
           to: [recipients.userEmail, recipients.adminEmail],
@@ -147,7 +153,7 @@ export class OrderNotificationService {
           html,
           from: {
             email: EMAIL_CONFIG.FROM_EMAIL,
-            name: EMAIL_CONFIG.FROM_NAME
+            name: platformName
           }
         }
       });
@@ -188,6 +194,10 @@ export class OrderNotificationService {
         return false;
       }
 
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+      console.log('⚙️ [EMAIL_DEBUG] Nome da plataforma carregado:', platformName);
+
       const emailData: PautaEmailData = {
         ...baseData,
         pautaData
@@ -196,11 +206,11 @@ export class OrderNotificationService {
       console.log('📧 [EMAIL_DEBUG] Gerando templates de pauta...');
       
       // Gerar template para o cliente
-      const clientTemplate = EmailTemplateService.generatePautaTemplate(emailData, false);
+      const clientTemplate = EmailTemplateService.generatePautaTemplate(emailData, false, platformName);
       console.log('📧 [EMAIL_DEBUG] Template cliente gerado:', { subject: clientTemplate.subject });
       
       // Gerar template para o admin
-      const adminTemplate = EmailTemplateService.generatePautaTemplate(emailData, true);
+      const adminTemplate = EmailTemplateService.generatePautaTemplate(emailData, true, platformName);
       console.log('📧 [EMAIL_DEBUG] Template admin gerado:', { subject: adminTemplate.subject });
       
       const recipients: EmailRecipients = {
@@ -260,6 +270,10 @@ export class OrderNotificationService {
         return false;
       }
 
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+      console.log('⚙️ [EMAIL_DEBUG] Nome da plataforma carregado:', platformName);
+
       const emailData: ArticleDocEmailData = {
         ...baseData,
         articleType,
@@ -269,11 +283,11 @@ export class OrderNotificationService {
       console.log('📧 [EMAIL_DEBUG] Gerando templates de artigo...');
       
       // Gerar template para o cliente
-      const clientTemplate = EmailTemplateService.generateArticleDocTemplate(emailData, false);
+      const clientTemplate = EmailTemplateService.generateArticleDocTemplate(emailData, false, platformName);
       console.log('📧 [EMAIL_DEBUG] Template cliente gerado:', { subject: clientTemplate.subject });
       
       // Gerar template para o admin
-      const adminTemplate = EmailTemplateService.generateArticleDocTemplate(emailData, true);
+      const adminTemplate = EmailTemplateService.generateArticleDocTemplate(emailData, true, platformName);
       console.log('📧 [EMAIL_DEBUG] Template admin gerado:', { subject: adminTemplate.subject });
       
       const recipients: EmailRecipients = {
@@ -328,13 +342,17 @@ export class OrderNotificationService {
         return false;
       }
 
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+      console.log('⚙️ [EMAIL_DEBUG] Nome da plataforma carregado:', platformName);
+
       const emailData: ArticleUrlEmailData = {
         ...baseData,
         publishedUrl
       };
 
       console.log('📧 [EMAIL_DEBUG] Gerando template de publicação...');
-      const template = EmailTemplateService.generateArticleUrlTemplate(emailData);
+      const template = EmailTemplateService.generateArticleUrlTemplate(emailData, platformName);
       console.log('📧 [EMAIL_DEBUG] Template gerado:', { subject: template.subject });
       
       const recipients: EmailRecipients = {

@@ -15,7 +15,7 @@ describe('EmailTemplateService', () => {
   describe('generatePautaTemplate', () => {
     it('deve gerar template para cliente com mensagem correta', () => {
       // Act
-      const result = EmailTemplateService.generatePautaTemplate(mockPautaEmailData, false);
+      const result = EmailTemplateService.generatePautaTemplate(mockPautaEmailData, false, 'Marketplace Teste');
 
       // Assert
       expect(result.subject).toBe('Nova Pauta Enviada');
@@ -24,6 +24,7 @@ describe('EmailTemplateService', () => {
       expect(result.html).toContain(mockPautaEmailData.userName);
       expect(result.html).toContain(mockPautaEmailData.shortOrderId);
       expect(result.html).toContain(mockPautaEmailData.pautaData.palavraChave);
+      expect(result.html).toContain('Marketplace Teste'); // Nome dinâmico
     });
 
     it('deve gerar template para admin com mensagem correta', () => {

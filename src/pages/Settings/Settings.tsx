@@ -32,7 +32,7 @@ export default function Settings() {
                   : "border-transparent text-gray-500 dark:text-gray-400"
               }`}
             >
-              Logo
+              Marketplace
             </button>
             <button
               onClick={() => setActiveTab("smtp")}

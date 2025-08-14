@@ -13,7 +13,11 @@ export class EmailTemplateService {
   /**
    * Template para nova pauta enviada
    */
-  static generatePautaTemplate(data: PautaEmailData, isAdmin: boolean = false): EmailTemplate {
+  static generatePautaTemplate(
+    data: PautaEmailData, 
+    isAdmin: boolean = false, 
+    platformName: string = 'Marketplace Sua Imprensa'
+  ): EmailTemplate {
     const subject = 'Nova Pauta Enviada';
     
     const html = `
@@ -122,7 +126,7 @@ export class EmailTemplateService {
           </div>
           
           <div class="footer">
-            <p>Este é um email automático do sistema Marketplace Sua Imprensa.</p>
+            <p>Este é um email automático do sistema ${platformName}.</p>
           </div>
         </div>
       </body>
@@ -135,7 +139,11 @@ export class EmailTemplateService {
   /**
    * Template para novo artigo enviado (upload ou link)
    */
-  static generateArticleDocTemplate(data: ArticleDocEmailData, isAdmin: boolean = false): EmailTemplate {
+  static generateArticleDocTemplate(
+    data: ArticleDocEmailData, 
+    isAdmin: boolean = false, 
+    platformName: string = 'Marketplace Sua Imprensa'
+  ): EmailTemplate {
     const subject = 'Novo Artigo Enviado';
     
     const html = `
@@ -260,7 +268,7 @@ export class EmailTemplateService {
           </div>
           
           <div class="footer">
-            <p>Este é um email automático do sistema Marketplace Sua Imprensa.</p>
+            <p>Este é um email automático do sistema ${platformName}.</p>
           </div>
         </div>
       </body>
@@ -273,7 +281,10 @@ export class EmailTemplateService {
   /**
    * Template para artigo publicado (URL final)
    */
-  static generateArticleUrlTemplate(data: ArticleUrlEmailData): EmailTemplate {
+  static generateArticleUrlTemplate(
+    data: ArticleUrlEmailData, 
+    platformName: string = 'Marketplace Sua Imprensa'
+  ): EmailTemplate {
     const subject = 'Novo Artigo Publicado';
     
     const html = `
@@ -395,7 +406,7 @@ export class EmailTemplateService {
           </div>
           
           <div class="footer">
-            <p>Este é um email automático do sistema Marketplace Sua Imprensa.</p>
+            <p>Este é um email automático do sistema ${platformName}.</p>
           </div>
         </div>
       </body>

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 function corsHeaders() {
   return {
@@ -6,6 +7,36 @@ function corsHeaders() {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
+}
+
+/**
+ * Busca o nome da plataforma das configurações
+ */
+async function getPlatformName(): Promise<string> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    console.log('⚙️ [PlatformName] Buscando configurações da plataforma...');
+
+    const { data, error } = await supabase
+      .from('settings')
+      .select('site_title')
+      .single();
+
+    if (error) {
+      console.warn('⚠️ [PlatformName] Erro ao buscar configurações, usando padrão:', error);
+      return 'Marketplace Sua Imprensa';
+    }
+
+    const platformName = data.site_title || 'Marketplace Sua Imprensa';
+    console.log('✅ [PlatformName] Nome da plataforma carregado:', platformName);
+    return platformName;
+  } catch (error) {
+    console.error('❌ [PlatformName] Erro ao buscar configurações:', error);
+    return 'Marketplace Sua Imprensa';
+  }
 }
 
 serve(async (req) => {
@@ -51,6 +82,10 @@ serve(async (req) => {
       </ul>
     `;
 
+    // Buscar nome dinâmico da plataforma
+    const platformName = await getPlatformName();
+    console.log('📧 [OrderEmail] Usando nome da plataforma:', platformName);
+
     // Chave da API do Resend (adicione como variável de ambiente no Supabase)
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
@@ -68,7 +103,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Seu Marketplace <noreply@cp.suaimprensa.com.br>",
+        from: `${platformName} <noreply@cp.suaimprensa.com.br>`,
         to: [clientEmail], // Cliente recebe no campo "Para"
         bcc: [adminEmail], // Admin recebe em CCO (oculto)
         subject: "Nova compra realizada",

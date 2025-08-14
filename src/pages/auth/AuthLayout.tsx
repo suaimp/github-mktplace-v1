@@ -21,13 +21,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900 sm:p-0">
         {children}
         {shouldShowSideImage && (
-          <div className="items-center hidden w-full h-full lg:w-1/2 bg-brand-950 dark:bg-white/5 lg:grid">
-            <div className="relative flex items-center justify-center z-1">
+          <div className="items-center hidden w-full h-full lg:w-1/2 lg:grid bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/images/banner/computer-room.jpg)'}}>
+            <div className="relative flex items-center justify-center z-1 bg-black/50 w-full h-full">
               <GridShape />
               <div className="flex flex-col items-center max-w-xs">
                 <Link to="/" className="block mb-4">
                   {loading ? (
-                    <div className="h-12 w-48 bg-gray-800 animate-pulse rounded"></div>
+                    <div className="h-12 w-48 bg-gray-300 animate-pulse rounded"></div>
                   ) : (
                     <img
                       className="h-12"
@@ -36,9 +36,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     />
                   )}
                 </Link>
-                <p className="text-center text-gray-400 dark:text-white/60">
+                <p className="text-center text-white dark:text-white">
                   {descriptionLoading ? (
-                    <span className="inline-block w-48 h-4 bg-gray-600 animate-pulse rounded"></span>
+                    <span className="inline-block w-48 h-4 bg-gray-300 animate-pulse rounded"></span>
                   ) : (
                     siteDescription
                   )}
