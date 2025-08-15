@@ -61,25 +61,22 @@ export const CompactTrafficFilter: React.FC<CompactTrafficFilterProps> = ({
 }) => {
   const trafficFilter = useTrafficFilter(entries, fields);
   
-  // Estabilizar função de callback para evitar loops
-  const stableOnFilterChange = React.useCallback(onFilterChange || (() => {}), []);
-  
-  // Aplicar filtro quando houver mudanças
+  // Estabilizar callback usando ref para evitar loops (igual ao desktop)
+  const onFilterChangeRef = React.useRef(onFilterChange);
   React.useEffect(() => {
-    const filterFn = (entry: any) => {
-      const criteria = {
-        selectedIntervals: trafficFilter.state.selectedIntervals,
-        customRange: trafficFilter.state.customRange
-      };
-      const filteredEntries = TrafficFilterService.filterSites([entry], criteria);
-      return filteredEntries.length > 0;
-    };
-    stableOnFilterChange(filterFn);
-  }, [
-    JSON.stringify(trafficFilter.state.selectedIntervals), 
-    JSON.stringify(trafficFilter.state.customRange), 
-    stableOnFilterChange
-  ]);
+    onFilterChangeRef.current = onFilterChange;
+  }, [onFilterChange]);
+
+  // Efeito para notificar mudanças no filtro (usar a mesma lógica do desktop)
+  React.useEffect(() => {
+    if (onFilterChangeRef.current) {
+      console.log('[CompactTrafficFilter] Creating filter function. hasSelectedItems:', trafficFilter.hasSelectedItems);
+      const filterFn = trafficFilter.getFilterFunction();
+      // Se não há filtro ativo, passa uma função que retorna true para todos
+      const finalFilterFn = filterFn || (() => true);
+      onFilterChangeRef.current(finalFilterFn);
+    }
+  }, [trafficFilter.getFilterFunction, trafficFilter.hasSelectedItems]);
 
   const intervals = TrafficFilterService.getTrafficIntervals();
 

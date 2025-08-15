@@ -163,6 +163,17 @@ export default function Register() {
       if (signUpError) throw signUpError;
       if (!user) throw new Error("Erro ao criar usuário");
 
+      // Get the role_id for the selected account type
+      const { data: roleData, error: roleError } = await supabase
+        .from("roles")
+        .select("id")
+        .eq("name", accountType)
+        .single();
+
+      if (roleError || !roleData) {
+        throw new Error(`Erro ao obter informações do tipo de conta: ${roleError?.message || 'Role não encontrado'}`);
+      }
+
       // Create platform user
       const { error: userError } = await supabase
         .from("platform_users")
@@ -174,6 +185,7 @@ export default function Register() {
             last_name: lastName.trim(),
             phone: phone.trim(),
             role: accountType,
+            role_id: roleData.id, // Incluir o role_id correto
             terms_accepted: true,
             terms_accepted_at: new Date().toISOString()
           }
@@ -185,7 +197,33 @@ export default function Register() {
       navigate("/verify-email");
     } catch (err: any) {
       console.error("Erro ao criar conta:", err);
-      setError(err.message || "Erro ao criar conta");
+      
+      // Traduzir mensagens de erro comuns do banco de dados
+      let errorMessage = "Erro ao criar conta";
+      
+      if (err.message) {
+        const message = err.message.toLowerCase();
+        
+        if (message.includes("null value in column") && message.includes("role_id")) {
+          errorMessage = "Erro interno: tipo de conta não foi definido corretamente. Tente novamente.";
+        } else if (message.includes("violates not-null constraint")) {
+          errorMessage = "Erro interno: alguns dados obrigatórios não foram preenchidos. Tente novamente.";
+        } else if (message.includes("duplicate key") || message.includes("already exists")) {
+          errorMessage = "Este e-mail já está cadastrado no sistema.";
+        } else if (message.includes("user already registered")) {
+          errorMessage = "Este e-mail já está cadastrado no sistema.";
+        } else if (message.includes("invalid email")) {
+          errorMessage = "E-mail inválido. Verifique o formato do e-mail.";
+        } else if (message.includes("password")) {
+          errorMessage = "Erro na senha. Verifique se atende aos requisitos.";
+        } else if (message.includes("network") || message.includes("connection")) {
+          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

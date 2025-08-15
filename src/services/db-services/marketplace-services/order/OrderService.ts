@@ -402,13 +402,14 @@ export async function getRecentOrders(): Promise<Order[] | null> {
 }
 
 /**
- * Retorna todos os pedidos (sem limite)
+ * Retorna todos os pedidos pagos (sem limite)
  */
 export async function getAllOrders(): Promise<Order[] | null> {
   try {
     const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .eq("payment_status", "paid")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data;

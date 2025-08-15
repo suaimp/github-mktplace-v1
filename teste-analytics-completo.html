@@ -1,0 +1,68 @@
+<!-- SCRIPT COMPLETO PARA TESTE DE ANALYTICS -->
+<!-- Cole este código no campo "Scripts dentro do <head>" -->
+
+<!-- Google Analytics 4 com Debug -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DEMO123456"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  // Configuração com debug ativado
+  gtag('config', 'G-DEMO123456', {
+    debug_mode: true,
+    send_page_view: true,
+    // Simulação - substitua por ID real
+    transport_type: 'beacon',
+    custom_map: {'custom_parameter': 'custom_value'}
+  });
+
+  // Logs para debugging
+  console.log('🎯 Google Analytics 4 inicializado');
+  console.log('📊 DataLayer:', window.dataLayer);
+
+  // Função para testar eventos
+  window.testarAnalytics = function() {
+    gtag('event', 'page_view', {
+      page_title: 'Teste Header Footer',
+      page_location: window.location.href,
+      content_group1: 'Configurações'
+    });
+    
+    gtag('event', 'click', {
+      event_category: 'Header Footer Test',
+      event_label: 'Botão de teste clicado',
+      value: 1
+    });
+    
+    console.log('✅ Eventos de teste enviados para GA!');
+  };
+
+  // Auto-teste após 2 segundos
+  setTimeout(() => {
+    if (typeof gtag !== 'undefined') {
+      window.testarAnalytics();
+      console.log('🚀 Teste automático executado!');
+    }
+  }, 2000);
+</script>
+
+<!-- Meta tags para melhor tracking -->
+<meta name="google-analytics" content="G-DEMO123456">
+<meta property="og:title" content="Teste Header Footer Scripts">
+<meta property="og:description" content="Testando funcionalidade de injeção de scripts">
+
+<!-- Hotjar simulado (descomente se quiser testar) -->
+<!--
+<script>
+    (function(h,o,t,j,a,r){
+        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+        h._hjSettings={hjid:1234567,hjsv:6};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    console.log('🔥 Hotjar simulado carregado');
+</script>
+-->

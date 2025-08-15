@@ -13,6 +13,8 @@ export interface SiteSettings {
   smtp_pass: string | null;
   smtp_from_email: string | null;
   smtp_from_name: string | null;
+  header_scripts: string | null;
+  footer_scripts: string | null;
   created_at?: string;
   updated_at?: string;
 }

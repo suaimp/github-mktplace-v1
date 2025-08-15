@@ -15,7 +15,20 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:notifications": "jest src/db-service/order-notifications",
-    "test:services": "jest src/services/db-services/marketplace-services/order"
+    "test:services": "jest src/services/db-services/marketplace-services/order",
+    "test:header-footer": "jest src/pages/Settings/__tests__",
+    "test:header-footer:watch": "jest src/pages/Settings/__tests__ --watch",
+    "test:header-footer:coverage": "jest src/pages/Settings/__tests__ --coverage",
+    "test:checkout": "node scripts/test-checkout.js",
+    "test:checkout:utils": "jest src/utils/__tests__",
+    "test:checkout:services": "jest src/services/db-services/marketplace-services/checkout",
+    "test:checkout:hooks": "jest src/components/Checkout/hooks/__tests__",
+    "test:checkout:components": "jest src/components/Checkout/__tests__",
+    "test:checkout:resume-table": "jest src/components/Checkout/__tests__/ResumeTable.test.tsx src/components/Checkout/__tests__/useResumeTableLogic.test.tsx src/components/Checkout/services/__tests__/ResumeTableCacheService.test.ts",
+    "test:checkout:pix": "jest src/pages/Checkout/Payment/pix",
+    "test:checkout:integration": "jest src/components/Checkout/__tests__/integration",
+    "test:checkout:watch": "jest --watch src/components/Checkout",
+    "test:checkout:coverage": "jest --coverage src/components/Checkout src/pages/Checkout src/utils"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -69,6 +82,8 @@
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.0.8",
     "@types/react-beautiful-dnd": "^13.1.8",
@@ -85,6 +100,7 @@
     "gh-pages": "^6.3.0",
     "globals": "^15.14.0",
     "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.4.38",
     "supabase": "^2.26.9",
     "tailwindcss": "^3.4.1",

@@ -11,6 +11,7 @@ import AdminRoute from "./routes/AdminRoute";
 
 /* Hooks */
 import { useGlobalLinkConfig } from "./hooks/useGlobalLinkConfig";
+import { useScriptInjection } from "./hooks/useScriptInjection";
 
 /* routes */
 import NotFound from "./pages/OtherPage/NotFound";
@@ -123,6 +124,9 @@ export default function App() {
     excludeInternalLinks: true,
     addSecurityAttributes: true,
   });
+
+  // Injeção dinâmica de scripts de header e footer
+  useScriptInjection();
 
   return (
     <Router>

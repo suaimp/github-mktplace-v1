@@ -1,0 +1,13 @@
+{
+  "name": "header-footer-tests",
+  "scripts": {
+    "test:header-footer": "jest --config=src/pages/Settings/__tests__/jest.config.json",
+    "test:header-footer:watch": "jest --config=src/pages/Settings/__tests__/jest.config.json --watch",
+    "test:header-footer:coverage": "jest --config=src/pages/Settings/__tests__/jest.config.json --coverage",
+    "test:header-footer:services": "jest --config=src/pages/Settings/__tests__/jest.config.json --testPathPattern=services",
+    "test:header-footer:hooks": "jest --config=src/pages/Settings/__tests__/jest.config.json --testPathPattern=hooks",
+    "test:header-footer:components": "jest --config=src/pages/Settings/__tests__/jest.config.json --testPathPattern=components",
+    "test:header-footer:integration": "jest --config=src/pages/Settings/__tests__/jest.config.json --testPathPattern=integration",
+    "test:header-footer:debug": "jest --config=src/pages/Settings/__tests__/jest.config.json --verbose --detectOpenHandles"
+  }
+}

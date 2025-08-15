@@ -4,6 +4,13 @@
 
 import '@testing-library/jest-dom';
 
+// Polyfills necessários para testes
+if (typeof global.TextEncoder === 'undefined') {
+  const util = require('util');
+  global.TextEncoder = util.TextEncoder;
+  global.TextDecoder = util.TextDecoder;
+}
+
 // Mock do console para testes
 global.console = {
   ...console,
