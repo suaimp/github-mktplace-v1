@@ -3,7 +3,7 @@
  */
 
 import { PixPaymentServiceModular } from '../PixPaymentServiceModular';
-import { PixCustomerData, PixOrderSummary } from '../interfaces/PixTypes';
+import { PixCustomerData, PixOrderSummary } from '../../interfaces/PixTypes';
 
 // Mock dos módulos externos
 jest.mock('../../../../../lib/supabase');
@@ -32,16 +32,7 @@ describe('PixPaymentServiceModular', () => {
       email: 'joao@example.com',
       document: '12345678901',
       legal_status: 'individual',
-      phone: '11999999999',
-      address: {
-        street: 'Rua Teste',
-        streetNumber: '123',
-        neighborhood: 'Centro',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234567',
-        country: 'BR'
-      }
+      phone: '11999999999'
     };
 
     const mockOrderSummary: PixOrderSummary = {
@@ -49,7 +40,8 @@ describe('PixPaymentServiceModular', () => {
       totalContentPrice: 50.00,
       totalFinalPrice: 150.00,
       discountValue: 0,
-      appliedCouponId: null
+      appliedCouponId: null,
+      items: []
     };
 
     it('should generate QR Code successfully', async () => {
@@ -98,7 +90,8 @@ describe('PixPaymentServiceModular', () => {
         totalContentPrice: 0,
         totalFinalPrice: 0,
         discountValue: 0,
-        appliedCouponId: null
+        appliedCouponId: null,
+        items: []
       };
 
       await expect(
@@ -114,7 +107,8 @@ describe('PixPaymentServiceModular', () => {
         totalContentPrice: 50.00,
         totalFinalPrice: 150.00,
         discountValue: 0,
-        appliedCouponId: null
+        appliedCouponId: null,
+        items: []
       };
 
       // Acessar método privado via TypeScript assertion
@@ -141,7 +135,8 @@ describe('PixPaymentServiceModular', () => {
         totalContentPrice: 100.00,
         totalFinalPrice: 100.00,
         discountValue: 0,
-        appliedCouponId: null
+        appliedCouponId: null,
+        items: []
       };
 
       const items = (pixService as any).prepareOrderItems(orderSummary);
@@ -158,16 +153,7 @@ describe('PixPaymentServiceModular', () => {
         email: 'joao@example.com',
         document: '12345678901',
         legal_status: 'individual',
-        phone: '11999999999',
-        address: {
-          street: 'Rua Teste',
-          streetNumber: '123',
-          neighborhood: 'Centro',
-          city: 'São Paulo',
-          state: 'SP',
-          zipCode: '01234567',
-          country: 'BR'
-        }
+        phone: '11999999999'
       };
 
       const mockOrderSummary: PixOrderSummary = {
@@ -175,7 +161,8 @@ describe('PixPaymentServiceModular', () => {
         totalContentPrice: 50.00,
         totalFinalPrice: 150.00,
         discountValue: 0,
-        appliedCouponId: null
+        appliedCouponId: null,
+        items: []
       };
 
       // Mock erro da API

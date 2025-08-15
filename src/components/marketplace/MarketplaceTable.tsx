@@ -18,7 +18,6 @@ import { extractProductPrice } from "./actions/priceCalculator";
 import PriceSimulationDisplay from "../EditorialManager/actions/PriceSimulationDisplay";
 import MarketplaceTableTooltip from "./Tooltip/MarketplaceTableTooltip";
 import { useTableState } from "./Tooltip/hooks/useTableState";
-import MarketplaceRowDetailsModal from "./MarketplaceRowDetailsModal";
 import { useMarketplaceSorting, sortEntries } from "./sorting";
 import { useTabNavigation } from "../tables/TabNavigation";
 import { BoltIcon, FireIcon, StarIcon } from "../../icons";
@@ -48,8 +47,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
   const [filteredEntries, setFilteredEntries] = useState<any[]>([]);
   const [fields, setFields] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<any>(null);
   // Estado para filtros
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
   // Estado para filtros de país
@@ -135,17 +132,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     currentPageEntries: paginatedEntries,
     scope: 'page'
   });
-
-  // Funções para o modal de detalhes
-  const openDetailsModal = (entry: any) => {
-    setSelectedEntry(entry);
-    setIsDetailsModalOpen(true);
-  };
-
-  const closeDetailsModal = () => {
-    setIsDetailsModalOpen(false);
-    setSelectedEntry(null);
-  };
 
   useEffect(() => {
     loadMarketplaceData();
@@ -334,30 +320,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
     ? fields.filter((field) => field.id !== buttonBuyField.id)
     : fields;
 
-  // Encontrar campo de site/URL
-  const siteField = tableFields.find(field => 
-    field.field_type === "url" || field.field_type === "site_url"
-  );
-
-  // Encontrar campo de categorias - usar a lógica mais flexível baseada nos logs
-  const categoryField = tableFields.find(field => 
-    field.field_type === "categories" || 
-    field.field_type === "category" ||
-    (field.field_type === "multiselect" && field.label?.toLowerCase().includes('categoria')) ||
-    field.label?.toLowerCase().includes('categoria') ||
-    field.label?.toLowerCase().includes('category') ||
-    field.label?.toLowerCase().includes('nicho') ||
-    field.label?.toLowerCase().includes('niche')
-  );
-
-  // Encontrar campo de preço
-  const priceField = tableFields.find(field => 
-    field.field_type === "product"
-  );
-
-  // Filtro de campos para mobile: Site, Categorias, Preço
-  const mobileFields = [siteField, categoryField, priceField].filter(Boolean);
-
   if (loading) {
     return <MarketplaceTableSkeleton />;
   }
@@ -439,21 +401,8 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     {/* StarIcon removido do cabeçalho */}
                   </div>
                 </th>
-                
-                {/* Cabeçalhos para mobile (menor que xl) - apenas colunas essenciais */}
-                {mobileFields.map((field) => {
-                  if (!field) return null;
-                  const settings = field.form_field_settings || {};
-                  const displayName = settings.marketplace_label || field.label;
-                  
-                  return (
-                    <th key={field.id} scope="col" className="xl:hidden text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                      <span>{displayName}</span>
-                    </th>
-                  );
-                })}
 
-                {/* Cabeçalhos para desktop (xl e acima) - todas as colunas */}
+                {/* Cabeçalhos das colunas */}
                 {tableFields.map((field) => {
                   const settings = field.form_field_settings || {};
                   const displayName = settings.marketplace_label || field.label;
@@ -520,7 +469,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                     <th
                       key={field.id}
                       scope="col"
-                      className={`hidden xl:table-cell text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
+                      className={`text-left text-[13px] font-semibold text-gray-900 dark:text-white ${
                         isSortable ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" : ""
                       }`}
                       onClick={isSortable ? () => handleSort(field.id) : undefined}
@@ -580,18 +529,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                   );
                 })}
 
-                {/* Botão de compra para mobile */}
-                {buttonBuyField && (
-                  <th scope="col" className="xl:hidden text-left text-[13px] font-semibold text-gray-900 dark:text-white">
-                    <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
-                  </th>
-                )}
-
-                {/* Botão de compra para desktop */}
+                {/* Botão de compra */}
                 {buttonBuyField && (
                   <th
                     scope="col" 
-                    className="hidden xl:table-cell sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
+                    className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
                     style={{ boxShadow: '-2px 0 4px rgba(0, 0, 0, 0.05)' }}
                   >
                     <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
@@ -611,16 +553,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 return (
                   <tr
                     key={entry.id}
-                    className={`cursor-pointer xl:cursor-auto ${
-                      selectedEntries.includes(entry.id) ? "bg-brand-50 dark:bg-brand-900/10" : ""
-                    }`}
-                    onClick={(e) => {
-                      if (window.innerWidth < 1280) {
-                        if (!(e.target as HTMLElement).closest('input, label')) {
-                          openDetailsModal(entry);
-                        }
-                      }
-                    }}
+                    className={selectedEntries.includes(entry.id) ? "bg-brand-50 dark:bg-brand-900/10" : ""}
                   >
                     <td className="whitespace-nowrap text-[13px]">
                       <div className="flex items-center justify-start gap-1">
@@ -647,63 +580,11 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                         <FavoriteStar entryId={entry.id} />
                       </div>
                     </td>
-                    
-                    {/* Células para mobile (menor que xl) - apenas campos essenciais */}
-                    {mobileFields.map((field) => {
-                      if (!field) return null;
-                      
-                      return (
-                        <td key={field.id} className="xl:hidden text-[13px] text-gray-700 dark:text-gray-300 xl:whitespace-nowrap">
-                          <div className="flex items-center justify-start">
-                            {(() => {
-                              const fieldValue = entry.values[field.id];
-                              if (field.field_type === "product") {
-                                const commissionValue = commissionField ? parseFloat(entry.values[commissionField.id]) || 0 : 0;
-                                return (
-                                  <PriceSimulationDisplay
-                                    commission={commissionValue}
-                                    productData={fieldValue}
-                                    layout="inline"
-                                    showMarginBelow={false}
-                                    showOriginalPrice={true}
-                                  />
-                                );
-                              }
-                              
-                              // Verificação direta para valores "Sim" e "Não" - aplicar badge diretamente (MOBILE)
-                              if (fieldValue === 'Sim' || fieldValue === 'Não') {
-                                const badgeClass = fieldValue === 'Sim' ? 'badge-sponsored-yes' : 'badge-sponsored-no';
-                                return (
-                                  <CellWithIcon 
-                                    fieldType={field.field_type} 
-                                    fieldLabel={field.label}
-                                  >
-                                    <span className={badgeClass}>
-                                      {fieldValue}
-                                    </span>
-                                  </CellWithIcon>
-                                );
-                              }
-                              
-                              const formattedValue = formatMarketplaceValue(fieldValue, field.field_type, true, field.label);
-                              return (
-                                <CellWithIcon 
-                                  fieldType={field.field_type} 
-                                  fieldLabel={field.label}
-                                >
-                                  {formattedValue}
-                                </CellWithIcon>
-                              );
-                            })()}
-                          </div>
-                        </td>
-                      );
-                    })}
 
-                    {/* Células para desktop (xl e acima) - todas as colunas */}
+                    {/* Células das colunas */}
                     {tableFields.map((field) => {
                       return (
-                        <td key={field.id} className="hidden xl:table-cell whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
+                        <td key={field.id} className="whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
                           <div className="flex items-center justify-start">
                             {(() => {
                               const fieldValue = entry.values[field.id];
@@ -785,26 +666,10 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                       );
                     })}
 
-                    {/* Botão de compra para mobile */}
-                    {buttonBuyField && (
-                      <td className="xl:hidden text-[13px] xl:whitespace-nowrap">
-                        <div className="flex items-center justify-start">
-                          <AddToCartButton
-                            entryId={entry.id}
-                            productName={productName}
-                            price={productPrice}
-                            url={productUrl}
-                            isInCart={isInCart}
-                            buttonStyle="outline"
-                          />
-                        </div>
-                      </td>
-                    )}
-
-                    {/* Botão de compra para desktop */}
+                    {/* Botão de compra */}
                     {buttonBuyField && (
                       <td 
-                        className="hidden xl:table-cell sticky right-0 z-10 whitespace-nowrap text-[13px]"
+                        className="sticky right-0 z-10 whitespace-nowrap text-[13px]"
                         style={{ boxShadow: 'rgba(0, 0, 0, 0.05) -2px 0px 4px' }}
                       >
                         <div className="flex items-center justify-start">
@@ -840,15 +705,6 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
           onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
-
-      {/* Modal de detalhes para mobile */}
-      <MarketplaceRowDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={closeDetailsModal}
-        entry={selectedEntry}
-        fields={tableFields}
-        productNameField={productNameField}
-      />
     </div>
   );
 }

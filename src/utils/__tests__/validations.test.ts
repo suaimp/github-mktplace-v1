@@ -2,7 +2,7 @@
  * Testes para validações de formulário
  */
 
-import { validateEmail, validateCPF, validateCNPJ, validatePhone } from '../validations';
+import { validateEmail, validateCPF, validateCNPJ, validatePhone } from '../inputMasks';
 
 describe('Form Validations', () => {
   describe('validateEmail', () => {

@@ -2,11 +2,16 @@
  * Testes para CartCheckoutResumeService
  */
 
-import { CartCheckoutResumeService } from '../CartCheckoutResumeService';
-import { supabase } from '../../../../lib/supabase';
+import { 
+  getCartCheckoutResumeByUser, 
+  createCartCheckoutResume, 
+  deleteCartCheckoutResume,
+    
+} from '../CartCheckoutResumeService';
+import { supabase } from '../../../../../lib/supabase';
 
 // Mock do Supabase
-jest.mock('../../../../lib/supabase', () => ({
+jest.mock('../../../../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {
@@ -48,7 +53,7 @@ describe('CartCheckoutResumeService', () => {
         error: null
       });
 
-      const result = await CartCheckoutResumeService.getCartCheckoutResumeByUser('user123');
+      const result = await getCartCheckoutResumeByUser('user123');
 
       expect(supabase.from).toHaveBeenCalledWith('cart_checkout_resume');
       expect(mockSupabaseFrom.select).toHaveBeenCalled();
@@ -62,13 +67,13 @@ describe('CartCheckoutResumeService', () => {
         error: { message: 'Database error' }
       });
 
-      const result = await CartCheckoutResumeService.getCartCheckoutResumeByUser('user123');
+      const result = await getCartCheckoutResumeByUser('user123');
 
       expect(result).toBeNull();
     });
 
     it('should handle empty user ID', async () => {
-      const result = await CartCheckoutResumeService.getCartCheckoutResumeByUser('');
+      const result = await getCartCheckoutResumeByUser('');
 
       expect(result).toBeNull();
     });
@@ -80,7 +85,9 @@ describe('CartCheckoutResumeService', () => {
         user_id: 'user123',
         product_url: 'https://example.com',
         quantity: 1,
-        product_price: 100.00
+        niche: 'Technology',
+        price: 100.00,
+        service_content: 'Test service content'
       };
 
       const mockResponse = {
@@ -90,7 +97,7 @@ describe('CartCheckoutResumeService', () => {
 
       mockSupabaseFrom.single.mockResolvedValue(mockResponse);
 
-      const result = await CartCheckoutResumeService.createCartCheckoutResume(mockItem);
+      const result = await createCartCheckoutResume(mockItem);
 
       expect(supabase.from).toHaveBeenCalledWith('cart_checkout_resume');
       expect(mockSupabaseFrom.insert).toHaveBeenCalledWith(mockItem);
@@ -102,7 +109,9 @@ describe('CartCheckoutResumeService', () => {
         user_id: 'user123',
         product_url: 'https://example.com',
         quantity: 1,
-        product_price: 100.00
+        niche: 'Technology',
+        price: 100.00,
+        service_content: 'Test service content'
       };
 
       mockSupabaseFrom.single.mockResolvedValue({
@@ -110,24 +119,24 @@ describe('CartCheckoutResumeService', () => {
         error: { message: 'Creation failed' }
       });
 
-      const result = await CartCheckoutResumeService.createCartCheckoutResume(mockItem);
+      const result = await createCartCheckoutResume(mockItem);
 
       expect(result).toBeNull();
     });
   });
 
-  describe('deleteCartCheckoutResumeByUser', () => {
-    it('should delete all items for user', async () => {
+  describe('deleteCartCheckoutResume', () => {
+    it('should delete item by id', async () => {
       mockSupabaseFrom.single.mockResolvedValue({
         data: null,
         error: null
       });
 
-      const result = await CartCheckoutResumeService.deleteCartCheckoutResumeByUser('user123');
+      const result = await deleteCartCheckoutResume('item123');
 
       expect(supabase.from).toHaveBeenCalledWith('cart_checkout_resume');
       expect(mockSupabaseFrom.delete).toHaveBeenCalled();
-      expect(mockSupabaseFrom.eq).toHaveBeenCalledWith('user_id', 'user123');
+      expect(mockSupabaseFrom.eq).toHaveBeenCalledWith('id', 'item123');
       expect(result).toBe(true);
     });
 
@@ -137,7 +146,7 @@ describe('CartCheckoutResumeService', () => {
         error: { message: 'Deletion failed' }
       });
 
-      const result = await CartCheckoutResumeService.deleteCartCheckoutResumeByUser('user123');
+      const result = await deleteCartCheckoutResume('item123');
 
       expect(result).toBe(false);
     });

@@ -4,10 +4,10 @@
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { useCouponDiscount } from '../useCouponDiscount';
-import { supabase } from '../../../../lib/supabase';
+import { supabase } from '../../../../../lib/supabase';
 
 // Mock do Supabase
-jest.mock('../../../../lib/supabase', () => ({
+jest.mock('../../../../../lib/supabase', () => ({
   supabase: {
     from: jest.fn()
   }
