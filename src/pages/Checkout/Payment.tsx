@@ -940,8 +940,8 @@ export default function Payment() {
         };
       });
 
-      // Calculate total amount
-      const totalAmount = orderSummary.totalFinalPrice; // Create order
+      // Calculate total amount with proper rounding to avoid floating point issues
+      const totalAmount = Math.round(orderSummary.totalFinalPrice * 100) / 100; // Create order
       const order = await createOrder({
         payment_method: paymentMethod,
         total_amount: totalAmount,

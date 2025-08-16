@@ -60,11 +60,21 @@ serve(async (req) => {
     const clientEmail = order.email;
     const adminEmail = "contato@suaimprensa.com.br"; // Email configurado para receber notificações
 
+    /**
+     * Formata valor monetário corretamente para evitar problemas de precisão
+     */
+    function formatCurrency(value: number): string {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+
     // Monte o corpo do e-mail com os dados da compra
     const orderDetails = `
       <h2>Nova compra realizada!</h2>
       <p><strong>Cliente:</strong> ${order.name} (${order.email})</p>
-      <p><strong>Valor Total:</strong> R$ ${order.total}</p>
+      <p><strong>Valor Total:</strong> ${formatCurrency(Number(order.total))}</p>
       <h3>Itens:</h3>
       <ul>
         ${order.items
