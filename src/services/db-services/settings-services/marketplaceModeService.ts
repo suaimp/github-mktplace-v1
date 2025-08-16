@@ -58,7 +58,7 @@ export class MarketplaceModeService {
    */
   static async updateMarketplaceModeSettings(
     data: MarketplaceModeData
-  ): Promise<boolean> {
+  ): Promise<MarketplaceModeSettings | null> {
     try {
       const settings = await this.getMarketplaceModeSettings();
       if (!settings) {
@@ -70,18 +70,27 @@ export class MarketplaceModeService {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from('settings')
         .update(updateData)
-        .eq('id', settings.id);
+        .eq('id', settings.id)
+        .select(`
+          id,
+          marketplace_in_test,
+          marketplace_in_maintenance,
+          marketplace_test_message,
+          marketplace_maintenance_message,
+          updated_at
+        `)
+        .single();
 
       if (error) throw error;
 
       console.log('Configurações de modo do marketplace atualizadas com sucesso');
-      return true;
+      return updatedData as MarketplaceModeSettings;
     } catch (error) {
       console.error('Erro ao atualizar configurações de modo do marketplace:', error);
-      return false;
+      return null;
     }
   }
 
@@ -100,7 +109,8 @@ export class MarketplaceModeService {
       updateData.marketplace_test_message = message;
     }
 
-    return await this.updateMarketplaceModeSettings(updateData);
+    const result = await this.updateMarketplaceModeSettings(updateData);
+    return result !== null;
   }
 
   /**
@@ -118,24 +128,27 @@ export class MarketplaceModeService {
       updateData.marketplace_maintenance_message = message;
     }
 
-    return await this.updateMarketplaceModeSettings(updateData);
+    const result = await this.updateMarketplaceModeSettings(updateData);
+    return result !== null;
   }
 
   /**
    * Atualiza apenas a mensagem do modo de teste
    */
   static async updateTestMessage(message: string): Promise<boolean> {
-    return await this.updateMarketplaceModeSettings({
+    const result = await this.updateMarketplaceModeSettings({
       marketplace_test_message: message
     });
+    return result !== null;
   }
 
   /**
    * Atualiza apenas a mensagem do modo de manutenção
    */
   static async updateMaintenanceMessage(message: string): Promise<boolean> {
-    return await this.updateMarketplaceModeSettings({
+    const result = await this.updateMarketplaceModeSettings({
       marketplace_maintenance_message: message
     });
+    return result !== null;
   }
 }

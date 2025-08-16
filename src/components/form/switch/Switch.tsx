@@ -22,10 +22,9 @@ const Switch: React.FC<SwitchProps> = ({
   // Sync internal state with external checked prop
   useEffect(() => {
     if (checked !== undefined) {
-      console.log(`Switch ${label} - External checked prop changed to:`, checked);
       setIsChecked(checked);
     }
-  }, [checked, label]);
+  }, [checked]);
 
   const handleToggle = () => {
     if (disabled) return;
@@ -34,12 +33,8 @@ const Switch: React.FC<SwitchProps> = ({
     setIsChecked(newCheckedState);
     
     if (onChange) {
-      console.log(`Switch ${label} - Calling onChange with:`, newCheckedState);
       onChange(newCheckedState);
     }
-    
-    // Log for debugging
-    console.log("Switch toggled:", label, "New state:", newCheckedState);
   };
 
   const switchColors =

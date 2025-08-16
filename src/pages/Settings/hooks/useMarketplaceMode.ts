@@ -73,13 +73,16 @@ export const useMarketplaceMode = (): UseMarketplaceModeReturn => {
       if (success) {
         setIsTestMode(enabled);
         showSuccessToast('Modo de teste atualizado com sucesso');
-        await loadSettings(); // Recarrega para sincronizar
       } else {
         showErrorToast('Erro ao atualizar modo de teste');
+        // Se falhou, reverter o estado local
+        await loadSettings();
       }
     } catch (error) {
       console.error('Erro ao alterar modo de teste:', error);
       showErrorToast('Erro ao atualizar modo de teste');
+      // Se deu erro, reverter o estado local
+      await loadSettings();
     } finally {
       setLoading(false);
     }
@@ -94,13 +97,16 @@ export const useMarketplaceMode = (): UseMarketplaceModeReturn => {
       if (success) {
         setIsMaintenanceMode(enabled);
         showSuccessToast('Modo de manutenção atualizado com sucesso');
-        await loadSettings(); // Recarrega para sincronizar
       } else {
         showErrorToast('Erro ao atualizar modo de manutenção');
+        // Se falhou, reverter o estado local
+        await loadSettings();
       }
     } catch (error) {
       console.error('Erro ao alterar modo de manutenção:', error);
       showErrorToast('Erro ao atualizar modo de manutenção');
+      // Se deu erro, reverter o estado local
+      await loadSettings();
     } finally {
       setLoading(false);
     }
