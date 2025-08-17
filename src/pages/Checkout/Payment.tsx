@@ -1880,9 +1880,24 @@ export default function Payment() {
         />
       )}
 
-      <div className="min-h-screen">
-        <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl mx-auto items-start">
-          <div className="w-full md:w-3/5">
+      <div className="min-h-screen px-4 md:px-0">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full max-w-6xl mx-auto items-start">
+          {/* Resumo do pedido - aparece primeiro no mobile, segundo no desktop */}
+          <div className="w-full md:w-2/5 order-1 md:order-2">
+            {/* Placeholder para manter o espaço quando sticky estiver ativo (apenas desktop) */}
+            <div className="hidden md:block" ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+            
+            <div 
+              ref={stickyHook.ref}
+              style={stickyHook.style}
+              className="w-full"
+            >
+              <FinishOrder />
+            </div>
+          </div>
+
+          {/* Formulários de pagamento - aparecem segundo no mobile, primeiro no desktop */}
+          <div className="w-full md:w-3/5 order-2 md:order-1">
             <PaymentInformationForm
               formData={formData}
               onChange={handleInputChange}
@@ -1929,20 +1944,6 @@ export default function Payment() {
               installmentsOptions={installmentsOptions}
               setInstallmentsOptions={setInstallmentsOptions}
             />
-          </div>
-
-          {/* Container com largura fixa para o sticky */}
-          <div className="w-full md:w-2/5">
-            {/* Placeholder para manter o espaço quando sticky estiver ativo */}
-            <div ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
-            
-            <div 
-              ref={stickyHook.ref}
-              style={stickyHook.style}
-              className="w-full"
-            >
-              <FinishOrder />
-            </div>
           </div>
         </div>
       </div>

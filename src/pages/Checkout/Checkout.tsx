@@ -111,22 +111,27 @@ export default function Checkout() {
       <PageMeta title="Checkout | Marketplace" description="Finalizar compra" />
       <PageBreadcrumb pageTitle="Checkout" />
 
-      <div className="w-full flex mx-auto min-h-screen gap-4">
-        <div className="flex-1 flex flex-col gap-8 mb-8">
-          <CheckoutCards />
-          <ResumeTable showCouponInput={true} />
-        </div>
-        {/* Lateral direita com sticky customizado */}
-        <div className="my-5 w-full flex-none md:my-0 md:w-72 lg:w-2/6 ml-2 md:ml-3 lg:ml-4">
-          {/* Placeholder para manter o espaço quando sticky estiver ativo */}
-          <div ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+      <div className="w-full mx-auto min-h-screen px-4 md:px-0">
+        {/* Layout responsivo: empilhado no mobile, lado a lado no desktop */}
+        <div className="flex flex-col md:flex-row md:gap-4">
+          {/* Conteúdo principal - ocupa toda largura no mobile, flex-1 no desktop */}
+          <div className="w-full md:flex-1 flex flex-col gap-6 md:gap-8 mb-6 md:mb-8">
+            <CheckoutCards />
+            <ResumeTable showCouponInput={true} />
+          </div>
           
-          <div 
-            ref={stickyHook.ref}
-            style={stickyHook.style}
-            className="w-full"
-          >
-            <FinishOrder />
+          {/* Resumo do pedido - aparece abaixo no mobile, lateral no desktop */}
+          <div className="w-full md:w-72 lg:w-2/6 md:my-5 md:ml-2 lg:ml-4 order-last md:order-none">
+            {/* Placeholder para manter o espaço quando sticky estiver ativo (apenas desktop) */}
+            <div className="hidden md:block" ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+            
+            <div 
+              ref={stickyHook.ref}
+              style={stickyHook.style}
+              className="w-full"
+            >
+              <FinishOrder />
+            </div>
           </div>
         </div>
       </div>

@@ -433,7 +433,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                             )
                           }
                           className="w-16 text-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-300 py-0 h-7 px-2"
-                          style={{ MozAppearance: "textfield" }}
+                          style={{ MozAppearance: "textfield", minWidth: "130px" }}
                           disabled={!!loadingItem[item.id]}
                         />
                       </div>
@@ -448,6 +448,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                               ? "border-gray-300 focus:border-brand-300 focus:ring-brand-500/10 dark:border-gray-700 dark:focus:border-brand-800 text-gray-800 dark:text-white/90"
                               : "border-gray-300 focus:border-brand-300 focus:ring-brand-500/10 dark:border-gray-700 dark:focus:border-brand-800 text-gray-400 dark:text-gray-400"
                           } pl-4`}
+                          style={{ minWidth: "130px" }}
                           value={getSelectedNicheName(item, selectedNiches) || NICHE_OPTIONS.PLACEHOLDER}
                           onChange={async (e) => {
                             const value = e.target.value;
@@ -603,6 +604,7 @@ export default function ResumeTable(props: ResumeTableProps) {
                                 : "text-gray-400 dark:text-gray-400 border-red-300 dark:border-red-600";
                             })()
                           } pl-4`}
+                          style={{ minWidth: "130px" }}
                           value={(() => {
                             const selectedTitle = getSelectedServiceTitle(item, selectedService);
                             // Se retornou NO_SELECTION, usa PLACEHOLDER no select
@@ -732,7 +734,11 @@ export default function ResumeTable(props: ResumeTableProps) {
                         );
                         
                         if (!shouldShowWordCountInput(selected, servicePackageArray)) {
-                          return null;
+                          return (
+                            <span className="text-gray-400 text-xs">
+                              Selecione um pacote
+                            </span>
+                          );
                         }
                         
                         const inputValue = wordCounts[item.id] ?? "";

@@ -233,28 +233,25 @@ export default function FinishOrder() {
           <label htmlFor="inputcode-textfield-with-link" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Cupom de desconto
           </label>
-          <div className="andes-form-control__control" style={{ width: '100%', maxWidth: 340, display: 'flex', alignItems: 'center' }}>
+          <div className="w-full flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center">
             <input
               autoComplete="off"
               id="inputcode-textfield-with-link"
-              className="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
+              className="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 w-full sm:rounded-r-none"
               maxLength={23}
               placeholder="Inserir código do cupom"
               aria-label="Inserir código do cupom"
               value={couponInput}
               onChange={e => setCouponInput(e.target.value)}
-              style={{ minWidth: 0 }}
               ref={inputRef}
             />
-            <div style={{ marginLeft: 8 }}>
-              <button
-                type="button"
-                className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors"
-                onClick={handleApplyCoupon}
-              >
-                Adicionar
-              </button>
-            </div>
+            <button
+              type="button"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors w-full sm:w-auto sm:rounded-l-none sm:ml-0"
+              onClick={handleApplyCoupon}
+            >
+              Adicionar
+            </button>
           </div>
           {couponLoading && <span className="text-xs text-gray-500">Validando cupom...</span>}
           {couponError && <span className="text-xs text-red-500">{couponError}</span>}
