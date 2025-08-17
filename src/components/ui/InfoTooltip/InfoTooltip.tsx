@@ -36,6 +36,9 @@ export default function InfoTooltip({
   } else {
     alignClass = 'left-1/2 -translate-x-1/2';
   }
+  // Em telas pequenas, garantir que o tooltip não ultrapasse os limites da viewport
+  const responsiveClasses = 'max-[570px]:left-[16px] max-[570px]:right-[16px] max-[570px]:translate-x-0 max-[570px]:w-auto';
+
   return (
     <div className={`group relative ${className}`} ref={triggerRef as any}>
       {children || (
@@ -55,12 +58,44 @@ export default function InfoTooltip({
       )}
       <div
         ref={tooltipRef as any}
-        className={`absolute ${alignClass} w-auto px-3 py-2 bg-gray-900 text-white !text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
-        style={{ color: '#fff', width: 'max-content' }}
+        className={`absolute ${alignClass} ${responsiveClasses} w-auto max-w-[200px] px-3 py-2 bg-gray-900 text-white !text-white text-[13px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+        style={{ 
+          color: '#fff',
+          minWidth: '92px',
+          maxWidth: 'min(200px, calc(100vw - 32px))',
+          wordWrap: 'break-word',
+          whiteSpace: 'normal'
+        }}
       >
         <span
           className="block"
-          style={{ color: '#fff', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit', fontFamily: 'inherit', WebkitTextFillColor: '#fff', textShadow: 'none', filter: 'none', background: 'none', boxShadow: 'none', border: 'none', outline: 'none', textDecoration: 'none', fontStyle: 'inherit', letterSpacing: 'inherit', wordBreak: 'normal', whiteSpace: 'normal', textAlign: 'inherit', verticalAlign: 'inherit', textTransform: 'inherit', textRendering: 'inherit', MozOsxFontSmoothing: 'inherit', WebkitFontSmoothing: 'inherit', fontVariant: 'inherit', colorScheme: 'light' }}
+          style={{ 
+            color: '#fff', 
+            fontSize: 'inherit', 
+            fontWeight: 'inherit', 
+            lineHeight: 'inherit', 
+            fontFamily: 'inherit', 
+            WebkitTextFillColor: '#fff', 
+            textShadow: 'none', 
+            filter: 'none', 
+            background: 'none', 
+            boxShadow: 'none', 
+            border: 'none', 
+            outline: 'none', 
+            textDecoration: 'none', 
+            fontStyle: 'inherit', 
+            letterSpacing: 'inherit', 
+            wordBreak: 'normal', 
+            whiteSpace: 'normal', 
+            textAlign: 'inherit', 
+            verticalAlign: 'inherit', 
+            textTransform: 'inherit', 
+            textRendering: 'inherit', 
+            MozOsxFontSmoothing: 'inherit', 
+            WebkitFontSmoothing: 'inherit', 
+            fontVariant: 'inherit', 
+            colorScheme: 'light' 
+          }}
         >
           {text}
         </span>
