@@ -6,7 +6,7 @@
   font-size: 13px;
   line-height: 1.2;
   padding: 0;
-  width: max-content;
+  min-width: fit-content;
 }
 
 /* Tipografia para links e âncoras na tabela */
@@ -97,5 +97,28 @@
   .marketplace-table td,
   .marketplace-table th {
     padding: 4px 8px;
+  }
+}
+
+/* Ajustes específicos para telas pequenas <= 570px */
+@media (max-width: 570px) {
+  .marketplace-table {
+    table-layout: auto;
+    width: 100%;
+  }
+  
+  .marketplace-table th,
+  .marketplace-table td {
+    max-width: none;
+    width: auto;
+    min-width: 0;
+    padding: 2px 4px;
+  }
+  
+  /* Forçar tooltips a respeitarem os limites da viewport */
+  .marketplace-table .group > div[class*="absolute"] {
+    max-width: calc(100vw - 32px) !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
   }
 }

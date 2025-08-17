@@ -68,16 +68,16 @@ export const MoreFiltersDropdown: React.FC<MoreFiltersDropdownProps> = ({
     return (
       <>
         {/* Overlay */}
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-999999" />
         
         {/* Modal */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-999999 flex items-center justify-center p-4">
           <div
             ref={dropdownRef}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto min-w-[320px] max-w-[90vw] max-h-[80vh] overflow-y-auto"
           >
             {/* Header do Modal */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-50">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Filtros Adicionais
               </h3>
@@ -109,7 +109,7 @@ export const MoreFiltersDropdown: React.FC<MoreFiltersDropdownProps> = ({
         ref={dropdownRef}
         className="absolute top-full left-0 z-50 mt-2 w-auto min-w-[320px] max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
       >
-        <h3 className="mb-3 text-sm font-medium text-gray-900 dark:text-white sticky top-0 bg-white dark:bg-gray-800 pb-2 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="mb-3 text-sm font-medium text-gray-900 dark:text-white sticky top-0 bg-white dark:bg-gray-800 pb-2 border-b border-gray-200 dark:border-gray-700 z-50">
           Filtros Adicionais
         </h3>
         <div className="space-y-3">

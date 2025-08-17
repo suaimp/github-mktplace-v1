@@ -71,15 +71,34 @@ export function useMarketplaceTableTooltipPosition(): UseMarketplaceTableTooltip
         setPlacement('bottom');
       }
       
-      // Ajuste horizontal baseado nos limites da tabela
-      if (leftEdge < containerLeft + 8 && rightEdge > containerRight - 8) {
-        setAlignX('center'); // Não cabe nem à esquerda nem à direita, centraliza o máximo possível
-      } else if (leftEdge < containerLeft + 8) {
-        setAlignX('left'); // Encosta à esquerda da tabela
-      } else if (rightEdge > containerRight - 8) {
-        setAlignX('right'); // Encosta à direita da tabela
+      // Ajuste horizontal baseado nos limites da tabela e largura da tela
+      const screenWidth = window.innerWidth;
+      const isSmallScreen = screenWidth < 570;
+      
+      if (isSmallScreen) {
+        // Em telas pequenas, priorizar não ultrapassar os limites da viewport
+        const viewportLeftEdge = triggerCenter - tooltipWidth / 2;
+        const viewportRightEdge = triggerCenter + tooltipWidth / 2;
+        const viewportPadding = 16; // 16px de margem da viewport
+        
+        if (viewportLeftEdge < viewportPadding) {
+          setAlignX('left');
+        } else if (viewportRightEdge > screenWidth - viewportPadding) {
+          setAlignX('right');
+        } else {
+          setAlignX('center');
+        }
       } else {
-        setAlignX('center'); // Centralizado
+        // Em telas maiores, usar a lógica baseada na tabela
+        if (leftEdge < containerLeft + 8 && rightEdge > containerRight - 8) {
+          setAlignX('center'); // Não cabe nem à esquerda nem à direita, centraliza o máximo possível
+        } else if (leftEdge < containerLeft + 8) {
+          setAlignX('left'); // Encosta à esquerda da tabela
+        } else if (rightEdge > containerRight - 8) {
+          setAlignX('right'); // Encosta à direita da tabela
+        } else {
+          setAlignX('center'); // Centralizado
+        }
       }
     }
 

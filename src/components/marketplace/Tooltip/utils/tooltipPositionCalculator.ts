@@ -72,10 +72,24 @@ export function calculateTooltipPosition(
   
   let alignX: 'center' | 'left' | 'right' = 'center';
   
-  if (leftEdge < containerBounds.left + padding) {
-    alignX = 'left';
-  } else if (rightEdge > containerBounds.right - padding) {
-    alignX = 'right';
+  // Em telas pequenas (< 570px), priorizar os limites da viewport
+  const screenWidth = window.innerWidth;
+  const isSmallScreen = screenWidth < 570;
+  
+  if (isSmallScreen) {
+    const viewportPadding = 16;
+    if (leftEdge < viewportPadding) {
+      alignX = 'left';
+    } else if (rightEdge > screenWidth - viewportPadding) {
+      alignX = 'right';
+    }
+  } else {
+    // Em telas maiores, usar a lógica baseada no container
+    if (leftEdge < containerBounds.left + padding) {
+      alignX = 'left';
+    } else if (rightEdge > containerBounds.right - padding) {
+      alignX = 'right';
+    }
   }
   
   return { placement, alignX };

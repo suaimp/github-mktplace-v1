@@ -38,8 +38,14 @@ const MarketplaceTooltip: React.FC<MarketplaceTooltipProps> = ({ text, className
       )}
       <div
         ref={tooltipRef as any}
-        className={`absolute ${alignClass} w-auto px-3 py-2 bg-gray-900 text-white !text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
-        style={{ color: '#fff', width: 'max-content' }}
+        className={`absolute ${alignClass} w-auto max-w-[200px] px-3 py-2 bg-gray-900 text-white !text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+        style={{ 
+          color: '#fff', 
+          minWidth: '92px',
+          maxWidth: 'min(200px, calc(100vw - 32px))',
+          wordWrap: 'break-word',
+          whiteSpace: 'normal'
+        }}
       >
         <span className="block" style={{ color: '#fff' }}>{text}</span>
         {placement === 'top' ? (
