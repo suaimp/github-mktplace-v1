@@ -110,7 +110,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
           {!isAdminLogin && (
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
-              Não tem uma conta??{" "}
+              Não tem uma conta?{" "}
               <Link to="/register" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Criar Conta
               </Link>
