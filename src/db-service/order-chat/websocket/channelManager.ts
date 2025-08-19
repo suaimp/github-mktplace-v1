@@ -4,7 +4,7 @@
  */
 
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { ChannelConfig, WebSocketCallbacks, UserPresence } from './types';
+import { ChannelConfig, WebSocketCallbacks } from './types';
 import { WEBSOCKET_CONFIG, CONNECTION_STATUS, ConnectionStatus } from './config';
 import { WebSocketUtils } from './utils';
 
@@ -47,6 +47,10 @@ export class WebSocketChannelManager {
 
       this.setupChannelListeners();
       
+      if (!this.channel) {
+        throw new Error('Falha ao criar canal');
+      }
+
       await this.channel.subscribe((status: string) => {
         console.log(`📡 [ChannelManager] Subscription status change:`, {
           status,
@@ -70,10 +74,6 @@ export class WebSocketChannelManager {
           this.handleReconnection(supabase);
         }
       });
-
-      if (!this.channel) {
-        throw new Error('Falha ao criar canal');
-      }
 
       return this.channel;
 

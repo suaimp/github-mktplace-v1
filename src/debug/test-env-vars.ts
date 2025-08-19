@@ -21,7 +21,7 @@ if (url && key) {
     
     // Teste básico de conexão
     supabase.from('users').select('count', { count: 'exact', head: true })
-      .then(({ data, error, count }) => {
+      .then(({   error, count }) => {
         if (error) {
           console.error('❌ Erro ao testar conexão:', error.message);
         } else {
