@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-08-19T17:40:28.191Z",
+  "results": {
+    "success": [
+      {
+        "table": "orders",
+        "records": 0,
+        "total": 65
+      },
+      {
+        "table": "coupons",
+        "records": 0,
+        "total": 1
+      },
+      {
+        "table": "contracts",
+        "records": 0,
+        "total": 4
+      },
+      {
+        "table": "company_data",
+        "records": 0,
+        "total": 6
+      },
+      {
+        "table": "admins",
+        "records": 0,
+        "total": 5
+      },
+      {
+        "table": "form_entries",
+        "records": 0,
+        "total": 428
+      },
+      {
+        "table": "user_stats",
+        "records": 0,
+        "total": 5
+      }
+    ],
+    "failed": [
+      {
+        "table": "users",
+        "error": "relation \"public.users\" does not exist",
+        "step": "fetch"
+      },
+      {
+        "table": "sites",
+        "error": "relation \"public.sites\" does not exist",
+        "step": "fetch"
+      },
+      {
+        "table": "order_notifications",
+        "error": "relation \"public.order_notifications\" does not exist",
+        "step": "fetch"
+      }
+    ],
+    "totalRecords": 0
+  },
+  "summary": {
+    "totalTables": 10,
+    "successfulTables": 7,
+    "failedTables": 3,
+    "totalRecords": 0
+  }
+}

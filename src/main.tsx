@@ -8,6 +8,7 @@ import "flatpickr/dist/flatpickr.css";
 import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./services/context/ThemeContext.tsx";
+import "./debug/checkSupabaseConfig";
 import { CartProvider } from "./components/marketplace/ShoppingCartContext.tsx";
 
 createRoot(document.getElementById("root")!).render(

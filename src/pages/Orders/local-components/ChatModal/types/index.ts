@@ -12,6 +12,11 @@ export interface ChatModalProps {
     product_name: string;
     product_url: string;
   };
+  buyerData?: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export interface ChatMessage {

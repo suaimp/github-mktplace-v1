@@ -1,0 +1,10 @@
+{
+  "name": "supabase-local-scripts",
+  "scripts": {
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:status": "supabase status",
+    "dev:local": "supabase start && npm run dev"
+  }
+}

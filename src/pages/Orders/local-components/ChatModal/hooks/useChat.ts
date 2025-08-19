@@ -92,12 +92,16 @@ export function useChat({ orderId, orderItemId, entryId, isOpen }: UseChatProps)
       setError(null);
       setChatState(prev => ({ ...prev, isTyping: true }));
 
+      // Verificar se usuário é admin
+      const isAdmin = await OrderChatService.isCurrentUserAdmin();
+      const senderType = isAdmin ? 'admin' : 'user';
+
       const newMessage = await OrderChatService.createMessage({
         order_id: orderId,
         order_item_id: orderItemId,
         entry_id: entryId,
         message: message.trim(),
-        sender_type: 'user'
+        sender_type: senderType
       });
 
       const chatMessage = convertMessage(newMessage);

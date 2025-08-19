@@ -1,9 +1,312 @@
+# Configuração do projeto Supabase
+project_id = "github-mktplace-v1"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_manual_linking = false
+# Configurações Auth sincronizadas da produção
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+# Configurações Auth sincronizadas da produção
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+# Configurações Auth sincronizadas da produção
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+
+# OAuth Providers (configure as secrets em .env)
+# [auth.external.google]
+# enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_CLIENT_SECRET)"
+
+# [auth.external.github]  
+# enabled = false
+# client_id = "env(GITHUB_CLIENT_ID)"
+# secret = "env(GITHUB_CLIENT_SECRET)"
+
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+inspector_port = 8083
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.buckets.logos]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"]
+
+[storage.buckets.avatars]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+
+[storage.buckets.brand_logos]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"]
+
+[storage.buckets.article_documents]
+public = false
+file_size_limit = "20MiB"
+allowed_mime_types = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"]
+
 [functions]
-[functions.test-smtp]
+
+# Edge Functions Configuration - Todas as funções disponíveis
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Edge Functions Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Edge Functions Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Edge Functions Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Edge Functions Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Edge Functions Configuration
+[functions.create-payment-intent]
+enabled = true
+verify_jwt = true
+
+[functions.create-pix-qrcode]
+enabled = true
+verify_jwt = true
+
+[functions.debug-secrets]
+enabled = true
+verify_jwt = true
+
+[functions.delete-user]
+enabled = true
+verify_jwt = true
+
+[functions.feedback-email]
+enabled = true
+verify_jwt = true
+
+[functions.fetch-production-secrets]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-installments]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-payment]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-pix-payment]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-pix-status]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-pix-webhook]
+enabled = true
+verify_jwt = true
+
+[functions.pagarme-webhook]
+enabled = true
 verify_jwt = true
 
 [functions.send-order-email]
-verify_jwt = false
+enabled = true
+verify_jwt = true
 
-   [functions.pagarme-pix-webhook]
-   verify_jwt = false
+[functions.send-order-notification-email]
+enabled = true
+verify_jwt = true
+
+[functions.smtp-test]
+enabled = true
+verify_jwt = true
+
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = true
+
+[functions.test-auth]
+enabled = true
+verify_jwt = true
+
+[functions.test-pix-simple]
+enabled = true
+verify_jwt = true
+
+[functions.test-secrets]
+enabled = true
+verify_jwt = true
+
+[functions.test-smtp]
+enabled = true
+verify_jwt = true
+

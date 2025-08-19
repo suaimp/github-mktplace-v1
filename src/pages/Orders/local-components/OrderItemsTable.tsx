@@ -5,7 +5,7 @@ import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options"
 import { supabase } from "../../../lib/supabase";
 import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
-import { SimpleChatModal } from "./SimpleChatModal";
+import { ChatModalWebSocket as SimpleChatModalWebSocket } from "./ChatModal";
 import { ChatIcon, HorizontaLDots, ExternalLinkIcon } from "../../../icons";
 import { OrderItemStatusService, OrderItemAnalyzer } from "./OrderItemsTable/index";
 
@@ -1026,16 +1026,12 @@ export default function OrderItemsTable({
       />
 
       {/* Modal de Chat */}
-      <SimpleChatModal
+      <SimpleChatModalWebSocket
         isOpen={chatModalOpen}
         onClose={handleCloseChat}
-        itemId={selectedChatItem?.id || ''}
+        orderItemId={selectedChatItem?.id || ''}
         orderId={orderId}
         entryId={selectedChatItem?.entry_id}
-        orderItemData={selectedChatItem ? {
-          product_name: selectedChatItem.product_name,
-          product_url: selectedChatItem.product_url
-        } : undefined}
       />
     </div>
   );

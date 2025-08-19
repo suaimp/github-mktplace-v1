@@ -28,7 +28,19 @@
     "test:checkout:pix": "jest src/pages/Checkout/Payment/pix",
     "test:checkout:integration": "jest src/components/Checkout/__tests__/integration",
     "test:checkout:watch": "jest --watch src/components/Checkout",
-    "test:checkout:coverage": "jest --coverage src/components/Checkout src/pages/Checkout src/utils"
+    "test:checkout:coverage": "jest --coverage src/components/Checkout src/pages/Checkout src/utils",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:status": "supabase status",
+    "supabase:sync": "powershell -ExecutionPolicy Bypass -File sync-production-db.ps1",
+    "supabase:diff": "supabase db diff",
+    "supabase:push": "supabase db push",
+    "supabase:pull": "supabase db pull",
+    "env:local": "powershell -Command \"if (Test-Path .env) { Move-Item .env .env.backup -Force }; Write-Host '✅ Configurado para DESENVOLVIMENTO LOCAL'\"",
+    "env:prod": "powershell -Command \"if (Test-Path .env.backup) { Move-Item .env.backup .env -Force }; Write-Host '✅ Configurado para PRODUÇÃO'\"",
+    "dev:local": "npm run env:local && supabase start && npm run dev",
+    "dev:prod": "npm run env:prod && npm run dev"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -56,6 +68,7 @@
     "apexcharts": "^4.1.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.1",
     "flatpickr": "^4.6.13",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",

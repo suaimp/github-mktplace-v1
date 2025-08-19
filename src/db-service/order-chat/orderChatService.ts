@@ -14,7 +14,7 @@ export class OrderChatService {
   /**
    * Verifica se o usuário atual é admin
    */
-  private static async isCurrentUserAdmin(): Promise<boolean> {
+  static async isCurrentUserAdmin(): Promise<boolean> {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return false;
@@ -248,7 +248,9 @@ export class OrderChatService {
     orderItemId: string, 
     callback: (message: OrderChatMessage) => void
   ) {
-    return supabase
+    console.log(`🔌 [Realtime] Criando subscription para orderItemId: ${orderItemId}`);
+    
+    const channel = supabase
       .channel(`order_chat_${orderItemId}`)
       .on(
         'postgres_changes',
@@ -259,10 +261,15 @@ export class OrderChatService {
           filter: `order_item_id=eq.${orderItemId}`,
         },
         (payload) => {
+          console.log(`📨 [Realtime] Nova mensagem recebida:`, payload);
           callback(payload.new as OrderChatMessage);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`🔌 [Realtime] Status da subscription: ${status}`);
+      });
+
+    return channel;
   }
 
   /**
@@ -270,6 +277,7 @@ export class OrderChatService {
    */
   static unsubscribeFromMessages(channel: any) {
     if (channel) {
+      console.log(`🔌 [Realtime] Removendo subscription`);
       supabase.removeChannel(channel);
     }
   }
