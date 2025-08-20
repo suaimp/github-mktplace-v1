@@ -3,7 +3,8 @@
  * Responsabilidade única: Exibir uma mensagem individual do chat
  */
 
-import { useMemo } from 'react';
+import { ChatAvatar } from './ChatAvatar';
+import { useUserAvatar } from '../../hooks/useUserAvatar';
 
 interface MessageProps {
   type: 'sent' | 'received';
@@ -17,29 +18,6 @@ interface MessageProps {
   showAvatar?: boolean;
 }
 
-// Avatar background colors (mesmas do UserAvatar)
-const AVATAR_COLORS = [
-  'bg-brand-500',   // Blue
-  'bg-success-500', // Green
-  'bg-error-500',   // Red
-  'bg-warning-500', // Orange
-  'bg-purple-500',  // Purple
-  'bg-pink-500',    // Pink
-  'bg-cyan-500',    // Cyan
-  'bg-amber-500',   // Amber
-  'bg-emerald-500', // Emerald
-  'bg-indigo-500',  // Indigo
-];
-
-function generateColor(text: string): string {
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = text.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[index];
-}
-
 export function Message({ 
   type, 
   content, 
@@ -47,23 +25,12 @@ export function Message({
   sender, 
   showAvatar = true 
 }: MessageProps) {
-  const avatarData = useMemo(() => {
-    if (!sender) return null;
-    
-    const initials = sender.name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-      
-    const backgroundColor = generateColor(sender.id || sender.name);
-    
-    return {
-      initials,
-      backgroundColor
-    };
-  }, [sender]);
+  // Hook para buscar dados do avatar do sender
+  const { avatarData, isLoading: avatarLoading } = useUserAvatar({
+    userId: sender?.id || '',
+    userName: sender?.name || '',
+    enabled: !!sender && showAvatar && type === 'received'
+  });
 
   if (type === 'sent') {
     return (
@@ -83,12 +50,21 @@ export function Message({
   return (
     <div className="max-w-[350px]">
       <div className="flex items-start gap-4">
-        {showAvatar && sender && avatarData && (
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${avatarData.backgroundColor}`}>
-            <span className="text-xs font-medium text-white">
-              {avatarData.initials}
-            </span>
-          </div>
+        {showAvatar && sender && (
+          <>
+            {avatarLoading ? (
+              <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse dark:bg-gray-700" />
+            ) : avatarData ? (
+              <ChatAvatar 
+                avatarData={avatarData} 
+                size="md" 
+              />
+            ) : (
+              <div className="w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                {sender.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </>
         )}
 
         <div>

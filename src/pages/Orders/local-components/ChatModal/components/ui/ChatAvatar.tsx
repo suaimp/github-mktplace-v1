@@ -27,6 +27,14 @@ export const ChatAvatar: React.FC<ChatAvatarProps> = ({
   const [imageError, setImageError] = useState(false);
   const sizeClasses = AVATAR_SIZES[size];
 
+  console.log('🎨 [ChatAvatar] Rendering with data:', {
+    hasImage: avatarData.hasImage,
+    imageUrl: avatarData.imageUrl,
+    initials: avatarData.initials,
+    backgroundColor: avatarData.backgroundColor,
+    imageError
+  });
+
   // Se a imagem falhou ou não existe, mostrar iniciais
   if (!avatarData.hasImage || !avatarData.imageUrl || imageError) {
     return (
@@ -43,7 +51,11 @@ export const ChatAvatar: React.FC<ChatAvatarProps> = ({
       src={avatarData.imageUrl}
       alt="Avatar"
       className={`${sizeClasses} rounded-full object-cover ${className}`}
-      onError={() => setImageError(true)}
+      onLoad={() => console.log('✅ [ChatAvatar] Image loaded successfully:', avatarData.imageUrl)}
+      onError={() => {
+        console.error('❌ [ChatAvatar] Image failed to load:', avatarData.imageUrl);
+        setImageError(true);
+      }}
     />
   );
 };

@@ -70,12 +70,10 @@ export function MessagesArea({
         </div>
       ) : (
         <>
-          {messages.map((message, index) => {
+          {messages.map((message) => {
             const isCurrentUser = message.sender.id === currentUserId;
-            const prevMessage = messages[index - 1];
-            const showAvatar = !prevMessage || 
-              prevMessage.sender.id !== message.sender.id ||
-              (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime()) > 300000; // 5 minutos
+            // Sempre mostrar avatar para mensagens recebidas (removida a lógica de sequência)
+            const showAvatar = true;
 
             return (
               <Message
