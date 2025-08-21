@@ -21,6 +21,7 @@ export interface NotificationItem {
   createdAt: Date;
   isRead?: boolean;
   relatedUrl?: string;
+  orderId?: string; // NOVO: ID do pedido para redirecionamento específico
 }
 
 export interface NotificationDropdownState {

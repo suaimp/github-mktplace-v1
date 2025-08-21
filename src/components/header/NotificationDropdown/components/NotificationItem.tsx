@@ -6,6 +6,7 @@
 import { NotificationItem } from '../types';
 import { DropdownItem } from '../../../ui/dropdown/DropdownItem';
 import { NotificationUserAvatar } from './NotificationUserAvatar';
+import { useNotificationClick } from '../hooks/useNotificationClick';
 
 interface NotificationItemComponentProps {
   notification: NotificationItem;
@@ -18,11 +19,10 @@ export function NotificationItemComponent({
   onClose, 
   onMarkAsRead 
 }: NotificationItemComponentProps) {
+  const { handleNotificationClick } = useNotificationClick();
+
   const handleClick = () => {
-    if (!notification.isRead) {
-      onMarkAsRead(notification.id);
-    }
-    onClose();
+    handleNotificationClick(notification, onMarkAsRead, onClose);
   };
 
   const formatTimeAgo = (date: Date): string => {
@@ -58,7 +58,6 @@ export function NotificationItemComponent({
     <li>
       <DropdownItem
         onItemClick={handleClick}
-        to={notification.relatedUrl}
         className={`flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
           !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : ''
         }`}

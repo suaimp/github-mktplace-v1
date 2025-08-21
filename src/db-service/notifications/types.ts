@@ -11,6 +11,7 @@ export interface Notification {
   title: string;
   subtitle?: string;
   content?: string;
+  order_id?: string;    // NOVO: ID do pedido para redirecionamento
   created_at: string;
   updated_at: string;
 }
@@ -23,12 +24,14 @@ export interface CreateNotificationInput {
   title: string;
   subtitle?: string;
   content?: string;
+  order_id?: string;    // NOVO: ID do pedido para redirecionamento
 }
 
 export interface UpdateNotificationInput {
   title?: string;
   subtitle?: string;
   content?: string;
+  order_id?: string;    // NOVO: Permitir atualizar order_id
 }
 
 export interface NotificationFilters {

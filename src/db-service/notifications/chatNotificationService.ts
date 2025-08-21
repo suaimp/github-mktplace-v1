@@ -26,7 +26,8 @@ export class ChatNotificationService {
           type: 'chat',
           title: data.orderItemUrl,
           subtitle: data.orderId,
-          content: data.message
+          content: data.message,
+          order_id: data.orderId             // NOVO: Adicionar order_id para redirecionamento
         });
         
         console.log(`✅ Notificação de chat criada para admins`);
@@ -40,7 +41,8 @@ export class ChatNotificationService {
             type: 'chat',
             title: data.orderItemUrl,
             subtitle: data.orderId,
-            content: data.message
+            content: data.message,
+            order_id: data.orderId             // NOVO: Adicionar order_id para redirecionamento
           });
           
           console.log(`✅ Notificação de chat criada para cliente ${customerIds[0]}`);

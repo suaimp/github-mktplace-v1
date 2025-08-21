@@ -14,7 +14,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../../lib/supabase';
 import { ChatNotificationFilterService } from '../../../../db-service/notifications';
-import { UserDisplayService } from '../services';
+import { UserDisplayService, NotificationRedirectService } from '../services';
 import { 
   NotificationDropdownState, 
   NotificationItem, 
@@ -64,6 +64,13 @@ export function useNotifications(): UseNotificationsReturn {
       user = await getUserInfo(dbNotification.sender_id);
     }
 
+    // Gerar URL de redirecionamento usando o novo serviço
+    const redirectUrl = NotificationRedirectService.generateRedirectUrl({
+      type: dbNotification.type,
+      orderId: dbNotification.order_id, // NOVO: Usar order_id da coluna
+      subtitle: dbNotification.subtitle
+    });
+
     return {
       id: dbNotification.id,
       title: dbNotification.title,
@@ -73,9 +80,8 @@ export function useNotifications(): UseNotificationsReturn {
       user,
       createdAt: new Date(dbNotification.created_at),
       isRead: false, // Por enquanto, todas são consideradas não lidas
-      relatedUrl: dbNotification.type === 'chat' && dbNotification.subtitle 
-        ? `/orders/${dbNotification.subtitle.replace('Pedido #', '')}`
-        : undefined
+      relatedUrl: redirectUrl,
+      orderId: dbNotification.order_id // NOVO: Incluir order_id no item
     };
   }, [getUserInfo]);
 

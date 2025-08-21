@@ -25,7 +25,8 @@ export class NotificationService {
         type: input.type,
         title: input.title,
         subtitle: input.subtitle,
-        content: input.content
+        content: input.content,
+        order_id: input.order_id        // NOVO: Incluir order_id na criação
       })
       .select()
       .single();
