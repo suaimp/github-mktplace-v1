@@ -6,6 +6,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { OrderChatService, OrderChatMessage } from '../../../../../db-service/order-chat';
 import { ChatUserService } from '../services/chatUserService';
+// Temporariamente comentado - sistema de presença
+// import { UserPresenceService } from '../../../../../db-service/user-presence';
+// import { supabase } from '../../../../../lib/supabase';
 import { ChatMessage, ChatState } from '../types';
 
 interface UseChatStableProps {
@@ -33,9 +36,13 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
 
   const [error, setError] = useState<string | null>(null);
   const [currentUserType, setCurrentUserType] = useState<'admin' | 'user' | null>(null);
+  // Temporariamente comentado - sistema de presença
+  // const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Temporariamente comentado - sistema de presença
+  // const presenceIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
   const lastMessageTimestampRef = useRef<string | null>(null);
@@ -294,6 +301,80 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
     }
   }, [orderId, orderItemId, entryId]);
 
+  // Temporariamente comentado - sistema de presença
+  /*
+  /**
+   * Verifica e atualiza presença de outros usuários
+   */
+  /*
+  const checkPresence = useCallback(async () => {
+    try {
+      // Busca usuários online para este chat
+      const onlineUsers = await UserPresenceService.getOnlineUsersForChat(orderItemId);
+      
+      // Se sou admin, verifica se há usuários online
+      // Se sou usuário, verifica se há admins online
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) return;
+
+      const currentUserId = currentUser.data.user.id;
+      const otherUsers = onlineUsers.filter(user => user.user_id !== currentUserId);
+      const hasOthersOnline = otherUsers.some(user => 
+        user.status === 'online' || user.status === 'typing'
+      );
+
+      setIsOtherUserOnline(hasOthersOnline);
+      
+      console.log('👥 [Presence] Status atualizado:', {
+        orderItemId,
+        totalOnline: onlineUsers.length,
+        othersOnline: otherUsers.length,
+        hasOthersOnline,
+        currentUserId
+      });
+
+    } catch (error) {
+      console.error('❌ [Presence] Erro ao verificar presença:', error);
+    }
+  }, [orderItemId]);
+
+  /**
+   * Marca usuário como online no chat
+   */
+  /*
+  const setUserOnline = useCallback(async () => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await UserPresenceService.setUserOnline(
+          user.user.id,
+          user.user.email,
+          orderItemId
+        );
+        console.log('✅ [Presence] Usuário marcado como online');
+      }
+    } catch (error) {
+      console.error('❌ [Presence] Erro ao marcar usuário online:', error);
+    }
+  }, [orderItemId]);
+
+  /**
+   * Marca usuário como offline no chat
+   */
+  /*
+  const setUserOffline = useCallback(async () => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await UserPresenceService.setUserOffline(user.user.id, orderItemId);
+        console.log('✅ [Presence] Usuário marcado como offline');
+      }
+    } catch (error) {
+      console.error('❌ [Presence] Erro ao marcar usuário offline:', error);
+    }
+  }, [orderItemId]);
+  */
+
   /**
    * Inicializa chat quando modal abre
    */
@@ -309,6 +390,12 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
       });
       setError(null);
       disconnectRealtime();
+      // Temporariamente comentado - sistema de presença
+      // setUserOffline();
+      // if (presenceIntervalRef.current) {
+      //   clearInterval(presenceIntervalRef.current);
+      //   presenceIntervalRef.current = null;
+      // }
       return;
     }
 
@@ -341,6 +428,16 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
         setError(null); // Limpar erro já que polling está funcionando
       }
 
+      // Temporariamente comentado - sistema de presença
+      // // 4. Configurar presença
+      // await setUserOnline();
+      // await checkPresence();
+
+      // // Polling periódico para presença
+      // presenceIntervalRef.current = setInterval(() => {
+      //   checkPresence();
+      // }, 10000); // A cada 10 segundos
+
       setChatState(prev => ({ ...prev, isLoading: false }));
     };
 
@@ -349,6 +446,11 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
     // Cleanup ao desmontar
     return () => {
       disconnectRealtime();
+      // Temporariamente comentado - sistema de presença
+      // setUserOffline();
+      // if (presenceIntervalRef.current) {
+      //   clearInterval(presenceIntervalRef.current);
+      // }
     };
   }, [isOpen, loadMessages, connectRealtime, disconnectRealtime, scheduleReconnect, startPolling]);
 
@@ -376,7 +478,7 @@ export function useChatStable({ orderId, orderItemId, entryId, isOpen }: UseChat
       error
     },
     sendMessage,
-    isOtherUserOnline: false, // Simplificado por enquanto
+    isOtherUserOnline: false, // Temporariamente hardcoded - sistema de presença comentado
     currentUserType // Agora retorna o tipo real do usuário
   };
 }

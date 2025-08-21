@@ -6,20 +6,18 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // Configurações da produção (do .env)
-const PROD_URL = process.env.PROD_SUPABASE_URL || 'https://uxbeaslwirkepnowydfu.supabase.co'
-const PROD_SERVICE_KEY = process.env.PROD_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4YmVhc2x3aXJrZXBub3d5ZGZ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTgxNDA1NSwiZXhwIjoyMDU3MzkwMDU1fQ.wTar7pt-A4wIZbiO2vfghTGUTKUK6hIKLonBybx4IVI'
+const PROD_URL = process.env.VITE_SUPABASE_URL || 'https://uxbeaslwirkepnowydfu.supabase.co'
+const PROD_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4YmVhc2x3aXJrZXBub3d5ZGZ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTgxNDA1NSwiZXhwIjoyMDU3MzkwMDU1fQ.wTar7pt-A4wIZbiO2vfghTGUTKUK6hIKLonBybx4IVI'
 
 // Configurações do local (do .env)
-const LOCAL_URL = process.env.LOCAL_SUPABASE_URL || 'http://127.0.0.1:54321'
-const LOCAL_SERVICE_KEY = process.env.LOCAL_SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+const LOCAL_URL = 'http://127.0.0.1:54321'
+const LOCAL_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
 const prodClient = createClient(PROD_URL, PROD_SERVICE_KEY)
 const localClient = createClient(LOCAL_URL, LOCAL_SERVICE_KEY)
 
-// Tabelas principais para sincronizar
+// Tabelas principais para sincronizar (apenas as que existem na produção)
 const TABLES_TO_SYNC = [
-  'users',
-  'sites', 
   'orders',
   'coupons',
   'contracts',
@@ -27,7 +25,11 @@ const TABLES_TO_SYNC = [
   'admins',
   'form_entries',
   'user_stats',
-  'order_notifications'
+  'order_chat',
+  'order_chat_participants',
+  'user_presence',
+  'best_selling_sites',
+  'cart_checkout_resume'
 ]
 
 async function pullProductionData() {

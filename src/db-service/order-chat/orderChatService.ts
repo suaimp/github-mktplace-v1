@@ -1,4 +1,5 @@
 import { supabase } from "../../lib/supabase";
+import { ChatNotificationService } from "../notifications";
 import { 
   OrderChatMessage, 
   CreateChatMessageInput, 
@@ -77,6 +78,28 @@ export class OrderChatService {
       console.error("Erro ao criar mensagem:", error);
       throw new Error("Falha ao enviar mensagem");
     }
+
+    // Buscar dados do order_item para usar o mesmo nome que aparece no header do chat
+    const { data: orderItemData } = await supabase
+      .from("order_items")
+      .select("product_name, product_url")
+      .eq("id", input.order_item_id)
+      .single();
+
+    // Usar o mesmo formato que o header do chat: product_name || product_url
+    const productTitle = orderItemData?.product_name || orderItemData?.product_url || `/order-item/${input.order_item_id}`;
+    
+    ChatNotificationService.sendChatNotifications({
+      orderId: input.order_id,
+      orderItemId: input.order_item_id,
+      orderItemUrl: productTitle, // Usar o mesmo nome que aparece no header do chat
+      senderId: user.user.id,
+      senderType: input.sender_type,
+      message: input.message,
+    }).catch(error => {
+      // Log do erro mas não quebra o fluxo
+      console.warn('Erro ao enviar notificação de chat:', error);
+    });
 
     return data;
   }

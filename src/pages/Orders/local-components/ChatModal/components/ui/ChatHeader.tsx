@@ -35,19 +35,23 @@ export function ChatHeader({
     enabled: !!userId && !!userName
   });
 
+  // Temporariamente comentado - funções de status online/offline
+  /*
   const getStatusText = () => {
     if (error) return error;
     if (isLoading) return 'Conectando...';
-    if (!isConnected) return 'Desconectado';
-    return isOnline ? 'Online' : 'Offline';
+    // if (!isConnected) return 'Desconectado';
+    // return isOnline ? 'Online' : 'Offline';
+    return ''; // Temporariamente removido
   };
 
   const getStatusColor = () => {
     if (error) return 'text-red-500 dark:text-red-400';
     if (isLoading) return 'text-yellow-500 dark:text-yellow-400';
-    if (!isConnected) return 'text-gray-400 dark:text-gray-500';
+    // if (!isConnected) return 'text-gray-400 dark:text-gray-500';
     return 'text-gray-400 dark:text-gray-500';
   };
+  */
 
   return (
     <div className={chatStyles.header.wrapper}>
@@ -74,9 +78,10 @@ export function ChatHeader({
               {productName}
             </p>
           )}
-          <span className={`text-xs ${getStatusColor()}`}>
+          {/* Temporariamente comentado - status online/offline */}
+          {/* <span className={`text-xs ${getStatusColor()}`}>
             {getStatusText()}
-          </span>
+          </span> */}
         </div>
       </div>
 

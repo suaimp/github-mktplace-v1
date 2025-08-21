@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-19T17:40:28.191Z",
+  "timestamp": "2025-08-20T22:05:52.102Z",
   "results": {
     "success": [
       {
@@ -36,31 +36,40 @@
         "table": "user_stats",
         "records": 0,
         "total": 5
-      }
-    ],
-    "failed": [
-      {
-        "table": "users",
-        "error": "relation \"public.users\" does not exist",
-        "step": "fetch"
       },
       {
-        "table": "sites",
-        "error": "relation \"public.sites\" does not exist",
-        "step": "fetch"
+        "table": "order_chat",
+        "records": 0,
+        "total": 28
       },
       {
-        "table": "order_notifications",
-        "error": "relation \"public.order_notifications\" does not exist",
-        "step": "fetch"
+        "table": "order_chat_participants",
+        "records": 0,
+        "total": 5
+      },
+      {
+        "table": "user_presence",
+        "records": 0,
+        "action": "empty"
+      },
+      {
+        "table": "best_selling_sites",
+        "records": 0,
+        "total": 33
+      },
+      {
+        "table": "cart_checkout_resume",
+        "records": 0,
+        "total": 11
       }
     ],
+    "failed": [],
     "totalRecords": 0
   },
   "summary": {
-    "totalTables": 10,
-    "successfulTables": 7,
-    "failedTables": 3,
+    "totalTables": 12,
+    "successfulTables": 12,
+    "failedTables": 0,
     "totalRecords": 0
   }
 }

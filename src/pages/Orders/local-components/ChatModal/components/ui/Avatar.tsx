@@ -9,8 +9,9 @@ interface AvatarProps {
   src: string;
   alt: string;
   size?: 'small' | 'medium';
-  showStatus?: boolean;
-  isOnline?: boolean;
+  // Temporariamente comentado - parâmetros de status online/offline
+  // showStatus?: boolean;
+  // isOnline?: boolean;
   className?: string;
 }
 
@@ -18,8 +19,9 @@ export function Avatar({
   src, 
   alt, 
   size = 'medium', 
-  showStatus = false, 
-  isOnline = false,
+  // Temporariamente comentado - parâmetros de status online/offline
+  // showStatus = false, 
+  // isOnline = false,
   className = '' 
 }: AvatarProps) {
   const sizeClasses = {
@@ -38,13 +40,14 @@ export function Avatar({
         alt={alt} 
         className={chatStyles.header.avatar.image}
       />
-      {showStatus && (
+      {/* Temporariamente comentado - indicador de status online/offline */}
+      {/* {showStatus && (
         <span 
           className={`${chatStyles.header.avatar.statusIndicator} ${
             isOnline ? chatStyles.states.online : chatStyles.states.offline
           }`}
         />
-      )}
+      )} */}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { signOut, supabase } from "../../lib/supabase";
 import UserAvatar from "../ui/avatar/UserAvatar";
 import { SettingsMinimalIcon } from "../../icons";
 import { DEFAULT_LOGIN_PATH } from "../marketplace/navigation";
+import { ThemeToggleItem } from "./theme";
 
 interface AdminProfile {
   id: string;
@@ -170,7 +171,7 @@ export default function UserDropdown() {
           </span>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-3 pb-3 border-t border-b border-gray-200 dark:border-gray-800">
+          <ul className="flex flex-col gap-1 pt-3 pb-3 border-t border-gray-200 dark:border-gray-800">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
@@ -235,6 +236,13 @@ export default function UserDropdown() {
           </li>
           */}
         </ul>
+        
+        {/* Seção 2: Theme Toggle */}
+        <div className="py-3 border-t border-b border-gray-200 dark:border-gray-800">
+          <ThemeToggleItem onItemClick={closeDropdown} />
+        </div>
+        
+        {/* Seção 3: Logout */}
         <button
           onClick={handleSignOut}
           disabled={loading}
