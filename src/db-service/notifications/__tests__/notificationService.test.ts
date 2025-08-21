@@ -3,7 +3,7 @@
  * Para executar: npm test -- notificationService.test.ts
  */
 
-import { NotificationService, ChatNotificationService } from '../index';
+// import { NotificationService, ChatNotificationService } from '../index';
 
 describe('NotificationService', () => {
   // Mock do Supabase será necessário aqui

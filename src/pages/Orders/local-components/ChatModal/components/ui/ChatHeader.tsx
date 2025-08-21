@@ -23,10 +23,10 @@ export function ChatHeader({
   userName, 
   userId,
   productName,
-  isOnline, 
-  isConnected, 
-  isLoading,
-  error,
+  isOnline: _isOnline, 
+  isConnected: _isConnected, 
+  isLoading: _isLoading,
+  error: _error,
   onClose 
 }: ChatHeaderProps) {
   const { avatarData, isLoading: avatarLoading } = useUserAvatar({
