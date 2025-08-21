@@ -6,6 +6,7 @@ import {
   PautaEmailData, 
   ArticleDocEmailData, 
   ArticleUrlEmailData, 
+  MessageEmailData,
   EmailTemplate 
 } from './types';
 
@@ -407,6 +408,150 @@ export class EmailTemplateService {
           
           <div class="footer">
             <p>Este é um email automático do sistema ${platformName}.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return { subject, html };
+  }
+
+  /**
+   * Template para nova mensagem de chat
+   */
+  static generateMessageTemplate(
+    data: MessageEmailData, 
+    isAdmin: boolean = false, 
+    platformName: string = 'Marketplace Sua Imprensa'
+  ): EmailTemplate {
+    const subject = isAdmin ? 'Nova mensagem do cliente' : 'Nova mensagem do suporte';
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subject}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #d30000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+          }
+          .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            border: 1px solid #e4e7ec;
+          }
+          .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+          }
+          .message-box {
+            background-color: #faf5f5;
+            border: 1px solid #d3000020;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #d30000;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+          }
+          .platform-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #d30000;
+            border: 1px solid #d30000;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-decoration: none !important;
+            color: white !important;
+            font-weight: bold;
+          }
+          .platform-link:hover {
+            background-color: #a82020;
+          }
+          .sender-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: ${data.senderType === 'admin' ? '#e3f2fd' : '#fff3e0'};
+            color: ${data.senderType === 'admin' ? '#1976d2' : '#f57c00'};
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>💬 ${subject}</h2>
+          </div>
+          <div class="content">
+            <p>Uma nova mensagem foi enviada no chat do pedido e está aguardando sua atenção.</p>
+            
+            <div class="info-box">
+              <h3>📋 Informações do Pedido</h3>
+              <p><strong>Cliente:</strong> ${data.userName}</p>
+              <p><strong>ID do Pedido:</strong> ${data.shortOrderId}</p>
+              <p><strong>Item:</strong> <a href="${data.productUrl}" target="_blank">${data.productName}</a></p>
+            </div>
+
+            <div class="info-box">
+              <h3>👤 Remetente</h3>
+              <div class="sender-badge">
+                ${data.senderType === 'admin' ? '🛡️ SUPORTE' : '👤 CLIENTE'}
+              </div>
+              <p><strong>Nome:</strong> ${data.senderName}</p>
+              <p><strong>Tipo:</strong> ${data.senderType === 'admin' ? 'Equipe de Suporte' : 'Cliente'}</p>
+            </div>
+
+            <div class="message-box">
+              <h3>💬 Mensagem Recebida</h3>
+              <p style="margin: 0; white-space: pre-wrap;">${data.message}</p>
+            </div>
+
+            ${isAdmin 
+              ? '<p>Por favor, responda à mensagem do cliente através do chat do pedido.</p>' 
+              : '<p>Nossa equipe de suporte enviou uma mensagem para você. Acesse o pedido para visualizar e responder.</p>'
+            }
+            
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="http://cp.suaimprensa.com.br/orders/${data.orderId}" class="platform-link" target="_blank">
+                Acessar Chat do Pedido
+              </a>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>Este é um email automático do sistema ${platformName}.</p>
+            <p>Para responder, acesse o chat do pedido através do link acima.</p>
           </div>
         </div>
       </body>

@@ -30,6 +30,10 @@ jest.mock('../../templates', () => ({
       subject: 'Artigo Publicado',
       html: '<html>Mock Published Template</html>'
     }),
+    generateMessageTemplate: jest.fn().mockImplementation((_data, isAdmin) => ({
+      subject: isAdmin ? 'Nova mensagem do cliente' : 'Nova mensagem do suporte',
+      html: '<html>Mock Message Template</html>'
+    })),
   },
 }));
 
@@ -303,6 +307,111 @@ describe('OrderNotificationService', () => {
 
       // Assert
       expect(result).toBe(true); // O serviço não valida URL vazia, isso pode ser uma melhoria
+    });
+  });
+
+  describe('sendMessageNotification', () => {
+    beforeEach(() => {
+      // Setup successful data retrieval
+      mockSupabaseClient.from.mockImplementation((table: string) => {
+        if (table === 'orders') {
+          return createTableMock(mockSupabaseResponses.orderSuccess.data);
+        }
+        if (table === 'order_items') {
+          return createTableMock(mockSupabaseResponses.orderItemSuccess.data);
+        }
+        return createTableMock();
+      });
+
+      mockSupabaseClient.functions.invoke.mockResolvedValue(mockSupabaseResponses.edgeFunctionSuccess);
+    });
+
+    it('deve enviar notificação quando cliente envia mensagem', async () => {
+      // Arrange
+      const messageData = {
+        message: 'Preciso de ajuda com meu pedido',
+        senderName: 'João Silva',
+        senderType: 'user' as const
+      };
+
+      // Act
+      const result = await OrderNotificationService.sendMessageNotification(
+        'c12eab5f-df30-4868-9469-a0dd61db4800',
+        'item-456',
+        messageData
+      );
+
+      // Assert
+      expect(result).toBe(true);
+      expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith(
+        'send-order-notification-email',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            subject: 'Nova mensagem do cliente',
+            html: expect.any(String),
+            from: expect.objectContaining({
+              name: expect.any(String)
+            })
+          })
+        })
+      );
+    });
+
+    it('deve enviar notificação quando admin envia mensagem', async () => {
+      // Arrange
+      const messageData = {
+        message: 'Seu pedido está sendo processado',
+        senderName: 'Maria (Suporte)',
+        senderType: 'admin' as const
+      };
+
+      // Act
+      const result = await OrderNotificationService.sendMessageNotification(
+        'c12eab5f-df30-4868-9469-a0dd61db4800',
+        'item-456',
+        messageData
+      );
+
+      // Assert
+      expect(result).toBe(true);
+      expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith(
+        'send-order-notification-email',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            subject: 'Nova mensagem do suporte',
+            html: expect.any(String),
+            from: expect.objectContaining({
+              name: expect.any(String)
+            })
+          })
+        })
+      );
+    });
+
+    it('deve retornar false quando dados do pedido não são encontrados', async () => {
+      // Arrange
+      mockSupabaseClient.from.mockImplementation((table: string) => {
+        if (table === 'orders') {
+          return createTableMock(null, { message: 'Order not found' });
+        }
+        return createTableMock();
+      });
+
+      const messageData = {
+        message: 'Teste',
+        senderName: 'Test User',
+        senderType: 'user' as const
+      };
+
+      // Act
+      const result = await OrderNotificationService.sendMessageNotification(
+        'invalid-order-id',
+        'item-456',
+        messageData
+      );
+
+      // Assert
+      expect(result).toBe(false);
     });
   });
 });

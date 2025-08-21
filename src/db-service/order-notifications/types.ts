@@ -39,10 +39,17 @@ export interface ArticleUrlEmailData extends OrderNotificationData {
   publishedUrl: string;
 }
 
+export interface MessageEmailData extends OrderNotificationData {
+  message: string;
+  senderName: string;
+  senderType: 'user' | 'admin';
+}
+
 export type EmailNotificationType = 
   | 'nova_pauta_enviada'
   | 'novo_artigo_enviado'
-  | 'novo_artigo_publicado';
+  | 'novo_artigo_publicado'
+  | 'nova_mensagem_chat';
 
 export interface EmailTemplate {
   subject: string;

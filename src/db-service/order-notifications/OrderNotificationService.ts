@@ -9,6 +9,7 @@ import {
   PautaEmailData,
   ArticleDocEmailData,
   ArticleUrlEmailData,
+  MessageEmailData,
   EmailRecipients,
   OrderNotificationData
 } from './types';
@@ -367,6 +368,83 @@ export class OrderNotificationService {
       return result;
     } catch (error) {
       console.error('❌ [EMAIL_DEBUG] Erro ao enviar notificação de artigo publicado:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Envia notificação de nova mensagem de chat
+   */
+  static async sendMessageNotification(
+    orderId: string,
+    orderItemId: string,
+    messageData: {
+      message: string;
+      senderName: string;
+      senderType: 'user' | 'admin';
+    }
+  ): Promise<boolean> {
+    try {
+      console.log('💬 [EMAIL_DEBUG] === INICIANDO NOTIFICAÇÃO DE MENSAGEM ===');
+      console.log('💬 [EMAIL_DEBUG] Parâmetros recebidos:', { orderId, orderItemId, messageData });
+
+      const baseData = await this.getOrderNotificationData(orderId, orderItemId);
+      if (!baseData) {
+        console.error('❌ [EMAIL_DEBUG] Não foi possível obter dados do pedido - ABORTANDO');
+        return false;
+      }
+
+      // Buscar nome dinâmico da plataforma
+      const platformName = await getPlatformName();
+      console.log('⚙️ [EMAIL_DEBUG] Nome da plataforma carregado:', platformName);
+
+      const emailData: MessageEmailData = {
+        ...baseData,
+        message: messageData.message,
+        senderName: messageData.senderName,
+        senderType: messageData.senderType
+      };
+
+      console.log('📧 [EMAIL_DEBUG] Gerando templates de mensagem...');
+      
+      // Gerar template para o cliente (quando admin envia mensagem)
+      const clientTemplate = EmailTemplateService.generateMessageTemplate(emailData, false, platformName);
+      console.log('📧 [EMAIL_DEBUG] Template cliente gerado:', { subject: clientTemplate.subject });
+      
+      // Gerar template para o admin (quando cliente envia mensagem)
+      const adminTemplate = EmailTemplateService.generateMessageTemplate(emailData, true, platformName);
+      console.log('📧 [EMAIL_DEBUG] Template admin gerado:', { subject: adminTemplate.subject });
+      
+      let clientResult = true;
+      let adminResult = true;
+
+      if (messageData.senderType === 'user') {
+        // Cliente enviou mensagem - notificar admin
+        adminResult = await this.sendEmailToRecipient(
+          EMAIL_CONFIG.ADMIN_EMAIL, 
+          adminTemplate.subject, 
+          adminTemplate.html
+        );
+        console.log('👤 [EMAIL_DEBUG] Cliente enviou mensagem, admin notificado:', adminResult ? 'SUCESSO' : 'FALHA');
+      } else {
+        // Admin enviou mensagem - notificar cliente
+        clientResult = await this.sendEmailToRecipient(
+          baseData.userEmail, 
+          clientTemplate.subject, 
+          clientTemplate.html
+        );
+        console.log('🛡️ [EMAIL_DEBUG] Admin enviou mensagem, cliente notificado:', clientResult ? 'SUCESSO' : 'FALHA');
+      }
+
+      const result = clientResult && adminResult;
+      console.log('💬 [EMAIL_DEBUG] === RESULTADO MENSAGEM ===', { 
+        cliente: clientResult ? 'SUCESSO' : 'FALHA',
+        admin: adminResult ? 'SUCESSO' : 'FALHA',
+        geral: result ? 'SUCESSO' : 'FALHA'
+      });
+      return result;
+    } catch (error) {
+      console.error('❌ [EMAIL_DEBUG] Erro ao enviar notificação de mensagem:', error);
       return false;
     }
   }

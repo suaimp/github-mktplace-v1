@@ -1,5 +1,6 @@
 import { supabase } from "../../lib/supabase";
 import { ChatNotificationService } from "../notifications";
+import { OrderNotificationService } from "../order-notifications/OrderNotificationService";
 import { 
   OrderChatMessage, 
   CreateChatMessageInput, 
@@ -89,16 +90,53 @@ export class OrderChatService {
     // Usar o mesmo formato que o header do chat: product_name || product_url
     const productTitle = orderItemData?.product_name || orderItemData?.product_url || `/order-item/${input.order_item_id}`;
     
+    // Buscar nome do remetente
+    let senderName = 'Usuário';
+    
+    if (input.sender_type === 'admin') {
+      // Buscar dados do admin
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('name')
+        .eq('id', user.user.id)
+        .single();
+      
+      senderName = adminData?.name || 'Equipe de Suporte';
+    } else {
+      // Buscar dados do pedido para obter o nome do cliente
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('billing_name')
+        .eq('id', input.order_id)
+        .single();
+      
+      senderName = orderData?.billing_name || 'Cliente';
+    }
+    
+    // Enviar notificação no dashboard (sistema interno)
     ChatNotificationService.sendChatNotifications({
       orderId: input.order_id,
       orderItemId: input.order_item_id,
-      orderItemUrl: productTitle, // Usar o mesmo nome que aparece no header do chat
+      orderItemUrl: productTitle,
       senderId: user.user.id,
       senderType: input.sender_type,
       message: input.message,
     }).catch(error => {
-      // Log do erro mas não quebra o fluxo
-      console.warn('Erro ao enviar notificação de chat:', error);
+      console.warn('Erro ao enviar notificação de chat no dashboard:', error);
+    });
+
+    // Enviar notificação por email
+    OrderNotificationService.sendMessageNotification(
+      input.order_id,
+      input.order_item_id,
+      {
+        message: input.message,
+        senderName: senderName,
+        senderType: input.sender_type
+      }
+    ).catch(error => {
+      // Log do erro mas não quebra o fluxo principal do chat
+      console.warn('Erro ao enviar notificação de mensagem por email:', error);
     });
 
     return data;

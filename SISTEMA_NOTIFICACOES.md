@@ -24,6 +24,17 @@ Sistema implementado para envio automático de emails em diferentes etapas do pr
 - **Destinatários**: Cliente + Admin (contato@suaimprensa.com.br)
 - **Conteúdo**: Link do artigo publicado + botão para visualizar
 
+### 💬 Nova Mensagem de Chat (NOVO!)
+- **Quando**: Envio de mensagem no chat do pedido
+- **Destinatários**: 
+  - Cliente envia mensagem → Admin recebe email
+  - Admin envia mensagem → Cliente recebe email
+- **Conteúdo**: 
+  - Texto da mensagem completa
+  - Dados do remetente (nome e tipo)
+  - Link direto para o chat do pedido
+  - Badge visual identificando origem (Cliente/Suporte)
+
 ## Estrutura dos Arquivos
 
 ### Core Services
@@ -39,6 +50,7 @@ Sistema implementado para envio automático de emails em diferentes etapas do pr
 - `PautaService.createPauta()` - Envia notificação ao criar pauta
 - `OrderItemService.uploadArticleDocument()` - Envia notificação ao fazer upload
 - `OrderItemService.updateOrderItem()` - Envia notificação ao atualizar artigos
+- `OrderChatService.createMessage()` - Envia notificação de nova mensagem (NOVO!)
 
 ## Como Funciona
 
