@@ -34,3 +34,12 @@ supabase/functions/.env.production
 .env.local
 .env.development
 .env.production
+
+# Supabase data dumps (contain sensitive data and secrets)
+supabase/dados_auth_recentes.sql
+supabase/data.sql
+supabase/data_complete.sql
+supabase/full_data.sql
+supabase/*_data*.sql
+supabase/backup*.sql
+supabase/dump*.sql
