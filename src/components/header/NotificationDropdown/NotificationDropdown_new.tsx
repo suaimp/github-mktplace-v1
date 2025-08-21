@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
-import { Link } from "react-router-dom";
-import { useUserNavigationPaths } from "../../marketplace/navigation";
 import { useNotifications } from "./hooks/useNotifications";
 import { NotificationItemComponent, EmptyNotifications } from "./components";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { paths } = useUserNavigationPaths();
   const { state, actions } = useNotifications();
 
   function toggleDropdown() {
@@ -133,13 +130,6 @@ export default function NotificationDropdown() {
                 />
               ))}
             </ul>
-            <Link
-              to={paths.home}
-              onClick={closeDropdown}
-              className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              Ver Todas as Notificações
-            </Link>
           </>
         )}
       </Dropdown>

@@ -98,12 +98,26 @@ export class OrderNotificationService {
     html: string
   ): Promise<boolean> {
     try {
-      console.log('📧 [EMAIL_DEBUG] Enviando email individual para:', email);
+      console.log('📧 [EMAIL_DEBUG] === INICIANDO ENVIO INDIVIDUAL ===');
+      console.log('📧 [EMAIL_DEBUG] Destinatário:', email);
+      console.log('📧 [EMAIL_DEBUG] Assunto:', subject);
+      console.log('📧 [EMAIL_DEBUG] HTML length:', html.length);
 
       // Buscar nome dinâmico da plataforma
       const platformName = await getPlatformName();
+      console.log('📧 [EMAIL_DEBUG] Platform name:', platformName);
 
-      const {   error } = await supabase.functions.invoke('send-order-notification-email', {
+      console.log('📧 [EMAIL_DEBUG] Invocando edge function com payload:', {
+        to: [email],
+        subject,
+        htmlLength: html.length,
+        from: {
+          email: EMAIL_CONFIG.FROM_EMAIL,
+          name: platformName
+        }
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-order-notification-email', {
         body: {
           to: [email],
           subject,
@@ -115,15 +129,31 @@ export class OrderNotificationService {
         }
       });
 
+      console.log('📧 [EMAIL_DEBUG] Resposta da edge function:', { data, error });
+
       if (error) {
-        console.error('❌ [EMAIL_DEBUG] Erro ao invocar função Edge para:', email, error);
+        console.error('❌ [EMAIL_DEBUG] ERRO DETALHADO da edge function:', {
+          email,
+          error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorDetails: (error as any).details || 'N/A',
+          errorContext: (error as any).context || 'N/A'
+        });
         return false;
       }
 
       console.log('✅ [EMAIL_DEBUG] Email enviado com sucesso para:', email);
+      console.log('✅ [EMAIL_DEBUG] Dados retornados:', data);
       return true;
     } catch (error) {
-      console.error('❌ [EMAIL_DEBUG] Erro no envio de email para:', email, error);
+      console.error('❌ [EMAIL_DEBUG] EXCEPTION no envio de email:', {
+        email,
+        error,
+        errorType: typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : 'N/A'
+      });
       return false;
     }
   }

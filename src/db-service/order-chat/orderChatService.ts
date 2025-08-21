@@ -126,6 +126,15 @@ export class OrderChatService {
     });
 
     // Enviar notificação por email
+    console.log('💬 [CHAT_DEBUG] === INICIANDO ENVIO DE NOTIFICAÇÃO POR EMAIL ===');
+    console.log('💬 [CHAT_DEBUG] Dados para notificação:', {
+      orderId: input.order_id,
+      orderItemId: input.order_item_id,
+      senderName,
+      senderType: input.sender_type,
+      messageLength: input.message.length
+    });
+
     OrderNotificationService.sendMessageNotification(
       input.order_id,
       input.order_item_id,
@@ -134,9 +143,14 @@ export class OrderChatService {
         senderName: senderName,
         senderType: input.sender_type
       }
-    ).catch(error => {
-      // Log do erro mas não quebra o fluxo principal do chat
-      console.warn('Erro ao enviar notificação de mensagem por email:', error);
+    ).then(result => {
+      console.log('💬 [CHAT_DEBUG] === RESULTADO NOTIFICAÇÃO EMAIL ===', result ? 'SUCESSO' : 'FALHA');
+    }).catch(error => {
+      // Log detalhado do erro
+      console.error('❌ [CHAT_DEBUG] ERRO DETALHADO ao enviar notificação por email:', error);
+      console.error('❌ [CHAT_DEBUG] Stack trace:', error.stack);
+      console.error('❌ [CHAT_DEBUG] Tipo do erro:', typeof error);
+      console.error('❌ [CHAT_DEBUG] Erro serializado:', JSON.stringify(error, null, 2));
     });
 
     return data;
