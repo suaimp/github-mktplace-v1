@@ -223,7 +223,7 @@ export default function FinishOrder() {
     inputRef.current?.focus();
   };
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 max-w-[733px] mx-auto">
       <h3 className="font-medium text-gray-800 dark:text-white mb-4 text-[16px] 2xsm:text-lg">
         Resumo do pedido
       </h3>

@@ -848,11 +848,11 @@ export default function OrderItemsTable({
                     
                     {/* Product type */}
                     <div className="flex items-center justify-between">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                      <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Produto
                       </div>
                       <div className="text-right min-w-[145px] overflow-hidden">
-                        <div className="font-medium text-gray-900 dark:text-gray-100 truncate max-[400px]:text-xs">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 truncate text-xs sm:text-sm">
                           {item.product_url ? (
                             <a
                               href={
@@ -862,7 +862,7 @@ export default function OrderItemsTable({
                               }
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate max-[400px]:text-xs"
+                              className="text-blue-600 dark:text-blue-400 hover:underline truncate text-xs sm:text-sm"
                             >
                               {(() => {
                                 const url = item.product_name || item.product_url;
@@ -876,7 +876,7 @@ export default function OrderItemsTable({
                               })()}
                             </a>
                           ) : (
-                            <span className="truncate max-[400px]:text-xs">{item.product_name}</span>
+                            <span className="truncate text-xs sm:text-sm">{item.product_name}</span>
                           )}
                         </div>
                       </div>
@@ -884,14 +884,14 @@ export default function OrderItemsTable({
 
                     {/* Package Content */}
                     <div className="flex items-center justify-between">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                      <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Pacote de Conteúdo
                       </div>
                       <div className="text-right min-w-[145px] overflow-hidden">
                         {(() => {
                           if (!item.service_content) {
                             return (
-                              <span className="text-gray-500 dark:text-gray-400 text-right truncate max-[400px]:text-xs">
+                              <span className="text-gray-500 dark:text-gray-400 text-right truncate text-xs sm:text-sm">
                                 Pacote não especificado
                               </span>
                             );
@@ -899,7 +899,7 @@ export default function OrderItemsTable({
 
                           if (!serviceData) {
                             return (
-                              <span className="text-gray-500 dark:text-gray-400 text-right truncate max-[400px]:text-xs">
+                              <span className="text-gray-500 dark:text-gray-400 text-right truncate text-xs sm:text-sm">
                                 Dados do pacote indisponíveis
                               </span>
                             );
@@ -911,7 +911,7 @@ export default function OrderItemsTable({
                             serviceData?.title === SERVICE_OPTIONS.NONE
                           ) {
                             return (
-                              <span className="text-gray-700 dark:text-gray-300 font-bold text-right truncate max-[400px]:text-xs">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold text-right truncate text-xs sm:text-sm">
                                 {serviceData.title}
                               </span>
                             );
@@ -920,7 +920,7 @@ export default function OrderItemsTable({
                           return (
                             <button
                               onClick={() => onPackageModalOpen(serviceData)}
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block max-[400px]:text-xs"
+                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block text-xs sm:text-sm"
                               title="Clique para ver detalhes do pacote"
                             >
                               {serviceData?.title || "Pacote sem título"}
@@ -932,7 +932,7 @@ export default function OrderItemsTable({
 
                     {/* Article Document */}
                     <div className="flex items-start justify-between">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                      <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Artigo DOC
                       </div>
                       <div className="text-right min-w-[145px] overflow-hidden">
@@ -940,7 +940,7 @@ export default function OrderItemsTable({
                           // Se o pagamento estiver pendente, mostrar "Aguardando Pagamento"
                           if (paymentStatus === 'pending') {
                             return (
-                              <span className="text-gray-500 dark:text-gray-400 italic truncate max-[400px]:text-xs">
+                              <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
                                 Aguardando Pagamento
                               </span>
                             );
@@ -958,7 +958,7 @@ export default function OrderItemsTable({
                                   )
                                 }
                                 disabled={downloadLoading[item.id]}
-                                className="text-blue-600 dark:text-blue-400 hover:underline truncate max-[400px]:text-xs"
+                                className="text-blue-600 dark:text-blue-400 hover:underline truncate text-xs sm:text-sm"
                                 title="Baixar artigo"
                               >
                                 Baixar Artigo
@@ -973,7 +973,7 @@ export default function OrderItemsTable({
                                 href={item.article_doc}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 dark:text-blue-400 hover:underline truncate max-[400px]:text-xs"
+                                className="text-blue-600 dark:text-blue-400 hover:underline truncate text-xs sm:text-sm"
                                 title="Abrir artigo em nova aba"
                               >
                                 Visualizar Artigo
@@ -984,7 +984,7 @@ export default function OrderItemsTable({
                           // Caso não tenha nada, botão de enviar artigo/pauta
                           if (hasPackage && hasOutline && !isAdmin) {
                             return (
-                              <span className="text-gray-900 dark:text-gray-100 truncate max-[400px]:text-xs">Pauta enviada</span>
+                              <span className="text-gray-900 dark:text-gray-100 truncate text-xs sm:text-sm">Pauta enviada</span>
                             );
                           }
 
@@ -1002,7 +1002,7 @@ export default function OrderItemsTable({
                           return (
                             <button
                               onClick={buttonAction}
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block max-[400px]:text-xs"
+                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block text-xs sm:text-sm"
                             >
                               {buttonText}
                             </button>
@@ -1013,12 +1013,12 @@ export default function OrderItemsTable({
 
                     {/* Article URL */}
                     <div className="flex items-start justify-between">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                      <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         URL do Artigo
                       </div>
                       <div className="text-right min-w-[145px] overflow-hidden">
                         {paymentStatus === 'pending' ? (
-                          <span className="text-gray-500 dark:text-gray-400 italic truncate max-[400px]:text-xs">
+                          <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
                             Aguardando Pagamento
                           </span>
                         ) : item.article_url ? (
@@ -1030,7 +1030,7 @@ export default function OrderItemsTable({
                             }
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline truncate block max-[400px]:text-xs"
+                            className="text-blue-600 dark:text-blue-400 hover:underline truncate block text-xs sm:text-sm"
                           >
                             {item.article_url}
                           </a>
@@ -1038,12 +1038,12 @@ export default function OrderItemsTable({
                           isAdmin ? (
                             <button
                               onClick={() => onUrlEditModalOpen(item.id, "")}
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block max-[400px]:text-xs"
+                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block text-xs sm:text-sm"
                             >
                               Adicionar URL
                             </button>
                           ) : (
-                            <span className="text-gray-500 dark:text-gray-400 italic truncate max-[400px]:text-xs">
+                            <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
                               N/A
                             </span>
                           )
@@ -1053,11 +1053,11 @@ export default function OrderItemsTable({
 
                     {/* Status */}
                     <div className="flex items-center justify-between">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                      <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         STATUS
                       </div>
                       <div className="text-right font-semibold min-w-[145px] overflow-hidden">
-                        <span className={`${status.className} truncate block max-[400px]:text-xs`}>
+                        <span className={`${status.className} truncate block text-xs sm:text-sm`}>
                           {status.label}
                         </span>
                       </div>
@@ -1066,7 +1066,7 @@ export default function OrderItemsTable({
                     {/* Action - Only for Admin */}
                     {isAdmin && (
                       <div className="flex items-center justify-between">
-                        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium max-[400px]:text-[10px]">
+                        <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                           Ação
                         </div>
                         <div className="text-right min-w-[145px] overflow-hidden">
@@ -1080,7 +1080,7 @@ export default function OrderItemsTable({
                               }));
                               onChangePublicationStatus(item.id, value);
                             }}
-                            className="h-9 appearance-none rounded-lg border bg-transparent px-3 py-1 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 border-gray-300 dark:border-gray-700 w-full max-[400px]:text-xs max-[400px]:px-2"
+                            className="h-9 appearance-none rounded-lg border bg-transparent px-3 py-1 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 border-gray-300 dark:border-gray-700 w-full text-xs sm:text-sm sm:px-3 px-2"
                           >
                             <option value="pending" className="text-gray-700 dark:bg-gray-900 dark:text-gray-400">Pendente</option>
                             <option value="approved" className="text-gray-700 dark:bg-gray-900 dark:text-gray-400">Aprovar</option>

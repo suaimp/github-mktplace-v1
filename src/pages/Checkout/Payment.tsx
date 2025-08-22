@@ -1880,12 +1880,12 @@ export default function Payment() {
         />
       )}
 
-      <div className="min-h-screen md:px-0">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full max-w-6xl mx-auto items-start">
+      <div className="min-h-screen min-[1150px]:px-0">
+        <div className="flex flex-col min-[1150px]:flex-row gap-6 min-[1150px]:gap-8 w-full max-w-6xl mx-auto items-start">
           {/* Resumo do pedido - aparece primeiro no mobile, segundo no desktop */}
-          <div className="w-full md:w-2/5 order-1 md:order-2">
+          <div className="w-full min-[1150px]:w-2/5 order-1 min-[1150px]:order-2">
             {/* Placeholder para manter o espaço quando sticky estiver ativo (apenas desktop) */}
-            <div className="hidden md:block" ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
+            <div className="hidden min-[1150px]:block" ref={stickyHook.placeholderRef} style={stickyHook.placeholderStyle} />
             
             <div 
               ref={stickyHook.ref}
@@ -1897,7 +1897,7 @@ export default function Payment() {
           </div>
 
           {/* Formulários de pagamento - aparecem segundo no mobile, primeiro no desktop */}
-          <div className="w-full md:w-3/5 order-2 md:order-1">
+          <div className="w-full min-[1150px]:w-3/5 order-2 min-[1150px]:order-1">
             <PaymentInformationForm
               formData={formData}
               onChange={handleInputChange}

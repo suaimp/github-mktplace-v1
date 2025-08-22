@@ -17,7 +17,7 @@ export function useCustomSticky({ offsetTop = 20, onlyOnDesktop = true }: UseCus
     if (!elementRef.current) return;
 
     // Skip on mobile if onlyOnDesktop is true
-    if (onlyOnDesktop && window.innerWidth < 768) {
+    if (onlyOnDesktop && window.innerWidth < 1150) {
       setIsFixed(false);
       setElementStyles({});
       setPlaceholderStyles({ display: 'none' });
