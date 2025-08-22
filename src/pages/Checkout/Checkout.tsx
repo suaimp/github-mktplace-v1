@@ -111,7 +111,7 @@ export default function Checkout() {
       <PageMeta title="Checkout | Marketplace" description="Finalizar compra" />
       <PageBreadcrumb pageTitle="Checkout" />
 
-      <div className="w-full mx-auto min-h-screen px-4 md:px-0">
+      <div className="w-full mx-auto min-h-screen md:px-0">
         {/* Layout responsivo: empilhado no mobile, lado a lado no desktop */}
         <div className="flex flex-col md:flex-row md:gap-4">
           {/* Conteúdo principal - ocupa toda largura no mobile, flex-1 no desktop */}

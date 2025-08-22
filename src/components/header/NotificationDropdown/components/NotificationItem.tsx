@@ -64,11 +64,11 @@ export function NotificationItemComponent({
           {/* Subtitle em negrito com pontinho e time ao lado */}
           {notification.subtitle && (
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-theme-sm font-bold text-gray-800 dark:text-white/90">
+              <span className="text-theme-sm max-[400px]:text-xs font-bold text-gray-800 dark:text-white/90">
                 {formatSubtitle(notification.subtitle)}
               </span>
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-              <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+              <span className="text-theme-xs max-[400px]:text-[10px] text-gray-500 dark:text-gray-400">
                 {formatTimeAgo(notification.createdAt)}
               </span>
             </div>
@@ -76,14 +76,14 @@ export function NotificationItemComponent({
 
           {/* Nome do usuário */}
           {notification.user && (
-            <span className="mb-1 block text-theme-xs font-medium text-blue-600 dark:text-blue-400">
+            <span className="mb-1 block text-theme-xs max-[400px]:text-[10px] font-medium text-blue-600 dark:text-blue-400">
               {notification.user.name}
             </span>
           )}
 
           {/* Content */}
           {notification.content && (
-            <p className="text-theme-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+            <p className="text-theme-xs max-[400px]:text-[10px] text-gray-600 dark:text-gray-400 line-clamp-2">
               {notification.content}
             </p>
           )}

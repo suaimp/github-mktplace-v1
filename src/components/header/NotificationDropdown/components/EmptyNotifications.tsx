@@ -12,7 +12,7 @@ export function EmptyNotifications({ isLoading }: EmptyNotificationsProps) {
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 text-sm max-[400px]:text-xs">
           Carregando notificações...
         </p>
       </div>
@@ -36,10 +36,10 @@ export function EmptyNotifications({ isLoading }: EmptyNotificationsProps) {
           />
         </svg>
       </div>
-      <h3 className="text-gray-800 dark:text-gray-200 font-medium mb-2">
+      <h3 className="text-gray-800 dark:text-gray-200 font-medium mb-2 max-[400px]:text-sm">
         Nenhuma notificação
       </h3>
-      <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+      <p className="text-gray-500 dark:text-gray-400 text-sm max-[400px]:text-xs text-center">
         Você está em dia! Quando houver novidades, elas aparecerão aqui.
       </p>
     </div>

@@ -1880,7 +1880,7 @@ export default function Payment() {
         />
       )}
 
-      <div className="min-h-screen px-4 md:px-0">
+      <div className="min-h-screen md:px-0">
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full max-w-6xl mx-auto items-start">
           {/* Resumo do pedido - aparece primeiro no mobile, segundo no desktop */}
           <div className="w-full md:w-2/5 order-1 md:order-2">

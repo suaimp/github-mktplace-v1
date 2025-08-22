@@ -48,10 +48,10 @@ export default function NotificationDropdown() {
   const NotificationsContent = () => (
     <>
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
-        <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+        <h5 className="text-lg max-[400px]:text-base font-semibold text-gray-800 dark:text-gray-200">
           Notificações
           {state.unreadCount > 0 && (
-            <span className="ml-2 px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full dark:bg-orange-900 dark:text-orange-200">
+            <span className="ml-2 px-2 py-1 text-xs max-[400px]:text-[10px] bg-orange-100 text-orange-800 rounded-full dark:bg-orange-900 dark:text-orange-200">
               {state.unreadCount}
             </span>
           )}
@@ -95,7 +95,7 @@ export default function NotificationDropdown() {
       
       {state.error && (
         <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
-          <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+          <p className="text-sm max-[400px]:text-xs text-red-600 dark:text-red-400">{state.error}</p>
         </div>
       )}
 

@@ -224,20 +224,20 @@ export default function FinishOrder() {
   };
   return (
     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
-      <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+      <h3 className="font-medium text-gray-800 dark:text-white mb-4 text-[16px] 2xsm:text-lg">
         Resumo do pedido
       </h3>
       {/* Input de cupom de desconto */}
       {window.location.pathname === "/checkout" && (
         <div className="mb-4 flex flex-col items-start gap-2">
-          <label htmlFor="inputcode-textfield-with-link" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <label htmlFor="inputcode-textfield-with-link" className="font-medium text-gray-700 dark:text-gray-200 text-[12px] 2xsm:text-sm">
             Cupom de desconto
           </label>
           <div className="w-full flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center">
             <input
               autoComplete="off"
               id="inputcode-textfield-with-link"
-              className="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 w-full sm:rounded-r-none"
+              className="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 w-full sm:rounded-r-none text-[12px] 2xsm:text-sm"
               maxLength={23}
               placeholder="Inserir código do cupom"
               aria-label="Inserir código do cupom"
@@ -247,7 +247,7 @@ export default function FinishOrder() {
             />
             <button
               type="button"
-              className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors w-full sm:w-auto sm:rounded-l-none sm:ml-0"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded transition-colors w-full sm:w-auto sm:rounded-l-none sm:ml-0 text-[12px] 2xsm:text-sm"
               onClick={handleApplyCoupon}
             >
               Adicionar
@@ -262,7 +262,7 @@ export default function FinishOrder() {
       )}
       {/* Lista de Itens do pedido */}
       <div className="mb-4">
-        <h4 className="text-sm text-gray-700 dark:text-gray-200 mb-1">Itens:</h4>
+        <h4 className="text-gray-700 dark:text-gray-200 mb-1 text-[12px] 2xsm:text-sm">Itens:</h4>
         {loadingCheckoutItems ? (
           <span className="text-xs text-gray-500">Carregando itens...</span>
         ) : checkoutItems.length === 0 ? (
@@ -285,8 +285,8 @@ export default function FinishOrder() {
       <div className="py-2"></div>
       <div className="my-2 border-t border-b border-t-gray-300 border-b-gray-300 dark:border-t-gray-700 dark:border-b-gray-700 py-5">
         <div className="flex items-center justify-between">
-          <div className="text-gray-700 dark:text-gray-300">Valor</div>
-          <div className="text-gray-900 dark:text-white">
+          <div className="text-gray-700 dark:text-gray-300 text-[12px] 2xsm:text-sm">Valor</div>
+          <div className="text-gray-900 dark:text-white text-[12px] 2xsm:text-sm">
             {loading ? (
               <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-16 rounded"></div>
             ) : (
@@ -302,8 +302,8 @@ export default function FinishOrder() {
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <div className="text-gray-700 dark:text-gray-300">Conteúdo</div>
-          <div className="text-gray-900 dark:text-white">
+          <div className="text-gray-700 dark:text-gray-300 text-[12px] 2xsm:text-sm">Conteúdo</div>
+          <div className="text-gray-900 dark:text-white text-[12px] 2xsm:text-sm">
             {loading ? (
               <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-16 rounded"></div>
             ) : (
@@ -322,20 +322,20 @@ export default function FinishOrder() {
         {/* Exibir desconto se houver */}
         {(isPaymentPage ? dbDiscountValue > 0 : discountValue > 0) && (
           <div className="flex items-center justify-between mt-2">
-            <div className="text-gray-700 dark:text-gray-300">Desconto</div>
-            <div className="text-green-600 dark:text-green-400">
+            <div className="text-gray-700 dark:text-gray-300 text-[12px] 2xsm:text-sm">Desconto</div>
+            <div className="text-green-600 dark:text-green-400 text-[12px] 2xsm:text-sm">
               - {formatCurrency(isPaymentPage ? dbDiscountValue : discountValue)}
             </div>
           </div>
         )}
       </div>
       <div className="flex items-center justify-between">
-        <div className="font-medium text-gray-800 dark:text-white">Total</div>
+        <div className="font-medium text-gray-800 dark:text-white text-[14px] 2xsm:text-base">Total</div>
         <div>
           {loading || loadingCheckoutTotal ? (
             <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-20 rounded"></div>
           ) : (
-            <span className="text-gray-900 dark:text-white font-bold">
+            <span className="text-gray-900 dark:text-white font-bold text-[14px] 2xsm:text-base">
               {isPaymentPage 
                 ? formatCurrency(totalFinalPrice || 0)
                 : formatCurrency(Math.max((checkoutTotal - discountValue), 0))
@@ -348,7 +348,7 @@ export default function FinishOrder() {
       {window.location.pathname !== "/checkout/payment" && (
         <div>
           <button
-            className={`w-full mt-2 font-medium py-2 px-4 rounded transition-colors ${
+            className={`w-full mt-2 font-medium py-2 px-4 rounded transition-colors text-[12px] 2xsm:text-sm ${
               areAllFieldsSelected && !loadingValidation
                 ? "bg-brand-500 hover:bg-brand-600 text-white"
                 : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
@@ -363,12 +363,12 @@ export default function FinishOrder() {
           {!areAllFieldsSelected && !loadingValidation && (
             <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0 hidden 2xsm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-red-800 dark:text-red-200">Confirme o Nicho e Conteúdo</p>
-                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">Por favor, selecione o tipo de conteúdo e Pacote de Conteúdo para cada item antes de continuar.</p>
+                  <p className="font-medium text-red-800 dark:text-red-200 text-[12px] 2xsm:text-sm">Confirme o Nicho e Conteúdo</p>
+                  <p className="text-red-700 dark:text-red-300 mt-1 text-[11px] 2xsm:text-sm">Por favor, selecione o tipo de conteúdo e Pacote de Conteúdo para cada item antes de continuar.</p>
                 </div>
               </div>
             </div>
