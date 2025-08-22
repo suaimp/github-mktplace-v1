@@ -111,7 +111,7 @@ export class ChatUserService {
         buyerEmail: currentUser.email,
         currentUserType: 'user',
         showingUserInfo: {
-          userId: 'admin-support',
+          userId: '', // ID vazio para suporte - não precisa buscar avatar
           name: 'Suporte',
           email: 'suporte@exemplo.com',
           type: 'admin',

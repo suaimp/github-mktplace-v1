@@ -5,7 +5,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import { ChatModalProps } from '../types';
-import { useChatStable } from '../hooks/useChatStable';
+import { useChatWebSocket } from '../hooks/websocket/useChatWebSocket';
 import { useOrderData } from '../hooks/useOrderData';
 import { ChatUserService, OrderParticipantInfo } from '../services/chatUserService';
 import { chatStyles } from '../styles';
@@ -22,6 +22,8 @@ export function NewChatModalWebSocket({
   orderItemId,
   entryId
 }: ChatModalProps) {
+  console.log('🔥 [COMPONENT] NewChatModalWebSocket renderizado!', { isOpen, orderItemId, orderId });
+  
   // Estado para informações do participante
   const [participantInfo, setParticipantInfo] = useState<OrderParticipantInfo | null>(null);
   
@@ -32,13 +34,13 @@ export function NewChatModalWebSocket({
     isOpen 
   });
   
-  // Hook estável para chat
+  // Hook WebSocket para chat
   const { 
     chatState, 
     sendMessage,
     isOtherUserOnline,
     currentUserType
-  } = useChatStable({
+  } = useChatWebSocket({
     orderId,
     orderItemId,
     entryId,

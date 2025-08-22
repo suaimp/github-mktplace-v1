@@ -30,6 +30,14 @@ export function useChatWebSocket({
   entryId,
   isOpen
 }: UseChatWebSocketProps): UseChatWebSocketReturn {
+  console.log('🎯 [HOOK INIT] ============= useChatWebSocket INICIADO =============', {
+    orderId,
+    orderItemId,
+    entryId,
+    isOpen,
+    timestamp: new Date().toISOString()
+  });
+
   const [chatState, setChatState] = useState<ChatWebSocketState>({
     messages: [],
     isConnected: false,
@@ -116,25 +124,128 @@ export function useChatWebSocket({
    */
   const webSocketCallbacks: WebSocketCallbacks = useMemo(() => ({
     onMessage: (message: BroadcastChatMessage) => {
+      console.log('🎯 [BROADCAST] === BROADCAST RECEBIDO ===', {
+        timestamp: new Date().toISOString(),
+        messageId: message.id,
+        text: message.message,
+        senderId: message.sender_id,
+        senderType: message.sender_type,
+        createdAt: message.created_at,
+        orderItemId: message.order_item_id,
+        currentUserId: currentUserRef.current,
+        isOwnMessage: message.sender_id === currentUserRef.current
+      });
+      
       const chatMessage = convertMessage(message);
+      console.log('🔄 [BROADCAST] Mensagem convertida:', {
+        id: chatMessage.id,
+        text: chatMessage.text,
+        sender: chatMessage.sender,
+        timestamp: chatMessage.timestamp,
+        isTemporary: chatMessage.isTemporary
+      });
+      
+      // Se é minha própria mensagem, apenas substitui a temporária pela definitiva
+      const isOwnMessage = message.sender_id === currentUserRef.current;
+      console.log('🔍 [BROADCAST] Análise da mensagem:', {
+        isOwnMessage,
+        senderId: message.sender_id,
+        currentUserId: currentUserRef.current,
+        willProcessAsOwnMessage: isOwnMessage,
+        willProcessAsOtherMessage: !isOwnMessage
+      });
+      
       setChatState(prev => {
-        // Remover mensagens temporárias com texto similar
-        const filteredMessages = prev.messages.filter(msg => 
-          !(msg.isTemporary && msg.text === chatMessage.text)
-        );
+        console.log('📊 [BROADCAST] === ANÁLISE DO ESTADO ATUAL ===', {
+          messagesCount: prev.messages.length,
+          lastMessageId: prev.messages[prev.messages.length - 1]?.id,
+          isConnected: prev.isConnected,
+          connectionStatus: prev.connectionStatus,
+          isOwnMessage,
+          allMessageIds: prev.messages.map(m => ({ id: m.id, isTemp: m.isTemporary, text: m.text.substring(0, 20) + '...' }))
+        });
         
         // Verificar se mensagem já existe (evitar duplicatas)
-        const messageExists = filteredMessages.some(msg => msg.id === chatMessage.id);
+        const messageExists = prev.messages.some(msg => msg.id === chatMessage.id);
+        
+        console.log('🔍 [BROADCAST] Verificação de duplicata:', {
+          messageId: chatMessage.id,
+          messageExists,
+          existingIds: prev.messages.map(m => m.id)
+        });
         
         if (messageExists) {
-          return prev; // Não adicionar se já existe
+          console.log('⚠️ [BROADCAST] Mensagem já existe, ignorando duplicata:', chatMessage.id);
+          return prev;
         }
 
-        return {
-          ...prev,
-          messages: [...filteredMessages, chatMessage],
-          unreadCount: chatMessage.sender === 'admin' ? prev.unreadCount + 1 : prev.unreadCount
-        };
+        if (isOwnMessage) {
+          console.log('✋ [BROADCAST] Processando mensagem própria...');
+          
+          // Para mensagens próprias: substitui a mensagem temporária pela definitiva
+          const temporaryMessages = prev.messages.filter(msg => msg.isTemporary && msg.text === chatMessage.text);
+          console.log('🔍 [BROADCAST] Mensagens temporárias encontradas:', {
+            count: temporaryMessages.length,
+            tempIds: temporaryMessages.map(m => m.id),
+            searchText: chatMessage.text
+          });
+          
+          const filteredMessages = prev.messages.filter(msg => 
+            !(msg.isTemporary && msg.text === chatMessage.text)
+          );
+          
+          console.log('🧹 [BROADCAST] Após filtrar temporárias:', {
+            originalCount: prev.messages.length,
+            filteredCount: filteredMessages.length,
+            removedCount: prev.messages.length - filteredMessages.length,
+            finalMessageId: chatMessage.id
+          });
+          
+          const newState = {
+            ...prev,
+            messages: [...filteredMessages, chatMessage],
+            // Não aumenta unreadCount para mensagens próprias
+          };
+          
+          console.log('✅ [BROADCAST] Estado final para mensagem própria:', {
+            newMessagesCount: newState.messages.length,
+            addedMessageId: chatMessage.id,
+            finalMessagesList: newState.messages.slice(-3).map(m => ({ id: m.id, text: m.text.substring(0, 20) + '...', isTemp: m.isTemporary }))
+          });
+          
+          return newState;
+        } else {
+          console.log('👥 [BROADCAST] Processando mensagem de outro usuário...');
+          
+          // Para mensagens de outros: adiciona normalmente e incrementa unread se for de admin
+          console.log('📨 [BROADCAST] Detalhes da mensagem de outro:', {
+            senderId: message.sender_id,
+            senderType: message.sender_type,
+            chatMessageSender: chatMessage.sender,
+            willIncrementUnread: chatMessage.sender === 'admin'
+          });
+          
+          const newState = {
+            ...prev,
+            messages: [...prev.messages, chatMessage],
+            unreadCount: chatMessage.sender === 'admin' ? prev.unreadCount + 1 : prev.unreadCount
+          };
+          
+          console.log('✅ [BROADCAST] Estado final para mensagem de outro:', {
+            newMessagesCount: newState.messages.length,
+            addedMessageId: chatMessage.id,
+            newUnreadCount: newState.unreadCount,
+            finalMessagesList: newState.messages.slice(-3).map(m => ({ id: m.id, text: m.text.substring(0, 20) + '...', sender: m.sender }))
+          });
+          
+          return newState;
+        }
+      });
+      
+      console.log('🏁 [BROADCAST] === BROADCAST PROCESSADO COM SUCESSO ===', {
+        messageId: chatMessage.id,
+        isOwnMessage,
+        timestamp: new Date().toISOString()
       });
     },
 
@@ -247,14 +358,14 @@ export function useChatWebSocket({
         console.log(`✅ [WebSocket] Step 1 completed - messages loaded`);
 
         console.log(`🔌 [WebSocket] Step 2: Connecting to WebSocket...`);
-        // 2. Conecta ao WebSocket - OU PODE ESTAR TRAVANDO AQUI
+        // 2. Conecta ao WebSocket
         await OrderChatWebSocketService.connectToChat(
           orderItemId,
           webSocketCallbacks,
           {
             enablePresence: true,
             enableTyping: true,
-            selfBroadcast: true // Permitir receber próprias mensagens por broadcast
+            selfBroadcast: true // Necessário para receber confirmação das próprias mensagens no chat
           }
         );
         console.log(`✅ [WebSocket] Step 2 completed - WebSocket connected`);
@@ -374,12 +485,43 @@ export function useChatWebSocket({
    * Envia mensagem
    */
   const sendMessage = useCallback(async (message: string) => {
-    if (!message.trim()) return;
+    console.log('🚀 [SEND] === BOTÃO CLICADO - SENDMESSAGE CHAMADO ===', {
+      message: message.trim(),
+      messageLength: message.trim().length,
+      timestamp: new Date().toISOString(),
+      orderItemId,
+      orderId,
+      entryId
+    });
+    console.log('🚀 [SEND] === INICIANDO ENVIO DE MENSAGEM ===', {
+      message: message.trim(),
+      messageLength: message.trim().length,
+      timestamp: new Date().toISOString(),
+      orderItemId,
+      orderId,
+      entryId
+    });
+
+    if (!message.trim()) {
+      console.log('⚠️ [SEND] Mensagem vazia, abortando');
+      return;
+    }
+
+    console.log('🔍 [SEND] Estado inicial do chat:', {
+      isConnected: isConnectedRef.current,
+      chatStateConnected: chatState.isConnected,
+      connectionStatus: chatState.connectionStatus,
+      currentUserId: currentUserRef.current,
+      messagesCount: chatState.messages.length,
+      isTyping: chatState.isTyping
+    });
 
     try {
+      console.log('🧹 [SEND] Limpando erros e definindo isTyping...');
       setError(null);
       setChatState(prev => ({ ...prev, isTyping: true }));
 
+      console.log('⚡ [SEND] Criando mensagem temporária...');
       // Adiciona mensagem temporária na UI para feedback imediato
       const tempMessage: ChatMessage = {
         id: `temp_${Date.now()}`,
@@ -390,18 +532,49 @@ export function useChatWebSocket({
         isTemporary: true
       };
 
-      setChatState(prev => ({
-        ...prev,
-        messages: [...prev.messages, tempMessage]
-      }));
+      console.log('📝 [SEND] Mensagem temporária criada:', {
+        tempId: tempMessage.id,
+        text: tempMessage.text,
+        sender: tempMessage.sender,
+        isTemporary: tempMessage.isTemporary
+      });
 
+      console.log('💾 [SEND] Adicionando mensagem temporária ao estado...');
+      setChatState(prev => {
+        console.log('📊 [SEND] Estado anterior:', {
+          messagesCount: prev.messages.length,
+          lastMessageId: prev.messages[prev.messages.length - 1]?.id
+        });
+        
+        const newState = {
+          ...prev,
+          messages: [...prev.messages, tempMessage]
+        };
+        
+        console.log('📊 [SEND] Novo estado:', {
+          messagesCount: newState.messages.length,
+          lastMessageId: newState.messages[newState.messages.length - 1]?.id,
+          tempMessageAdded: newState.messages.some(m => m.id === tempMessage.id)
+        });
+        
+        return newState;
+      });
+
+      console.log('👤 [SEND] Verificando tipo de usuário...');
       // Verificar se usuário é admin antes de enviar
       const isAdmin = await OrderChatService.isCurrentUserAdmin();
       const senderType = isAdmin ? 'admin' : 'user';
       
+      console.log('👤 [SEND] Tipo de usuário determinado:', {
+        isAdmin,
+        senderType,
+        currentUserId: currentUserRef.current
+      });
+      
       // Atualizar tipo do usuário atual
       setCurrentUserType(senderType);
 
+      console.log('🔄 [SEND] Atualizando mensagem temporária com tipo correto...');
       // Atualizar mensagem temporária com o tipo correto de sender
       setChatState(prev => ({
         ...prev,
@@ -412,7 +585,24 @@ export function useChatWebSocket({
         )
       }));
 
+      console.log('📤 [SEND] Enviando mensagem via WebSocket:', {
+        orderItemId,
+        message: message.trim(),
+        senderType,
+        tempMessageId: tempMessage.id,
+        currentUserId: currentUserRef.current,
+        isConnected: isConnectedRef.current
+      });
+
+      console.log('🔍 [SEND] Verificando estado antes de enviar:', {
+        chatStateConnected: chatState.isConnected,
+        connectionStatus: chatState.connectionStatus,
+        messagesCount: chatState.messages.length,
+        tempMessageAdded: chatState.messages.some(m => m.id === tempMessage.id)
+      });
+
       // Envia via WebSocket (que também salva no banco)
+      console.log('⏳ [SEND] Chamando OrderChatWebSocketService.sendMessage...');
       await OrderChatWebSocketService.sendMessage(orderItemId, {
         order_id: orderId,
         order_item_id: orderItemId,
@@ -421,14 +611,24 @@ export function useChatWebSocket({
         sender_type: senderType
       });
 
-      // Manter mensagem temporária por um tempo e depois remover
+      console.log('✅ [SEND] OrderChatWebSocketService.sendMessage concluído com sucesso');
+      console.log('⏳ [SEND] Aguardando broadcast para confirmar...');
+
+      // Timeout de segurança: se após 10 segundos não recebeu o broadcast, remove a temporária
       setTimeout(() => {
-        setChatState(prev => ({
-          ...prev,
-          messages: prev.messages.filter(msg => msg.id !== tempMessage.id),
-          isTyping: false
-        }));
-      }, 2000); // Remove após 2 segundos se não chegou broadcast
+        setChatState(prev => {
+          const hasTemporary = prev.messages.some(msg => msg.id === tempMessage.id);
+          if (hasTemporary) {
+            console.warn('⏰ [SEND] Timeout: removendo mensagem temporária que não foi confirmada via broadcast');
+            return {
+              ...prev,
+              messages: prev.messages.filter(msg => msg.id !== tempMessage.id),
+              isTyping: false
+            };
+          }
+          return { ...prev, isTyping: false };
+        });
+      }, 10000); // 10 segundos de timeout
 
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);

@@ -265,7 +265,7 @@ export default function OrderDetail() {
         <div className="w-full">
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 relative">
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
                   ID do Pedido: {order.id.substring(0, 8)}
                 </h2>
@@ -273,11 +273,33 @@ export default function OrderDetail() {
                   <p className="text-gray-500 dark:text-gray-400">
                     Realizado em {formatDate(order.created_at)}
                   </p>
-                </div>{" "}
+                </div>
+                {/* Botão de informações abaixo do título em telas menores que 1024px */}
+                <div className="lg:hidden mt-3">
+                  <button
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+                    onClick={() => setIsOrderInfoOpen(true)}
+                    title="Mais informações"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="text-gray-500 dark:text-gray-300"
+                    >
+                      <circle cx="5" cy="12" r="2" />
+                      <circle cx="12" cy="12" r="2" />
+                      <circle cx="19" cy="12" r="2" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              {/* Ícone de três pontinhos no canto direito */}
+              {/* Ícone de três pontinhos no canto direito - apenas em telas grandes */}
               <button
-                className="absolute top-0 right-0 mt-2 mr-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+                className="hidden lg:block absolute top-0 right-0 mt-2 mr-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
                 onClick={() => setIsOrderInfoOpen(true)}
                 title="Mais informações"
               >

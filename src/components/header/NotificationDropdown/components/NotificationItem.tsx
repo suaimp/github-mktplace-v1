@@ -12,17 +12,19 @@ interface NotificationItemComponentProps {
   notification: NotificationItem;
   onClose: () => void;
   onMarkAsRead: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
 export function NotificationItemComponent({ 
   notification, 
   onClose, 
-  onMarkAsRead 
+  onMarkAsRead,
+  onRemove 
 }: NotificationItemComponentProps) {
   const { handleNotificationClick } = useNotificationClick();
 
-  const handleClick = () => {
-    handleNotificationClick(notification, onMarkAsRead, onClose);
+  const handleClick = async () => {
+    await handleNotificationClick(notification, onMarkAsRead, onClose, onRemove);
   };
 
   const formatTimeAgo = (date: Date): string => {
@@ -45,15 +47,6 @@ export function NotificationItemComponent({
     return `Pedido: ${firstGroup}`;
   };
 
-  const getTypeLabel = (type: string): string => {
-    switch (type) {
-      case 'chat': return 'Chat';
-      case 'purchase': return 'Pedido';
-      case 'system': return 'Sistema';
-      default: return 'Notificação';
-    }
-  };
-
   return (
     <li>
       <DropdownItem
@@ -68,19 +61,20 @@ export function NotificationItemComponent({
         />
 
         <span className="block flex-1">
-          {/* Título */}
-          <span className="mb-1 block text-theme-sm font-medium text-gray-800 dark:text-white/90">
-            {notification.title}
-          </span>
-          
-          {/* Subtitle embaixo do título */}
+          {/* Subtitle em negrito com pontinho e time ao lado */}
           {notification.subtitle && (
-            <span className="mb-2 block text-theme-xs font-medium text-gray-600 dark:text-gray-300">
-              {formatSubtitle(notification.subtitle)}
-            </span>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-theme-sm font-bold text-gray-800 dark:text-white/90">
+                {formatSubtitle(notification.subtitle)}
+              </span>
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+              <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+                {formatTimeAgo(notification.createdAt)}
+              </span>
+            </div>
           )}
 
-          {/* Nome do usuário acima do content */}
+          {/* Nome do usuário */}
           {notification.user && (
             <span className="mb-1 block text-theme-xs font-medium text-blue-600 dark:text-blue-400">
               {notification.user.name}
@@ -89,16 +83,10 @@ export function NotificationItemComponent({
 
           {/* Content */}
           {notification.content && (
-            <p className="mb-2 text-theme-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+            <p className="text-theme-xs text-gray-600 dark:text-gray-400 line-clamp-2">
               {notification.content}
             </p>
           )}
-
-          <span className="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-            <span>{getTypeLabel(notification.type)}</span>
-            <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-            <span>{formatTimeAgo(notification.createdAt)}</span>
-          </span>
         </span>
       </DropdownItem>
     </li>

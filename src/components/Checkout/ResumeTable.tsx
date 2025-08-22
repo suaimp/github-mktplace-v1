@@ -378,7 +378,16 @@ export default function ResumeTable(props: ResumeTableProps) {
                         )}
                         <span className="font-semibold text-gray-800 text-theme-sm dark:text-white/90 whitespace-nowrap">
                           {item.product_url
-                            ? item.product_url.replace(/^(https?:\/\/)?(www\.)?/, "")
+                            ? (() => {
+                                const url = item.product_url;
+                                // Remove protocolo se existir
+                                const cleanUrl = url.replace(/^https?:\/\//, '');
+                                // Remove www. se existir
+                                const withoutWww = cleanUrl.replace(/^www\./, '');
+                                // Pega até o segundo ponto (inclui .com, .org, etc)
+                                const parts = withoutWww.split('.');
+                                return parts.length >= 2 ? `${parts[0]}.${parts[1]}` : withoutWww;
+                              })()
                             : "-"}
                         </span>
                       </div>

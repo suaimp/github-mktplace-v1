@@ -92,8 +92,26 @@ export class WebSocketChannelManager {
 
     // Listener para novas mensagens
     this.channel.on('broadcast', { event: 'new_message' }, (payload) => {
+      console.log('📥 [ChannelManager] === BROADCAST RECEBIDO ===', {
+        event: 'new_message',
+        orderItemId: this.config.orderItemId,
+        payloadReceived: !!payload,
+        payloadPayload: !!payload?.payload,
+        messageId: payload?.payload?.id,
+        messageText: payload?.payload?.message?.substring(0, 50) + '...',
+        senderId: payload?.payload?.sender_id,
+        timestamp: new Date().toISOString()
+      });
+
       if (WebSocketUtils.validateBroadcastMessage(payload.payload)) {
+        console.log('✅ [ChannelManager] Mensagem válida, chamando callback...');
         this.callbacks.onMessage(payload.payload);
+        console.log('✅ [ChannelManager] Callback onMessage executado');
+      } else {
+        console.warn('⚠️ [ChannelManager] Mensagem inválida recebida:', {
+          payload: payload.payload,
+          validation: 'failed'
+        });
       }
     });
 
@@ -132,17 +150,43 @@ export class WebSocketChannelManager {
    * Envia mensagem via broadcast
    */
   async sendBroadcast(event: string, payload: any): Promise<void> {
+    console.log('📡 [ChannelManager] === ENVIANDO BROADCAST ===', {
+      event,
+      orderItemId: this.config.orderItemId,
+      connectionStatus: this.connectionStatus,
+      channelExists: !!this.channel,
+      payloadId: payload?.id,
+      payloadText: payload?.message?.substring(0, 50) + '...',
+      timestamp: new Date().toISOString()
+    });
+
     if (!this.channel || this.connectionStatus !== CONNECTION_STATUS.CONNECTED) {
-      throw new Error('Canal não conectado');
+      const error = `Canal não conectado: channel=${!!this.channel}, status=${this.connectionStatus}`;
+      console.error('❌ [ChannelManager] Erro no sendBroadcast:', error);
+      throw new Error(error);
     }
 
     try {
+      console.log('⏳ [ChannelManager] Chamando channel.send...');
       await this.channel.send({
         type: 'broadcast',
         event,
         payload
       });
+      console.log('✅ [ChannelManager] Broadcast enviado com sucesso!', {
+        event,
+        payloadId: payload?.id,
+        orderItemId: this.config.orderItemId,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
+      console.error('💥 [ChannelManager] Erro ao enviar broadcast:', {
+        error,
+        event,
+        orderItemId: this.config.orderItemId,
+        connectionStatus: this.connectionStatus,
+        timestamp: new Date().toISOString()
+      });
       this.callbacks.onError?.(`Erro ao enviar broadcast: ${error}`);
       throw error;
     }

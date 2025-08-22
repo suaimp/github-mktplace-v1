@@ -27,13 +27,13 @@ export function ArticleDetailsModal({
       
       {/* Slide Panel */}
       <div
-        className={`fixed top-0 right-0 h-full max-w-lg min-w-[320px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full max-[400px]:w-full max-[400px]:left-0 min-[400px]:max-w-lg min-[400px]:min-w-[320px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[999999] transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between p-4 max-[400px]:p-3 min-[400px]:p-6 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-lg font-medium text-gray-800 dark:text-white">
               Detalhes do Artigo
             </h3>
@@ -58,7 +58,7 @@ export function ArticleDetailsModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 max-[400px]:p-3 min-[400px]:p-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
@@ -124,7 +124,7 @@ export function ArticleDetailsModal({
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 dark:border-gray-800">
+          <div className="p-4 max-[400px]:p-3 min-[400px]:p-6 border-t border-gray-200 dark:border-gray-800">
             <button
               onClick={onClose}
               className="w-full px-4 py-2 text-sm font-medium text-white bg-brand-500 border border-transparent rounded-md hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors"

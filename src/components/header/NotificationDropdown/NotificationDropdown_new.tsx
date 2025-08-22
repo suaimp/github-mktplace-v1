@@ -127,6 +127,7 @@ export default function NotificationDropdown() {
                   notification={notification}
                   onClose={closeDropdown}
                   onMarkAsRead={actions.markAsRead}
+                  onRemove={actions.markAsRead}
                 />
               ))}
             </ul>

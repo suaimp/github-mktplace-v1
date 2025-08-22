@@ -209,6 +209,23 @@ export function useNotifications(): UseNotificationsReturn {
   }, []);
 
   /**
+   * Remove uma notificação da lista local
+   */
+  const removeNotification = useCallback((notificationId: string) => {
+    setState(prev => {
+      const filteredNotifications = prev.notifications.filter(n => n.id !== notificationId);
+      const unreadCount = filteredNotifications.filter(n => !n.isRead).length;
+      
+      return {
+        ...prev,
+        notifications: filteredNotifications,
+        hasUnread: unreadCount > 0,
+        unreadCount
+      };
+    });
+  }, []);
+
+  /**
    * Recarrega as notificações
    */
   const refresh = useCallback(async () => {
@@ -235,6 +252,7 @@ export function useNotifications(): UseNotificationsReturn {
       loadNotifications,
       markAsRead,
       markAllAsRead,
+      removeNotification,
       refresh
     }
   };

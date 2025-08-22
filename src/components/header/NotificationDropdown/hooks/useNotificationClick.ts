@@ -6,20 +6,41 @@
 import { useNavigate } from 'react-router-dom';
 import { NotificationItem } from '../types';
 import { NotificationRedirectService } from '../services';
+import { useNotificationDelete } from './useNotificationDelete';
 
 export interface UseNotificationClickReturn {
-  handleNotificationClick: (notification: NotificationItem, onMarkAsRead: (id: string) => void, onClose: () => void) => void;
+  handleNotificationClick: (
+    notification: NotificationItem, 
+    onMarkAsRead: (id: string) => void, 
+    onClose: () => void,
+    onDelete?: (id: string) => void
+  ) => Promise<void>;
+  isDeleting: boolean;
+  deleteError: string | null;
 }
 
 export function useNotificationClick(): UseNotificationClickReturn {
   const navigate = useNavigate();
+  const { deleteNotification, isDeleting, deleteError } = useNotificationDelete();
 
-  const handleNotificationClick = (
+  const handleNotificationClick = async (
     notification: NotificationItem,
     onMarkAsRead: (id: string) => void,
-    onClose: () => void
+    onClose: () => void,
+    onDelete?: (id: string) => void
   ) => {
-    // Marcar como lida se não estiver lida
+    console.log(`🔔 [NotificationClick] Clique na notificação ${notification.id}`);
+
+    // Deletar a notificação do banco de dados
+    const deleteSuccess = await deleteNotification(notification.id);
+    
+    if (deleteSuccess && onDelete) {
+      // Remover da lista local se a exclusão foi bem-sucedida
+      onDelete(notification.id);
+      console.log(`✅ [NotificationClick] Notificação ${notification.id} removida da lista local`);
+    }
+
+    // Marcar como lida se não estiver lida (mesmo se a exclusão falhar)
     if (!notification.isRead) {
       onMarkAsRead(notification.id);
     }
@@ -49,6 +70,8 @@ export function useNotificationClick(): UseNotificationClickReturn {
   };
 
   return {
-    handleNotificationClick
+    handleNotificationClick,
+    isDeleting,
+    deleteError
   };
 }

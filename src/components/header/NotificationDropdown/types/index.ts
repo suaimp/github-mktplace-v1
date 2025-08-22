@@ -44,6 +44,7 @@ export interface UseNotificationsReturn {
     loadNotifications: () => Promise<void>;
     markAsRead: (notificationId: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
+    removeNotification: (notificationId: string) => void;
     refresh: () => Promise<void>;
   };
 }

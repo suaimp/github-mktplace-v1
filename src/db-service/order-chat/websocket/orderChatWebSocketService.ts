@@ -64,16 +64,34 @@ export class OrderChatWebSocketService {
     orderItemId: string,
     messageInput: CreateChatMessageInput
   ): Promise<void> {
+    console.log('📤 [SEND] Iniciando envio de mensagem:', {
+      orderItemId,
+      messageText: messageInput.message,
+      senderType: messageInput.sender_type,
+      timestamp: new Date().toISOString()
+    });
+    
     const channelKey = `chat_${orderItemId}`;
     const manager = this.managers.get(channelKey);
 
     if (!manager || !manager.isConnected()) {
+      console.error('❌ [SEND] Canal não conectado:', {
+        channelKey,
+        managerExists: !!manager,
+        isConnected: manager?.isConnected() ?? false
+      });
       throw new Error('Canal não conectado');
     }
 
     try {
       // 1. Salva no banco de dados
+      console.log('💾 [SEND] Salvando mensagem no banco...');
       const savedMessage = await OrderChatService.createMessage(messageInput);
+      console.log('✅ [SEND] Mensagem salva no banco:', {
+        id: savedMessage.id,
+        message: savedMessage.message,
+        sender_type: savedMessage.sender_type
+      });
       
       // 2. Envia via broadcast
       const broadcastMessage: BroadcastChatMessage = {
@@ -87,9 +105,12 @@ export class OrderChatWebSocketService {
         entry_id: savedMessage.entry_id
       };
 
+      console.log('📡 [SEND] Enviando broadcast:', broadcastMessage);
       await manager.sendBroadcast(CHANNEL_EVENTS.NEW_MESSAGE, broadcastMessage);
+      console.log('✅ [SEND] Broadcast enviado com sucesso!');
       
     } catch (error) {
+      console.error('💥 [SEND] Erro no envio:', error);
       throw new Error(`Falha ao enviar mensagem: ${error}`);
     }
   }

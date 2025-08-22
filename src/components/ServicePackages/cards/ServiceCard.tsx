@@ -59,17 +59,16 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
     >
       <div className="flex items-start justify-between -mb-4">
         <span
-          className={`block mb-3 font-semibold ${cardColors.title} text-theme-xl ${cardColors.titleDark}`}
-          style={{ fontSize: 20 }}
+          className={`block mb-3 font-semibold ${cardColors.title} text-theme-xl ${cardColors.titleDark} text-[16px] 2xsm:text-[18px] xl:text-[19px] 2xl:text-[20px]`}
         >
           {title}
         </span>
       </div>
-      <div className="flex items-end justify-between mb-1">
-        <div className="flex items-end gap-1" style={{ gap: 5 }}>
+      <div className="flex items-center 2xsm:items-end justify-between mb-1">
+        <div className="flex items-center 2xsm:items-end gap-1" style={{ gap: 5 }}>
           <h2
-            className={`font-bold ${cardColors.price} text-title-md ${cardColors.priceDark}`}
-            style={{ fontSize: 36, height: 43 }}
+            className={`font-bold ${cardColors.price} text-title-md ${cardColors.priceDark} text-[20px] 2xsm:text-[28px] xl:text-[32px] 2xl:text-[36px]`}
+            style={{ height: 43 }}
           >
             {price.toLocaleString("pt-BR", {
               style: "currency",
@@ -77,7 +76,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             })}
           </h2>
           <span
-            className={`inline-block mb-1 text-sm ${cardColors.period} ${cardColors.periodDark}`}
+            className={`inline-block mb-1 ${cardColors.period} ${cardColors.periodDark} text-[12px] 2xsm:text-[13px] xl:text-[14px] 2xl:text-sm`}
           >
             /{period}
           </span>
@@ -85,7 +84,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         {/* Exemplo de preço riscado, pode remover se não usar */}
         {/* <span className="font-semibold text-gray-400 line-through text-theme-xl">$59.00</span> */}
       </div>
-      <p className={`text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}>
+      <p className={`${cardColors.benefit} ${cardColors.benefitDark} text-[12px] 2xsm:text-[13px] xl:text-[14px] 2xl:text-sm`}>
         {subtitle}
       </p>
       <div
@@ -96,7 +95,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           item.type === "benefit" ? (
             <li
               key={"b-" + idx}
-              className={`flex items-center gap-3 text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}
+              className={`flex items-center gap-3 ${cardColors.benefit} ${cardColors.benefitDark} text-[12px] 2xsm:text-[13px] xl:text-[14px] 2xl:text-sm`}
             >
               <svg
                 width="1em"
@@ -119,7 +118,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           ) : (
             <li
               key={"nb-" + idx}
-              className={`flex items-center gap-3 text-sm ${cardColors.benefit} ${cardColors.benefitDark}`}
+              className={`flex items-center gap-3 ${cardColors.benefit} ${cardColors.benefitDark} text-[12px] 2xsm:text-[13px] xl:text-[14px] 2xl:text-sm`}
             >
               <svg
                 width="1em"

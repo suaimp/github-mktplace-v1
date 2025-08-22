@@ -50,6 +50,11 @@ async function getUserTable(userId: string): Promise<'admins' | 'platform_users'
  * Gera cor consistente baseada no userId
  */
 function getColorForUser(userId: string): string {
+  // Se userId está vazio, usar cor padrão para suporte
+  if (!userId || userId.trim() === '' || userId === 'default') {
+    return 'bg-warning-500'; // Cor laranja para suporte
+  }
+  
   const charSum = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return AVATAR_COLORS[charSum % AVATAR_COLORS.length];
 }
@@ -73,11 +78,17 @@ export async function getUserAvatarData(userId: string, userName: string): Promi
   const defaultData: UserAvatarData = {
     imageUrl: null,
     initials: getInitials(userName),
-    backgroundColor: getColorForUser(userId),
+    backgroundColor: getColorForUser(userId || 'default'),
     hasImage: false
   };
 
   try {
+    // Se não temos userId válido, retornar dados padrão imediatamente
+    if (!userId || userId.trim() === '') {
+      console.log('🔍 [UserAvatarService] Empty userId, using default avatar for:', userName);
+      return defaultData;
+    }
+
     console.log('🔍 [UserAvatarService] Loading avatar for:', { userId, userName });
     
     // Determinar qual tabela usar
