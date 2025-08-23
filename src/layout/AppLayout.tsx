@@ -28,7 +28,7 @@ const LayoutContent: React.FC = () => {
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader onToggle={toggleMobileSidebar} />
-        <div className="w-full main-content p-2 2xsm:p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 overflow-hidden pt-20 mt-16">
+        <div className="w-full main-content p-2 2xsm:p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 overflow-hidden pt-20 mt-16 mb-[60px]">
           <Outlet />
         </div>
       </div>

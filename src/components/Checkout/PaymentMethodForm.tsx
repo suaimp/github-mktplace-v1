@@ -437,7 +437,10 @@ export default function PaymentMethodForm({
                       />
                     </div>
                     <div>
-                      <Label>Código de segurança</Label>
+                      <Label>
+                        <span className="hidden min-[400px]:inline">Código de segurança</span>
+                        <span className="min-[400px]:hidden">Código</span>
+                      </Label>
                       <InputMask
                         mask="999"
                         value={cardData.cardCvc}
@@ -557,7 +560,7 @@ export default function PaymentMethodForm({
 
         {paymentMethod === "pix" && (
           <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
+            <h3 className="text-base min-[400px]:text-lg font-medium text-gray-800 dark:text-white mb-4 text-center">
               Pagamento via PIX
             </h3>
             {/* Checkbox de termos e condições acima do botão de gerar QR Code PIX */}
@@ -569,7 +572,7 @@ export default function PaymentMethodForm({
                   onChange={(e) => onTermsAcceptedChange(e.target.checked)}
                   className="form-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
                 />
-                <span className="text-gray-700 dark:text-gray-200">
+                <span className="text-xs min-[400px]:text-sm text-gray-700 dark:text-gray-200">
                   Eu aceito os{' '}
                   <a
                     href="/terms"
@@ -582,7 +585,7 @@ export default function PaymentMethodForm({
                 </span>
               </label>
               {!termsAccepted && (
-                <div className="text-error-500 text-sm mt-1 dark:text-error-300 dark:bg-error-500/10 dark:rounded">
+                <div className="text-error-500 text-xs min-[400px]:text-sm mt-1 dark:text-error-300 dark:bg-error-500/10 dark:rounded">
                   Por favor, aceite os termos e condições para continuar
                 </div>
               )}
@@ -608,7 +611,7 @@ export default function PaymentMethodForm({
                   }
                 }}
                 disabled={processing || isGeneratingQrCode || !termsAccepted || !isPaymentInfoFormValid}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-xs min-[400px]:text-sm"
               >
                 {processing || isGeneratingQrCode ? "Gerando QR Code..." : "Gerar QR Code PIX"}
               </button>
@@ -618,7 +621,7 @@ export default function PaymentMethodForm({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-sm font-mono font-medium">
+                  <span className="text-xs min-[400px]:text-sm font-mono font-medium">
                     {formatTime(qrCodeTimer)}
                   </span>
                   <span className="text-xs">restante</span>
@@ -626,12 +629,12 @@ export default function PaymentMethodForm({
               )}
             </div>
             {isGeneratingQrCode && (
-              <p className="text-sm text-gray-400 dark:text-gray-300 mt-3">
+              <p className="text-xs min-[400px]:text-sm text-gray-400 dark:text-gray-300 mt-3">
                 ⏳ Aguardando processamento PIX (pode levar até 2 minutos em produção)
               </p>
             )}
 
-            <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-center text-xs min-[400px]:text-sm text-gray-600 dark:text-gray-400 mb-6">
               {pixQrCodeUrl ? "Escaneie o QR Code abaixo com o aplicativo do seu banco para pagar" : "Preencha seus dados e clique em 'Gerar QR Code PIX' para continuar"}
             </p>
 
@@ -644,18 +647,18 @@ export default function PaymentMethodForm({
                 />
               ) : (
                 <div className="w-48 h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded">
-                  <span className="text-gray-400 dark:text-gray-300">Gerando código...</span>
+                  <span className="text-xs min-[400px]:text-sm text-gray-400 dark:text-gray-300">Gerando código...</span>
                 </div>
               )}
             </div>
 
             <div className="mb-6">
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <p className="text-center text-xs min-[400px]:text-sm text-gray-600 dark:text-gray-400 mb-2">
                 Ou copie e cole o código abaixo no seu aplicativo bancário:
               </p>
               <div className="relative">
                 <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-center">
-                  <p className="text-sm font-mono break-all select-all overflow-hidden">
+                  <p className="text-xs min-[400px]:text-sm font-mono break-all select-all overflow-hidden">
                     {pixCopiaECola || "Gerando código..."}
                   </p>
                 </div>
@@ -684,16 +687,15 @@ export default function PaymentMethodForm({
                   />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  <h4 className="text-xs min-[400px]:text-sm font-medium text-yellow-800 dark:text-yellow-200">
                     Importante
                   </h4>
-                  <ul className="mt-1 text-sm text-yellow-700 dark:text-yellow-200 list-disc list-inside">
+                  <ul className="mt-1 text-xs min-[400px]:text-sm text-yellow-700 dark:text-yellow-200 list-disc list-inside">
                     <li>O pagamento via PIX é processado instantaneamente</li>
                     <li>O QR Code e o código PIX são válidos por 1 hora</li>
                     <li>
                       Após o pagamento, você receberá um email de confirmação
                     </li>
-                    <li>Preencha seus dados reais para garantir a aprovação do pagamento</li>
                   </ul>
                 </div>
               </div>
