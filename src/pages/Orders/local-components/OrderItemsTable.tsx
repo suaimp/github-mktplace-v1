@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import InfoTooltip from "../../../components/ui/InfoTooltip/InfoTooltip";
+import { InfoTooltipOptimized } from "../../../components/ui/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
 import { PautaModal, usePautaModal } from "./PautaModal";
@@ -328,7 +328,7 @@ export default function OrderItemsTable({
                 >
                   <div className="flex items-center gap-1">
                     <span>URL do Artigo</span>
-                    <InfoTooltip text="A URL fica disponível após a publicação do artigo em um prazo de 3 a 5 dias" />
+                    <InfoTooltipOptimized text="A URL fica disponível após a publicação do artigo em um prazo de 3 a 5 dias" />
                     {sortField === "article_url" && (
                       <span className="flex flex-col gap-0.5 ml-1">
                         <svg className="fill-gray-300 dark:fill-gray-700" width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
