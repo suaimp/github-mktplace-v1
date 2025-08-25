@@ -6,7 +6,7 @@ import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
 import { ChatModalWebSocket as SimpleChatModalWebSocket } from "./ChatModal";
 import { ChatIcon, HorizontaLDots } from "../../../icons";
-import { OrderItemStatusService, OrderItemAnalyzer } from "./OrderItemsTable/index";
+import { OrderItemStatusService, OrderItemAnalyzer, useChatColumnVisibility } from "./OrderItemsTable/index";
 
 interface OrderItem {
   id: string;
@@ -65,6 +65,9 @@ export default function OrderItemsTable({
   const articleDetailsModal = useArticleDetailsModal();
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [selectedChatItem, setSelectedChatItem] = useState<OrderItem | null>(null);
+
+  // Hook para controlar visibilidade da coluna de chat
+  const { shouldShowChatColumn } = useChatColumnVisibility(paymentStatus);
 
   // Função para abrir o chat
   const handleOpenChat = (item: OrderItem) => {
@@ -254,7 +257,7 @@ export default function OrderItemsTable({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl px-4 pt-0 pb-4 mb-6">
       <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
         <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-3">
           Itens do Pedido
@@ -356,10 +359,12 @@ export default function OrderItemsTable({
                     )}
                   </div>
                 </th>
-                {/* Coluna para botões de ação */}
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {/* Sem título conforme solicitado */}
-                </th>
+                {/* Coluna para botões de ação - só aparece se não for pagamento pendente */}
+                {shouldShowChatColumn && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {/* Sem título conforme solicitado */}
+                  </th>
+                )}
                 {isAdmin && (
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -735,37 +740,39 @@ export default function OrderItemsTable({
                       );
                     })()}
                   </td>
-                  {/* Coluna de botões de ação */}
-                  <td className="whitespace-nowrap px-4 py-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      {/* Botão de Chat - sempre visível */}
-                      <button
-                        onClick={() => handleOpenChat(item)}
-                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                        style={{ borderRadius: '12px' }}
-                        title="Abrir chat"
-                      >
-                        <ChatIcon className="w-5 h-5 text-white" />
-                      </button>
-                      {/* Botão de Detalhes - apenas para admin */}
-                      {isAdmin && (
+                  {/* Coluna de botões de ação - só aparece se não for pagamento pendente */}
+                  {shouldShowChatColumn && (
+                    <td className="whitespace-nowrap px-4 py-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        {/* Botão de Chat - sempre visível */}
                         <button
-                          onClick={() => handleOpenArticleDetails(item)}
-                          className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                          onClick={() => handleOpenChat(item)}
+                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
                           style={{ borderRadius: '12px' }}
-                          title="Ver detalhes do artigo"
+                          title="Abrir chat"
                         >
-                          <HorizontaLDots className="w-5 h-5 text-white" />
-                          {/* Notificação até artigo ser enviado */}
-                          {!OrderItemAnalyzer.hasArticleData(item) && (
-                            <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
-                              <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-                            </span>
-                          )}
+                          <ChatIcon className="w-5 h-5 text-white" />
                         </button>
-                      )}
-                    </div>
-                  </td>
+                        {/* Botão de Detalhes - apenas para admin */}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleOpenArticleDetails(item)}
+                            className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                            style={{ borderRadius: '12px' }}
+                            title="Ver detalhes do artigo"
+                          >
+                            <HorizontaLDots className="w-5 h-5 text-white" />
+                            {/* Notificação até artigo ser enviado */}
+                            {!OrderItemAnalyzer.hasArticleData(item) && (
+                              <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
+                                <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                              </span>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                   {isAdmin && (
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                       <div className="relative">
@@ -1092,37 +1099,39 @@ export default function OrderItemsTable({
                   </div>
                 </div>
 
-                {/* Actions Section */}
-                <div className="border-t border-gray-100 dark:border-gray-700 px-6 py-4">
-                  <div className="flex items-center justify-end space-x-3">
-                      {/* Botão de Chat - sempre visível */}
-                      <button
-                        onClick={() => handleOpenChat(item)}
-                        className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                        style={{ borderRadius: '12px' }}
-                        title="Abrir chat"
-                      >
-                        <ChatIcon className="w-5 h-5 text-white" />
-                      </button>
-                      {/* Botão de Detalhes - apenas para admin */}
-                      {isAdmin && (
+                {/* Actions Section - só aparece se não for pagamento pendente */}
+                {shouldShowChatColumn && (
+                  <div className="border-t border-gray-100 dark:border-gray-700 px-6 py-4">
+                    <div className="flex items-center justify-end space-x-3">
+                        {/* Botão de Chat - sempre visível */}
                         <button
-                          onClick={() => handleOpenArticleDetails(item)}
-                          className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                          onClick={() => handleOpenChat(item)}
+                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
                           style={{ borderRadius: '12px' }}
-                          title="Ver detalhes do artigo"
+                          title="Abrir chat"
                         >
-                          <HorizontaLDots className="w-5 h-5 text-white" />
-                          {/* Notificação até artigo ser enviado */}
-                          {!OrderItemAnalyzer.hasArticleData(item) && (
-                            <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
-                              <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-                            </span>
-                          )}
+                          <ChatIcon className="w-5 h-5 text-white" />
                         </button>
-                      )}
+                        {/* Botão de Detalhes - apenas para admin */}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleOpenArticleDetails(item)}
+                            className="relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
+                            style={{ borderRadius: '12px' }}
+                            title="Ver detalhes do artigo"
+                          >
+                            <HorizontaLDots className="w-5 h-5 text-white" />
+                            {/* Notificação até artigo ser enviado */}
+                            {!OrderItemAnalyzer.hasArticleData(item) && (
+                              <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
+                                <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                              </span>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                )}
                 </section>
         
             );

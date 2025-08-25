@@ -15,3 +15,6 @@ export { OrderItemStatusService } from './services/OrderItemStatusService';
 
 // Utils
 export { OrderItemAnalyzer } from './utils/OrderItemAnalyzer';
+
+// Hooks
+export { useChatColumnVisibility } from './hooks';

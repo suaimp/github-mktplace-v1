@@ -263,8 +263,8 @@ export default function OrderDetail() {
       <div className="container mx-auto px-4 py-6 bg-white rounded-xl border border-gray-200 dark:bg-gray-900 dark:border-gray-800">
         {/* Order Summary */}
         <div className="w-full">
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 relative">
+          <div className="bg-white dark:bg-gray-900 rounded-xl px-4 pt-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between relative">
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-1">
                   ID do Pedido: {order.id.substring(0, 8)}
