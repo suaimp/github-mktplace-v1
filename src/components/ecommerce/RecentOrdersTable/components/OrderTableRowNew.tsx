@@ -1,5 +1,6 @@
 import { OrderTableRowProps } from '../interfaces/OrderTableTypes';
 import { MultipleUrlsDisplay } from './marketplace-favicon';
+import { getTranslatedStatus } from '../utils/statusTranslation';
 
 export function OrderTableRowNew({ item }: OrderTableRowProps) {
   return (
@@ -16,7 +17,7 @@ export function OrderTableRowNew({ item }: OrderTableRowProps) {
       
       {/* Coluna Status */}
       <td className="status-cell text-xs text-start text-gray-800 dark:text-white/90" style={{ paddingTop: '12px', paddingBottom: '12px', paddingRight: '12px' }}>
-        {item.status || 'Indefinido'}
+        {getTranslatedStatus(item.status || 'Indefinido')}
       </td>
     </tr>
   );

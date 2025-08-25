@@ -1,5 +1,6 @@
 import { OrderItem } from '../../../../services/db-services/marketplace-services/order/OrderService';
 import { getDomainFromUrl } from '../utils/domain.ts';
+import { getTranslatedStatus } from '../utils/statusTranslation';
 
 interface OrderTableRowProps {
   item: OrderItem;
@@ -22,7 +23,7 @@ export function OrderTableRow({ item }: OrderTableRowProps) {
       </td>
       {/* Coluna Status */}
       <td className="status-cell text-xs text-start text-gray-800 dark:text-white/90" style={{ paddingTop: '12px', paddingBottom: '12px', paddingRight: '12px' }}>
-        {item.publication_status || 'Indefinido'}
+        {getTranslatedStatus(item.publication_status || 'Indefinido')}
       </td>
     </tr>
   );

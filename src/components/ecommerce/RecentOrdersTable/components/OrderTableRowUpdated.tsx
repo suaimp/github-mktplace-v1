@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrderWithUrls } from '../db-service/ordersTableService';
 import { NonClickableUrlsDisplay } from './marketplace-favicon';
+import { getTranslatedStatus } from '../utils/statusTranslation';
 
 interface OrderTableRowUpdatedProps {
   order: OrderWithUrls;
@@ -44,7 +45,7 @@ export const OrderTableRowUpdated: React.FC<OrderTableRowUpdatedProps> = ({ orde
 
       {/* Coluna Status */}
       <td className="status-cell text-xs text-gray-800 dark:text-white/90" style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '12px' }}>
-        {order.status || 'Indefinido'}
+        {getTranslatedStatus(order.status || 'Indefinido')}
       </td>
     </tr>
   );
