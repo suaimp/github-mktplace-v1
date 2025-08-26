@@ -777,8 +777,8 @@ export default function OrderItemsTable({
                             <HorizontaLDots className="w-5 h-5 text-white" />
                             {/* Notificação até artigo ser enviado */}
                             {!OrderItemAnalyzer.hasArticleData(item) && (
-                              <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
-                                <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 flex">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                               </span>
                             )}
                           </button>
@@ -1133,8 +1133,8 @@ export default function OrderItemsTable({
                             <HorizontaLDots className="w-5 h-5 text-white" />
                             {/* Notificação até artigo ser enviado */}
                             {!OrderItemAnalyzer.hasArticleData(item) && (
-                              <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
-                                <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 flex">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                               </span>
                             )}
                           </button>

@@ -62,8 +62,8 @@ export function ChatButton({
         (() => {
           console.log('[ChatButton] Renderizando badge de notificação. sender_id:', lastUnreadMessage.sender_id, 'currentUserId:', currentUserId, 'orderItemId:', orderItemId);
           return (
-            <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-orange-400 flex">
-              <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-orange-400 flex">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
             </span>
           );
         })()
