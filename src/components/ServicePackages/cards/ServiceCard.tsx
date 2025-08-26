@@ -182,7 +182,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       <div className="flex items-end justify-between mb-1">
         <div className="flex items-center gap-1" style={{ gap: 5 }}>
           <h2
-            className={`font-bold ${cardColors.price} text-title-md ${cardColors.priceDark} text-xl sm:text-2xl xl:text-3xl 2xl:text-4xl`}
+            className={`font-bold ${cardColors.price} text-title-md ${cardColors.priceDark} text-xl sm:text-2xl xl:text-3xl 2xl:text-3xl`}
             style={{ height: 'max-content', padding: 0 }}
           >
             {price.toLocaleString("pt-BR", {

@@ -66,12 +66,12 @@ export default function AdvertiserDashboard() {
       />
 
       {/* Novo layout principal com grid de 2 colunas, esquerda maior */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 mb-8 items-start">
+      <div className="grid grid-cols-1 custom-1210:grid-cols-[2fr_1fr] gap-8 mb-8 items-start">
         {/* Primeira coluna (maior) */}
         <div className="flex flex-col gap-4 h-full">
           <WelcomeMessage className="mb-4" />
           <div className="w-full h-full">
-            <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-full grid grid-cols-1 custom-1210:grid-cols-2 gap-4">
               <TopSitesPromoChart />
               <BestSellingSitesChart />
             </div>

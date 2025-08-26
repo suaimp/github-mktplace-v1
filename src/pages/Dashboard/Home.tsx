@@ -82,25 +82,25 @@ export default function Home() {
           <div className="col-span-12 space-y-6 w-full">
             <AnalyticsSummary />
    
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-6 xl:col-span-2">
+            <div className="grid grid-cols-1 custom-1210:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-6 custom-1210:col-span-2">
                 <AnalyticsChart />
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 custom-1210:grid-cols-2 gap-6">
                   <BestSellingSitesChart />
                   <TopSitesPromoChart />
                 </div>
               </div>
-              <div className="xl:col-span-1">
+              <div className="custom-1210:col-span-1">
                 <RecentOrdersTable />
               </div>
             </div>
           </div>
 
        
-          <div className="col-span-12 xl:col-span-8">
+          <div className="col-span-12 custom-1210:col-span-8">
             <FAQ />
           </div>
-          <div className="col-span-12 xl:col-span-4">
+          <div className="col-span-12 custom-1210:col-span-4">
             <FeedbackForm />
           </div>
         </div>
@@ -108,10 +108,10 @@ export default function Home() {
         // Layout simplificado para usuários comuns
         <div className="grid grid-cols-12 gap-4 md:gap-6">
          
-          <div className="col-span-12 xl:col-span-7">
+          <div className="col-span-12 custom-1210:col-span-7">
             <FAQ />
           </div>
-          <div className="col-span-12 xl:col-span-5">
+          <div className="col-span-12 custom-1210:col-span-5">
             <FeedbackForm />
           </div>
         </div>
