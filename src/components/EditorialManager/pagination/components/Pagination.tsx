@@ -21,7 +21,7 @@ export const Pagination: React.FC<ExtendedPaginationProps> = ({
   if (totalPages <= 1 && !onItemsPerPageChange) return null;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6 gap-3">
       <div className="flex items-center gap-4">
         {/* Seletor de itens por página na primeira posição */}
         {onItemsPerPageChange && (
@@ -43,7 +43,7 @@ export const Pagination: React.FC<ExtendedPaginationProps> = ({
         )}
       </div>
       
-      {/* Controles de paginação à direita */}
+      {/* Controles de paginação */}
       {totalPages > 1 && (
         <PaginationControls
           currentPage={currentPage}
