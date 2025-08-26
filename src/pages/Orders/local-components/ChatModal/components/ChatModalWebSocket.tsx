@@ -56,6 +56,16 @@ export function ChatModalWebSocket({
     scrollToBottom();
   }, [chatState.messages]);
 
+  // Travar o body ao abrir e restaurar ao fechar
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow || 'auto';
+    };
+  }, [isOpen]);
+
   // Marca como lidas quando modal abre
   useEffect(() => {
     if (isOpen && chatState.unreadCount > 0) {
@@ -166,7 +176,17 @@ export function ChatModalWebSocket({
         </div>
 
         {/* Área de mensagens */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div
+          className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain"
+          onWheel={(e) => {
+            const el = e.currentTarget as HTMLDivElement;
+            const atTop = el.scrollTop === 0;
+            const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+            if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+              e.preventDefault();
+            }
+          }}
+        >
           {chatState.isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

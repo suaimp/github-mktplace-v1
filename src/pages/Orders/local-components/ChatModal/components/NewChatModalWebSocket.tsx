@@ -159,6 +159,16 @@ export function NewChatModalWebSocket({
     }
   };
 
+  // Travar o scroll do body enquanto o modal está aberto
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow || 'auto';
+    };
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -171,7 +181,7 @@ export function NewChatModalWebSocket({
         onClick={onClose}
       />
       
-      {/* Modal */}
+  {/* Modal */}
       <div 
         className={chatStyles.container}
         onClick={(e) => e.stopPropagation()}
