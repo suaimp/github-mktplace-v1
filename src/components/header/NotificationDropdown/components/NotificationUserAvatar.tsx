@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useLogos } from '../../../../hooks/useLogos';
 
 interface NotificationUserAvatarProps {
   user?: {
@@ -51,6 +52,7 @@ export function NotificationUserAvatar({
   size = 40 
 }: NotificationUserAvatarProps) {
   const [imageError, setImageError] = useState(false);
+  const { logos } = useLogos();
 
   // Se não tem user, usar fallback genérico
   if (!user) {
@@ -81,16 +83,32 @@ export function NotificationUserAvatar({
     );
   }
 
-  // Fallback: usar initials com cor baseada no ID
+  // Fallback: usar logo da plataforma para Admin/Suporte, senão initials com cor baseada no ID
   const bgColor = getColorForUser(user.id);
   const initials = getInitials(user.name);
+  const isSupport = user.isAdmin || user.name === 'Suporte' || user.name === 'Admin';
   
   return (
     <div 
-      className={`${bgColor} rounded-full flex items-center justify-center text-white font-medium`}
+      className={`${isSupport ? 'bg-gradient-to-br from-blue-500 to-blue-600' : bgColor} rounded-full flex items-center justify-center text-white font-medium`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
-      {initials}
+      {isSupport ? (
+        <img 
+          src={logos.icon || "/images/brand/brand-01.svg"} 
+          alt="Logo da Plataforma" 
+          style={{ width: size * 0.6, height: size * 0.6 }}
+          onError={(e) => {
+            // Fallback para caso a imagem não carregue
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.parentElement!.innerHTML = `
+              <span style="font-size: ${size * 0.4}px">${initials}</span>
+            `;
+          }}
+        />
+      ) : (
+        initials
+      )}
     </div>
   );
 }

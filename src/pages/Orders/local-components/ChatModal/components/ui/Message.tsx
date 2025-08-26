@@ -5,6 +5,7 @@
 
 import { ChatAvatar } from './ChatAvatar';
 import { useUserAvatar } from '../../hooks/useUserAvatar';
+import { useLogos } from '../../../../../../hooks/useLogos';
 
 interface MessageProps {
   type: 'sent' | 'received';
@@ -31,6 +32,8 @@ export function Message({
     userName: sender?.name || '',
     enabled: !!sender && showAvatar && type === 'received'
   });
+
+  const { logos } = useLogos();
 
   if (type === 'sent') {
     return (
@@ -60,8 +63,28 @@ export function Message({
                 size="md" 
               />
             ) : (
-              <div className="w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                {sender.name.charAt(0).toUpperCase()}
+              // Fallback: Logo da plataforma se for Suporte, senão letra inicial
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                sender.name === 'Suporte' || sender.name === 'Admin' 
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 p-2' 
+                  : 'bg-brand-500'
+              }`}>
+                {sender.name === 'Suporte' || sender.name === 'Admin' ? (
+                  <img 
+                    src={logos.icon || "/images/brand/brand-01.svg"} 
+                    alt="Logo da Plataforma" 
+                    className="w-6 h-6"
+                    onError={(e) => {
+                      // Fallback para caso a imagem não carregue
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerHTML = `
+                        <span class="text-white text-sm font-medium">S</span>
+                      `;
+                    }}
+                  />
+                ) : (
+                  sender.name.charAt(0).toUpperCase()
+                )}
               </div>
             )}
           </>
