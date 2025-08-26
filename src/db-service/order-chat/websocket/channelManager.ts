@@ -5,7 +5,8 @@
 
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { ChannelConfig, WebSocketCallbacks } from './types';
-import { WEBSOCKET_CONFIG, CONNECTION_STATUS, ConnectionStatus } from './config';
+import { CONNECTION_STATUS, ConnectionStatus } from './config';
+import { handleChannelStatusCallback } from './listeners/statusListener';
 import { WebSocketUtils } from './utils';
 
 /**
@@ -15,9 +16,7 @@ export class WebSocketChannelManager {
   private channel: RealtimeChannel | null = null;
   private config: ChannelConfig;
   private callbacks: WebSocketCallbacks;
-  private reconnectAttempts = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
-  private heartbeatTimer: NodeJS.Timeout | null = null;
   private connectionStatus: ConnectionStatus = CONNECTION_STATUS.DISCONNECTED;
 
   constructor(config: ChannelConfig, callbacks: WebSocketCallbacks) {
@@ -52,26 +51,12 @@ export class WebSocketChannelManager {
       }
 
       await this.channel.subscribe((status: string) => {
-        console.log(`📡 [ChannelManager] Subscription status change:`, {
-          status,
-          orderItemId: this.config.orderItemId,
-          timestamp: new Date().toISOString(),
-          reconnectAttempts: this.reconnectAttempts
-        });
-
+        console.log(`📡 [Channel] Status change: ${status} for ${channelName}`);
+        handleChannelStatusCallback(status, this.callbacks);
         if (status === 'SUBSCRIBED') {
-          console.log(`✅ [ChannelManager] Successfully subscribed to channel`);
           this.setConnectionStatus(CONNECTION_STATUS.CONNECTED);
-          this.reconnectAttempts = 0;
-          this.startHeartbeat();
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.warn(`⚠️ [ChannelManager] Channel closed or error:`, {
-            status,
-            orderItemId: this.config.orderItemId,
-            timestamp: new Date().toISOString()
-          });
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           this.setConnectionStatus(CONNECTION_STATUS.DISCONNECTED);
-          this.handleReconnection(supabase);
         }
       });
 
@@ -92,26 +77,8 @@ export class WebSocketChannelManager {
 
     // Listener para novas mensagens
     this.channel.on('broadcast', { event: 'new_message' }, (payload) => {
-      console.log('📥 [ChannelManager] === BROADCAST RECEBIDO ===', {
-        event: 'new_message',
-        orderItemId: this.config.orderItemId,
-        payloadReceived: !!payload,
-        payloadPayload: !!payload?.payload,
-        messageId: payload?.payload?.id,
-        messageText: payload?.payload?.message?.substring(0, 50) + '...',
-        senderId: payload?.payload?.sender_id,
-        timestamp: new Date().toISOString()
-      });
-
       if (WebSocketUtils.validateBroadcastMessage(payload.payload)) {
-        console.log('✅ [ChannelManager] Mensagem válida, chamando callback...');
         this.callbacks.onMessage(payload.payload);
-        console.log('✅ [ChannelManager] Callback onMessage executado');
-      } else {
-        console.warn('⚠️ [ChannelManager] Mensagem inválida recebida:', {
-          payload: payload.payload,
-          validation: 'failed'
-        });
       }
     });
 
@@ -140,8 +107,14 @@ export class WebSocketChannelManager {
 
     // Listener para eventos do sistema
     this.channel.on('system', {}, (payload) => {
+      console.log(`📡 [System] Event received for ${this.config.orderItemId}:`, payload);
+      
       if (payload.status === 'CLOSED') {
+        console.warn(`🚪 [System] Channel closed for ${this.config.orderItemId}`);
         this.setConnectionStatus(CONNECTION_STATUS.DISCONNECTED);
+      } else if (payload.status === 'ERROR') {
+        console.error(`❌ [System] Channel error for ${this.config.orderItemId}:`, payload);
+        this.callbacks.onError?.(`Erro no canal: ${payload.message || 'Erro desconhecido'}`);
       }
     });
   }
@@ -150,43 +123,18 @@ export class WebSocketChannelManager {
    * Envia mensagem via broadcast
    */
   async sendBroadcast(event: string, payload: any): Promise<void> {
-    console.log('📡 [ChannelManager] === ENVIANDO BROADCAST ===', {
-      event,
-      orderItemId: this.config.orderItemId,
-      connectionStatus: this.connectionStatus,
-      channelExists: !!this.channel,
-      payloadId: payload?.id,
-      payloadText: payload?.message?.substring(0, 50) + '...',
-      timestamp: new Date().toISOString()
-    });
-
     if (!this.channel || this.connectionStatus !== CONNECTION_STATUS.CONNECTED) {
       const error = `Canal não conectado: channel=${!!this.channel}, status=${this.connectionStatus}`;
-      console.error('❌ [ChannelManager] Erro no sendBroadcast:', error);
       throw new Error(error);
     }
 
     try {
-      console.log('⏳ [ChannelManager] Chamando channel.send...');
       await this.channel.send({
         type: 'broadcast',
         event,
         payload
       });
-      console.log('✅ [ChannelManager] Broadcast enviado com sucesso!', {
-        event,
-        payloadId: payload?.id,
-        orderItemId: this.config.orderItemId,
-        timestamp: new Date().toISOString()
-      });
     } catch (error) {
-      console.error('💥 [ChannelManager] Erro ao enviar broadcast:', {
-        error,
-        event,
-        orderItemId: this.config.orderItemId,
-        connectionStatus: this.connectionStatus,
-        timestamp: new Date().toISOString()
-      });
       this.callbacks.onError?.(`Erro ao enviar broadcast: ${error}`);
       throw error;
     }
@@ -209,10 +157,17 @@ export class WebSocketChannelManager {
    * Desconecta do canal
    */
   async disconnect(): Promise<void> {
+    console.log(`🔌 [Manager] Desconectando canal ${this.config.orderItemId}`);
+  // Removido: this.isDestroyed
     this.clearTimers();
     
     if (this.channel) {
-      await this.channel.unsubscribe();
+      try {
+        await this.channel.unsubscribe();
+        console.log(`✅ [Manager] Canal ${this.config.orderItemId} desconectado com sucesso`);
+      } catch (error) {
+        console.warn(`⚠️ [Manager] Erro ao desconectar canal ${this.config.orderItemId}:`, error);
+      }
       this.channel = null;
     }
     
@@ -222,67 +177,9 @@ export class WebSocketChannelManager {
   /**
    * Tenta reconectar automaticamente
    */
-  private handleReconnection(supabase: any): void {
-    console.log(`🔄 [ChannelManager] Handling reconnection:`, {
-      attempts: this.reconnectAttempts,
-      maxAttempts: WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS,
-      orderItemId: this.config.orderItemId,
-      timestamp: new Date().toISOString()
-    });
+  // Removido: handleReconnection. Reconexão deve ser gerenciada externamente ou por status listener oficial do Supabase.
 
-    if (this.reconnectAttempts >= WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS) {
-      console.error(`❌ [ChannelManager] Max reconnection attempts reached`);
-      this.setConnectionStatus(CONNECTION_STATUS.ERROR);
-      this.callbacks.onError?.('Máximo de tentativas de reconexão atingido');
-      return;
-    }
-
-    this.setConnectionStatus(CONNECTION_STATUS.RECONNECTING);
-    
-    const delay = WebSocketUtils.calculateReconnectDelay(this.reconnectAttempts);
-    console.log(`⏰ [ChannelManager] Scheduling reconnection in ${delay}ms`);
-    
-    this.reconnectTimer = setTimeout(async () => {
-      this.reconnectAttempts++;
-      console.log(`🔄 [ChannelManager] Attempting reconnection #${this.reconnectAttempts}`);
-      try {
-        await this.connect(supabase);
-      } catch (error) {
-        console.error(`💥 [ChannelManager] Reconnection #${this.reconnectAttempts} failed:`, error);
-      }
-    }, delay);
-  }
-
-  /**
-   * Inicia heartbeat para manter conexão ativa
-   */
-  private startHeartbeat(): void {
-    this.clearHeartbeat();
-    
-    this.heartbeatTimer = setInterval(() => {
-      if (this.channel && this.connectionStatus === CONNECTION_STATUS.CONNECTED) {
-        this.channel.send({
-          type: 'broadcast',
-          event: 'heartbeat',
-          payload: { timestamp: Date.now() }
-        }).catch((error) => {
-          console.warn('Heartbeat falhou:', error);
-          // Não desconecta imediatamente, pode ser temporário
-          // this.setConnectionStatus(CONNECTION_STATUS.DISCONNECTED);
-        });
-      }
-    }, WEBSOCKET_CONFIG.HEARTBEAT_INTERVAL);
-  }
-
-  /**
-   * Para o heartbeat
-   */
-  private clearHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
-  }
+  // Removido: startHeartbeat e clearHeartbeat. Heartbeat manual não é mais necessário.
 
   /**
    * Limpa todos os timers
@@ -292,32 +189,16 @@ export class WebSocketChannelManager {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    this.clearHeartbeat();
+    // Removido: this.clearHeartbeat();
   }
 
   /**
    * Define status da conexão e notifica callbacks
    */
   private setConnectionStatus(status: ConnectionStatus): void {
-    const previousStatus = this.connectionStatus;
     if (this.connectionStatus !== status) {
-      console.log(`🔄 [ChannelManager] Connection status change:`, {
-        from: previousStatus,
-        to: status,
-        orderItemId: this.config.orderItemId,
-        timestamp: new Date().toISOString(),
-        reconnectAttempts: this.reconnectAttempts
-      });
-
       this.connectionStatus = status;
       const isConnected = status === CONNECTION_STATUS.CONNECTED;
-      
-      console.log(`📢 [ChannelManager] Notifying connection change:`, {
-        isConnected,
-        orderItemId: this.config.orderItemId,
-        timestamp: new Date().toISOString()
-      });
-
       this.callbacks.onConnectionChange?.(isConnected);
     }
   }

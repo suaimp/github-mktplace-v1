@@ -4,7 +4,7 @@
 
 // Componentes tradicionais
 export { ChatModal } from './components/ChatModal';
-export { ChatButton } from './components/ChatButton';
+ 
 
 // Componentes WebSocket - Novo design como padrão
 export { NewChatModalWebSocket as ChatModalWebSocket } from './components/NewChatModalWebSocket';

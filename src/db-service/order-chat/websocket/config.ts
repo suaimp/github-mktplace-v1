@@ -6,11 +6,12 @@
  * Configurações padrão para reconexão
  */
 export const WEBSOCKET_CONFIG = {
-  RECONNECT_INTERVAL: 5000,
-  MAX_RECONNECT_ATTEMPTS: 3,
-  HEARTBEAT_INTERVAL: 60000, // 1 minuto em vez de 30 segundos
+  RECONNECT_INTERVAL: 3000, // Reduzido de 5000 para reconectar mais rápido
+  MAX_RECONNECT_ATTEMPTS: 5, // Aumentado de 3 para dar mais chances
+  HEARTBEAT_INTERVAL: 30000, // Reduzido de 60000 para detectar problemas mais rápido
   MESSAGE_TIMEOUT: 10000,
   TYPING_TIMEOUT: 3000,
+  CONNECTION_TIMEOUT: 10000, // Novo: timeout para estabelecer conexão inicial
 } as const;
 
 /**

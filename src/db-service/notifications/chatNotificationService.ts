@@ -2,10 +2,8 @@
  * Serviço para notificações de chat
  * Responsabilidade única: Gerenciar notificações específicas do chat
  */
-
 import { NotificationService } from "./notificationService";
 import { ChatNotificationData } from "./types";
-
 export class ChatNotificationService {
   /**
    * Cria notificações quando uma mensagem de chat é enviada
@@ -16,7 +14,6 @@ export class ChatNotificationService {
     try {
       // Buscar o customer_id do pedido (sempre o comprador)
       const customerIds = await this.getOrderCustomerId(data.orderId);
-      
       if (data.senderType === 'user') {
         // Cliente enviou mensagem - criar UMA notificação para todos os admins
         await NotificationService.createNotification({
@@ -29,8 +26,6 @@ export class ChatNotificationService {
           content: data.message,
           order_id: data.orderId             // NOVO: Adicionar order_id para redirecionamento
         });
-        
-        console.log(`✅ Notificação de chat criada para admins`);
       } else {
         // Admin enviou mensagem - notificar apenas o cliente (comprador)
         if (customerIds.length > 0) {
@@ -44,8 +39,6 @@ export class ChatNotificationService {
             content: data.message,
             order_id: data.orderId             // NOVO: Adicionar order_id para redirecionamento
           });
-          
-          console.log(`✅ Notificação de chat criada para cliente ${customerIds[0]}`);
         }
       }
     } catch (error) {
@@ -53,7 +46,6 @@ export class ChatNotificationService {
       // Não propagar o erro para não quebrar o fluxo principal do chat
     }
   }
-
   /**
    * Busca o destinatário correto para a notificação
    * Se quem enviou foi admin, notifica o cliente
@@ -76,66 +68,52 @@ export class ChatNotificationService {
       return [];
     }
   }
-
   /**
    * Busca IDs de todos os admins
    */
   private static async getAdminIds(): Promise<string[]> {
     const { supabase } = await import("../../lib/supabase");
-    
     const { data: admins, error } = await supabase
       .from("admins")
       .select("id, role_id")
       .eq("role", "admin");
-
     if (error) {
       console.error('Erro ao buscar admins:', error);
       return [];
     }
-
     // Filtrar apenas admins com role_id válido
     const validAdmins = admins?.filter(admin => admin.role_id) || [];
-    
     // Verificar se as roles são realmente de admin
     if (validAdmins.length > 0) {
       const roleIds = validAdmins.map(admin => admin.role_id);
-      
       const { data: roles } = await supabase
         .from("roles")
         .select("id")
         .in("id", roleIds)
         .eq("name", "admin");
-
       const validRoleIds = roles?.map(role => role.id) || [];
-      
       return validAdmins
         .filter(admin => validRoleIds.includes(admin.role_id))
         .map(admin => admin.id);
     }
-
     return [];
   }
-
   /**
    * Busca o ID do cliente de um pedido específico
    */
   private static async getOrderCustomerId(orderId: string): Promise<string[]> {
     const { supabase } = await import("../../lib/supabase");
-    
     const { data: order, error } = await supabase
       .from("orders")
       .select("user_id")
       .eq("id", orderId)
       .maybeSingle();
-
     if (error || !order?.user_id) {
       console.error('Erro ao buscar cliente do pedido:', error);
       return [];
     }
-
     return [order.user_id];
   }
-
   /**
    * Cria uma única notificação para a mensagem de chat
    */
@@ -143,8 +121,6 @@ export class ChatNotificationService {
     try {
       // Criar apenas uma notificação com o sender como user_id
       await this.createChatNotification(data);
-      
-      console.log(`✅ Notificação criada para mensagem de chat`);
     } catch (error) {
       console.error('❌ Erro ao enviar notificação de chat:', error);
     }

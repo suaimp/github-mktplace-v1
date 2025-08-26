@@ -20,7 +20,7 @@ export { AdaptiveChatModal } from './examples/WebSocketUsage';
 
 // Exports do sistema tradicional (para compatibilidade)
 export { ChatModal } from './components/ChatModal';
-export { ChatButton } from './components/ChatButton';
+export { ChatButton } from '../OrderItemsTable/components/ChatButton';
 export { useChat } from './hooks/useChat';
 export { useChatModal } from './hooks/useChatModal';
 

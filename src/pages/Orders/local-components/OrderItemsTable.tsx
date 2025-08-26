@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext } from "react";
+// Contexto para forçar re-render global da tabela
+export const TableForceUpdateContext = createContext<{ force: () => void }>({ force: () => {} });
 import { InfoTooltipOptimized } from "../../../components/ui/InfoTooltip";
 import { SERVICE_OPTIONS } from "../../../components/Checkout/constants/options";
 import { supabase } from "../../../lib/supabase";
 import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
 import { ChatModalWebSocket as SimpleChatModalWebSocket } from "./ChatModal";
-import { ChatIcon, HorizontaLDots } from "../../../icons";
+import { HorizontaLDots } from "../../../icons";
 import { OrderItemStatusService, OrderItemAnalyzer, useChatColumnVisibility } from "./OrderItemsTable/index";
+import { ChatButton } from "./OrderItemsTable/components";
 
 interface OrderItem {
   id: string;
@@ -49,6 +52,9 @@ export default function OrderItemsTable({
   paymentStatus,
 }: OrderItemsTableProps) {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  // Estado para forçar re-render global da tabela
+  const [tableForceUpdate, setTableForceUpdate] = useState(0);
+  const forceTableUpdate = () => setTableForceUpdate(f => f + 1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -257,6 +263,7 @@ export default function OrderItemsTable({
   }
 
   return (
+    <TableForceUpdateContext.Provider value={{ force: forceTableUpdate }}>
     <div className="bg-white dark:bg-gray-900 rounded-xl px-4 pt-0 pb-4 mb-6">
       <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
         <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-3">
@@ -733,6 +740,15 @@ export default function OrderItemsTable({
                       const context = OrderItemAnalyzer.extractStatusContext(item, paymentStatus);
                       const status = OrderItemStatusService.determineStatus(context);
                       
+                      // Proteção contra status undefined
+                      if (!status) {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                            Status Indeterminado
+                          </span>
+                        );
+                      }
+                      
                       return (
                         <span className={status.className}>
                           {status.label}
@@ -745,14 +761,11 @@ export default function OrderItemsTable({
                     <td className="whitespace-nowrap px-4 py-4 text-sm">
                       <div className="flex items-center space-x-2">
                         {/* Botão de Chat - sempre visível */}
-                        <button
-                          onClick={() => handleOpenChat(item)}
-                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                          style={{ borderRadius: '12px' }}
-                          title="Abrir chat"
-                        >
-                          <ChatIcon className="w-5 h-5 text-white" />
-                        </button>
+                        <ChatButton
+                          key={item.id + '-' + tableForceUpdate}
+                          orderItemId={item.id}
+                          onOpenChat={() => handleOpenChat(item)}
+                        />
                         {/* Botão de Detalhes - apenas para admin */}
                         {isAdmin && (
                           <button
@@ -1104,14 +1117,11 @@ export default function OrderItemsTable({
                   <div className="border-t border-gray-100 dark:border-gray-700 px-6 py-4">
                     <div className="flex items-center justify-end space-x-3">
                         {/* Botão de Chat - sempre visível */}
-                        <button
-                          onClick={() => handleOpenChat(item)}
-                          className="p-2 transition-all duration-200 hover:opacity-80 hover:scale-105 bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500"
-                          style={{ borderRadius: '12px' }}
-                          title="Abrir chat"
-                        >
-                          <ChatIcon className="w-5 h-5 text-white" />
-                        </button>
+                        <ChatButton
+                          key={item.id + '-' + tableForceUpdate}
+                          orderItemId={item.id}
+                          onOpenChat={() => handleOpenChat(item)}
+                        />
                         {/* Botão de Detalhes - apenas para admin */}
                         {isAdmin && (
                           <button
@@ -1168,6 +1178,7 @@ export default function OrderItemsTable({
         orderId={orderId}
         entryId={selectedChatItem?.entry_id}
       />
-    </div>
+  </div>
+  </TableForceUpdateContext.Provider>
   );
 }

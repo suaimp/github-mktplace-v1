@@ -85,15 +85,11 @@ export async function getUserAvatarData(userId: string, userName: string): Promi
   try {
     // Se não temos userId válido, retornar dados padrão imediatamente
     if (!userId || userId.trim() === '') {
-      console.log('🔍 [UserAvatarService] Empty userId, using default avatar for:', userName);
       return defaultData;
     }
-
-    console.log('🔍 [UserAvatarService] Loading avatar for:', { userId, userName });
     
     // Determinar qual tabela usar
     const table = await getUserTable(userId);
-    console.log('📋 [UserAvatarService] Using table:', table);
 
     // Buscar dados do avatar
     const { data: avatarData, error } = await supabase
@@ -103,22 +99,16 @@ export async function getUserAvatarData(userId: string, userName: string): Promi
       .maybeSingle();
 
     if (error) {
-      console.error('❌ [UserAvatarService] Database error:', error);
       return defaultData;
     }
-
-    console.log('📊 [UserAvatarService] Avatar data:', avatarData);
 
     if (avatarData?.avatar_url) {
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(avatarData.avatar_url);
-        
-      console.log('🔗 [UserAvatarService] Generated public URL:', publicUrl);
       
       // Verificação adicional para produção
       if (import.meta.env.MODE === 'production' && (publicUrl.includes('localhost') || publicUrl.includes('127.0.0.1'))) {
-        console.error('❌ [UserAvatarService] localhost URL detected in production:', publicUrl);
         return defaultData;
       }
       
@@ -130,10 +120,8 @@ export async function getUserAvatarData(userId: string, userName: string): Promi
       };
     }
 
-    console.log('📭 [UserAvatarService] No avatar URL found, using initials');
     return defaultData;
   } catch (err) {
-    console.error('❌ [UserAvatarService] Error loading user avatar data:', err);
     return defaultData;
   }
 }

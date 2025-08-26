@@ -2,7 +2,6 @@
  * Serviço principal para WebSocket do chat
  * Responsabilidade única: Orquestrar comunicação via WebSocket
  */
-
 import { supabase } from '../../../lib/supabase';
 import { OrderChatService } from '../orderChatService';
 import { CreateChatMessageInput } from '../types';
@@ -15,14 +14,12 @@ import {
 } from './types';
 import { CHANNEL_EVENTS, WEBSOCKET_CONFIG } from './config';
 import { WebSocketUtils } from './utils';
-
 /**
  * Serviço principal para gerenciar WebSocket do chat
  */
 export class OrderChatWebSocketService {
   private static managers = new Map<string, WebSocketChannelManager>();
   private static typingTimers = new Map<string, NodeJS.Timeout>();
-
   /**
    * Conecta ao chat via WebSocket
    */
@@ -33,11 +30,14 @@ export class OrderChatWebSocketService {
   ): Promise<WebSocketChannelManager> {
     const channelKey = `chat_${orderItemId}`;
     
-    // Se já existe um manager ativo, desconecta primeiro
+    // Se já existe um manager ativo, desconecta primeiro para evitar duplicatas
     if (this.managers.has(channelKey)) {
+      console.log(`🔄 [Connect] Manager já existe para ${channelKey}, desconectando primeiro...`);
       await this.disconnectFromChat(orderItemId);
     }
 
+    console.log(`🚀 [Connect] Criando novo manager para ${channelKey}`);
+    
     const channelConfig: ChannelConfig = {
       orderItemId,
       enablePresence: true,
@@ -51,47 +51,48 @@ export class OrderChatWebSocketService {
     try {
       await manager.connect(supabase);
       this.managers.set(channelKey, manager);
+      console.log(`✅ [Connect] Manager criado e conectado para ${channelKey}`);
       return manager;
     } catch (error) {
+      console.error(`❌ [Connect] Falha ao conectar ${channelKey}:`, error);
       throw new Error(`Falha ao conectar ao chat: ${error}`);
     }
   }
-
   /**
    * Envia mensagem via WebSocket
    */
   static async sendMessage(
     orderItemId: string,
     messageInput: CreateChatMessageInput
-  ): Promise<void> {
-    console.log('📤 [SEND] Iniciando envio de mensagem:', {
-      orderItemId,
-      messageText: messageInput.message,
-      senderType: messageInput.sender_type,
-      timestamp: new Date().toISOString()
-    });
-    
+  ): Promise<void> {    
     const channelKey = `chat_${orderItemId}`;
-    const manager = this.managers.get(channelKey);
+    let manager = this.managers.get(channelKey);
 
+    // Se não há manager ou não está conectado, tenta aguardar a conexão
     if (!manager || !manager.isConnected()) {
-      console.error('❌ [SEND] Canal não conectado:', {
+      console.warn('⚠️ [SEND] Canal não conectado, aguardando conexão:', {
         channelKey,
         managerExists: !!manager,
         isConnected: manager?.isConnected() ?? false
       });
-      throw new Error('Canal não conectado');
+      
+      // Tenta aguardar um pouco para a conexão finalizar (se estiver em processo)
+      await this.waitForConnection(orderItemId, 3000); // 3 segundos máximo
+      
+      // Verifica novamente após aguardar
+      manager = this.managers.get(channelKey);
+      if (!manager || !manager.isConnected()) {
+        console.error('❌ [SEND] Canal ainda não conectado após aguardar:', {
+          channelKey,
+          managerExists: !!manager,
+          isConnected: manager?.isConnected() ?? false
+        });
+        throw new Error('Canal não conectado');
+      }
     }
-
     try {
       // 1. Salva no banco de dados
-      console.log('💾 [SEND] Salvando mensagem no banco...');
       const savedMessage = await OrderChatService.createMessage(messageInput);
-      console.log('✅ [SEND] Mensagem salva no banco:', {
-        id: savedMessage.id,
-        message: savedMessage.message,
-        sender_type: savedMessage.sender_type
-      });
       
       // 2. Envia via broadcast
       const broadcastMessage: BroadcastChatMessage = {
@@ -104,17 +105,13 @@ export class OrderChatWebSocketService {
         order_id: savedMessage.order_id,
         entry_id: savedMessage.entry_id
       };
-
-      console.log('📡 [SEND] Enviando broadcast:', broadcastMessage);
-      await manager.sendBroadcast(CHANNEL_EVENTS.NEW_MESSAGE, broadcastMessage);
-      console.log('✅ [SEND] Broadcast enviado com sucesso!');
       
+      await manager.sendBroadcast(CHANNEL_EVENTS.NEW_MESSAGE, broadcastMessage);      
     } catch (error) {
       console.error('💥 [SEND] Erro no envio:', error);
       throw new Error(`Falha ao enviar mensagem: ${error}`);
     }
   }
-
   /**
    * Envia indicador de digitação
    */
@@ -125,30 +122,24 @@ export class OrderChatWebSocketService {
   ): Promise<void> {
     const channelKey = `chat_${orderItemId}`;
     const manager = this.managers.get(channelKey);
-
     if (!manager || !manager.isConnected()) {
       return; // Não é crítico se falhar
     }
-
     try {
       const typingIndicator: TypingIndicator = {
         userId,
         isTyping,
         timestamp: new Date().toISOString()
       };
-
       await manager.sendBroadcast(CHANNEL_EVENTS.TYPING, typingIndicator);
-
       // Auto-parar indicador de digitação após timeout
       if (isTyping) {
         this.scheduleTypingStop(orderItemId, userId);
       }
-      
     } catch (error) {
       console.warn('Falha ao enviar indicador de digitação:', error);
     }
   }
-
   /**
    * Atualiza presença do usuário
    */
@@ -162,11 +153,9 @@ export class OrderChatWebSocketService {
   ): Promise<void> {
     const channelKey = `chat_${orderItemId}`;
     const manager = this.managers.get(channelKey);
-
     if (!manager || !manager.isConnected()) {
       return;
     }
-
     try {
       await manager.updatePresence({
         user_id: userPresence.userId,
@@ -178,19 +167,16 @@ export class OrderChatWebSocketService {
       console.warn('Falha ao atualizar presença:', error);
     }
   }
-
   /**
    * Desconecta do chat
    */
   static async disconnectFromChat(orderItemId: string): Promise<void> {
     const channelKey = `chat_${orderItemId}`;
     const manager = this.managers.get(channelKey);
-
     if (manager) {
       await manager.disconnect();
       this.managers.delete(channelKey);
     }
-
     // Limpa timer de digitação
     const typingKey = `${orderItemId}_typing`;
     const typingTimer = this.typingTimers.get(typingKey);
@@ -199,7 +185,6 @@ export class OrderChatWebSocketService {
       this.typingTimers.delete(typingKey);
     }
   }
-
   /**
    * Desconecta de todos os chats
    */
@@ -208,10 +193,8 @@ export class OrderChatWebSocketService {
       const orderItemId = key.replace('chat_', '');
       return this.disconnectFromChat(orderItemId);
     });
-
     await Promise.all(disconnectPromises);
   }
-
   /**
    * Verifica se está conectado a um chat específico
    */
@@ -220,7 +203,6 @@ export class OrderChatWebSocketService {
     const manager = this.managers.get(channelKey);
     return manager?.isConnected() ?? false;
   }
-
   /**
    * Obtém status de conexão
    */
@@ -229,7 +211,6 @@ export class OrderChatWebSocketService {
     const manager = this.managers.get(channelKey);
     return manager?.getConnectionStatus() ?? 'DISCONNECTED';
   }
-
   /**
    * Obtém lista de chats conectados
    */
@@ -238,28 +219,23 @@ export class OrderChatWebSocketService {
       .map(key => key.replace('chat_', ''))
       .filter(orderItemId => this.isConnectedToChat(orderItemId));
   }
-
   /**
    * Agenda parada do indicador de digitação
    */
   private static scheduleTypingStop(orderItemId: string, userId: string): void {
     const typingKey = `${orderItemId}_${userId}_typing`;
-    
     // Limpa timer anterior se existir
     const existingTimer = this.typingTimers.get(typingKey);
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-
     // Agenda nova parada
     const timer = setTimeout(() => {
       this.sendTypingIndicator(orderItemId, userId, false);
       this.typingTimers.delete(typingKey);
     }, WEBSOCKET_CONFIG.TYPING_TIMEOUT);
-
     this.typingTimers.set(typingKey, timer);
   }
-
   /**
    * Cria debounced sender para indicador de digitação
    */
@@ -269,7 +245,6 @@ export class OrderChatWebSocketService {
       500 // 500ms de debounce
     );
   }
-
   /**
    * Cria throttled sender para atualizações de presença
    */
@@ -278,5 +253,36 @@ export class OrderChatWebSocketService {
       (presence: any) => this.updateUserPresence(orderItemId, presence),
       2000 // Máximo uma atualização a cada 2 segundos
     );
+  }
+
+  /**
+   * Aguarda conexão estar estabelecida
+   */
+  private static async waitForConnection(orderItemId: string, timeoutMs: number): Promise<void> {
+    const channelKey = `chat_${orderItemId}`;
+    const startTime = Date.now();
+
+    return new Promise((resolve, reject) => {
+      const checkConnection = () => {
+        const manager = this.managers.get(channelKey);
+        
+        if (manager && manager.isConnected()) {
+          console.log('✅ [WAIT] Conexão estabelecida');
+          resolve();
+          return;
+        }
+
+        if (Date.now() - startTime >= timeoutMs) {
+          console.warn('⏰ [WAIT] Timeout aguardando conexão');
+          reject(new Error('Timeout aguardando conexão'));
+          return;
+        }
+
+        // Verifica novamente em 100ms
+        setTimeout(checkConnection, 100);
+      };
+
+      checkConnection();
+    });
   }
 }

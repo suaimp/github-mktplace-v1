@@ -39,7 +39,6 @@ export class OrderChatService {
 
       return !!roleData;
     } catch (error) {
-      console.error("Erro ao verificar se usuário é admin:", error);
       return false;
     }
   }
@@ -76,7 +75,6 @@ export class OrderChatService {
       .single();
 
     if (error) {
-      console.error("Erro ao criar mensagem:", error);
       throw new Error("Falha ao enviar mensagem");
     }
 
@@ -121,20 +119,11 @@ export class OrderChatService {
       senderId: user.user.id,
       senderType: input.sender_type,
       message: input.message,
-    }).catch(error => {
-      console.warn('Erro ao enviar notificação de chat no dashboard:', error);
+    }).catch(() => {
+      // Erro silencioso para não afetar o fluxo principal
     });
 
     // Enviar notificação por email
-    console.log('💬 [CHAT_DEBUG] === INICIANDO ENVIO DE NOTIFICAÇÃO POR EMAIL ===');
-    console.log('💬 [CHAT_DEBUG] Dados para notificação:', {
-      orderId: input.order_id,
-      orderItemId: input.order_item_id,
-      senderName,
-      senderType: input.sender_type,
-      messageLength: input.message.length
-    });
-
     OrderNotificationService.sendMessageNotification(
       input.order_id,
       input.order_item_id,
@@ -143,14 +132,10 @@ export class OrderChatService {
         senderName: senderName,
         senderType: input.sender_type
       }
-    ).then(result => {
-      console.log('💬 [CHAT_DEBUG] === RESULTADO NOTIFICAÇÃO EMAIL ===', result ? 'SUCESSO' : 'FALHA');
-    }).catch(error => {
-      // Log detalhado do erro
-      console.error('❌ [CHAT_DEBUG] ERRO DETALHADO ao enviar notificação por email:', error);
-      console.error('❌ [CHAT_DEBUG] Stack trace:', error.stack);
-      console.error('❌ [CHAT_DEBUG] Tipo do erro:', typeof error);
-      console.error('❌ [CHAT_DEBUG] Erro serializado:', JSON.stringify(error, null, 2));
+    ).then(() => {
+      // Notificação enviada com sucesso
+    }).catch(() => {
+      // Erro silencioso para não afetar o fluxo principal
     });
 
     return data;
@@ -198,7 +183,6 @@ export class OrderChatService {
     const { data, error } = await query;
 
     if (error) {
-      console.error("Erro ao buscar mensagens:", error);
       throw new Error("Falha ao carregar mensagens");
     }
 
@@ -225,7 +209,6 @@ export class OrderChatService {
       .in("id", senderIds);
 
     if (sendersError) {
-      console.error("Erro ao buscar remetentes:", sendersError);
       // Retornar mensagens sem dados do remetente
       return messages.map(msg => ({ ...msg, sender: undefined }));
     }
@@ -254,7 +237,6 @@ export class OrderChatService {
       .in("id", messageIds);
 
     if (error) {
-      console.error("Erro ao marcar mensagens como lidas:", error);
       throw new Error("Falha ao marcar mensagens como lidas");
     }
   }
@@ -269,7 +251,6 @@ export class OrderChatService {
       .eq("order_item_id", orderItemId);
 
     if (error) {
-      console.error("Erro ao marcar mensagens do item como lidas:", error);
       throw new Error("Falha ao marcar mensagens como lidas");
     }
   }
@@ -284,7 +265,6 @@ export class OrderChatService {
       .eq("order_item_id", orderItemId);
 
     if (error) {
-      console.error("Erro ao buscar estatísticas do chat:", error);
       throw new Error("Falha ao carregar estatísticas");
     }
 
@@ -311,7 +291,6 @@ export class OrderChatService {
       .eq("id", messageId);
 
     if (error) {
-      console.error("Erro ao deletar mensagem:", error);
       throw new Error("Falha ao deletar mensagem");
     }
   }
@@ -323,8 +302,6 @@ export class OrderChatService {
     orderItemId: string, 
     callback: (message: OrderChatMessage) => void
   ) {
-    console.log(`🔌 [Realtime] Criando subscription para orderItemId: ${orderItemId}`);
-    
     const channel = supabase
       .channel(`order_chat_${orderItemId}`)
       .on(
@@ -336,13 +313,10 @@ export class OrderChatService {
           filter: `order_item_id=eq.${orderItemId}`,
         },
         (payload) => {
-          console.log(`📨 [Realtime] Nova mensagem recebida:`, payload);
           callback(payload.new as OrderChatMessage);
         }
       )
-      .subscribe((status) => {
-        console.log(`🔌 [Realtime] Status da subscription: ${status}`);
-      });
+      .subscribe();
 
     return channel;
   }
@@ -352,7 +326,45 @@ export class OrderChatService {
    */
   static unsubscribeFromMessages(channel: any) {
     if (channel) {
-      console.log(`🔌 [Realtime] Removendo subscription`);
+ 
+      supabase.removeChannel(channel);
+    }
+  }
+
+  /**
+   * Cria um listener para notificações (ícone pulsante) - canal separado para evitar conflitos
+   */
+  static subscribeToNotifications(
+    orderItemId: string, 
+    callback: (message: OrderChatMessage) => void
+  ) {
+ 
+    const channel = supabase
+      .channel(`notifications_chat_${orderItemId}`)  // Nome diferente para evitar conflito
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'order_chat',
+          filter: `order_item_id=eq.${orderItemId}`,
+        },
+        (payload) => {
+           callback(payload.new as OrderChatMessage);
+        }
+      )
+      .subscribe((_status) => {
+     });
+
+    return channel;
+  }
+
+  /**
+   * Remove listener de notificações
+   */
+  static unsubscribeFromNotifications(channel: any) {
+    if (channel) {
+    
       supabase.removeChannel(channel);
     }
   }

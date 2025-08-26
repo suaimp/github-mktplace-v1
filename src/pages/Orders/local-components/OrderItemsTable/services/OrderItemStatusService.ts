@@ -2,11 +2,8 @@
  * Serviço para determinar status de itens do pedido
  * Responsabilidade: Lógica de negócio para status
  */
-
 import { OrderItemStatus, OrderItemStatusContext, OrderItemStatusType } from '../types/status';
-
 export class OrderItemStatusService {
-  
   /**
    * Mapa de configurações de status
    */
@@ -64,70 +61,42 @@ export class OrderItemStatusService {
       className: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400'
     }
   };
-
   /**
    * Determina o status de um item baseado no contexto
    */
   static determineStatus(context: OrderItemStatusContext): OrderItemStatus {
-    console.log('🔍 [OrderItemStatusService] Determinando status com contexto:', {
-      paymentStatus: context.paymentStatus,
-      hasPackage: context.hasPackage,
-      hasOutline: context.hasOutline,
-      hasArticle: context.hasArticle,
-      hasArticleUrl: context.hasArticleUrl,
-      isRejected: context.isRejected
-    });
-
     // 0. PRIORIDADE MÁXIMA: Verificar se pagamento está pendente
-    if (context.paymentStatus === "pending") {
-      console.log('✅ [OrderItemStatusService] Retornando status: Pagamento Pendente');
-      return this.STATUS_CONFIG.payment_pending;
+    if (context.paymentStatus === "pending") {      return this.STATUS_CONFIG.payment_pending;
     }
-
     // 1. Verificar status críticos
-    if (context.isRejected) {
-      console.log('➡️ [OrderItemStatusService] Retornando status: Reprovado');
-      return this.STATUS_CONFIG.rejected;
+    if (context.isRejected) {      return this.STATUS_CONFIG.rejected;
     }
-
     // 2. Publicado APENAS quando admin adiciona URL do artigo publicado
-    if (context.hasArticleUrl) {
-      console.log('➡️ [OrderItemStatusService] Retornando status: Artigo Publicado');
-      return this.STATUS_CONFIG.published;
+    if (context.hasArticleUrl) {      return this.STATUS_CONFIG.published;
     }
-
     // 3. Se artigo foi enviado (upload ou link), mas ainda não publicado (sem url)
     // Artigo doc = artigo antes de ser publicado (upload ou link)
-    if (context.hasArticle) {
-      console.log('➡️ [OrderItemStatusService] Retornando status: Publicação Pendente');
-      return this.STATUS_CONFIG.publication_pending;
+    if (context.hasArticle) {      return this.STATUS_CONFIG.publication_pending;
     }
-
     // 4. Se tem pacote, avaliar fluxo de pauta
     if (context.hasPackage) {
       // Se tem pauta enviada -> Em preparação
       if (context.hasOutline) {
-        console.log('➡️ [OrderItemStatusService] Retornando status: Em preparação');
         return this.STATUS_CONFIG.in_preparation;
       }
-      
       // Se tem pacote mas não tem pauta nem artigo
-      console.log('➡️ [OrderItemStatusService] Retornando status: Aguardando Pauta');
       return this.STATUS_CONFIG.pauta_pending;
     }
-
+    
     // 5. Se não tem pacote, aguarda artigo
-    console.log('➡️ [OrderItemStatusService] Retornando status: Artigo Pendente');
     return this.STATUS_CONFIG.article_pending;
   }
-
   /**
    * Obtém a configuração de um status específico
    */
   static getStatusConfig(type: OrderItemStatusType): OrderItemStatus {
     return this.STATUS_CONFIG[type];
   }
-
   /**
    * Lista todos os tipos de status disponíveis
    */

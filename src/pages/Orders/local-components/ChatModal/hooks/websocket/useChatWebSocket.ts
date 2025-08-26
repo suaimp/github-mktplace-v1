@@ -2,7 +2,6 @@
  * Hook principal para chat WebSocket
  * Responsabilidade única: Gerenciar estado e comunicação WebSocket do chat
  */
-
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   OrderChatWebSocketService, 
@@ -20,7 +19,6 @@ import {
   ChatWebSocketState, 
   ChatMessage 
 } from './types';
-
 /**
  * Hook para gerenciar chat WebSocket
  */
@@ -30,14 +28,6 @@ export function useChatWebSocket({
   entryId,
   isOpen
 }: UseChatWebSocketProps): UseChatWebSocketReturn {
-  console.log('🎯 [HOOK INIT] ============= useChatWebSocket INICIADO =============', {
-    orderId,
-    orderItemId,
-    entryId,
-    isOpen,
-    timestamp: new Date().toISOString()
-  });
-
   const [chatState, setChatState] = useState<ChatWebSocketState>({
     messages: [],
     isConnected: false,
@@ -49,12 +39,10 @@ export function useChatWebSocket({
     connectionStatus: 'DISCONNECTED',
     error: null
   });
-
   const [error, setError] = useState<string | null>(null);
   const isConnectedRef = useRef(false);
   const currentUserRef = useRef<string | null>(null);
   const [currentUserType, setCurrentUserType] = useState<'user' | 'admin' | null>(null);
-
   /**
    * Converte mensagem do banco para UI
    */
@@ -68,206 +56,95 @@ export function useChatWebSocket({
       isTemporary: false
     };
   }, []);
-
   /**
    * Carrega mensagens existentes do banco
    */
   const loadExistingMessages = useCallback(async () => {
     try {
       console.log(`📚 [LoadMessages] Starting to load messages`, { orderItemId, entryId });
-      
       const dbMessages = await OrderChatService.getMessages({
         order_item_id: orderItemId,
         entry_id: entryId
       });
-
       console.log(`📚 [LoadMessages] Retrieved ${dbMessages.length} messages from database`);
-
       const messages = dbMessages.map(convertMessage);
       const unreadCount = messages.filter(msg => !msg.isRead && msg.sender === 'admin').length;
-
       console.log(`📚 [LoadMessages] Processed ${messages.length} messages, ${unreadCount} unread`);
-
       setChatState(prev => ({
         ...prev,
         messages,
         unreadCount,
         isLoading: false
       }));
-
       console.log(`📚 [LoadMessages] Updated chat state with messages`);
-
       // Marcar mensagens como lidas se houver não lidas
       if (unreadCount > 0) {
         console.log(`📚 [LoadMessages] Marking ${unreadCount} messages as read`);
         const unreadIds = dbMessages
           .filter(msg => !msg.is_read && msg.sender_type === 'admin')
           .map(msg => msg.id);
-        
         if (unreadIds.length > 0) {
           await OrderChatService.markAsRead(unreadIds);
           console.log(`📚 [LoadMessages] Successfully marked messages as read`);
         }
       }
-
       console.log(`✅ [LoadMessages] Loading completed successfully`);
-
     } catch (err) {
       console.error('💥 [LoadMessages] Error loading messages:', err);
       setError('Falha ao carregar mensagens');
       setChatState(prev => ({ ...prev, isLoading: false }));
     }
   }, [orderItemId, entryId, convertMessage]);
-
   /**
    * Callbacks para WebSocket
    */
   const webSocketCallbacks: WebSocketCallbacks = useMemo(() => ({
     onMessage: (message: BroadcastChatMessage) => {
-      console.log('🎯 [BROADCAST] === BROADCAST RECEBIDO ===', {
-        timestamp: new Date().toISOString(),
-        messageId: message.id,
-        text: message.message,
-        senderId: message.sender_id,
-        senderType: message.sender_type,
-        createdAt: message.created_at,
-        orderItemId: message.order_item_id,
-        currentUserId: currentUserRef.current,
-        isOwnMessage: message.sender_id === currentUserRef.current
-      });
-      
       const chatMessage = convertMessage(message);
-      console.log('🔄 [BROADCAST] Mensagem convertida:', {
-        id: chatMessage.id,
-        text: chatMessage.text,
-        sender: chatMessage.sender,
-        timestamp: chatMessage.timestamp,
-        isTemporary: chatMessage.isTemporary
-      });
-      
       // Se é minha própria mensagem, apenas substitui a temporária pela definitiva
-      const isOwnMessage = message.sender_id === currentUserRef.current;
-      console.log('🔍 [BROADCAST] Análise da mensagem:', {
-        isOwnMessage,
-        senderId: message.sender_id,
-        currentUserId: currentUserRef.current,
-        willProcessAsOwnMessage: isOwnMessage,
-        willProcessAsOtherMessage: !isOwnMessage
-      });
-      
-      setChatState(prev => {
-        console.log('📊 [BROADCAST] === ANÁLISE DO ESTADO ATUAL ===', {
-          messagesCount: prev.messages.length,
-          lastMessageId: prev.messages[prev.messages.length - 1]?.id,
-          isConnected: prev.isConnected,
-          connectionStatus: prev.connectionStatus,
-          isOwnMessage,
-          allMessageIds: prev.messages.map(m => ({ id: m.id, isTemp: m.isTemporary, text: m.text.substring(0, 20) + '...' }))
-        });
-        
+      const isOwnMessage = message.sender_id === currentUserRef.current;      
+      setChatState(prev => {        
         // Verificar se mensagem já existe (evitar duplicatas)
-        const messageExists = prev.messages.some(msg => msg.id === chatMessage.id);
-        
-        console.log('🔍 [BROADCAST] Verificação de duplicata:', {
-          messageId: chatMessage.id,
-          messageExists,
-          existingIds: prev.messages.map(m => m.id)
-        });
-        
-        if (messageExists) {
-          console.log('⚠️ [BROADCAST] Mensagem já existe, ignorando duplicata:', chatMessage.id);
-          return prev;
+        const messageExists = prev.messages.some(msg => msg.id === chatMessage.id);        
+        if (messageExists) {          return prev;
         }
-
-        if (isOwnMessage) {
-          console.log('✋ [BROADCAST] Processando mensagem própria...');
-          
+        if (isOwnMessage) {          
           // Para mensagens próprias: substitui a mensagem temporária pela definitiva
-          const temporaryMessages = prev.messages.filter(msg => msg.isTemporary && msg.text === chatMessage.text);
-          console.log('🔍 [BROADCAST] Mensagens temporárias encontradas:', {
-            count: temporaryMessages.length,
-            tempIds: temporaryMessages.map(m => m.id),
-            searchText: chatMessage.text
-          });
-          
           const filteredMessages = prev.messages.filter(msg => 
             !(msg.isTemporary && msg.text === chatMessage.text)
-          );
-          
-          console.log('🧹 [BROADCAST] Após filtrar temporárias:', {
-            originalCount: prev.messages.length,
-            filteredCount: filteredMessages.length,
-            removedCount: prev.messages.length - filteredMessages.length,
-            finalMessageId: chatMessage.id
-          });
-          
+          );          
           const newState = {
             ...prev,
             messages: [...filteredMessages, chatMessage],
             // Não aumenta unreadCount para mensagens próprias
-          };
-          
-          console.log('✅ [BROADCAST] Estado final para mensagem própria:', {
-            newMessagesCount: newState.messages.length,
-            addedMessageId: chatMessage.id,
-            finalMessagesList: newState.messages.slice(-3).map(m => ({ id: m.id, text: m.text.substring(0, 20) + '...', isTemp: m.isTemporary }))
-          });
-          
+          };          
           return newState;
-        } else {
-          console.log('👥 [BROADCAST] Processando mensagem de outro usuário...');
-          
-          // Para mensagens de outros: adiciona normalmente e incrementa unread se for de admin
-          console.log('📨 [BROADCAST] Detalhes da mensagem de outro:', {
-            senderId: message.sender_id,
-            senderType: message.sender_type,
-            chatMessageSender: chatMessage.sender,
-            willIncrementUnread: chatMessage.sender === 'admin'
-          });
-          
+        } else {          
+          // Para mensagens de outros: adiciona normalmente e incrementa unread se for de admin          
           const newState = {
             ...prev,
             messages: [...prev.messages, chatMessage],
             unreadCount: chatMessage.sender === 'admin' ? prev.unreadCount + 1 : prev.unreadCount
-          };
-          
-          console.log('✅ [BROADCAST] Estado final para mensagem de outro:', {
-            newMessagesCount: newState.messages.length,
-            addedMessageId: chatMessage.id,
-            newUnreadCount: newState.unreadCount,
-            finalMessagesList: newState.messages.slice(-3).map(m => ({ id: m.id, text: m.text.substring(0, 20) + '...', sender: m.sender }))
-          });
-          
+          };          
           return newState;
         }
-      });
-      
-      console.log('🏁 [BROADCAST] === BROADCAST PROCESSADO COM SUCESSO ===', {
-        messageId: chatMessage.id,
-        isOwnMessage,
-        timestamp: new Date().toISOString()
-      });
-    },
-
+      });    },
     onTyping: (typing: TypingIndicator) => {
       if (typing.userId !== currentUserRef.current) {
         setChatState(prev => {
           const typingUsers = typing.isTyping
             ? [...prev.typingUsers.filter(id => id !== typing.userId), typing.userId]
             : prev.typingUsers.filter(id => id !== typing.userId);
-          
           return { ...prev, typingUsers };
         });
       }
     },
-
     onPresenceUpdate: (presence: UserPresence[]) => {
       setChatState(prev => ({
         ...prev,
         onlineUsers: presence
       }));
     },
-
     onError: (errorMessage: string) => {
       console.error(`❌ [WebSocket] Error received:`, {
         errorMessage,
@@ -278,23 +155,13 @@ export function useChatWebSocket({
       });
       setError(errorMessage);
     },
-
     onConnectionChange: (connected: boolean) => {
-      console.log(`🔌 [WebSocket] Connection change: ${connected ? 'CONNECTED' : 'DISCONNECTED'}`, {
-        timestamp: new Date().toISOString(),
-        orderItemId,
-        isOpen,
-        currentError: error,
-        previousConnected: isConnectedRef.current
-      });
-
       isConnectedRef.current = connected;
       setChatState(prev => ({
         ...prev,
         isConnected: connected,
         connectionStatus: connected ? 'CONNECTED' : 'DISCONNECTED'
       }));
-
       // Só mostra erro se estiver tentando usar o chat e perdeu conexão
       if (!connected && isOpen && error !== 'Falha na conexão WebSocket. Funcionalidade limitada.') {
         console.warn(`⚠️ [WebSocket] Setting reconnection error`, {
@@ -317,7 +184,6 @@ export function useChatWebSocket({
       }
     }
   }), [convertMessage, isOpen, error]);
-
   /**
    * Conecta ao WebSocket quando modal abre
    */
@@ -336,14 +202,12 @@ export function useChatWebSocket({
       setError(null);
       return;
     }
-
     const connectWebSocket = async () => {
       console.log(`🚀 [WebSocket] Starting connection process`, {
         orderItemId,
         isOpen,
         timestamp: new Date().toISOString()
       });
-
       try {
         setError(null);
         setChatState(prev => ({ 
@@ -352,11 +216,34 @@ export function useChatWebSocket({
           error: null
         }));
 
-        console.log(`📚 [WebSocket] Step 1: Loading existing messages...`);
-        // 1. Carrega mensagens existentes - PODE ESTAR TRAVANDO AQUI
+        // 0. Verificar autenticação primeiro
+        console.log(`� [WebSocket] Step 0: Verifying authentication...`);
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData?.user) {
+          throw new Error('Usuário não autenticado ou token expirado');
+        }
+        
+        // Verificar se token não está próximo do vencimento
+        const session = await supabase.auth.getSession();
+        if (session.data.session?.expires_at) {
+          const expiresAt = new Date(session.data.session.expires_at * 1000);
+          const now = new Date();
+          const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+          
+          if (timeUntilExpiry < 5 * 60 * 1000) { // Menos de 5 minutos
+            console.warn(`⚠️ [WebSocket] Token expira em ${Math.round(timeUntilExpiry / 1000)}s, renovando...`);
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error(`❌ [WebSocket] Erro ao renovar token:`, refreshError);
+            }
+          }
+        }
+        console.log(`✅ [WebSocket] Step 0 completed - authentication verified`);
+
+        console.log(`�📚 [WebSocket] Step 1: Loading existing messages...`);
+        // 1. Carrega mensagens existentes
         await loadExistingMessages();
         console.log(`✅ [WebSocket] Step 1 completed - messages loaded`);
-
         console.log(`🔌 [WebSocket] Step 2: Connecting to WebSocket...`);
         // 2. Conecta ao WebSocket
         await OrderChatWebSocketService.connectToChat(
@@ -369,20 +256,38 @@ export function useChatWebSocket({
           }
         );
         console.log(`✅ [WebSocket] Step 2 completed - WebSocket connected`);
-
+        
+        // 2.1. Verifica se conexão está realmente estabelecida
+        console.log(`🔍 [WebSocket] Step 2.1: Verifying connection is ready...`);
+        const isConnected = OrderChatWebSocketService.isConnectedToChat(orderItemId);
+        if (!isConnected) {
+          console.warn(`⚠️ [WebSocket] Connection not ready immediately, waiting...`);
+          // Aguarda até 2 segundos para a conexão estar pronta
+          let attempts = 0;
+          const maxAttempts = 20; // 20 * 100ms = 2 segundos
+          
+          while (attempts < maxAttempts && !OrderChatWebSocketService.isConnectedToChat(orderItemId)) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+          }
+          
+          if (!OrderChatWebSocketService.isConnectedToChat(orderItemId)) {
+            throw new Error('WebSocket conectou mas não está pronto para receber mensagens');
+          }
+        }
+        console.log(`✅ [WebSocket] Step 2.1 completed - Connection verified and ready`);
+        
         console.log(`👤 [WebSocket] Step 3: Updating user presence...`);
         // 3. Atualiza presença do usuário
         const { data: user } = await supabase.auth.getUser();
         if (user?.user) {
           console.log(`👤 [WebSocket] Got user data`, { userId: user.user.id });
           currentUserRef.current = user.user.id;
-          
           // Determinar tipo do usuário (admin ou user)
           const isAdmin = await OrderChatService.isCurrentUserAdmin();
           const userType = isAdmin ? 'admin' : 'user';
           setCurrentUserType(userType);
           console.log(`👤 [WebSocket] User type determined:`, { userType });
-          
           // Usar novo serviço de presença
           await UserPresenceService.setUserOnline(
             user.user.id,
@@ -390,7 +295,6 @@ export function useChatWebSocket({
             orderItemId
           );
           console.log(`✅ [WebSocket] User presence service updated`);
-
           // Manter compatibilidade com WebSocket
           await OrderChatWebSocketService.updateUserPresence(orderItemId, {
             userId: user.user.id,
@@ -400,7 +304,6 @@ export function useChatWebSocket({
           console.log(`✅ [WebSocket] WebSocket presence updated`);
         }
         console.log(`✅ [WebSocket] Step 3 completed - presence updated`);
-
         // 4. Finalizar loading
         console.log(`🏁 [WebSocket] Step 4: Finalizing connection...`);
         setChatState(prev => ({ 
@@ -410,7 +313,6 @@ export function useChatWebSocket({
           connectionStatus: 'CONNECTED'
         }));
         console.log(`✅ [WebSocket] All steps completed successfully!`);
-
       } catch (err) {
         console.error('💥 [WebSocket] Connection failed at some step:', err, {
           orderItemId,
@@ -430,17 +332,29 @@ export function useChatWebSocket({
         }));
       }
     };
-
     // Timeout de segurança para garantir que loading termine
     const loadingTimeout = setTimeout(() => {
       console.warn(`⏰ [WebSocket] Loading timeout reached after 10 seconds, forcing loading to false`);
       setChatState(prev => ({ ...prev, isLoading: false }));
     }, 10000); // 10 segundos timeout
 
+    // Listener para mudanças de autenticação
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`🔐 [Auth] State change: ${event}`, { hasSession: !!session });
+      
+      if (event === 'TOKEN_REFRESHED') {
+        console.log(`🔄 [Auth] Token refreshed, connection should be stable now`);
+      } else if (event === 'SIGNED_OUT') {
+        console.log(`🚪 [Auth] User signed out, disconnecting WebSocket`);
+        if (isConnectedRef.current) {
+          OrderChatWebSocketService.disconnectFromChat(orderItemId);
+        }
+      }
+    });
+
     connectWebSocket().finally(() => {
       clearTimeout(loadingTimeout);
     });
-
     // Cleanup quando modal fecha ou componente desmonta
     return () => {
       console.log(`🧹 [WebSocket] Cleanup triggered`, {
@@ -449,6 +363,11 @@ export function useChatWebSocket({
         isOpen,
         timestamp: new Date().toISOString()
       });
+
+      // Cleanup do listener de autenticação
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
 
       // Definir usuário como offline no chat específico
       if (currentUserRef.current) {
@@ -460,69 +379,21 @@ export function useChatWebSocket({
             console.error(`❌ [WebSocket] Error setting user offline:`, err);
           });
       }
-
       if (isConnectedRef.current) {
         console.log(`🔌 [WebSocket] Disconnecting from chat...`);
         OrderChatWebSocketService.disconnectFromChat(orderItemId);
       }
     };
   }, [isOpen, orderItemId]); // Dependências limitadas para evitar reconexões desnecessárias
-
-  // Log adicional para rastrear mudanças de estado
-  useEffect(() => {
-    console.log(`📊 [WebSocket] State change:`, {
-      isOpen,
-      isConnected: chatState.isConnected,
-      connectionStatus: chatState.connectionStatus,
-      messagesCount: chatState.messages.length,
-      onlineUsersCount: chatState.onlineUsers.length,
-      error,
-      timestamp: new Date().toISOString()
-    });
-  }, [isOpen, chatState.isConnected, chatState.connectionStatus, chatState.messages.length, chatState.onlineUsers.length, error]);
-
+  // State monitoring removed for performance
   /**
    * Envia mensagem
    */
   const sendMessage = useCallback(async (message: string) => {
-    console.log('🚀 [SEND] === BOTÃO CLICADO - SENDMESSAGE CHAMADO ===', {
-      message: message.trim(),
-      messageLength: message.trim().length,
-      timestamp: new Date().toISOString(),
-      orderItemId,
-      orderId,
-      entryId
-    });
-    console.log('🚀 [SEND] === INICIANDO ENVIO DE MENSAGEM ===', {
-      message: message.trim(),
-      messageLength: message.trim().length,
-      timestamp: new Date().toISOString(),
-      orderItemId,
-      orderId,
-      entryId
-    });
-
-    if (!message.trim()) {
-      console.log('⚠️ [SEND] Mensagem vazia, abortando');
-      return;
+    if (!message.trim()) {      return;
     }
-
-    console.log('🔍 [SEND] Estado inicial do chat:', {
-      isConnected: isConnectedRef.current,
-      chatStateConnected: chatState.isConnected,
-      connectionStatus: chatState.connectionStatus,
-      currentUserId: currentUserRef.current,
-      messagesCount: chatState.messages.length,
-      isTyping: chatState.isTyping
-    });
-
-    try {
-      console.log('🧹 [SEND] Limpando erros e definindo isTyping...');
-      setError(null);
-      setChatState(prev => ({ ...prev, isTyping: true }));
-
-      console.log('⚡ [SEND] Criando mensagem temporária...');
-      // Adiciona mensagem temporária na UI para feedback imediato
+    try {      setError(null);
+      setChatState(prev => ({ ...prev, isTyping: true }));      // Adiciona mensagem temporária na UI para feedback imediato
       const tempMessage: ChatMessage = {
         id: `temp_${Date.now()}`,
         text: message.trim(),
@@ -530,52 +401,17 @@ export function useChatWebSocket({
         timestamp: new Date().toISOString(),
         isRead: true,
         isTemporary: true
-      };
-
-      console.log('📝 [SEND] Mensagem temporária criada:', {
-        tempId: tempMessage.id,
-        text: tempMessage.text,
-        sender: tempMessage.sender,
-        isTemporary: tempMessage.isTemporary
-      });
-
-      console.log('💾 [SEND] Adicionando mensagem temporária ao estado...');
-      setChatState(prev => {
-        console.log('📊 [SEND] Estado anterior:', {
-          messagesCount: prev.messages.length,
-          lastMessageId: prev.messages[prev.messages.length - 1]?.id
-        });
-        
+      };      setChatState(prev => {        
         const newState = {
           ...prev,
           messages: [...prev.messages, tempMessage]
-        };
-        
-        console.log('📊 [SEND] Novo estado:', {
-          messagesCount: newState.messages.length,
-          lastMessageId: newState.messages[newState.messages.length - 1]?.id,
-          tempMessageAdded: newState.messages.some(m => m.id === tempMessage.id)
-        });
-        
+        };        
         return newState;
-      });
-
-      console.log('👤 [SEND] Verificando tipo de usuário...');
-      // Verificar se usuário é admin antes de enviar
+      });      // Verificar se usuário é admin antes de enviar
       const isAdmin = await OrderChatService.isCurrentUserAdmin();
-      const senderType = isAdmin ? 'admin' : 'user';
-      
-      console.log('👤 [SEND] Tipo de usuário determinado:', {
-        isAdmin,
-        senderType,
-        currentUserId: currentUserRef.current
-      });
-      
+      const senderType = isAdmin ? 'admin' : 'user';      
       // Atualizar tipo do usuário atual
-      setCurrentUserType(senderType);
-
-      console.log('🔄 [SEND] Atualizando mensagem temporária com tipo correto...');
-      // Atualizar mensagem temporária com o tipo correto de sender
+      setCurrentUserType(senderType);      // Atualizar mensagem temporária com o tipo correto de sender
       setChatState(prev => ({
         ...prev,
         messages: prev.messages.map(msg => 
@@ -584,25 +420,8 @@ export function useChatWebSocket({
             : msg
         )
       }));
-
-      console.log('📤 [SEND] Enviando mensagem via WebSocket:', {
-        orderItemId,
-        message: message.trim(),
-        senderType,
-        tempMessageId: tempMessage.id,
-        currentUserId: currentUserRef.current,
-        isConnected: isConnectedRef.current
-      });
-
-      console.log('🔍 [SEND] Verificando estado antes de enviar:', {
-        chatStateConnected: chatState.isConnected,
-        connectionStatus: chatState.connectionStatus,
-        messagesCount: chatState.messages.length,
-        tempMessageAdded: chatState.messages.some(m => m.id === tempMessage.id)
-      });
-
+      
       // Envia via WebSocket (que também salva no banco)
-      console.log('⏳ [SEND] Chamando OrderChatWebSocketService.sendMessage...');
       await OrderChatWebSocketService.sendMessage(orderItemId, {
         order_id: orderId,
         order_item_id: orderItemId,
@@ -610,10 +429,6 @@ export function useChatWebSocket({
         message: message.trim(),
         sender_type: senderType
       });
-
-      console.log('✅ [SEND] OrderChatWebSocketService.sendMessage concluído com sucesso');
-      console.log('⏳ [SEND] Aguardando broadcast para confirmar...');
-
       // Timeout de segurança: se após 10 segundos não recebeu o broadcast, remove a temporária
       setTimeout(() => {
         setChatState(prev => {
@@ -629,11 +444,9 @@ export function useChatWebSocket({
           return { ...prev, isTyping: false };
         });
       }, 10000); // 10 segundos de timeout
-
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);
       setError('Falha ao enviar mensagem');
-      
       // Remove mensagem temporária em caso de erro
       setChatState(prev => ({
         ...prev,
@@ -642,7 +455,6 @@ export function useChatWebSocket({
       }));
     }
   }, [orderId, orderItemId, entryId]);
-
   /**
    * Inicia indicador de digitação
    */
@@ -655,7 +467,6 @@ export function useChatWebSocket({
       );
     }
   }, [orderItemId]);
-
   /**
    * Para indicador de digitação
    */
@@ -668,7 +479,6 @@ export function useChatWebSocket({
       );
     }
   }, [orderItemId]);
-
   /**
    * Marca mensagens como lidas
    */
@@ -682,7 +492,6 @@ export function useChatWebSocket({
       console.warn('Erro ao marcar como lidas:', err);
     }
   }, [orderItemId, chatState.unreadCount]);
-
   /**
    * Reconecta manualmente
    */
@@ -699,7 +508,6 @@ export function useChatWebSocket({
       }
     }
   }, [isOpen, orderItemId, webSocketCallbacks]);
-
   /**
    * Verifica se o outro usuário está online
    * Se eu sou admin, verifica se o cliente está online
@@ -710,15 +518,12 @@ export function useChatWebSocket({
     if (!chatState.isConnected || chatState.isLoading || !currentUserRef.current || chatState.onlineUsers.length === 0) {
       return false;
     }
-
     // Filtra usuários online excluindo o usuário atual
     const otherUsersOnline = chatState.onlineUsers.filter(
       user => user.userId !== currentUserRef.current
     );
-
     return otherUsersOnline.length > 0;
   }, [chatState.onlineUsers, chatState.isConnected, chatState.isLoading]);
-
   return {
     chatState,
     error,
