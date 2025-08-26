@@ -9,9 +9,6 @@
 export { NewChatModalWebSocket as SimpleChatModal } from './components/NewChatModalWebSocket';
 export { NewChatModalWebSocket as SimpleChatModalWebSocket } from './components/NewChatModalWebSocket';
 
-// Mantém componente antigo como legado
-export { ChatModalWebSocket as LegacyChatModalWebSocket } from './components/ChatModalWebSocket';
-
 // Re-exporta o hook WebSocket com o mesmo nome do tradicional  
 export { useChatWebSocket as useSimpleChat } from './hooks/websocket/useChatWebSocket';
 
@@ -19,13 +16,11 @@ export { useChatWebSocket as useSimpleChat } from './hooks/websocket/useChatWebS
 export { AdaptiveChatModal } from './examples/WebSocketUsage';
 
 // Exports do sistema tradicional (para compatibilidade)
-export { ChatModal } from './components/ChatModal';
 export { ChatButton } from '../OrderItemsTable/components/ChatButton';
 export { useChat } from './hooks/useChat';
 export { useChatModal } from './hooks/useChatModal';
 
 // Exports do sistema WebSocket
-export { ChatModalWebSocket } from './components/ChatModalWebSocket';
 export {
   useChatWebSocket,
   useTypingIndicator, 

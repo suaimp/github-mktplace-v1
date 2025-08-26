@@ -4,11 +4,11 @@
  */
 
 import { useState } from 'react';
-import { ChatModalWebSocket } from '../components/ChatModalWebSocket';
+import { NewChatModalWebSocket } from '../components/NewChatModalWebSocket';
 import { ChatModalProps } from '../types';
 
 /**
- * Exemplo de como integrar o ChatModalWebSocket na OrderItemsTable
+ * Exemplo de como integrar o NewChatModalWebSocket na OrderItemsTable
  */
 export function OrderItemsTableWithWebSocket() {
   const [selectedChatItem, setSelectedChatItem] = useState<any>(null);
@@ -51,7 +51,7 @@ export function OrderItemsTableWithWebSocket() {
 
       {/* Modal do Chat WebSocket */}
       {selectedChatItem && (
-        <ChatModalWebSocket
+        <NewChatModalWebSocket
           isOpen={chatModalOpen}
           onClose={handleCloseWebSocketChat}
           orderId={orderId}
@@ -104,7 +104,7 @@ export function AdaptiveChatModal({
 }: AdaptiveChatModalProps) {
   
   if (useWebSocket) {
-    return <ChatModalWebSocket {...props} />;
+    return <NewChatModalWebSocket {...props} />;
   }
   
   // Importar e usar o ChatModal tradicional
