@@ -125,6 +125,37 @@ export function NewChatModalWebSocket({
       };
     });
   }, [chatState.messages, currentUserType, participantInfo, orderData]);
+  
+  // Exibir mais: manter última N mensagens visíveis e permitir carregar mais no topo
+  const PAGE_SIZE = 15;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Ajustar visibleCount quando a quantidade total de mensagens mudar (ex: primeira carga)
+  useEffect(() => {
+    if (!formattedMessages || formattedMessages.length === 0) {
+      setVisibleCount(PAGE_SIZE);
+      return;
+    }
+    // Garantir que o count não passe do total nem caia abaixo do mínimo
+    setVisibleCount((prev) => {
+      const min = PAGE_SIZE;
+      const max = formattedMessages.length;
+      // Se novas mensagens chegaram e prev é menor que min, mantemos min
+      // Se prev é maior que o total (ex: mensagens removidas), clamp para total
+      return Math.min(Math.max(prev, min), max);
+    });
+  }, [formattedMessages.length]);
+
+  const visibleMessages = useMemo(() => {
+    const total = formattedMessages.length;
+    const start = Math.max(0, total - visibleCount);
+    return formattedMessages.slice(start);
+  }, [formattedMessages, visibleCount]);
+
+  const hasMore = visibleCount < formattedMessages.length;
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, formattedMessages.length));
+  };
 
   // Informações do usuário para o header
   const userInfo = useMemo(() => {
@@ -198,9 +229,12 @@ export function NewChatModalWebSocket({
         />
 
         <MessagesArea
-          messages={formattedMessages}
+          messages={visibleMessages}
           currentUserType={currentUserType}
           isLoading={chatState.isLoading && chatState.messages.length === 0}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          startAtBottom={true}
         />
 
         <ChatInput

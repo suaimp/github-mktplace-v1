@@ -3,7 +3,7 @@
  * Responsabilidade única: Exibir lista de mensagens do chat
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useLayoutEffect } from 'react';
 import { chatStyles } from '../../styles';
 import { Message } from './Message';
 
@@ -25,19 +25,60 @@ interface MessagesAreaProps {
   currentUserType: 'user' | 'admin' | null;
   isLoading?: boolean;
   loadingText?: string;
+  hasMore?: boolean;           // Se há mais mensagens para carregar
+  onLoadMore?: () => void;     // Callback para carregar mais
+  startAtBottom?: boolean;     // Iniciar com scroll no fim
 }
 
 export function MessagesArea({ 
   messages, 
   currentUserType, 
   isLoading = false,
-  loadingText = "Carregando mensagens..." 
+  loadingText = "Carregando mensagens...",
+  hasMore = false,
+  onLoadMore,
+  startAtBottom = true
 }: MessagesAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadingMoreRef = useRef(false);
+  const prevScrollHeightRef = useRef<number>(0);
+  const prevScrollTopRef = useRef<number>(0);
+  const justDidInitialBottomRef = useRef(false);
+
+  // Posiciona no final antes da pintura inicial (ou quando mensagens chegam pela primeira vez)
+  useLayoutEffect(() => {
+    if (!startAtBottom) return;
+    const el = containerRef.current;
+    if (!el) return;
+    // Só faz na primeira oportunidade em que existir conteúdo
+    if (messages.length > 0 && !justDidInitialBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+      justDidInitialBottomRef.current = true; // Usado para pular o smooth na primeira atualização
+    }
+  }, [startAtBottom, messages.length]);
 
   // Auto scroll para a última mensagem
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (loadingMoreRef.current) {
+      // Manter posição ao adicionar mensagens no topo
+      const newScrollHeight = container.scrollHeight;
+      const added = newScrollHeight - prevScrollHeightRef.current;
+      container.scrollTop = prevScrollTopRef.current + added;
+      loadingMoreRef.current = false;
+      return;
+    }
+
+    // Evita animar imediatamente após posicionar no fundo ao abrir
+    if (justDidInitialBottomRef.current) {
+      justDidInitialBottomRef.current = false;
+      return;
+    }
+
+    // Auto scroll para o fim em novas mensagens normais
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -58,6 +99,25 @@ export function MessagesArea({
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel as EventListener);
   }, []);
+
+  // Dispara onLoadMore automaticamente ao chegar no topo do scroll
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !hasMore || !onLoadMore) return;
+
+    const TOP_THRESHOLD = 16; // px
+    const onScroll = () => {
+      if (el.scrollTop <= TOP_THRESHOLD && hasMore && !loadingMoreRef.current) {
+        loadingMoreRef.current = true;
+        prevScrollHeightRef.current = el.scrollHeight;
+        prevScrollTopRef.current = el.scrollTop;
+        onLoadMore();
+      }
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [hasMore, onLoadMore]);
 
   if (isLoading && messages.length === 0) {
     return (

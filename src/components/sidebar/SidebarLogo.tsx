@@ -19,14 +19,7 @@ export default function SidebarLogo({
   isMobileOpen,
   loading
 }: SidebarLogoProps) {
-  console.log('🖼️ [SidebarLogo] Rendering with props:', {
-    logos,
-    isExpanded,
-    isHovered,
-    isMobileOpen,
-    loading,
-    timestamp: new Date().toISOString()
-  });
+ 
 
   if (loading) {
     return (
@@ -43,17 +36,13 @@ export default function SidebarLogo({
   // Verificar se as URLs das imagens estão acessíveis
   useEffect(() => {
     const testImageUrls = async () => {
-      console.log('[SidebarLogo] Testing image URLs...');
+ 
       
       const testUrl = async (url: string, name: string) => {
         try {
+          //@ts-ignore
           const response = await fetch(url);
-          console.log(`[SidebarLogo] ${name} URL test:`, {
-            url,
-            status: response.status,
-            ok: response.ok,
-            contentType: response.headers.get('content-type')
-          });
+ 
         } catch (error) {
           console.error(`[SidebarLogo] ${name} URL test failed:`, {
             url,
@@ -70,14 +59,7 @@ export default function SidebarLogo({
     testImageUrls();
   }, [logos]);
 
-  console.log('[SidebarLogo] About to render:', {
-    condition: isExpanded || isHovered || isMobileOpen,
-    isExpanded,
-    isHovered,
-    isMobileOpen,
-    logos,
-    timestamp: new Date().toISOString()
-  });
+ 
 
   return (
     <div
@@ -91,15 +73,7 @@ export default function SidebarLogo({
             className="dark:hidden h-8" 
             src={logos.light} 
             alt="Logo" 
-            onLoad={(e) => {
-              const target = e.target as HTMLImageElement;
-              console.log('✅ [SidebarLogo] Light logo loaded successfully:', {
-                src: logos.light,
-                naturalWidth: target.naturalWidth,
-                naturalHeight: target.naturalHeight,
-                complete: target.complete
-              });
-            }}
+ 
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               console.error('❌ [SidebarLogo] Light logo failed to load:', {
@@ -112,15 +86,7 @@ export default function SidebarLogo({
             className="hidden dark:block h-8" 
             src={logos.dark} 
             alt="Logo" 
-            onLoad={(e) => {
-              const target = e.target as HTMLImageElement;
-              console.log('✅ [SidebarLogo] Dark logo loaded successfully:', {
-                src: logos.dark,
-                naturalWidth: target.naturalWidth,
-                naturalHeight: target.naturalHeight,
-                complete: target.complete
-              });
-            }}
+ 
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               console.error('❌ [SidebarLogo] Dark logo failed to load:', {
@@ -135,15 +101,7 @@ export default function SidebarLogo({
           src={logos.icon} 
           alt="Logo" 
           className="h-8 w-8" 
-          onLoad={(e) => {
-            const target = e.target as HTMLImageElement;
-            console.log('✅ [SidebarLogo] Icon logo loaded successfully:', {
-              src: logos.icon,
-              naturalWidth: target.naturalWidth,
-              naturalHeight: target.naturalHeight,
-              complete: target.complete
-            });
-          }}
+ 
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             console.error('❌ [SidebarLogo] Icon logo failed to load:', {

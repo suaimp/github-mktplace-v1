@@ -2,16 +2,11 @@
  * Arquivo de índice para exportar componentes e hooks do ChatModal
  */
 
-// Componentes tradicionais
-export { ChatModal } from './components/ChatModal';
  
-
 // Componentes WebSocket - Novo design como padrão
 export { NewChatModalWebSocket as ChatModalWebSocket } from './components/NewChatModalWebSocket';
 
-// Componente legado (para compatibilidade)
-export { ChatModalWebSocket as LegacyChatModalWebSocket } from './components/ChatModalWebSocket';
-
+ 
 // Hooks tradicionais
 export { useChatModal } from './hooks/useChatModal';
 export { useChat } from './hooks/useChat';
