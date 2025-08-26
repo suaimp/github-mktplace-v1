@@ -22,8 +22,6 @@ export function NewChatModalWebSocket({
   orderItemId,
   entryId
 }: ChatModalProps) {
-  console.log('🔥 [COMPONENT] NewChatModalWebSocket renderizado!', { isOpen, orderItemId, orderId });
-  
   // Estado para informações do participante
   const [participantInfo, setParticipantInfo] = useState<OrderParticipantInfo | null>(null);
   
@@ -39,7 +37,8 @@ export function NewChatModalWebSocket({
     chatState, 
     sendMessage,
     isOtherUserOnline,
-    currentUserType
+    currentUserType,
+    currentUserId
   } = useChatWebSocket({
     orderId,
     orderItemId,
@@ -92,7 +91,7 @@ export function NewChatModalWebSocket({
 
       if (msg.sender === 'admin') {
         senderName = 'Suporte';
-        senderId = 'admin-support';
+        senderId = currentUserId || 'admin-support'; // Fallback se currentUserId for null
       } else {
         // Mensagem do cliente
         if (participantInfo) {
@@ -146,9 +145,9 @@ export function NewChatModalWebSocket({
     // Se for cliente, mostra info do admin
     return {
       name: 'Suporte',
-      id: 'admin-support'
+      id: currentUserId || 'admin-support' // Usar ID real ou fallback
     };
-  }, [participantInfo, currentUserType, orderData]);
+  }, [participantInfo, currentUserType, orderData, currentUserId]);
 
   const handleSendMessage = async (content: string) => {
     try {

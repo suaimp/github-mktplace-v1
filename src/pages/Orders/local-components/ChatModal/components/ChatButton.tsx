@@ -1,9 +1,8 @@
 /**
- * Componente de botão para abrir o chat
+ * Componente de botão para abrir o chat com ícone pulsante para novas mensagens
  */
 
-import { useState, useEffect } from 'react';
-import { OrderChatService } from '../../../../../db-service/order-chat';
+import { useChatNotifications } from '../hooks/useChatNotifications';
 
 interface ChatButtonProps {
   orderId: string;
@@ -14,44 +13,15 @@ interface ChatButtonProps {
 }
 
 export function ChatButton({ 
- 
   orderItemId, 
- 
   onOpenChat, 
-  className = '' 
+  className = ''
 }: ChatButtonProps) {
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadChatStats = async () => {
-      try {
-        setIsLoading(true);
-        const stats = await OrderChatService.getChatStats(orderItemId);
-        setUnreadCount(stats.unread_messages);
-      } catch (error) {
-        console.error('Erro ao carregar estatísticas do chat:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadChatStats();
-
-    // Setup realtime listener para estatísticas
-    const channel = OrderChatService.subscribeToMessages(orderItemId, () => {
-      // Recarregar estatísticas quando nova mensagem chegar
-      loadChatStats();
-    });
-
-    return () => {
-      OrderChatService.unsubscribeFromMessages(channel);
-    };
-  }, [orderItemId]);
+  const { hasNewMessages, isLoading } = useChatNotifications({ 
+    orderItemId
+  });
 
   const handleClick = () => {
-    // Resetar contador quando abrir o chat
-    setUnreadCount(0);
     onOpenChat();
   };
 
@@ -60,12 +30,12 @@ export function ChatButton({
       onClick={handleClick}
       disabled={isLoading}
       className={`
-        relative inline-flex items-center justify-center p-2 rounded-lg
-        transition-all duration-200 hover:scale-105
-        bg-blue-600 hover:bg-blue-700 text-white
+        relative p-2 transition-all duration-200 hover:opacity-80 hover:scale-105
+        bg-[#677f9b] dark:bg-slate-600 dark:hover:bg-slate-500 text-white
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}
+      style={{ borderRadius: '12px' }}
       title="Abrir chat de suporte"
     >
       {/* Ícone de chat */}
@@ -83,12 +53,17 @@ export function ChatButton({
         />
       </svg>
 
-      {/* Badge de mensagens não lidas */}
-      {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {unreadCount > 9 ? '9+' : unreadCount}
+      {/* Ícone pulsante - MESMO TAMANHO E POSIÇÃO DO BOTÃO DE DETALHES */}
+      {hasNewMessages && (
+        <span className="absolute -top-1 -right-1 z-10 h-2 w-2 rounded-full bg-red-500 flex">
+          <span className="absolute -z-10 inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
         </span>
       )}
+      
+      {/* DEBUG: Mostrar valor de hasNewMessages - REMOVER EM PRODUÇÃO */}
+      {/* <div style={{position: 'absolute', top: '-20px', left: '0', fontSize: '10px', color: 'red'}}>
+        {hasNewMessages ? 'TRUE' : 'FALSE'}
+      </div> */}
 
       {/* Loading indicator */}
       {isLoading && (
