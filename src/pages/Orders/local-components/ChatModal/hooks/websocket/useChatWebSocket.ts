@@ -51,6 +51,7 @@ export function useChatWebSocket({
       id: message.id,
       text: message.message,
       sender: message.sender_type === 'admin' ? 'admin' : 'user',
+      senderId: message.sender_id, // CORREÇÃO: Inclui o sender_id real da mensagem
       timestamp: message.created_at,
       isRead: message.is_read ?? false,
       isTemporary: false

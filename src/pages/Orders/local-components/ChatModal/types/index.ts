@@ -23,6 +23,7 @@ export interface ChatMessage {
   id: string;
   text: string;
   sender: 'user' | 'admin';
+  senderId?: string; // CORREÇÃO: Adiciona o ID real do remetente
   timestamp: Date;
   isRead?: boolean;
 }

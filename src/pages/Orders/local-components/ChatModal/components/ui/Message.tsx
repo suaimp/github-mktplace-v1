@@ -35,8 +35,8 @@ export function Message({
   if (type === 'sent') {
     return (
       <div className="ml-auto max-w-[350px] text-right">
-        <div className="ml-auto max-w-max rounded-lg rounded-tr-sm bg-brand-500 px-3 py-2 dark:bg-brand-500">
-          <p className="text-sm text-white dark:text-white/90">
+        <div className="ml-auto max-w-[280px] rounded-lg rounded-tr-sm bg-brand-500 px-3 py-2 dark:bg-brand-500">
+          <p className="text-sm text-white dark:text-white/90 break-words">
             {content}
           </p>
         </div>
@@ -68,13 +68,13 @@ export function Message({
         )}
 
         <div>
-          <div className="rounded-lg rounded-tl-sm bg-gray-100 px-3 py-2 dark:bg-white/5">
-            <p className="text-sm text-gray-800 dark:text-white/90">
+          <div className="rounded-lg rounded-tl-sm bg-gray-100 px-3 py-2 dark:bg-white/5 max-w-[280px]">
+            <p className="text-sm text-gray-800 dark:text-white/90 break-words">
               {content}
             </p>
           </div>
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {sender?.name}, {timestamp}
+            {avatarData?.realName || sender?.name}, {timestamp}
           </p>
         </div>
       </div>

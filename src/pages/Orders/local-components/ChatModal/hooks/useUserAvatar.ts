@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { getUserAvatarData, UserAvatarData } from '../services/userAvatarService';
+import { UserDisplayService } from '../../../../../components/header/NotificationDropdown/services/userDisplayService';
 
 interface UseUserAvatarOptions {
   userId: string;
@@ -13,8 +14,12 @@ interface UseUserAvatarOptions {
   enabled?: boolean;
 }
 
+export interface ExtendedUserAvatarData extends UserAvatarData {
+  realName?: string; // Nome real do usuário do banco de dados
+}
+
 export function useUserAvatar({ userId, userName, enabled = true }: UseUserAvatarOptions) {
-  const [avatarData, setAvatarData] = useState<UserAvatarData | null>(null);
+  const [avatarData, setAvatarData] = useState<ExtendedUserAvatarData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -23,10 +28,17 @@ export function useUserAvatar({ userId, userName, enabled = true }: UseUserAvata
     let isMounted = true;
     setIsLoading(true);
 
-    getUserAvatarData(userId, userName)
-      .then((data) => {
+    // Buscar tanto dados do avatar quanto informações completas do usuário
+    Promise.all([
+      getUserAvatarData(userId, userName),
+      UserDisplayService.getUserDisplayInfo(userId)
+    ])
+      .then(([avatarInfo, userInfo]) => {
         if (isMounted) {
-          setAvatarData(data);
+          setAvatarData({
+            ...avatarInfo,
+            realName: userInfo.name // Adiciona o nome real do usuário
+          });
         }
       })
       .catch((err) => {
@@ -42,7 +54,8 @@ export function useUserAvatar({ userId, userName, enabled = true }: UseUserAvata
               .join('')
               .toUpperCase(),
             backgroundColor: 'bg-brand-500',
-            hasImage: false
+            hasImage: false,
+            realName: userName // Fallback para o nome fornecido
           });
         }
       })

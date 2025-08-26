@@ -76,7 +76,7 @@ export function NewChatModalWebSocket({
             minute: '2-digit' 
           }),
           sender: {
-            id: msg.sender,
+            id: msg.senderId || msg.sender, // CORREÇÃO: Usa o senderId real ou fallback
             name: '',
             avatar: '',
             type: msg.sender
@@ -90,19 +90,21 @@ export function NewChatModalWebSocket({
       let senderId = '';
 
       if (msg.sender === 'admin') {
-        senderName = 'Suporte';
-        senderId = currentUserId || 'admin-support'; // Fallback se currentUserId for null
+        // CORREÇÃO: Para mensagens de admin, sempre usar o senderId real da mensagem
+        // O componente Message/UserAvatar irá buscar o nome e foto real do admin
+        senderName = 'Admin'; // Nome temporário, será substituído pelo UserAvatar
+        senderId = msg.senderId || 'admin-support'; // CORREÇÃO: Usa o senderId real da mensagem
       } else {
         // Mensagem do cliente
         if (participantInfo) {
           senderName = participantInfo.buyerName;
-          senderId = participantInfo.buyerId;
+          senderId = msg.senderId || participantInfo.buyerId; // CORREÇÃO: Usa o senderId real da mensagem
         } else if (orderData) {
           senderName = orderData.billing_name || 'Cliente';
-          senderId = orderData.user_id || '';
+          senderId = msg.senderId || orderData.user_id || ''; // CORREÇÃO: Usa o senderId real da mensagem
         } else {
           senderName = 'Cliente';
-          senderId = 'user';
+          senderId = msg.senderId || 'user'; // CORREÇÃO: Usa o senderId real da mensagem
         }
       }
 
@@ -145,7 +147,7 @@ export function NewChatModalWebSocket({
     // Se for cliente, mostra info do admin
     return {
       name: 'Suporte',
-      id: currentUserId || 'admin-support' // Usar ID real ou fallback
+      id: 'support-team' // CORREÇÃO: Usar ID fixo para suporte, não currentUserId
     };
   }, [participantInfo, currentUserType, orderData, currentUserId]);
 

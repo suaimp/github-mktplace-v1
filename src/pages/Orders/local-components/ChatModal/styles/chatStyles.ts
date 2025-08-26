@@ -33,8 +33,8 @@ export const chatStyles = {
       },
       content: {
         wrapper: "div",
-        bubble: "rounded-lg rounded-tl-sm bg-gray-100 px-3 py-2 dark:bg-white/5",
-        text: "text-sm text-gray-800 dark:text-white/90",
+        bubble: "rounded-lg rounded-tl-sm bg-gray-100 px-3 py-2 dark:bg-white/5 max-w-[280px]",
+        text: "text-sm text-gray-800 dark:text-white/90 break-words",
         timestamp: "mt-2 text-xs text-gray-500 dark:text-gray-400"
       }
     },
@@ -43,8 +43,8 @@ export const chatStyles = {
     sent: {
       wrapper: "ml-auto max-w-[350px] text-right",
       content: {
-        bubble: "ml-auto max-w-max rounded-lg rounded-tr-sm bg-brand-500 px-3 py-2 dark:bg-brand-500",
-        text: "text-sm text-white dark:text-white/90",
+        bubble: "ml-auto max-w-[280px] rounded-lg rounded-tr-sm bg-brand-500 px-3 py-2 dark:bg-brand-500",
+        text: "text-sm text-white dark:text-white/90 break-words",
         timestamp: "mt-2 text-xs text-gray-500 dark:text-gray-400"
       }
     }

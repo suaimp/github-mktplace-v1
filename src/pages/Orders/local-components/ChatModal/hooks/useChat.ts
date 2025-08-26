@@ -30,6 +30,7 @@ export function useChat({ orderId, orderItemId, entryId, isOpen }: UseChatProps)
     id: dbMessage.id,
     text: dbMessage.message,
     sender: dbMessage.sender_type === 'user' ? 'user' : 'admin',
+    senderId: dbMessage.sender_id, // CORREÇÃO: Inclui o sender_id real da mensagem
     timestamp: new Date(dbMessage.created_at),
     isRead: dbMessage.is_read
   }), []);
