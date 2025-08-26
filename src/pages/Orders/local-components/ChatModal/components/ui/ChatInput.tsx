@@ -15,7 +15,7 @@ interface ChatInputProps {
 
 export function ChatInput({ 
   onSendMessage, 
-  placeholder = "Type a message", 
+  placeholder = "Digite uma mensagem", 
   disabled = false,
   isLoading = false 
 }: ChatInputProps) {
@@ -47,8 +47,13 @@ export function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled || isLoading}
-            className={chatStyles.input.input}
-            style={{ padding: '10px' }}
+            className={`${chatStyles.input.input} focus:outline-none focus:ring-0 focus:border-transparent`}
+            style={{ 
+              padding: '10px',
+              outline: 'none',
+              border: 'none',
+              boxShadow: 'none'
+            }}
           />
         </div>
 

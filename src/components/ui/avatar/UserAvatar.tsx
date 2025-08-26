@@ -56,80 +56,55 @@ export default function UserAvatar({ userId, name, size = 'md', onImageChange, e
   const [error, setError] = useState<string | null>(null);
   const [userTable, setUserTable] = useState<'admins' | 'platform_users' | null>(null);
 
-  console.log('👤 [UserAvatar] Rendering with props:', {
-    userId,
-    name,
-    size,
-    editable,
-    imageUrl,
-    userTable,
-    timestamp: new Date().toISOString()
-  });
 
   useEffect(() => {
-    console.log('🔄 [UserAvatar] Effect triggered, loading avatar for userId:', userId);
     loadAvatar();
   }, [userId]);
 
   async function getUserTable(id: string): Promise<'admins' | 'platform_users'> {
-    console.log('🔍 [UserAvatar] Determining user table for ID:', id);
-    
     // Check if user exists in admins table
-    const { data: adminData, error: adminError } = await supabase
+    const { data: adminData } = await supabase
       .from('admins')
       .select('id')
       .eq('id', id)
       .maybeSingle();
 
-    console.log('👥 [UserAvatar] Admin check result:', { adminData, adminError });
 
     if (adminData) {
-      console.log('✅ [UserAvatar] User found in admins table');
       return 'admins';
     }
 
-    console.log('👤 [UserAvatar] User not in admins, using platform_users table');
     // If not admin, must be platform user
     return 'platform_users';
   }
 
   async function loadAvatar() {
     try {
-      console.log('📸 [UserAvatar] Starting avatar load for userId:', userId);
-      
       // First determine which table to use
       const table = await getUserTable(userId);
       setUserTable(table);
-      console.log('📋 [UserAvatar] Using table:', table);
 
       // Then load avatar data
-      const { data: avatarData, error: avatarError } = await supabase
+      const { data: avatarData } = await supabase
         .from(table)
         .select('avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
-      console.log('📊 [UserAvatar] Avatar data query result:', { avatarData, avatarError });
 
       if (avatarData?.avatar_url) {
-        console.log('🖼️ [UserAvatar] Avatar URL found in database:', avatarData.avatar_url);
         
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(avatarData.avatar_url);
           
-        console.log('🔗 [UserAvatar] Generated public URL:', publicUrl);
         
         // Verificação adicional para produção
         if (import.meta.env.MODE === 'production' && (publicUrl.includes('localhost') || publicUrl.includes('127.0.0.1'))) {
-          console.error('❌ [UserAvatar] localhost URL detected in production:', publicUrl);
-          console.log('🔍 [UserAvatar] Environment:', import.meta.env.MODE);
-          console.log('🔍 [UserAvatar] VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
         }
         
         setImageUrl(publicUrl);
       } else {
-        console.log('📭 [UserAvatar] No avatar URL found, will use initials');
         setImageUrl(null);
       }
     } catch (err) {
@@ -194,13 +169,6 @@ export default function UserAvatar({ userId, name, size = 'md', onImageChange, e
   const bgColor = getColorForUser(userId);
   const initials = getInitials(name);
 
-  console.log('🎨 [UserAvatar] Render values:', {
-    imageUrl,
-    sizeClasses,
-    bgColor,
-    initials,
-    hasImage: !!imageUrl
-  });
 
   return (
     <div className="relative group">
@@ -209,9 +177,7 @@ export default function UserAvatar({ userId, name, size = 'md', onImageChange, e
           src={imageUrl}
           alt={name}
           className={`${sizeClasses} rounded-full object-cover`}
-          onLoad={() => console.log('✅ [UserAvatar] Image loaded successfully:', imageUrl)}
           onError={() => {
-            console.error('❌ [UserAvatar] Image failed to load:', imageUrl);
             setImageUrl(null); // Fallback to initials
           }}
         />

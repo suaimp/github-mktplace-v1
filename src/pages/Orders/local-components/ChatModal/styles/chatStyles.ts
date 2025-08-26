@@ -55,7 +55,7 @@ export const chatStyles = {
     container: "sticky bottom-0 border-t border-gray-200 p-3 dark:border-gray-800",
     form: "flex items-center justify-between",
     inputWrapper: "relative w-full",
-    input: "h-9 w-full border-none bg-transparent pl-12 pr-5 text-sm text-gray-800 outline-hidden placeholder:text-gray-400 focus:border-0 focus:ring-0 dark:text-white/90",
+    input: "h-9 w-full border-none bg-transparent pl-12 pr-5 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:outline-none focus:border-0 focus:ring-0 dark:text-white/90 dark:placeholder:text-white/30",
     inputPadding: "padding: 10px",
     buttonsWrapper: "flex items-center",
     sendButton: "ml-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600 xl:ml-5"

@@ -74,12 +74,8 @@ export function Message({
                     src={logos.icon || "/images/brand/brand-01.svg"} 
                     alt="Logo da Plataforma" 
                     className="w-6 h-6"
-                    onError={(e) => {
-                      // Fallback para caso a imagem não carregue
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.innerHTML = `
-                        <span class="text-white text-sm font-medium">S</span>
-                      `;
+                    onLoad={() => {
+                      // Logo carregada com sucesso
                     }}
                   />
                 ) : (

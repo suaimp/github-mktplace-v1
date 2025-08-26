@@ -7,7 +7,6 @@
 import { chatStyles } from '../../styles';
 import { ChatAvatar } from './ChatAvatar';
 import { useUserAvatar } from '../../hooks/useUserAvatar';
-import { useLogos } from '../../../../../../hooks/useLogos';
 
 interface ChatHeaderProps {
   userName: string;
@@ -36,8 +35,6 @@ export function ChatHeader({
     enabled: !!userId && !!userName
   });
 
-  const { logos } = useLogos();
-
   // Temporariamente comentado - funções de status online/offline
   /*
   const getStatusText = () => {
@@ -61,27 +58,21 @@ export function ChatHeader({
       <div className={chatStyles.header.userInfo}>
         {avatarLoading ? (
           <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
-        ) : avatarData ? (
+        ) : (
           <ChatAvatar 
-            avatarData={avatarData} 
+            avatarData={avatarData || {
+              imageUrl: null,
+              initials: userName
+                .split(' ')
+                .map(part => part[0])
+                .filter((_, index, arr) => index === 0 || index === arr.length - 1)
+                .join('')
+                .toUpperCase(),
+              backgroundColor: 'bg-blue-500',
+              hasImage: false
+            }} 
             size="md" 
           />
-        ) : (
-          // Fallback: Logo da plataforma ao invés de letra inicial
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center p-2">
-            <img 
-              src={logos.icon || "/images/brand/brand-01.svg"} 
-              alt="Logo da Plataforma" 
-              className="w-6 h-6 text-white"
-              onError={(e) => {
-                // Fallback para caso a imagem não carregue
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = `
-                  <span class="text-white text-sm font-medium">S</span>
-                `;
-              }}
-            />
-          </div>
         )}
 
         <div>

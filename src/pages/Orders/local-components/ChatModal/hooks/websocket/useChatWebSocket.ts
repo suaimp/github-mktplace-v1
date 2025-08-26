@@ -62,34 +62,27 @@ export function useChatWebSocket({
    */
   const loadExistingMessages = useCallback(async () => {
     try {
-      console.log(`📚 [LoadMessages] Starting to load messages`, { orderItemId, entryId });
       const dbMessages = await OrderChatService.getMessages({
         order_item_id: orderItemId,
         entry_id: entryId
       });
-      console.log(`📚 [LoadMessages] Retrieved ${dbMessages.length} messages from database`);
       const messages = dbMessages.map(convertMessage);
       const unreadCount = messages.filter(msg => !msg.isRead && msg.sender === 'admin').length;
-      console.log(`📚 [LoadMessages] Processed ${messages.length} messages, ${unreadCount} unread`);
       setChatState(prev => ({
         ...prev,
         messages,
         unreadCount,
         isLoading: false
       }));
-      console.log(`📚 [LoadMessages] Updated chat state with messages`);
       // Marcar mensagens como lidas se houver não lidas
       if (unreadCount > 0) {
-        console.log(`📚 [LoadMessages] Marking ${unreadCount} messages as read`);
         const unreadIds = dbMessages
           .filter(msg => !msg.is_read && msg.sender_type === 'admin')
           .map(msg => msg.id);
         if (unreadIds.length > 0) {
           await OrderChatService.markAsRead(unreadIds);
-          console.log(`📚 [LoadMessages] Successfully marked messages as read`);
         }
       }
-      console.log(`✅ [LoadMessages] Loading completed successfully`);
     } catch (err) {
       console.error('💥 [LoadMessages] Error loading messages:', err);
       setError('Falha ao carregar mensagens');
@@ -176,7 +169,6 @@ export function useChatWebSocket({
           error: 'Conexão perdida. Tentando reconectar...'
         }));
       } else if (connected) {
-        console.log(`✅ [WebSocket] Connection restored, clearing errors`);
         setError(null);
         setChatState(prev => ({ 
           ...prev, 
@@ -190,7 +182,6 @@ export function useChatWebSocket({
    */
   useEffect(() => {
     if (!isOpen) {
-      console.log(`🚫 [WebSocket] Modal closed, resetting state`, { orderItemId });
       // Reset estado quando fecha
       setChatState(prev => ({
         ...prev,
@@ -204,11 +195,6 @@ export function useChatWebSocket({
       return;
     }
     const connectWebSocket = async () => {
-      console.log(`🚀 [WebSocket] Starting connection process`, {
-        orderItemId,
-        isOpen,
-        timestamp: new Date().toISOString()
-      });
       try {
         setError(null);
         setChatState(prev => ({ 
@@ -218,7 +204,6 @@ export function useChatWebSocket({
         }));
 
         // 0. Verificar autenticação primeiro
-        console.log(`� [WebSocket] Step 0: Verifying authentication...`);
         const { data: authData, error: authError } = await supabase.auth.getUser();
         if (authError || !authData?.user) {
           throw new Error('Usuário não autenticado ou token expirado');
@@ -239,13 +224,9 @@ export function useChatWebSocket({
             }
           }
         }
-        console.log(`✅ [WebSocket] Step 0 completed - authentication verified`);
 
-        console.log(`�📚 [WebSocket] Step 1: Loading existing messages...`);
         // 1. Carrega mensagens existentes
         await loadExistingMessages();
-        console.log(`✅ [WebSocket] Step 1 completed - messages loaded`);
-        console.log(`🔌 [WebSocket] Step 2: Connecting to WebSocket...`);
         // 2. Conecta ao WebSocket
         await OrderChatWebSocketService.connectToChat(
           orderItemId,
@@ -256,10 +237,6 @@ export function useChatWebSocket({
             selfBroadcast: true // Necessário para receber confirmação das próprias mensagens no chat
           }
         );
-        console.log(`✅ [WebSocket] Step 2 completed - WebSocket connected`);
-        
-        // 2.1. Verifica se conexão está realmente estabelecida
-        console.log(`🔍 [WebSocket] Step 2.1: Verifying connection is ready...`);
         const isConnected = OrderChatWebSocketService.isConnectedToChat(orderItemId);
         if (!isConnected) {
           console.warn(`⚠️ [WebSocket] Connection not ready immediately, waiting...`);
@@ -276,44 +253,34 @@ export function useChatWebSocket({
             throw new Error('WebSocket conectou mas não está pronto para receber mensagens');
           }
         }
-        console.log(`✅ [WebSocket] Step 2.1 completed - Connection verified and ready`);
-        
-        console.log(`👤 [WebSocket] Step 3: Updating user presence...`);
         // 3. Atualiza presença do usuário
         const { data: user } = await supabase.auth.getUser();
         if (user?.user) {
-          console.log(`👤 [WebSocket] Got user data`, { userId: user.user.id });
           currentUserRef.current = user.user.id;
           // Determinar tipo do usuário (admin ou user)
           const isAdmin = await OrderChatService.isCurrentUserAdmin();
           const userType = isAdmin ? 'admin' : 'user';
           setCurrentUserType(userType);
-          console.log(`👤 [WebSocket] User type determined:`, { userType });
           // Usar novo serviço de presença
           await UserPresenceService.setUserOnline(
             user.user.id,
             user.user.email,
             orderItemId
           );
-          console.log(`✅ [WebSocket] User presence service updated`);
           // Manter compatibilidade com WebSocket
           await OrderChatWebSocketService.updateUserPresence(orderItemId, {
             userId: user.user.id,
             email: user.user.email,
             status: 'online'
           });
-          console.log(`✅ [WebSocket] WebSocket presence updated`);
         }
-        console.log(`✅ [WebSocket] Step 3 completed - presence updated`);
         // 4. Finalizar loading
-        console.log(`🏁 [WebSocket] Step 4: Finalizing connection...`);
         setChatState(prev => ({ 
           ...prev, 
           isLoading: false,
           isConnected: true,
           connectionStatus: 'CONNECTED'
         }));
-        console.log(`✅ [WebSocket] All steps completed successfully!`);
       } catch (err) {
         console.error('💥 [WebSocket] Connection failed at some step:', err, {
           orderItemId,
@@ -340,13 +307,8 @@ export function useChatWebSocket({
     }, 10000); // 10 segundos timeout
 
     // Listener para mudanças de autenticação
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔐 [Auth] State change: ${event}`, { hasSession: !!session });
-      
-      if (event === 'TOKEN_REFRESHED') {
-        console.log(`🔄 [Auth] Token refreshed, connection should be stable now`);
-      } else if (event === 'SIGNED_OUT') {
-        console.log(`🚪 [Auth] User signed out, disconnecting WebSocket`);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, _session) => {
+      if (event === 'SIGNED_OUT') {
         if (isConnectedRef.current) {
           OrderChatWebSocketService.disconnectFromChat(orderItemId);
         }
@@ -356,14 +318,8 @@ export function useChatWebSocket({
     connectWebSocket().finally(() => {
       clearTimeout(loadingTimeout);
     });
-    // Cleanup quando modal fecha ou componente desmonta
-    return () => {
-      console.log(`🧹 [WebSocket] Cleanup triggered`, {
-        orderItemId,
-        isConnected: isConnectedRef.current,
-        isOpen,
-        timestamp: new Date().toISOString()
-      });
+  // Cleanup quando modal fecha ou componente desmonta
+  return () => {
 
       // Cleanup do listener de autenticação
       if (authListener) {
@@ -374,14 +330,13 @@ export function useChatWebSocket({
       if (currentUserRef.current) {
         UserPresenceService.setUserOffline(currentUserRef.current, orderItemId)
           .then(() => {
-            console.log(`🔴 [WebSocket] User set offline for chat ${orderItemId}`);
+            // user set offline
           })
           .catch(err => {
             console.error(`❌ [WebSocket] Error setting user offline:`, err);
           });
       }
       if (isConnectedRef.current) {
-        console.log(`🔌 [WebSocket] Disconnecting from chat...`);
         OrderChatWebSocketService.disconnectFromChat(orderItemId);
       }
     };
