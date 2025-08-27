@@ -31,9 +31,8 @@ supabase/functions/.env
 supabase/functions/.env.local
 supabase/functions/.env.development
 supabase/functions/.env.production
-.env.local
-.env.development
-.env.production
+.env
+.env.*
 
 # Supabase data dumps (contain sensitive data and secrets)
 supabase/dados_auth_recentes.sql
