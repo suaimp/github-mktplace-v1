@@ -33,7 +33,7 @@ export function MultipleUrlsWithFavicons({
       {extraUrls.length > 0 && (
         <div className="flex -space-x-2 mr-1">
           {extraUrls.map((url, index) => (
-            <div key={index} style={{ zIndex: 10 - index }}>
+            <div key={index}>
               <Favicon
                 url={url}
                 size={faviconSize}

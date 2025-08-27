@@ -56,7 +56,6 @@ export const MultipleUrlsDisplay: React.FC<MultipleUrlsDisplayProps> = ({
             key={`extra-${index}`}
             className="w-6 h-6 rounded-full border flex items-center justify-center"
             style={{ 
-              zIndex: 8 + index,
               backgroundColor: 'var(--favicon-bg-light)',
               borderColor: 'var(--favicon-border-light)'
             }}
@@ -83,7 +82,6 @@ export const MultipleUrlsDisplay: React.FC<MultipleUrlsDisplayProps> = ({
         <div 
           className="w-6 h-6 rounded-full border flex items-center justify-center"
           style={{ 
-            zIndex: 12,
             backgroundColor: 'var(--favicon-bg-light)',
             borderColor: 'var(--favicon-border-light)'
           }}

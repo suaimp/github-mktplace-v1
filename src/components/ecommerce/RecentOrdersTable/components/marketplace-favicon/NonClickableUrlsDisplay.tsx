@@ -82,7 +82,6 @@ export const NonClickableUrlsDisplay: React.FC<NonClickableUrlsDisplayProps> = (
             key={`extra-${index}`}
             className="w-6 h-6 rounded-full border flex items-center justify-center"
             style={{ 
-              zIndex: 8 + index,
               backgroundColor: 'var(--favicon-bg-light)',
               borderColor: 'var(--favicon-border-light)'
             }}
@@ -109,7 +108,6 @@ export const NonClickableUrlsDisplay: React.FC<NonClickableUrlsDisplayProps> = (
         <div 
           className="w-6 h-6 rounded-full border flex items-center justify-center"
           style={{ 
-            zIndex: 12,
             backgroundColor: 'var(--favicon-bg-light)',
             borderColor: 'var(--favicon-border-light)'
           }}
