@@ -533,7 +533,7 @@ export default function MarketplaceTable({ formId }: MarketplaceTableProps) {
                 {buttonBuyField && (
                   <th
                     scope="col" 
-                    className="sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
+                    className="sticky right-0 bg-gray-50 dark:bg-gray-800 text-left text-[13px] font-semibold text-gray-900 dark:text-white"
                     style={{ boxShadow: '-2px 0 4px rgba(0, 0, 0, 0.05)' }}
                   >
                     <span>{buttonBuyField?.form_field_settings?.marketplace_label || buttonBuyField?.label}</span>
