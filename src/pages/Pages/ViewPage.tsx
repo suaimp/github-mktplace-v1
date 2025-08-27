@@ -102,7 +102,7 @@ export default function ViewPage() {
         );
       } else if (type === "marketplace") {
         parts.push(
-          <div key={`marketplace-${id}`} className="w-full my-8">
+          <div key={`marketplace-${id}`} className="w-full my-1">
             <MarketplaceRenderer formId={id} />
           </div>
         );
