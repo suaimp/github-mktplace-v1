@@ -1,182 +1,249 @@
-# TailAdmin React - Free React Tailwind Admin Dashboard Template
+# 🛒 GitHub Marketplace v1
 
-TailAdmin is a free and open-source admin dashboard template built on **React and Tailwind CSS**, providing developers with everything they need to create a comprehensive, data-driven back-end,
-dashboard, or admin panel solution for upcoming web projects.
+> 🌐 **Produção:** [https://cp.suaimprensa.com.br/](https://cp.suaimprensa.com.br/)
 
-With TailAdmin, you get access to all the necessary dashboard UI components, elements, and pages required to build a feature-rich and complete dashboard or admin panel. Whether you're building dashboard or admin panel for a complex web application or a simple website, TailAdmin is the perfect solution to help you get up and running quickly.
+Um marketplace completo e moderno para compra e venda de artigos digitais, desenvolvido com React, TypeScript, Supabase e Tailwind CSS. O sistema oferece uma experiência completa de e-commerce com carrinho de compras, checkout integrado, sistema de pedidos e painel administrativo. 
 
-![TailAdmin React.js Dashboard Preview](./banner.png)
+**🔄 Sistema de Comunicação:** O sistema também conta com um fluxo completo de envio de artigo, onde acontece a fase de comunicação e troca de arquivos entre comprador e publicador do artigo, contando com um chat desenvolvido do zero utilizando protocolo WebSocket para comunicação em tempo real.
 
-## Overview
 
-TailAdmin provides essential UI components and layouts for building feature-rich, data-driven admin dashboards and control panels. It's built on:
 
-- React 18 (create-react-app)
-- TypeScript
-- Tailwind CSS
+## 🚀 Tecnologias Principais
 
-### Quick Links
+- **Frontend:** React 18 + TypeScript + Vite
+- **UI/Styling:** Tailwind CSS + HeadlessUI
+- **Backend:** Supabase (PostgreSQL + Edge Functions)
+- **Autenticação:** Supabase Auth
+- **Pagamentos:** Pagar.me Integration
+- **Deploy:** Netlify
+- **Testes:** Jest + React Testing Library
 
-- [✨ Visit Website](https://tailadmin.com)
-- [📄 Documentation](https://tailadmin.com/docs)
-- [⬇️ Download](https://tailadmin.com/download)
-- [🖌️ Figma Design File (Community Edition)](https://www.figma.com/community/file/1214477970819985778)
-- [⚡ Get PRO Version](https://tailadmin.com/pricing)
+## 📋 Funcionalidades
 
-### Demos
+### 🛍️ Marketplace
+- **Tabela dinâmica** com dados do Supabase
+- **Sistema de filtros** avançados (país, categoria, preço, etc.)
+- **Ordenação** por múltiplos campos
+- **Paginação** otimizada
+- **Busca em tempo real**
+- **Seleção em massa** de itens
+- **Sistema de favoritos**
+- **Tooltips informativos** com posicionamento inteligente
 
-- [Free Version](https://free-react-demo.tailadmin.com/)
-- [Pro Version](https://react-demo.tailadmin.com)
+### 🛒 Carrinho & Checkout
+- **Carrinho persistente** com Context API
+- **Resumo de pedido** com cálculos automáticos
+- **Múltiplas formas de pagamento** (PIX, Cartão)
+- **Validação de formulários** com feedback visual
+- **Processamento seguro** via Edge Functions
 
-### Other Versions
+### 📦 Sistema de Pedidos
+- **Gestão completa** de pedidos
+- **Status tracking** em tempo real
+- **Histórico de transações**
+- **Notificações automáticas**
+- **Painéis de administração**
 
-- [HTML Version](https://github.com/TailAdmin/tailadmin-free-tailwind-dashboard-template)
-- [Next.js Version](https://github.com/TailAdmin/free-nextjs-admin-dashboard)
-- [Vue.js Version](https://github.com/TailAdmin/vue-tailwind-admin-dashboard)
+### ⚙️ Configurações & Admin
+- **Painel de configurações** modular
+- **Sistema de modos** (Teste/Manutenção)
+- **Configuração de headers/footers** personalizados
+- **Gerenciamento de usuários**
+- **Analytics e relatórios**
 
-## Installation
+## 🏗️ Arquitetura
 
-### Prerequisites
-
-To get started with TailAdmin, ensure you have the following prerequisites installed and set up:
-
-- Node.js 18.x or later (recommended to use Node.js 20.x or later)
-
-### Cloning the Repository
-
-Clone the repository using the following command:
-
-```bash
-git clone https://github.com/TailAdmin/free-react-tailwind-admin-dashboard.git
+### 📁 Estrutura do Projeto
+```
+src/
+├── components/           # Componentes reutilizáveis
+│   ├── marketplace/     # Sistema do marketplace
+│   │   ├── filters/     # Filtros modulares
+│   │   ├── sorting/     # Sistema de ordenação
+│   │   ├── selection/   # Seleção de itens
+│   │   ├── navigation/  # Navegação por abas
+│   │   └── Tooltip/     # Sistema de tooltips
+│   ├── Checkout/        # Fluxo de checkout
+│   └── ui/             # Componentes base
+├── pages/              # Páginas da aplicação
+│   ├── auth/           # Autenticação
+│   ├── Orders/         # Gestão de pedidos
+│   └── Settings/       # Configurações
+├── services/           # Serviços de dados
+│   └── db-services/    # Integração Supabase
+├── hooks/              # Hooks customizados
+├── utils/              # Utilitários
+└── lib/                # Configurações
 ```
 
-> Windows Users: place the repository near the root of your drive if you face issues while cloning.
+### 🎯 Princípios SOLID
+O projeto segue rigorosamente os princípios SOLID:
 
-1. Install dependencies:
+- **Single Responsibility:** Cada componente tem uma responsabilidade específica
+- **Open/Closed:** Extensível sem modificar código existente
+- **Liskov Substitution:** Interfaces consistentes e substituíveis
+- **Interface Segregation:** Interfaces específicas e enxutas
+- **Dependency Inversion:** Dependências baseadas em abstrações
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+### 🔄 Padrões de Design
+- **Custom Hooks** para lógica de negócio
+- **Context API** para estado global
+- **Service Layer** para comunicação com APIs
+- **Component Composition** para reutilização
+- **Error Boundaries** para tratamento de erros
 
-   > On `npm` some included packages can cause peer-deps issue with React 18 while installing.
-   >
-   > Use the `--legacy-peer-deps` flag, at the end of the installation command, as a workaround for that.
+## 🛠️ Scripts Disponíveis
 
-2. Start the development server:
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+### Desenvolvimento
+```bash
+npm run dev              # Servidor de desenvolvimento
+npm run dev:local        # Desenvolvimento com Supabase local
+npm run dev:prod         # Desenvolvimento com produção
+```
 
-## Components
+### Build & Deploy
+```bash
+npm run build           # Build para produção
+npm run preview         # Preview do build
+npm run deploy          # Deploy via GitHub Pages
+```
 
-TailAdmin is a pre-designed starting point for building a web-based dashboard using React.js and Tailwind CSS. The template includes:
+### Testes
+```bash
+npm test               # Executar todos os testes
+npm run test:watch     # Modo watch
+npm run test:coverage  # Relatório de cobertura
+```
 
-- Sophisticated and accessible sidebar
-- Data visualization components
-- Prebuilt profile management and 404 page
-- Tables and Charts(Line and Bar)
-- Authentication forms and input elements
-- Alerts, Dropdowns, Modals, Buttons and more
-- Can't forget Dark Mode 🕶️
+### Supabase
+```bash
+npm run supabase:start  # Iniciar Supabase local
+npm run supabase:reset  # Reset do banco local
+npm run supabase:sync   # Sincronizar com produção
+```
 
-All components are built with React and styled using Tailwind CSS for easy customization.
+## 🔧 Configuração
 
-## Feature Comparison
+### 1. Clonar e Instalar
+```bash
+git clone https://github.com/suaimp/github-mktplace-v1.git
+cd github-mktplace-v1
+npm install
+```
 
-### Free Version
+### 2. Variáveis de Ambiente
+```bash
+# .env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_FUNCTIONS_URL=your_functions_url
+```
 
-- 1 Unique Dashboard
-- 30+ dashboard components
-- 50+ UI elements
-- Basic Figma design files
-- Community support
+### 3. Configuração do Banco
+```bash
+# Inicializar Supabase
+npm run supabase:start
 
-### Pro Version
+# Aplicar migrações
+npm run supabase:reset
+```
 
-- 5 Unique Dashboards: Analytics, Ecommerce, Marketing, CRM, Stocks (more coming soon)
-- 400+ dashboard components and UI elements
-- Complete Figma design file
-- Email support
+### 4. Executar Projeto
+```bash
+npm run dev
+```
 
-To learn more about pro version features and pricing, visit our [pricing page](https://tailadmin.com/pricing).
+## 🌟 Funcionalidades Avançadas
 
-## Changelog
+### 🎛️ Sistema de Filtros
+- **Filtros por botões** para seleção rápida
+- **Filtros básicos** com dropdown
+- **Combinação de filtros** para busca precisa
+- **Cache inteligente** para performance
 
-### Version 2.0.1 - [February 27, 2025]
+### 📊 Métricas e APIs
+- **Integração com Moz** para DA (Domain Authority)
+- **Dados de tráfego** via APIs externas
+- **Badges de status** em tempo real
+- **Caching otimizado** para APIs
 
-#### Update Overview
+### 🎨 UI/UX
+- **Dark mode** completo
+- **Responsivo** para todos os dispositivos
+- **Animações fluidas** com Tailwind
+- **Loading states** e skeletons
+- **Feedback visual** em todas as interações
 
-- Upgraded to Tailwind CSS v4 for better performance and efficiency.
-- Updated class usage to match the latest syntax and features.
-- Replaced deprecated class and optimized styles.
+### 🔒 Segurança
+- **Autenticação JWT** via Supabase
+- **Row Level Security** no banco
+- **Validação** client-side e server-side
+- **Rate limiting** nas APIs
+- **Sanitização** de dados
 
-#### Next Steps
+## 🧪 Testes
 
-- Run npm install or yarn install to update dependencies.
-- Check for any style changes or compatibility issues.
-- Refer to the Tailwind CSS v4 [Migration Guide](https://tailwindcss.com/docs/upgrade-guide) on this release. if needed.
-- This update keeps the project up to date with the latest Tailwind improvements. 🚀
+O projeto possui uma suíte completa de testes:
 
-### Version 2.0.0 - [February 2025]
+- **Unit Tests** para componentes isolados
+- **Integration Tests** para fluxos completos
+- **Service Tests** para camada de dados
+- **Hook Tests** para lógica customizada
 
-A major update with comprehensive redesign and modern React patterns implementation.
+### Executar Testes Específicos
+```bash
+npm run test:checkout        # Testes do checkout
+npm run test:notifications   # Sistema de notificações
+npm run test:services        # Serviços de dados
+npm run test:header-footer   # Configurações
+```
 
-#### Major Improvements
+## 📚 Documentação Detalhada
 
-- Complete UI redesign with modern React patterns
-- New features: collapsible sidebar, chat, and calendar
-- Improved performance and accessibility
-- Updated data visualization using ApexCharts
+Cada módulo principal possui documentação específica:
 
-#### Key Features
+- [Sistema de Modos](./MARKETPLACE_MODES_README.md)
+- [Filtros do Marketplace](./src/components/marketplace/filters/README.md)
+- [Sistema de Ordenação](./src/components/marketplace/sorting/README.md)
+- [Sistema de Seleção](./src/components/marketplace/selection/README.md)
+- [Navegação por Abas](./src/components/marketplace/navigation/README.md)
+- [Sistema de Tooltips](./src/components/marketplace/Tooltip/README.md)
 
-- Redesigned dashboards (Ecommerce, Analytics, Marketing, CRM)
-- Enhanced navigation with React Router integration
-- Advanced tables with sorting and filtering
-- Calendar with drag-and-drop support
-- New UI components and improved existing ones
+## 🚀 Deploy
 
-#### Breaking Changes
+### Netlify
+1. Configure as variáveis de ambiente no painel Netlify
+2. Build automático via GitHub integration
+3. Deploy contínuo na branch `main`
 
-- Updated sidebar component API
-- Migrated charts to ApexCharts
-- Revised authentication system
+### Variáveis Netlify
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_FUNCTIONS_URL=your_functions_url
+```
 
-[Read more](https://tailadmin.com/docs/update-logs/react) on this release.
+## 🤝 Contribuição
 
-### Version 1.3.7 - [June 20, 2024]
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-#### Enhancements
+## 📄 Licença
 
-1. Remove Repetition of DefaultLayout in every Pages
-2. Add ClickOutside Component for reduce repeated functionality in Header Message, Notification and User Dropdowns.
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE.md) para detalhes.
 
-### Version 1.3.6 - [Jan 31, 2024]
+## 👥 Equipe
 
-#### Enhancements
+- **Desenvolvimento:** Equipe SUA Imprensa
+- **Design:** Interface moderna e responsiva
+- **Backend:** Arquitetura serverless com Supabase
 
-1. Integrate flatpickr in [Date Picker/Form Elements]
-2. Change color after select an option [Select Element/Form Elements].
-3. Make it functional [Multiselect Dropdown/Form Elements].
-4. Make best value editable [Pricing Table One/Pricing Table].
-5. Rearrange Folder structure.
+---
 
-### Version 1.2.0 - [Apr 28, 2023]
-
-- Add Typescript in TailAdmin React.
-
-### Version 1.0.0 - Initial Release - [Mar 13, 2023]
-
-- Initial release of TailAdmin React.
-
-## License
-
-TailAdmin React.js Free Version is released under the MIT License.
-
-## Support
-
-If you find this project helpful, please consider giving it a star on GitHub. Your support helps us continue developing and maintaining this template.
+<div align="center">
+  <strong>🌟 Marketplace moderno, escalável e performático 🌟</strong><br>
+  Desenvolvido com as melhores práticas e tecnologias atuais
+</div>
