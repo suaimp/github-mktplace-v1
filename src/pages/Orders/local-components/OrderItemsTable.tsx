@@ -270,7 +270,7 @@ export default function OrderItemsTable({
         </h3>
         
         {/* Desktop Table - Hidden on mobile */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="hidden lg:block  ">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
