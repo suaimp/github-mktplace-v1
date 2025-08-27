@@ -80,7 +80,7 @@ export default function InfoTooltipOptimized({
       {shouldRender && (
         <div
           ref={tooltipRef as any}
-          className={`absolute ${alignClass} ${responsiveClasses} w-auto max-w-[200px] px-3 py-2 bg-gray-900 text-white !text-white text-[13px] rounded-lg transition-opacity duration-300 pointer-events-none z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute ${alignClass} ${responsiveClasses} w-auto max-w-[200px] px-3 py-2 bg-gray-900 text-white !text-white text-[13px] rounded-lg transition-opacity duration-300 pointer-events-auto z-50 ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} ${isVisible ? 'opacity-100' : 'opacity-0'}`}
           style={{ 
             color: '#fff',
             minWidth: '92px',
@@ -88,6 +88,8 @@ export default function InfoTooltipOptimized({
             wordWrap: 'break-word',
             whiteSpace: 'normal'
           }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <span
             className="block"
