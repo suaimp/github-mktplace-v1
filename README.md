@@ -1,4 +1,4 @@
-# 🛒 GitHub Marketplace v1
+# 🛒 Marketplace v1
 
 > 🌐 **Produção:** [https://cp.suaimprensa.com.br/](https://cp.suaimprensa.com.br/)
 
