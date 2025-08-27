@@ -4,5 +4,10 @@
  */
 
 export { ChatButton } from './ChatButton';
+export { ArticleAction } from './ArticleAction';
+export { ArticleActionButtons } from './ArticleActionButtons';
+export { AdminDropdownMenu } from './AdminDropdownMenu';
+export { AdminArticleActions } from './AdminArticleActions';
+export * from './Icons';
 export { useChatButtonNotifications } from '../hooks/useChatButtonNotifications';
 export type { ChatButtonProps, ChatNotificationState } from '../types/chat-button.types';

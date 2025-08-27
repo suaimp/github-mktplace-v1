@@ -8,7 +8,7 @@ import { PautaModal, usePautaModal } from "./PautaModal";
 import { ArticleDetailsModal, useArticleDetailsModal } from "./ArticleDetailsModal";
 import { ChatModalWebSocket as SimpleChatModalWebSocket } from "./ChatModal";
 import { HorizontaLDots } from "../../../icons";
-import { OrderItemStatusService, OrderItemAnalyzer, useChatColumnVisibility } from "./OrderItemsTable/index";
+import { OrderItemStatusService, OrderItemAnalyzer, useChatColumnVisibility, ArticleAction, AdminArticleActions } from "./OrderItemsTable/index";
 import { ChatButton } from "./OrderItemsTable/components";
 
 interface OrderItem {
@@ -47,7 +47,6 @@ export default function OrderItemsTable({
   onUrlEditModalOpen,
   onDownloadFile,
   onChangePublicationStatus,
-  downloadLoading,
   refreshTrigger,
   paymentStatus,
 }: OrderItemsTableProps) {
@@ -535,68 +534,31 @@ export default function OrderItemsTable({
                       // Caso tenha arquivo enviado
                       if (item.article_document_path) {
                         return (
-                          <div className="flex items-center">
-                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            </div>
-                            <button
-                              onClick={() =>
-                                onDownloadFile(
-                                  item.article_document_path!,
-                                  item.article_doc || "documento.docx",
-                                  item.id
-                                )
-                              }
-                              disabled={downloadLoading[item.id]}
-                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
-                              title="Baixar artigo"
-                            >
-                              Artigo
-                            </button>
-                          </div>
+                          <ArticleAction
+                            url={item.article_document_path}
+                            fileName={item.article_doc || "documento.docx"}
+                            onDownload={() =>
+                              onDownloadFile(
+                                item.article_document_path!,
+                                item.article_doc || "documento.docx",
+                                item.id
+                              )
+                            }
+                            iconSize="medium"
+                            label="Artigo"
+                            showCopyIcon={false}
+                          />
                         );
                       }
                       // Caso article_doc contenha 'http' (link)
                       if (item.article_doc && typeof item.article_doc === "string" && item.article_doc.includes("http")) {
                         return (
-                          <div className="flex items-center">
-                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            </div>
-                            <a
-                              href={item.article_doc}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                              title="Abrir artigo em nova aba"
-                            >
-                              Artigo
-                            </a>
-                          </div>
+                          <ArticleAction
+                            url={item.article_doc}
+                            iconSize="medium"
+                            label="Artigo"
+                            showCopyIcon={true}
+                          />
                         );
                       }
                       // Caso não tenha nada, botão de enviar artigo/pauta
@@ -646,7 +608,7 @@ export default function OrderItemsTable({
                           className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
                         >
                           <svg
-                            className="w-5 h-5 mr-1"
+                            className="w-5 h-5 mr-1 lg:w-5 lg:h-5 max-[1023px]:w-[15px] max-[1023px]:h-[15px]"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -672,35 +634,33 @@ export default function OrderItemsTable({
                           Aguardando Pagamento
                         </span>
                       ) : item.article_url ? (
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-3 h-3 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
+                        // Se há URL do artigo
+                        isAdmin ? (
+                          // Admin: mostra "Publicado" + ícone redirect + menu 3 pontinhos
+                          <div className="flex items-center gap-1">
+                            <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center lg:w-5 lg:h-5 max-[1023px]:w-[12px] max-[1023px]:h-[12px]">
+                              <svg className="w-3.5 h-3.5 text-white lg:w-3 lg:h-3 max-[1023px]:w-[12px] max-[1023px]:h-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium mr-1">
+                              Publicado
+                            </span>
+                            <AdminArticleActions
+                              url={item.article_url.startsWith("http") ? item.article_url : `https://${item.article_url}`}
+                              onEdit={() => onUrlEditModalOpen(item.id, item.article_url || "")}
+                              iconSize="medium"
+                            />
                           </div>
-                          <a
-                            href={
-                              item.article_url?.startsWith("http")
-                                ? item.article_url
-                                : `https://${item.article_url}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
-                          >
-                            Publicado
-                          </a>
-                        </div>
+                        ) : (
+                          // Usuário comum: apenas "Publicado" sem editar
+                          <ArticleAction
+                            url={item.article_url.startsWith("http") ? item.article_url : `https://${item.article_url}`}
+                            iconSize="medium"
+                            label="Publicado"
+                            showCopyIcon={true}
+                          />
+                        )
                       ) : (
                         // Se não há URL do artigo
                         isAdmin ? (
@@ -710,7 +670,7 @@ export default function OrderItemsTable({
                             className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center"
                           >
                             <svg
-                              className="w-4 h-4 mr-1"
+                              className="w-4 h-4 mr-1 lg:w-4 lg:h-4 max-[1023px]:w-[15px] max-[1023px]:h-[15px]"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -871,7 +831,7 @@ export default function OrderItemsTable({
                       <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Produto
                       </div>
-                      <div className="text-right min-w-[145px] overflow-hidden">
+                      <div className="text-right min-w-[145px] overflow-hidden flex justify-end">
                         <div className="font-medium text-gray-900 dark:text-gray-100 truncate text-xs sm:text-sm">
                           {item.product_url ? (
                             <a
@@ -907,7 +867,7 @@ export default function OrderItemsTable({
                       <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Pacote de Conteúdo
                       </div>
-                      <div className="text-right min-w-[145px] overflow-hidden">
+                      <div className="text-right min-w-[145px] overflow-hidden flex justify-end">
                         {(() => {
                           if (!item.service_content) {
                             return (
@@ -955,9 +915,8 @@ export default function OrderItemsTable({
                       <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         Artigo DOC
                       </div>
-                      <div className="text-right min-w-[145px] overflow-hidden">
+                      <div className="text-right min-w-[145px] overflow-hidden flex justify-end">
                         {(() => {
-                          // Se o pagamento estiver pendente, mostrar "Aguardando Pagamento"
                           if (paymentStatus === 'pending') {
                             return (
                               <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
@@ -965,52 +924,52 @@ export default function OrderItemsTable({
                               </span>
                             );
                           }
-
-                          // Caso tenha arquivo enviado
                           if (item.article_document_path) {
                             return (
-                              <button
-                                onClick={() =>
+                              <ArticleAction
+                                url={item.article_document_path}
+                                fileName={item.article_doc || "documento.docx"}
+                                onDownload={() =>
                                   onDownloadFile(
                                     item.article_document_path!,
                                     item.article_doc || "documento.docx",
                                     item.id
                                   )
                                 }
-                                disabled={downloadLoading[item.id]}
-                                className="text-blue-600 dark:text-blue-400 hover:underline truncate text-xs sm:text-sm"
-                                title="Baixar artigo"
-                              >
-                                Baixar Artigo
-                              </button>
+                                className="justify-end"
+                                textClassName="text-xs sm:text-sm max-[400px]:text-[11px]"
+                                iconSize="small"
+                                label="Artigo"
+                                showCopyIcon={false}
+                              />
                             );
                           }
-
-                          // Caso article_doc contenha 'http' (link)
                           if (item.article_doc && typeof item.article_doc === "string" && item.article_doc.includes("http")) {
                             return (
-                              <a
-                                href={item.article_doc}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 dark:text-blue-400 hover:underline truncate text-xs sm:text-sm"
-                                title="Abrir artigo em nova aba"
-                              >
-                                Visualizar Artigo
-                              </a>
+                              <ArticleAction
+                                url={item.article_doc}
+                                className="justify-end"
+                                textClassName="text-xs sm:text-sm max-[400px]:text-[11px]"
+                                iconSize="small"
+                                label="Artigo"
+                                showCopyIcon={true}
+                              />
                             );
                           }
-
-                          // Caso não tenha nada, botão de enviar artigo/pauta
                           if (hasPackage && hasOutline && !isAdmin) {
                             return (
-                              <span className="text-gray-900 dark:text-gray-100 truncate text-xs sm:text-sm">Pauta enviada</span>
+                              <div className="flex items-center justify-end">
+                                <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center lg:w-5 lg:h-5 max-[1023px]:w-[12px] max-[1023px]:h-[12px]">
+                                  <svg className="w-3.5 h-3.5 text-white lg:w-3 lg:h-3 max-[1023px]:w-[12px] max-[1023px]:h-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                                <span className="text-xs sm:text-sm max-[400px]:text-[11px] text-gray-900 dark:text-gray-100">Pauta enviada</span>
+                              </div>
                             );
                           }
-
                           let buttonText = "Enviar Artigo";
                           let buttonAction = () => onDocModalOpen(item.id);
-
                           if (hasPackage && !hasOutline) {
                             buttonText = "Enviar Pauta";
                             buttonAction = () => pautaModal.openModal(item.id);
@@ -1018,12 +977,14 @@ export default function OrderItemsTable({
                             buttonText = "Enviar Artigo";
                             buttonAction = () => onDocModalOpen(item.id);
                           }
-
                           return (
                             <button
                               onClick={buttonAction}
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block text-xs sm:text-sm"
+                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center text-xs sm:text-sm max-[400px]:text-[11px]"
                             >
+                              <svg className="w-5 h-5 mr-1 lg:w-5 lg:h-5 max-[1023px]:w-[15px] max-[1023px]:h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                              </svg>
                               {buttonText}
                             </button>
                           );
@@ -1036,35 +997,55 @@ export default function OrderItemsTable({
                       <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         URL do Artigo
                       </div>
-                      <div className="text-right min-w-[145px] overflow-hidden">
+                      <div className="text-right min-w-[145px] flex justify-end" style={{ overflow: (item.article_url && isAdmin) ? 'visible' : 'hidden' }}>
                         {paymentStatus === 'pending' ? (
                           <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
                             Aguardando Pagamento
                           </span>
                         ) : item.article_url ? (
-                          <a
-                            href={
-                              item.article_url?.startsWith("http")
-                                ? item.article_url
-                                : `https://${item.article_url}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline truncate block text-xs sm:text-sm"
-                          >
-                            {item.article_url}
-                          </a>
+                          // Se há URL do artigo
+                          isAdmin ? (
+                            // Admin: mostra "Publicado" + ícone redirect + menu 3 pontinhos
+                            <div className="flex items-center gap-1 justify-end">
+                              <div className="w-5 h-5 mr-2 bg-green-500 rounded-full flex items-center justify-center lg:w-5 lg:h-5 max-[1023px]:w-[12px] max-[1023px]:h-[12px]">
+                                <svg className="w-3.5 h-3.5 text-white lg:w-3 lg:h-3 max-[1023px]:w-[12px] max-[1023px]:h-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-xs sm:text-sm max-[400px]:text-[11px] mr-1">
+                                Publicado
+                              </span>
+                              <AdminArticleActions
+                                url={item.article_url.startsWith("http") ? item.article_url : `https://${item.article_url}`}
+                                onEdit={() => onUrlEditModalOpen(item.id, item.article_url || "")}
+                                iconSize="small"
+                              />
+                            </div>
+                          ) : (
+                            // Usuário comum: apenas "Publicado" sem editar
+                            <ArticleAction
+                              url={item.article_url.startsWith("http") ? item.article_url : `https://${item.article_url}`}
+                              className="justify-end"
+                              textClassName="text-xs sm:text-sm max-[400px]:text-[11px]"
+                              iconSize="small"
+                              label="Publicado"
+                              showCopyIcon={true}
+                            />
+                          )
                         ) : (
                           isAdmin ? (
                             <button
                               onClick={() => onUrlEditModalOpen(item.id, "")}
-                              className="text-blue-600 dark:text-blue-400 hover:underline truncate w-full text-right block text-xs sm:text-sm"
+                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center text-xs sm:text-sm max-[400px]:text-[11px]"
                             >
+                              <svg className="w-4 h-4 mr-1 lg:w-4 lg:h-4 max-[1023px]:w-[15px] max-[1023px]:h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                              </svg>
                               Adicionar URL
                             </button>
                           ) : (
                             <span className="text-gray-500 dark:text-gray-400 italic truncate text-xs sm:text-sm">
-                              N/A
+                              Aguardando
                             </span>
                           )
                         )}
@@ -1076,7 +1057,7 @@ export default function OrderItemsTable({
                       <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                         STATUS
                       </div>
-                      <div className="text-right font-semibold min-w-[145px] overflow-hidden">
+                      <div className="text-right font-semibold min-w-[145px] overflow-hidden flex justify-end">
                         <span className={`${status.className} truncate block text-xs sm:text-sm`}>
                           {status.label}
                         </span>
@@ -1089,7 +1070,7 @@ export default function OrderItemsTable({
                         <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                           Ação
                         </div>
-                        <div className="text-right min-w-[145px] overflow-hidden">
+                        <div className="text-right min-w-[145px] overflow-hidden flex justify-end">
                           <select
                             value={localStatus[item.id] || "pending"}
                             onChange={(e) => {
@@ -1114,7 +1095,7 @@ export default function OrderItemsTable({
 
                 {/* Actions Section - só aparece se não for pagamento pendente */}
                 {shouldShowChatColumn && (
-                  <div className="border-t border-gray-100 dark:border-gray-700 px-6 py-4">
+                  <div className="border-t border-gray-100 dark:border-gray-700 px-6 py-4 max-[400px]:px-2.5 max-[400px]:py-3">
                     <div className="flex items-center justify-end space-x-3">
                         {/* Botão de Chat - sempre visível */}
                         <ChatButton
