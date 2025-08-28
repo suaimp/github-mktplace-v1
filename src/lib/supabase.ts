@@ -1,9 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Configuração de produção como fallback
+const PRODUCTION_CONFIG = {
+  url: 'https://uxbeaslwirkepnowydfu.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4YmVhc2x3aXJrZXBub3d5ZGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MTQwNTUsImV4cCI6MjA1NzM5MDA1NX0.bhPFhXaCgp363YlcAWtNhPlpj82dSNUWwNim2fgYh5s'
+};
+
+// Em produção, usar configuração de produção se env vars não estiverem disponíveis
+const isProduction = import.meta.env.MODE === 'production' || window.location.hostname !== 'localhost';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 
+  (isProduction ? PRODUCTION_CONFIG.url : import.meta.env.VITE_SUPABASE_URL);
+
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  (isProduction ? PRODUCTION_CONFIG.anonKey : import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Configuração do Supabase:', {
+    url: supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    mode: import.meta.env.MODE,
+    isProduction,
+    hostname: window.location.hostname
+  });
   throw new Error('Supabase env vars missing!');
 }
 
