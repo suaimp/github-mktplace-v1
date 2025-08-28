@@ -408,7 +408,28 @@ export default function EditMenuItem() {
           </div>
 
           <div>
-            <Label>Visibilidade</Label>
+            <Label>Ativo/Visível</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_visible"
+                checked={form.is_visible}
+                onChange={(e) =>
+                  setForm({ ...form, is_visible: e.target.checked })
+                }
+                className="w-4 h-4 text-brand-600 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 dark:focus:ring-brand-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label htmlFor="is_visible" className="text-sm text-gray-900 dark:text-gray-300">
+                Item visível na sidebar
+              </label>
+            </div>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Desmarque para ocultar este item da sidebar
+            </p>
+          </div>
+
+          <div>
+            <Label>Visibilidade por Tipo de Usuário</Label>
             <Select
               options={[
                 { value: "all", label: "Todos os Usuários" },
