@@ -88,9 +88,12 @@ export function useLogos() {
       
         // Verificação adicional para produção
         if (import.meta.env.MODE === 'production') {
-        Object.entries(newLogos).forEach(([  url]) => {
+          Object.entries(newLogos).forEach(([key, url]) => {
             if (url.includes('localhost') || url.includes('127.0.0.1')) {
-          }
+              console.warn(`⚠️ URL local detectada em produção para ${key}:`, url);
+              // Em produção, usar logos padrão se detectar URLs locais
+              newLogos[key as keyof Logos] = defaultLogos[key as keyof Logos];
+            }
           });
         }
         
