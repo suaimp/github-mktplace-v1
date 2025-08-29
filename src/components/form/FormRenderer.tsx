@@ -442,7 +442,9 @@ export default function FormRenderer({ formId }: FormRendererProps) {
         : settings,
       value: formData[field.id],
       onChange: (value: any) => {
-        setFormData({ ...formData, [field.id]: value });
+        // Use functional update to avoid stale closures when multiple fields
+        // update formData concurrently (important for auto-fill flows).
+        setFormData((prev: Record<string, any>) => ({ ...prev, [field.id]: value }));
         if (validationErrors[field.id]) {
           setValidationErrors((prev) => {
             const next = { ...prev };
@@ -461,6 +463,12 @@ export default function FormRenderer({ formId }: FormRendererProps) {
           });
         }
       },
+      // Props extras para YoutubeUrlField
+      ...(fieldTypeMapped === 'youtubeUrl' && {
+        fields,
+        formData,
+        setFormData
+      })
     };
 
     // Adicionar formFields para campos import_csv
@@ -580,6 +588,32 @@ export default function FormRenderer({ formId }: FormRendererProps) {
       // Map import_csv field to use ImportCsvField component
     if (fieldType === "import_csv") {
       return "importCsv";
+    }
+
+
+    // Map youtube_url field to use YoutubeUrlField component
+    if (fieldType === "youtube_url") {
+      return "youtubeUrl";
+    }
+
+    // Map subscriber_count field to use SubscriberCountField component
+    if (fieldType === "subscriber_count") {
+      return "SubscriberCount";
+    }
+
+    // Map engagement field to use EngagementField component
+    if (fieldType === "engagement") {
+      return "engagement";
+    }
+
+    // Map channel_name field to use ChannelNameField component
+    if (fieldType === "channel_name") {
+      return "channelName";
+    }
+
+    // Map channel_logo field to use ChannelLogoField component
+    if (fieldType === "channel_logo") {
+      return "channelLogo";
     }
 
     // Return original field type for standard fields

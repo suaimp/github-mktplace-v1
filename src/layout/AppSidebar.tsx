@@ -241,7 +241,6 @@ export default function AppSidebar() {
     },
     ...filterMenuItems(menuItems)
       .filter((item) => item.name !== "Cupons")
-      .filter((item) => item.name !== "Podcasts") // Ocultar temporariamente no frontend
       .map((item) => ({
         icon: getIconComponent(item.icon),
         name: item.name,

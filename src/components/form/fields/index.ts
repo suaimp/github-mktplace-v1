@@ -22,6 +22,11 @@ import { default as BrandField } from "./BrandField";
 import { default as ButtonBuyField } from "./ButtonBuyField";
 import { default as NicheField } from "./NicheField";
 import { default as ImportCsvField } from "./ImportCsvField";
+import { default as YoutubeUrlField } from "./YoutubeUrlField";
+import { default as SubscriberCountField } from "./SubscriberCountField";
+import { default as EngagementField } from "./EngagementField";
+import { default as ChannelNameField } from "./ChannelNameField";
+import { default as ChannelLogoField } from "./ChannelLogoField";
 
 export {
   TextField,
@@ -47,7 +52,12 @@ export {
   BrandField,
   ButtonBuyField,
   NicheField,
-  ImportCsvField
+  ImportCsvField,
+  YoutubeUrlField,
+  SubscriberCountField,
+  EngagementField,
+  ChannelNameField,
+  ChannelLogoField
 };
 
 export type { FormField, FormFieldSettings, BaseFieldProps } from "./types";

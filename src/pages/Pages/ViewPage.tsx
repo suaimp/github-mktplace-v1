@@ -147,7 +147,7 @@ export default function ViewPage() {
         description={page.meta_description || `View ${page.title} page`}
       />
 
-      <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+  <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 max-[400px]:p-4 dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
         <h1 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white/90">
           {page.title}
         </h1>

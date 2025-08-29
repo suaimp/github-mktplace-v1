@@ -211,6 +211,12 @@ export function renderFormattedValue(value: any, fieldType: string, field: any) 
       }
       return value.toString();
     
+    case 'subscriber_count':
+      // Exibe número formatado pt-BR
+      return Number(value).toLocaleString('pt-BR');
+    case 'engagement':
+      // Exibe número formatado pt-BR com %
+      return Number(value).toLocaleString('pt-BR') + '%';
     default:
       return value.toString();
   }

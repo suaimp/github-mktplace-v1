@@ -93,7 +93,12 @@ export class FormFieldsService {
       "brazilian_states": "brazilianStates",
       "brand": "brand",
       "button_buy": "buttonBuy",
-      "multiselect": "multiSelect"
+      "multiselect": "multiSelect",
+      "youtube_url": "youtubeUrl",
+  "channel_name": "channelName",
+  "channel_logo": "channelLogo",
+  "subscriber_count": "SubscriberCount",
+  "engagement": "Engagement"
     };
 
     return fieldTypeMap[fieldType] || fieldType;

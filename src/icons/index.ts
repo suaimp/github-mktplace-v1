@@ -59,6 +59,7 @@ import CodeIcon from "./code.svg?react";
 import SettingsIcon from "./settings.svg?react";
 import SettingsMinimalIcon from "./settings-minimal.svg?react";
 import ChartIcon from "./pie-chart.svg?react";
+import { Youtube as YouTubeIcon } from "lucide-react";
 import AhrefsTrafficIcon from "./ahrefs-traffic.svg?react";
 import SimilarwebTrafficIcon from "./similarweb-traffic.svg?react";
 import GoogleTrafficIcon from "./google-traffic.svg?react";
@@ -155,3 +156,5 @@ export {
   EntertainmentIcon,
   StarIcon
 };
+
+export { YouTubeIcon };

@@ -681,6 +681,31 @@ export default function UserFormEntriesRenderer({
       return "multiSelect";
     }
 
+    // Map youtube_url field to use YoutubeUrlField component
+    if (fieldType === "youtube_url") {
+      return "youtubeUrl";
+    }
+
+    // Map subscriber_count field to use SubscriberCountField component
+    if (fieldType === "subscriber_count") {
+      return "SubscriberCount";
+    }
+
+    // Map engagement field to use EngagementField component
+    if (fieldType === "engagement") {
+      return "engagement";
+    }
+
+    // Map channel_name field to use ChannelNameField component
+    if (fieldType === "channel_name") {
+      return "channelName";
+    }
+
+    // Map channel_logo field to use ChannelLogoField component
+    if (fieldType === "channel_logo") {
+      return "channelLogo";
+    }
+
     // Return original field type for standard fields
     return fieldType;
   };

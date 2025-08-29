@@ -213,7 +213,42 @@ const fieldGroups = [
         icon: "GoogleTrafficIcon"
       }
     ]
+  },
+  {
+    title: "Campos Para Youtube",
+    fields: [  
+      {
+        type: "youtube_url",
+        title: "Youtube URL",
+        description: " URL do canal do YouTube",
+        icon: "YouTubeIcon"
+      }, {
+    type: "channel_name",
+    title: "Nome do Canal",
+    description: "Nome do canal do YouTube",
+    icon: "YouTubeIcon"
+  },
+  {
+    type: "channel_logo",
+    title: "Logo do Canal",
+    description: " Logo do canal do YouTube",
+    icon: "YouTubeIcon"
+  },
+  {
+    type: "subscriber_count",
+    title: "Inscritos",
+    description: "Quantidade de inscritos do canal",
+    icon: "YouTubeIcon"
+  },
+  {
+    type: "engagement",
+    title: "Engajamento",
+    description: "Engajamento do canal (ex: média de views, comentários, etc.)",
+    icon: "YouTubeIcon"
   }
+ 
+    ]
+  },
 ];
 
 export default function FormFieldSidebar({

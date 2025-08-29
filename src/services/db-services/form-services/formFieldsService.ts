@@ -86,3 +86,41 @@ export async function getCommissionField() {
 
   return data?.[0] as FormField | null;
 }
+
+/**
+ * Busca especificamente o campo de nome do canal (channel_name)
+ */
+export async function getChannelNameField() {
+  const { data, error } = await supabase
+    .from("form_fields")
+    .select("*")
+    .or(
+      "field_type.eq.channel_name,label.ilike.%canal%,label.ilike.%channel%,label.ilike.%nome%"
+    )
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+
+  return data?.[0] as FormField | null;
+}
+
+/**
+ * Busca especificamente o campo de logo do canal (channel_logo)
+ */
+export async function getChannelLogoField() {
+  const { data, error } = await supabase
+    .from("form_fields")
+    .select("*")
+    .or(
+      "field_type.eq.channel_logo,label.ilike.%logo%,label.ilike.%icone%,label.ilike.%avatar%,label.ilike.%imagem%,label.ilike.%image%"
+    )
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+
+  return data?.[0] as FormField | null;
+}
