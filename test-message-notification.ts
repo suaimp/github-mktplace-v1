@@ -6,7 +6,7 @@
 import { OrderNotificationService } from './src/db-service/order-notifications/OrderNotificationService';
 
 async function testMessageNotification() {
-  console.log('🧪 === TESTE DE NOTIFICAÇÃO DE MENSAGEM ===');
+  console.log('🧪 === TESTE DE NOTIFICAÇÃO DE MENSAGEMS ===');
   
   try {
     // Dados de teste - substitua por dados reais do seu sistema
